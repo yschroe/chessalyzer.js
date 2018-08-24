@@ -14,10 +14,12 @@ class ChessTile {
 		 */
 		this.defaultPiece = null;
 
-		/* 8x8 matrix that contains 2 informations for every tile
-			0: counts how often the piece, that starts at these coordinates, was on this tile
-			1: ? */
+		/**
+		 * Stores the data of every other tile in repect to this tile
+		 * @member {Array}
+		 */
 		this.dataMap = null;
+
 		this.initStats();
 		// counts amount of half moves, this tile has a piece on it [white, black]
 		this.cntHasPiece = [0, 0];

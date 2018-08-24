@@ -5,7 +5,6 @@ const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
 /** Class that contains the board status and tracks statistics. */
-/** Class that contains the board status and tracks statistics. */
 class ChessBoard {
 	/** Creates a new 8x8 Chessboard out of 64 {@link ChessTile}s and 32 {@link ChessPiece}s */
 	constructor() {
@@ -44,9 +43,9 @@ class ChessBoard {
 	 *  'take', 'en passant', 'castle' and 'promote'.
 	 * Use this function instead of {@link ChessBoard.processMove()} to input a move to the board!
 	 * @param {Object} moveData
-	 * @param {Array|Object} moveData.moves - An array containing up to 2 moves in the
+	 * @param {Object[]} moveData.moves - An array containing up to 2 moves in the
 	 *  syntax {from: [], to: []}
-	 * @param {Boolean} moveData.takes - Move that takes a piece
+	 * @param {Boolean} moveData.takes - True if the move takes a piece
 	 * @param {String} moveData.promotes - Type of promoted piece in case of pawn promotion, else null
 	 */
 	move(moveData) {
@@ -106,12 +105,12 @@ class ChessBoard {
 	}
 
 	/**
-	 * Handles the move commanded by {@link ChessBoard.move}. Don't call this function directly,
-	 *  use {@link ChessBoard.move} to input a move!
+	 * Handles the move commanded by {@link ChessBoard#move}. Don't call this function directly,
+	 *  use {@link ChessBoard#move} to input a move!
 	 * @private
 	 * @param {Object} move
-	 * @param {Array | Number} move.from - Coordinates of start tile
-	 * @param {Array | Number} move.to - Coordinates of target tile
+	 * @param {Number[]} move.from - Coordinates of start tile
+	 * @param {Number[]} move.to - Coordinates of target tile
 	 */
 	processMove(move) {
 		// takes?
@@ -133,7 +132,7 @@ class ChessBoard {
 	 *  pieces back to their starting positions.
 	 *
 	 *  Does not reset the stats recorded. If you wish to reset the stats,
-	 *  call {@link ChessBoard.resetStats}. */
+	 *  call {@link ChessBoard#resetStats}. */
 	reset() {
 		this.cntGames += 1;
 		// reset the pieces to default
@@ -172,7 +171,7 @@ class ChessBoard {
 
 	/**
 	 * Promotes a pawn to a piece.
-	 * @param {Array} coords An array containing the row and column of the pawn to be promoted.
+	 * @param {Number[]} coords An array containing the row and column of the pawn to be promoted.
 	 * @param {String} pieceType Target piece type in SAN notation ('N', 'B', 'Q', 'R').
 	 */
 	promotePiece(coords, pieceType) {
@@ -204,7 +203,7 @@ class ChessBoard {
 		}
 	}
 
-	/** Is called after each {@link ChessBoard.move} to record the stats for the ChessTiles.
+	/** Is called after each {@link ChessBoard#move} to record the stats for the ChessTiles.
 	 * Only every tile, that has a piece on it, is updated.
 	 */
 	updateTileStats() {

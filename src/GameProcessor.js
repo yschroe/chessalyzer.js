@@ -121,22 +121,17 @@ class GameProcessor extends EventEmitter {
 	}
 
 	/**
+	 * @typedef {Object} MoveData
+	 * @property {Object[]} moves - Array of {from: [], to: []} objects
+	 * @property {Boolean} takes - Move takes a piece true/false
+	 *  @property {String} promotes - Piece type in case of pawn promotion else null
+	 */
+
+	/**
 	 * Parses a move in string format to board coordinates. Wrapper function for
 	 *  the different move algorithms.
 	 * @param {string} rawMove The move to be parsed, e.g. 'Ne5+'.
-	 * @returns {Array} An array containing:
-	 *      [0-1]: start tile,
-	 *      [2-3]: target tile,
-	 *      [4]: takes true/false,
-	 *      [5]: new piece type in case of pawn promotion.
-	 *
-	 *      If the move is castling, the array is assigned differently:
-	 *      [0-3]: king move,
-	 *      [4-7]: rook move.
-	 *
-	 *      Returns 'null' on game end (move is '1-0', '0-1' or '1/2-1/2').
-	 *
-	 *      Use coords.length to differentiate between the different outputs
+	 * @returns {MoveData}
 	 */
 	parseMove(rawMove) {
 		const token = rawMove.substring(0, 1);
@@ -162,11 +157,7 @@ class GameProcessor extends EventEmitter {
 	/**
 	 * Returns the board coordinates for the move if it is a pawn move.
 	 * @param {string} moveFen The move to be parsed, e.g. 'e5'.
-	 * @returns {Array} An array containing:
-	 *      [0-1]: start tile,
-	 *      [2-3]: target tile,
-	 *      [4]: takes true/false,
-	 *      [5]: new piece type in case of promotion.
+	 * @returns {MoveData}
 	 */
 	pawnMove(moveFen) {
 		const from = [];
@@ -219,10 +210,7 @@ class GameProcessor extends EventEmitter {
 	/**
 	 * Returns the board coordinates for a piece (!= pawn) move.
 	 * @param {string} moveFen The move to be parsed, e.g. 'Be3'.
-	 * @returns {Array} An array containing:
-	 *      [0-1]: start tile,
-	 *      [2-3]: target tile,
-	 *      [4]: takes true/false.
+	 * @returns {MoveData}
 	 */
 	pieceMove(moveFen) {
 		const from = [];
@@ -288,9 +276,7 @@ class GameProcessor extends EventEmitter {
 	 * @param {number} mustBeInRow Moving piece must be in this row. '-1' if unknown.
 	 * @param {number} mustBeInCol Moving piece must be in this column. '-1' if unknown.
 	 * @param {string} token Moving piece must be of this type, e.g 'R'.
-	 * @returns {Array} An array containing:
-	 *      [0-1]: start tile,
-	 *      [2-3]: target tile.
+	 * @returns {Object}
 	 */
 	findPiece(tarRow, tarCol, mustBeInRow, mustBeInCol, token) {
 		let move;
@@ -354,9 +340,7 @@ class GameProcessor extends EventEmitter {
 	 * @param {number} mustBeInRow Moving piece must be in this row. '-1' if unknown.
 	 * @param {number} mustBeInCol Moving piece must be in this column. '-1' if unknown.
 	 * @param {string} token Moving piece must be of this type, e.g 'R'.
-	 * @returns {Array} An array containing:
-	 *      [0-1]: start tile,
-	 *      [2-3]: target tile.
+	 * @returns {Object}
 	 */
 	findDiag(tarRow, tarCol, mustBeInRow, mustBeInCol, token) {
 		const color = this.activePlayer % 2 ? 'black' : 'white';
@@ -438,9 +422,7 @@ class GameProcessor extends EventEmitter {
 	 * @param {number} mustBeInRow Moving piece must be in this row. '-1' if unknown.
 	 * @param {number} mustBeInCol Moving piece must be in this column. '-1' if unknown.
 	 * @param {string} token Moving piece must be of this type, e.g 'R'.
-	 * @returns {Array} An array containing:
-	 *      [0-1]: start tile,
-	 *      [2-3]: target tile.
+	 * @returns {Object}
 	 */
 	findLine(tarRow, tarCol, mustBeInRow, mustBeInCol, token) {
 		const color = this.activePlayer % 2 ? 'black' : 'white';
@@ -520,9 +502,7 @@ class GameProcessor extends EventEmitter {
 	 * @param {number} mustBeInRow Moving piece must be in this row. '-1' if unknown.
 	 * @param {number} mustBeInCol Moving piece must be in this column. '-1' if unknown.
 	 * @param {string} token Moving piece must be of this type, e.g 'R'.
-	 * @returns {Array} An array containing:
-	 *      [0-1]: start tile,
-	 *      [2-3]: target tile.
+	 * @returns {Object}
 	 */
 	findKnight(tarRow, tarCol, mustBeInRow, mustBeInCol, token) {
 		const color = this.activePlayer % 2 ? 'black' : 'white';
@@ -588,7 +568,8 @@ class GameProcessor extends EventEmitter {
 
 	/**
 	 * Checks if the input move would be resulting with the king being in check.
-	 * @param {Array} coords Coordinates of the move that shall be checked.
+	 * @param {Number[]} from Coordinates of the source tile of the move that shall be checked.
+	 *  @param {Number[]} to Coordinates of the target tile of the move that shall be checked.
 	 * @returns {boolean} After the move, the king will be in check true/false.
 	 */
 	checkCheck(from, to) {
@@ -659,9 +640,7 @@ class GameProcessor extends EventEmitter {
 	/**
 	 * Returns the board coordinates for castling.
 	 * @param {string} move The move to be parsed, e.g. 'O-O'.
-	 * @returns {Array} An array containing:
-	 *      [0-3]: king move coordinates,
-	 *      [4-7]: rook move coordinates.
+	 * @returns {MoveData.moves}
 	 */
 	castle(move) {
 		const row = this.activePlayer % 2 ? 0 : 7;
