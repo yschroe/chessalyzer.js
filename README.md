@@ -64,4 +64,4 @@ Or you can check out my standalone electron project [Chessalyzer](https://github
 -   [ ] Check functionality for non-lichess PGN files
 -   [ ] Write Mocha tests
 -   [ ] Update jsdoc
--   [ ] Optimize speed further. An earlier version used just an array as input for the Chessboard.move() function as opposed to the moveData object that is used now. The array version was around 10% faster and I can't figure out why.
+-   [ ] Track statistics for promoted pieces and en passant moves

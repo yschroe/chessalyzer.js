@@ -8,13 +8,25 @@ const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 class ChessBoard {
 	/** Creates a new 8x8 Chessboard out of 64 {@link ChessTile}s and 32 {@link ChessPiece}s */
 	constructor() {
-		this.cntMoves = 0;
-		this.cntGames = 0;
+		/**
+		 * Tracks number of moves and games: { cntMoves, cntGames }
+		 * @member {Object}
+		 */
+		this.data = {
+			cntMoves: 0,
+			cntGames: 0
+		};
 
-		// contains all pieces
+		/**
+		 * Contains all pieces on the board
+		 * @member {ChessPiece[]}
+		 */
 		this.pieces = [];
 
-		// init tiles
+		/**
+		 * 8x8 array of {@link ChessTile}s
+		 * @member {Array[]}
+		 */
 		this.tiles = new Array(8);
 		for (let row = 0; row < 8; row += 1) {
 			const currRow = new Array(8);
@@ -50,7 +62,7 @@ class ChessBoard {
 	 */
 	move(moveData) {
 		if (moveData !== null) {
-			this.cntMoves += 1;
+			this.data.cntMoves += 1;
 
 			const { moves } = moveData;
 			const { takes } = moveData;
@@ -134,7 +146,7 @@ class ChessBoard {
 	 *  Does not reset the stats recorded. If you wish to reset the stats,
 	 *  call {@link ChessBoard#resetStats}. */
 	reset() {
-		this.cntGames += 1;
+		this.data.cntGames += 1;
 		// reset the pieces to default
 		for (let i = 0; i < this.pieces.length; i += 1) {
 			this.pieces[i].reset();
@@ -165,8 +177,8 @@ class ChessBoard {
 			this.pieces[i].initStats();
 		}
 
-		this.cntMoves = 0;
-		this.cntGames = 0;
+		this.data.cntMoves = 0;
+		this.data.cntGames = 0;
 	}
 
 	/**

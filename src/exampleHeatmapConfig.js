@@ -8,9 +8,9 @@ module.exports = [
 		description: 'Tile X had a piece on it for Y% of all moves.',
 		calc: (board, moCoords, loopCoords) => {
 			let val =
-				board.tiles[loopCoords[0]][loopCoords[1]].cntHasPiece[0] +
-				board.tiles[loopCoords[0]][loopCoords[1]].cntHasPiece[1];
-			val = (val * 100) / board.cntMoves;
+				board.tiles[loopCoords[0]][loopCoords[1]].cntHasPiece.white +
+				board.tiles[loopCoords[0]][loopCoords[1]].cntHasPiece.black;
+			val = (val * 100) / board.data.cntMoves;
 			return val;
 		}
 	},
@@ -22,8 +22,9 @@ module.exports = [
 		unit: '%',
 		description: 'Tile X had a white piece on it for Y% of all moves.',
 		calc: (board, moCoords, loopCoords) => {
-			let val = board.tiles[loopCoords[0]][loopCoords[1]].cntHasPiece[0];
-			val = (val * 100) / board.cntMoves;
+			let val =
+				board.tiles[loopCoords[0]][loopCoords[1]].cntHasPiece.white;
+			val = (val * 100) / board.data.cntMoves;
 			return val;
 		}
 	},
@@ -35,8 +36,9 @@ module.exports = [
 		unit: '%',
 		description: 'Tile X had a black piece on it for Y% of all moves.',
 		calc: (board, moCoords, loopCoords) => {
-			let val = board.tiles[loopCoords[0]][loopCoords[1]].cntHasPiece[1];
-			val = (val * 100) / board.cntMoves;
+			let val =
+				board.tiles[loopCoords[0]][loopCoords[1]].cntHasPiece.black;
+			val = (val * 100) / board.data.cntMoves;
 			return val;
 		}
 	},
@@ -50,10 +52,10 @@ module.exports = [
 			'Selected tile was occupated by piece X during Y% of all moves.',
 		calc: (board, moCoords, loopCoords) => {
 			let val =
-				board.tiles[moCoords[0]][moCoords[1]].dataMap[loopCoords[0]][
+				board.tiles[moCoords[0]][moCoords[1]].stats[loopCoords[0]][
 					loopCoords[1]
-				][0];
-			val = (val * 100) / board.cntMoves;
+				].wasOnTile;
+			val = (val * 100) / board.data.cntMoves;
 			return val;
 		}
 	},
@@ -70,10 +72,11 @@ module.exports = [
 			let val =
 				defaultPiece === null
 					? 0
-					: defaultPiece.dataMap[loopCoords[0]][loopCoords[1]][0];
+					: defaultPiece.stats[loopCoords[0]][loopCoords[1]]
+							.movedToTile;
 			val =
 				(val * 100) /
-				(defaultPiece === null ? 1 : defaultPiece.cntMoved);
+				(defaultPiece === null ? 1 : defaultPiece.data.cntMoved);
 			return val;
 		}
 	},
@@ -90,10 +93,10 @@ module.exports = [
 			let val =
 				defaultPiece === null
 					? 0
-					: defaultPiece.dataMap[loopCoords[0]][loopCoords[1]][1];
+					: defaultPiece.stats[loopCoords[0]][loopCoords[1]].killedBy;
 			val =
 				(val * 100) /
-				(defaultPiece === null ? 1 : defaultPiece.cntWasKilled);
+				(defaultPiece === null ? 1 : defaultPiece.data.cntWasKilled);
 			return val;
 		}
 	},
@@ -110,10 +113,10 @@ module.exports = [
 			let val =
 				defaultPiece === null
 					? 0
-					: defaultPiece.dataMap[loopCoords[0]][loopCoords[1]][2];
+					: defaultPiece.stats[loopCoords[0]][loopCoords[1]].killed;
 			val =
 				(val * 100) /
-				(defaultPiece === null ? 1 : defaultPiece.cntHasKilled);
+				(defaultPiece === null ? 1 : defaultPiece.data.cntHasKilled);
 			return val;
 		}
 	},
@@ -126,8 +129,9 @@ module.exports = [
 		description: 'Piece was killed in X% of games.',
 		calc: (board, moCoords, loopCoords) => {
 			const { defaultPiece } = board.tiles[loopCoords[0]][loopCoords[1]];
-			let val = defaultPiece === null ? 0 : defaultPiece.cntWasKilled;
-			val = (val * 100) / board.cntGames;
+			let val =
+				defaultPiece === null ? 0 : defaultPiece.data.cntWasKilled;
+			val = (val * 100) / board.data.cntGames;
 			return val;
 		}
 	},
@@ -140,8 +144,9 @@ module.exports = [
 		description: 'Piece took on average X other pieces per game.',
 		calc: (board, moCoords, loopCoords) => {
 			const { defaultPiece } = board.tiles[loopCoords[0]][loopCoords[1]];
-			let val = defaultPiece === null ? 0 : defaultPiece.cntHasKilled;
-			val /= board.cntGames;
+			let val =
+				defaultPiece === null ? 0 : defaultPiece.data.cntHasKilled;
+			val /= board.data.cntGames;
 			return val;
 		}
 	}

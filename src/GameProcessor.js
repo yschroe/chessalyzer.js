@@ -19,7 +19,6 @@ class GameProcessor extends EventEmitter {
 		return new Promise((resolve, reject) => {
 			const lr = new LineByLineReader(path, { skipEmptyLines: true });
 			let game = { moves: '' };
-			let gameCnt = 0;
 			// let blankLineCnt = 0;
 
 			// process current line
@@ -72,10 +71,9 @@ class GameProcessor extends EventEmitter {
 						.replace(/\d+\.+\s/g, '');
 					// if (!(game.white === '?' || game.black === '?')) {
 					this.processGame(game);
-					gameCnt += 1;
 					// }
-					if (gameCnt % refreshRate === 0) {
-						this.emit('status', gameCnt);
+					if (this.board.data.cntGames % refreshRate === 0) {
+						this.emit('status', this.board.data.cntGames);
 					}
 
 					game = { moves: '' };
@@ -98,7 +96,7 @@ class GameProcessor extends EventEmitter {
 
 			lr.on('end', () => {
 				console.log('Read entire file.');
-				resolve(gameCnt);
+				resolve(this.board);
 			});
 		});
 	}
