@@ -47,7 +47,7 @@ Then you can use `heatmapData` with a chessboard frontend, for example my fork o
 
 Or you can check out my standalone electron project [Chessalyzer](https://github.com/PeterPain/chessalyzer-nuxt).
 
-![heatmap1](https://imgur.com/xH3XETp)
+![heatmap1](https://i.imgur.com/xH3XETp.png)
 
 ## Contribute
 
