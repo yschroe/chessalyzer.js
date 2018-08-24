@@ -1,10 +1,10 @@
 {
 	"name": "chessalyzer.js",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Batch analyze PGN and generate heat maps",
 	"main": "lib/chessalyzer.js",
 	"scripts": {
-		"build": "webpack --env dev && webpack --env build && npm run test",
+		"build": "webpack --env dev && webpack --env build",
 		"dev": "webpack --progress --colors --watch --env dev",
 		"test": "mocha --require babel-register --colors ./test/*.spec.js",
 		"test:watch": "mocha --require babel-register --colors -w ./test/*.spec.js",
