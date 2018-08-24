@@ -24,6 +24,8 @@ const Chessalyzer = require('chessalyzer');
 const chessalyzer = new Chessalyzer();
 ```
 
+3. See the [docs](https://peterpain.github.io/chessalyzer.js/Chessalyzer.html) for a full API description.
+
 ## Examples
 
 ```javascript
