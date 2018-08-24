@@ -1,5 +1,5 @@
 {
-	"name": "chessalyzer",
+	"name": "chessalyzer.js",
 	"version": "0.0.1",
 	"description": "Batch analyze PGN and generate heat maps",
 	"main": "lib/chessalyzer.js",
@@ -12,23 +12,21 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/"
+		"url": "https://github.com/PeterPain/chessalyzer.js"
 	},
 	"keywords": [
-		"webpack",
-		"es6",
-		"starter",
-		"library",
-		"universal",
-		"umd",
-		"commonjs"
+		"chess",
+		"pgn",
+		"heatmap",
+		"batch",
+		"analysis"
 	],
 	"author": "Yannik Schröder",
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/"
+		"url": "https://github.com/PeterPain/chessalyzer.js/issues"
 	},
-	"homepage": "https://github.com/",
+	"homepage": "https://github.com/PeterPain/chessalyzer.js",
 	"devDependencies": {
 		"@babel/cli": "^7.0.0-beta.51",
 		"@babel/core": "^7.0.0-beta.51",
