@@ -1,0 +1,18 @@
+{
+	"root": true,
+	"env": {
+		"browser": true,
+		"node": true
+	},
+	"parserOptions": {
+		"parser": "babel-eslint"
+	},
+	"extends": ["airbnb"],
+	"rules": {
+		"indent": ["error", "tab", { "SwitchCase": 1 }],
+		"no-tabs": 0,
+		"func-names": ["error", "never"],
+		"comma-dangle": ["error", "never"],
+		"operator-linebreak": ["error", "after"]
+	}
+}

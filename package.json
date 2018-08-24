@@ -1,0 +1,61 @@
+{
+	"name": "chessalyzer",
+	"version": "0.0.1",
+	"description": "Batch analyze PGN and generate heat maps",
+	"main": "lib/chessalyzer.js",
+	"scripts": {
+		"build": "webpack --env dev && webpack --env build && npm run test",
+		"dev": "webpack --progress --colors --watch --env dev",
+		"test": "mocha --require babel-register --colors ./test/*.spec.js",
+		"test:watch": "mocha --require babel-register --colors -w ./test/*.spec.js",
+		"jsdoc": "./node_modules/.bin/jsdoc src"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/"
+	},
+	"keywords": [
+		"webpack",
+		"es6",
+		"starter",
+		"library",
+		"universal",
+		"umd",
+		"commonjs"
+	],
+	"author": "Yannik Schröder",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/"
+	},
+	"homepage": "https://github.com/",
+	"devDependencies": {
+		"@babel/cli": "^7.0.0-beta.51",
+		"@babel/core": "^7.0.0-beta.51",
+		"@babel/preset-env": "^7.0.0-beta.51",
+		"babel-eslint": "^8.0.3",
+		"babel-loader": "^8.0.0-beta.4",
+		"babel-plugin-add-module-exports": "^0.2.1",
+		"babel-preset-env": "^7.0.0-beta.3",
+		"babel-register": "^7.0.0-beta.3",
+		"chai": "^4.1.2",
+		"eslint": "^5.0.1",
+		"eslint-config-airbnb": "^17.1.0",
+		"eslint-loader": "^2.0.0",
+		"eslint-plugin-import": "^2.14.0",
+		"eslint-plugin-jsx-a11y": "^6.1.1",
+		"eslint-plugin-react": "^7.11.1",
+		"jsdoc": "^3.5.5",
+		"jsdom": "11.11.0",
+		"jsdom-global": "3.0.2",
+		"mocha": "^4.0.1",
+		"uglifyjs-webpack-plugin": "^1.2.7",
+		"webpack": "^4.12.2",
+		"webpack-cli": "^3.0.8",
+		"webpack-node-externals": "^1.7.2",
+		"yargs": "^10.0.3"
+	},
+	"dependencies": {
+		"line-by-line": "^0.1.6"
+	}
+}
