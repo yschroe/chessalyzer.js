@@ -55,7 +55,7 @@ class Chessalyzer {
 					} moves processed in ${tdiff}s (${mps} moves/s)`
 				);
 				this.gameProcessor.reset();
-				resolve(dataset.data.cntGames);
+				resolve(this.dataStore[bank].data.cntGames);
 			});
 		});
 	}
