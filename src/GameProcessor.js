@@ -52,7 +52,8 @@ class GameProcessor extends EventEmitter {
 				} else if (line.startsWith('1') && cfg.filter(game)) {
 					game.moves = line
 						.replace(/\{(.*?)\}\s/g, '')
-						.replace(/\d+\.+\s/g, '');
+						.replace(/\d+\.+\s/g, '')
+						.replace(' *', '');
 
 					this.processGame(game);
 
@@ -141,16 +142,19 @@ class GameProcessor extends EventEmitter {
 		} else {
 			moveData = this.pieceMove(move);
 		}
+		// if (moveData !== null) {
+		// 	if (Number.isNaN(moveData.moves[0].to[0])) console.log(rawMove);
+		// }
 
 		return moveData;
 	}
 
 	/**
 	 * Returns the board coordinates for the move if it is a pawn move.
-	 * @param {string} moveFen The move to be parsed, e.g. 'e5'.
+	 * @param {string} moveSan The move to be parsed, e.g. 'e5'.
 	 * @returns {MoveData}
 	 */
-	pawnMove(moveFen) {
+	pawnMove(moveSan) {
 		const from = [];
 		const to = [];
 		const moveData = {
@@ -159,7 +163,7 @@ class GameProcessor extends EventEmitter {
 			promotes: null
 		};
 		const direction = -2 * (this.activePlayer % 2) + 1;
-		let move = moveFen;
+		let move = moveSan;
 
 		// takes
 		if (move.includes('x')) {
@@ -200,10 +204,10 @@ class GameProcessor extends EventEmitter {
 
 	/**
 	 * Returns the board coordinates for a piece (!= pawn) move.
-	 * @param {string} moveFen The move to be parsed, e.g. 'Be3'.
+	 * @param {string} moveSan The move to be parsed, e.g. 'Be3'.
 	 * @returns {MoveData}
 	 */
-	pieceMove(moveFen) {
+	pieceMove(moveSan) {
 		const from = [];
 		const to = [];
 		const moveData = {
@@ -211,7 +215,7 @@ class GameProcessor extends EventEmitter {
 			takes: false,
 			promotes: null
 		};
-		let move = moveFen;
+		let move = moveSan;
 		const token = move.substring(0, 1);
 
 		// remove token
