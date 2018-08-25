@@ -15,68 +15,63 @@ class GameProcessor extends EventEmitter {
 		this.activePlayer = 0;
 	}
 
-	processPGN(path, refreshRate) {
+	static checkConfig(config) {
+		const cfg = {};
+		cfg.filter = Object.prototype.hasOwnProperty.call(config, 'filter')
+			? config.filter
+			: () => true;
+		cfg.cntGames = Object.prototype.hasOwnProperty.call(config, 'cntGames')
+			? config.cntGames
+			: Infinity;
+
+		// TODO: currently without function
+		cfg.split = Object.prototype.hasOwnProperty.call(config, 'split')
+			? config.split
+			: false;
+
+		return cfg;
+	}
+
+	processPGN(path, config, refreshRate) {
+		const cfg = GameProcessor.checkConfig(config);
+
 		return new Promise((resolve, reject) => {
 			const lr = new LineByLineReader(path, { skipEmptyLines: true });
-			let game = { moves: '' };
-			// let blankLineCnt = 0;
+			let game = {};
 
 			// process current line
 			const processLine = (line) => {
-				// let currLine;
-
 				// data tag
 				if (line.startsWith('[')) {
-					// currLine = line.replace(/[[\]']+/g, '');
-					// currLine = currLine.split(' "');
-					// let key = currLine[0];
-					// let value = currLine[1].replace('"', '');
-					// // compact some strings to save space
-					// if (key === 'Site') {
-					// 	value = value.replace('https://lichess.org/', '');
-					// 	key = 'id';
-					// } else if (key === 'UTCDate') key = 'Date';
-					// else if (key === 'Event') {
-					// 	value = value
-					// 		.replace('Rated', 'R')
-					// 		.replace('Unrated', 'U')
-					// 		.replace(' game', '');
-					// 	value = value.replace(/\s+tournament.*$/, '');
-					// }
-					// // convert to int if Elo
-					// if (key === 'WhiteElo' || key === 'BlackElo') {
-					// 	value = +value;
-					// }
-					// // omit some values
-					// if (
-					// 	!(
-					// 		key === 'UTCTime' ||
-					// 		key === 'WhiteRatingDiff' ||
-					// 		key === 'BlackRatingDiff' ||
-					// 		key === 'Opening'
-					// 	)
-					// ) {
-					// 	game[key] = value;
-					// }
-					// // next game
-					// } else if (line === '' && blankLineCnt === 1) {
-					// 	blankLineCnt = 0;
-					// 	// separator between tags and moves
-					// } else if (line === '' && blankLineCnt === 0) {
-					// blankLineCnt += 1;
-					// // moves
-				} else if (line.startsWith('1')) {
+					const key = line.match(/\[(.*?)\s/)[1];
+					const value = line.match(/"(.*?)"/)[1];
+
+					game[key] = value;
+
+					// moves
+				} else if (line.startsWith('1') && cfg.filter(game)) {
 					game.moves = line
-						.replace(/\{.*?\}\s/g, '')
+						.replace(/\{(.*?)\}\s/g, '')
 						.replace(/\d+\.+\s/g, '');
-					// if (!(game.white === '?' || game.black === '?')) {
+
 					this.processGame(game);
-					// }
+
+					// emit event
 					if (this.board.data.cntGames % refreshRate === 0) {
 						this.emit('status', this.board.data.cntGames);
 					}
 
-					game = { moves: '' };
+					if (this.board.data.cntGames >= cfg.cntGames) {
+						lr.close();
+						lr.end();
+					}
+
+					game = {};
+				}
+				if (this.board.data.cntGames >= cfg.cntGames) {
+					lr.close();
+				} else {
+					lr.resume();
 				}
 			};
 
@@ -89,9 +84,7 @@ class GameProcessor extends EventEmitter {
 				// pause emitting of lines...
 				lr.pause();
 
-				// ...do your asynchronous line processing..
 				processLine(line);
-				lr.resume();
 			});
 
 			lr.on('end', () => {
@@ -122,7 +115,7 @@ class GameProcessor extends EventEmitter {
 	 * @typedef {Object} MoveData
 	 * @property {Object[]} moves - Array of {from: [], to: []} objects
 	 * @property {Boolean} takes - Move takes a piece true/false
-	 *  @property {String} promotes - Piece type in case of pawn promotion else null
+	 * @property {String} promotes - Piece type in case of pawn promotion else null
 	 */
 
 	/**

@@ -13,6 +13,6 @@
 		"no-tabs": 0,
 		"func-names": ["error", "never"],
 		"comma-dangle": ["error", "never"],
-		"operator-linebreak": ["error", "after"]
+		"operator-linebreak": 0
 	}
 }

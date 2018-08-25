@@ -7,6 +7,13 @@ const fs = require('fs');
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
+/**
+ * @typedef {Object} cfg
+ * @property {Function} filter - Descr
+ * @property {Number} cntGames - Descr
+ * @property {Boolean} split - Descr
+ */
+
 /** Main class for batch processing and generating heat maps */
 class Chessalyzer {
 	constructor() {
@@ -38,25 +45,27 @@ class Chessalyzer {
 	 *  e.g. to update an UI.
 	 * @returns {Promise} Promise that contains the number of processed games when finished
 	 */
-	startBatch(path, bank = 0, refreshRate = 250) {
+	startBatch(path, cfg = {}, bank = 0, refreshRate = 250) {
 		return new Promise((resolve) => {
 			const t0 = performance.now();
-			this.gameProcessor.processPGN(path, refreshRate).then((board) => {
-				const dataset = {};
-				dataset.data = board.data;
-				dataset.tiles = board.tiles;
-				this.dataStore[bank] = JSON.parse(JSON.stringify(dataset));
-				const t1 = performance.now();
-				const tdiff = Math.round(t1 - t0) / 1000;
-				const mps = Math.round(dataset.data.cntMoves / tdiff);
-				console.log(
-					`${
-						dataset.data.cntMoves
-					} moves processed in ${tdiff}s (${mps} moves/s)`
-				);
-				this.gameProcessor.reset();
-				resolve(this.dataStore[bank].data.cntGames);
-			});
+			this.gameProcessor
+				.processPGN(path, cfg, refreshRate)
+				.then((board) => {
+					const dataset = {};
+					dataset.data = board.data;
+					dataset.tiles = board.tiles;
+					this.dataStore[bank] = JSON.parse(JSON.stringify(dataset));
+					const t1 = performance.now();
+					const tdiff = Math.round(t1 - t0) / 1000;
+					const mps = Math.round(dataset.data.cntMoves / tdiff);
+					console.log(
+						`${dataset.data.cntGames} games (${
+							dataset.data.cntMoves
+						} moves) processed in ${tdiff}s (${mps} moves/s)`
+					);
+					this.gameProcessor.reset();
+					resolve(this.dataStore[bank].data.cntGames);
+				});
 		});
 	}
 
