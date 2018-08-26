@@ -17,9 +17,9 @@ class GameProcessor extends EventEmitter {
 
 	static checkConfig(config) {
 		const cfg = {};
-		cfg.filter = Object.prototype.hasOwnProperty.call(config, 'filter')
-			? config.filter
-			: () => true;
+		cfg.hasFilter = Object.prototype.hasOwnProperty.call(config, 'filter');
+		cfg.filter = cfg.hasFilter ? config.filter : () => true;
+
 		cfg.cntGames = Object.prototype.hasOwnProperty.call(config, 'cntGames')
 			? config.cntGames
 			: Infinity;
@@ -42,14 +42,17 @@ class GameProcessor extends EventEmitter {
 			// process current line
 			const processLine = (line) => {
 				// data tag
-				if (line.startsWith('[')) {
+				if (line.startsWith('[') && cfg.hasFilter) {
 					const key = line.match(/\[(.*?)\s/)[1];
 					const value = line.match(/"(.*?)"/)[1];
 
 					game[key] = value;
 
 					// moves
-				} else if (line.startsWith('1') && cfg.filter(game)) {
+				} else if (
+					line.startsWith('1') &&
+					(cfg.filter(game) || !cfg.hasFilter)
+				) {
 					game.moves = line
 						.replace(/\{(.*?)\}\s/g, '')
 						.replace(/\d+\.+\s/g, '')
