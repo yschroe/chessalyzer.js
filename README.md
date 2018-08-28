@@ -20,7 +20,7 @@ npm install --save PeterPain/chessalyzer.js
 2. Import the Chessalyzer object and create a new instance
 
 ```javascript
-const Chessalyzer = require('chessalyzer');
+const Chessalyzer = require('chessalyzer.js');
 const chessalyzer = new Chessalyzer();
 ```
 
@@ -133,7 +133,7 @@ Tile:
 
 Piece:
 
--   `ChessPiece.stats.at[row][col].movedToTile`  
+-   `ChessPiece.stats.at[row][col].movedTo`  
     How often did this piece move to the tile at `[row][col]`
 
 -   `ChessPiece.stats.at[row][col].killedBy`  
