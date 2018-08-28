@@ -1,3 +1,4 @@
+/*eslint-disable*/
 const Chessalyzer = require('../lib/chessalyzer');
 
 const c1 = new Chessalyzer();
@@ -7,8 +8,8 @@ for (let i = 0; i < 1; i += 1) {
 		'C:/Users/yanni/Documents/GitHub/archive/Chessalyzer_p5js/lichess_db_standard_rated_2013-01.pgn',
 		{
 			split: false,
-			cntGames: 100000,
-			filter: (game) => game.WhiteElo > 1800
+			cntGames: 100000
+			// filter: (game) => game.WhiteElo > 1800
 		}
 	).then(() => {
 		// c1.startBatch(

@@ -61,19 +61,15 @@ class GameProcessor extends EventEmitter {
 					this.processGame(game);
 
 					// emit event
-					if (this.board.data.cntGames % refreshRate === 0) {
-						this.emit('status', this.board.data.cntGames);
-					}
-
-					if (this.board.data.cntGames >= cfg.cntGames) {
-						lr.close();
-						lr.end();
+					if (this.board.stats.cntGames % refreshRate === 0) {
+						this.emit('status', this.board.stats.cntGames);
 					}
 
 					game = {};
 				}
-				if (this.board.data.cntGames >= cfg.cntGames) {
+				if (this.board.stats.cntGames >= cfg.cntGames) {
 					lr.close();
+					lr.end();
 				} else {
 					lr.resume();
 				}
@@ -138,16 +134,12 @@ class GameProcessor extends EventEmitter {
 		if (token.match(/\d/) !== null) {
 			moveData = null;
 		} else if (token.toLowerCase() === token) {
-			// pawn move
 			moveData = this.pawnMove(move);
-		} else if (token === 'O') {
-			moveData = this.castle(move);
-		} else {
+		} else if (token !== 'O') {
 			moveData = this.pieceMove(move);
+		} else {
+			moveData = this.castle(move);
 		}
-		// if (moveData !== null) {
-		// 	if (Number.isNaN(moveData.moves[0].to[0])) console.log(rawMove);
-		// }
 
 		return moveData;
 	}

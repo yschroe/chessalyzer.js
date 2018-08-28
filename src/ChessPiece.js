@@ -38,26 +38,18 @@ class ChessPiece {
 			this.color = this.defaultPos[0] <= 1 ? 'black' : 'white'; // color of piece: 0 white, 1 black
 		}
 
-		/**
-		 * 8x8 array that contains data for each tile/piece { movedTo: 0, killedBy: 0, killed: 0 }.
-		 * The data for pieces is stored on the tile the piece starts the game. For example, if you
-		 * are looking for data on how the piece interacted with the black queen, the data is stored at
-		 * [0,3].
-		 * @member {Array}
-		 */
-		this.stats = null;
+		this.alive = true; // piece alive?
 
 		/**
-		 * Other data about this piece: { cntMoved, cntWasKilled, cntHasKilled }
+		 * Other stats about this piece: { cntMoved, cntWasKilled, cntHasKilled }
 		 * @member {Object}
 		 */
-		this.data = { cntMoved: 0, cntWasKilled: 0, cntHasKilled: 0 };
+		this.stats = {};
 
 		/**
 		 * Is this piece alive?
 		 * @member {Object}
 		 */
-		this.alive = true; // piece alive?
 
 		this.initStats();
 
@@ -87,12 +79,12 @@ class ChessPiece {
 	 * @param {Number[]} pos Target row and column of the tile the piece shall move to.
 	 */
 	updatePosition(pos) {
-		this.data.cntMoved += 1;
+		this.stats.cntMoved += 1;
 		this.pos = pos;
 		if (this.logHistory && this.history.length < this.maxHistory) {
 			this.history.push(pos);
 		}
-		this.stats[pos[0]][pos[1]].movedTo += 1;
+		this.stats.at[pos[0]][pos[1]].movedTo += 1;
 	}
 
 	/**
@@ -101,24 +93,24 @@ class ChessPiece {
 	 */
 	killPiece(killedByPiece) {
 		this.alive = false;
-		this.data.cntWasKilled += 1;
+		this.stats.cntWasKilled += 1;
 
 		// if killer is not promoted pawn...
 		if (!(killedByPiece.name.length === 1 || this.name.length === 1)) {
 			// update killedBy of this piece
-			this.stats[killedByPiece.defaultPos[0]][
+			this.stats.at[killedByPiece.defaultPos[0]][
 				killedByPiece.defaultPos[1]
 			].killedBy += 1;
 		}
 	}
 
 	killedPiece(killedPiece) {
-		this.data.cntHasKilled += 1;
+		this.stats.cntHasKilled += 1;
 
 		// if killer is not promoted pawn...
 		if (!(killedPiece.name.length === 1 || this.name.length === 1)) {
 			// update killed stat of killer piece
-			this.stats[killedPiece.defaultPos[0]][
+			this.stats.at[killedPiece.defaultPos[0]][
 				killedPiece.defaultPos[1]
 			].killed += 1;
 		}
@@ -128,15 +120,14 @@ class ChessPiece {
 	 * Inits the statistics array of this piece.
 	 */
 	initStats() {
-		this.alive = true;
-		this.data = { cntMoved: 0, cntWasKilled: 0, cntHasKilled: 0 };
-		this.stats = new Array(8);
+		this.stats = { cntMoved: 0, cntWasKilled: 0, cntHasKilled: 0 };
+		this.stats.at = new Array(8);
 		for (let row = 0; row < 8; row += 1) {
 			const currRow = new Array(8);
 			for (let col = 0; col < 8; col += 1) {
 				currRow[col] = { movedTo: 0, killedBy: 0, killed: 0 };
 			}
-			this.stats[row] = currRow;
+			this.stats.at[row] = currRow;
 		}
 	}
 }

@@ -16,15 +16,9 @@ class ChessTile {
 
 		/**
 		 * 8x8 array that contains data for this tile. {wasOnTile: Number}
-		 * @member {Array}
-		 */
-		this.stats = null;
-
-		/**
-		 * Counts how often a piece was on the tile { white, black }
 		 * @member {Object}
 		 */
-		this.cntHasPiece = { white: 0, black: 0 };
+		this.stats = {};
 
 		this.initStats();
 	}
@@ -48,34 +42,40 @@ class ChessTile {
 	/**
 	 * Updates the statistics of this tile.
 	 */
-	updateStats() {
-		// this.data.cntHasPiece[this.piece.color] is slow for some reason, so use if
+	updateOccupationStats() {
+		// this.stats.cntHasPiece[this.piece.color] is slow for some reason, so use if
 		if (this.piece.color === 'white') {
-			this.cntHasPiece.white += 1;
+			this.stats.cntHasPiece.white += 1;
 		} else {
-			this.cntHasPiece.black += 1;
+			this.stats.cntHasPiece.black += 1;
 		}
 
 		// only non-promoted pieces are counted
 		if (this.piece.name.length !== 1) {
-			this.stats[this.piece.defaultPos[0]][
+			this.stats.at[this.piece.defaultPos[0]][
 				this.piece.defaultPos[1]
 			].wasOnTile += 1;
 		}
+	}
+
+	updateDeadCount() {
+		this.stats.cntTakenPieces += 1;
 	}
 
 	/**
 	 * Inits the statistics array. Is called by the constructor.
 	 */
 	initStats() {
-		this.cntHasPiece = { white: 0, black: 0 };
-		this.stats = new Array(8);
+		this.stats.cntHasPiece = { white: 0, black: 0 };
+		this.stats.cntTakenPieces = 0;
+
+		this.stats.at = new Array(8);
 		for (let row = 0; row < 8; row += 1) {
 			const currRow = new Array(8);
 			for (let col = 0; col < 8; col += 1) {
 				currRow[col] = { wasOnTile: 0 };
 			}
-			this.stats[row] = currRow;
+			this.stats.at[row] = currRow;
 		}
 	}
 }

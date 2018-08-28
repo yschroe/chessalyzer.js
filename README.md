@@ -41,7 +41,7 @@ chessalyzer.startBatch('<pathToPgnFile>').then(() => {
 	// in this example we want to know how often each piece was on a specific tile
 	let fun = (board, sqrCoords, loopCoords) => {
 		let val =
-			board.tiles[sqrCoords[0]][sqrCoords[1]].stats[loopCoords[0]][
+			board.tiles[sqrCoords[0]][sqrCoords[1]].stats.at[loopCoords[0]][
 				loopCoords[1]
 			].wasOnTile;
 		return val;
@@ -82,8 +82,8 @@ let fil2 = function(game) {
 // create a evaluation function for the heat map
 // (sqrCoords isn't used by this analysis, but needs to be an argument nevertheless)
 let fun = (board, sqrCoords, loopCoords) => {
-	let val = board.tiles[loopCoords[0]][loopCoords[1]].cntHasPiece.white;
-	val = (val * 100) / board.cntMoves;
+	let val = board.tiles[loopCoords[0]][loopCoords[1]].stats.cntHasPiece.white;
+	val = (val * 100) / board.stats.cntMoves;
 	return val;
 };
 
@@ -114,32 +114,42 @@ Currently the following stats are generated:
 
 General:
 
--   Number of games processed:  
-    `ChessBoard.data.cntMoves`
--   Number of moves processed:  
-    `ChessBoard.data.cntMoves`
+-   `ChessBoard.stats.cntGames`  
+    Number of games processed
+
+-   `ChessBoard.stats.cntMoves`  
+    Number of moves processed
 
 Tile:
 
--   How often was each piece on this tile:  
-    `ChessTile.stats[x][y].wasOnTile`
--   How often did a piece of which color occupate this tile:  
-    `ChessTile.cntHasPiece[color]`
+-   `ChessTile.stats.at[x][y].wasOnTile`  
+    How often was each piece on this tile
+
+-   `ChessTile.stats.cntHasPiece[color]`  
+    How often did a piece of which color occupate this tile
+
+-   `ChessTile.stats.cntTakenPieces`  
+    How often was a piece taken on this tile
 
 Piece:
 
--   How often did this piece move to the tile at `[row][col]`:  
-    `ChessPiece.stats[row][col].movedToTile`
--   How often was this piece taken by the piece that starts at `[row][col]`:  
-    `ChessPiece.stats[row][col].killedBy`
--   How often did this piece take the piece that starts at `[row][col]`:  
-    `ChessPiece.stats[row][col].killed`
--   How often did this piece move:  
-    `ChessPiece.data.cntMoved`
--   How often was this piece taken:  
-    `ChessPiece.data.cntWasKilled`
--   How often did this piece take another piece:  
-    `ChessPiece.data.cntKilled`
+-   `ChessPiece.stats.at[row][col].movedToTile`  
+    How often did this piece move to the tile at `[row][col]`
+
+-   `ChessPiece.stats.at[row][col].killedBy`  
+    How often was this piece taken by the piece that starts at `[row][col]`
+
+-   `ChessPiece.stats.at[row][col].killed`  
+    How often did this piece take the piece that starts at `[row][col]`
+
+-   `ChessPiece.stats.cntMoved`  
+    How often did this piece move
+
+-   `ChessPiece.stats.cntWasKilled`  
+    How often was this piece taken
+
+-   `ChessPiece.stats.cntKilled`  
+    How often did this piece take another piece:
 
 If you need another stat tracked, let me know or create a pull request.
 

@@ -12,7 +12,7 @@ class ChessBoard {
 		 * Tracks number of moves and games: { cntMoves, cntGames }
 		 * @member {Object}
 		 */
-		this.data = {
+		this.stats = {
 			cntMoves: 0,
 			cntGames: 0
 		};
@@ -62,7 +62,7 @@ class ChessBoard {
 	 */
 	move(moveData) {
 		if (moveData !== null) {
-			this.data.cntMoves += 1;
+			this.stats.cntMoves += 1;
 
 			const { moves } = moveData;
 			const { takes } = moveData;
@@ -86,6 +86,9 @@ class ChessBoard {
 								this.tiles[move.to[0] + 1][
 									move.to[1]
 								].piece = null;
+								this.tiles[move.to[0] + 1][
+									move.to[1]
+								].updateDeadCount();
 							} else {
 								this.tiles[move.to[0] - 1][
 									move.to[1]
@@ -93,7 +96,14 @@ class ChessBoard {
 								this.tiles[move.to[0] - 1][
 									move.to[1]
 								].piece = null;
+								this.tiles[move.to[0] - 1][
+									move.to[1]
+								].updateDeadCount();
 							}
+						} else {
+							this.tiles[move.to[0]][
+								move.to[1]
+							].updateDeadCount();
 						}
 						break;
 					case false:
@@ -146,7 +156,7 @@ class ChessBoard {
 	 *  Does not reset the stats recorded. If you wish to reset the stats,
 	 *  call {@link ChessBoard#resetStats}. */
 	reset() {
-		this.data.cntGames += 1;
+		this.stats.cntGames += 1;
 		// reset the pieces to default
 		for (let i = 0; i < this.pieces.length; i += 1) {
 			this.pieces[i].reset();
@@ -177,8 +187,8 @@ class ChessBoard {
 			this.pieces[i].initStats();
 		}
 
-		this.data.cntMoves = 0;
-		this.data.cntGames = 0;
+		this.stats.cntMoves = 0;
+		this.stats.cntGames = 0;
 	}
 
 	/**
@@ -223,7 +233,7 @@ class ChessBoard {
 			if (this.pieces[i].alive) {
 				this.tiles[this.pieces[i].pos[0]][
 					this.pieces[i].pos[1]
-				].updateStats();
+				].updateOccupationStats();
 			}
 		}
 	}

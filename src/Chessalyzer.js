@@ -52,19 +52,19 @@ class Chessalyzer {
 				.processPGN(path, cfg, refreshRate)
 				.then((board) => {
 					const dataset = {};
-					dataset.data = board.data;
+					dataset.stats = board.stats;
 					dataset.tiles = board.tiles;
 					this.dataStore[bank] = JSON.parse(JSON.stringify(dataset));
 					const t1 = performance.now();
 					const tdiff = Math.round(t1 - t0) / 1000;
-					const mps = Math.round(dataset.data.cntMoves / tdiff);
+					const mps = Math.round(dataset.stats.cntMoves / tdiff);
 					console.log(
-						`${dataset.data.cntGames} games (${
-							dataset.data.cntMoves
+						`${dataset.stats.cntGames} games (${
+							dataset.stats.cntMoves
 						} moves) processed in ${tdiff}s (${mps} moves/s)`
 					);
 					this.gameProcessor.reset();
-					resolve(this.dataStore[bank].data.cntGames);
+					resolve(this.dataStore[bank].stats.cntGames);
 				});
 		});
 	}
