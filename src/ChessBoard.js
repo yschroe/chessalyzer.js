@@ -9,7 +9,7 @@ class ChessBoard {
 	/** Creates a new 8x8 Chessboard out of 64 {@link ChessTile}s and 32 {@link ChessPiece}s */
 	constructor() {
 		/**
-		 * Tracks number of moves and games: { cntMoves, cntGames }
+		 * Tracks number of moves and games
 		 * @member {Object}
 		 */
 		this.stats = {

@@ -15,7 +15,7 @@ class ChessTile {
 		this.defaultPiece = null;
 
 		/**
-		 * 8x8 array that contains data for this tile. {wasOnTile: Number}
+		 * Object that contains the tracked statistics
 		 * @member {Object}
 		 */
 		this.stats = {};

@@ -14,25 +14,25 @@ A JavaScript library for batch analyzing chess games.
 1. Install package
 
 ```sh
-npm install --save PeterPain/chessalyzer.js
+npm install --save chessalyzer.js
 ```
 
 2. Import the Chessalyzer object and create a new instance
 
 ```javascript
-const Chessalyzer = require('chessalyzer');
+const Chessalyzer = require('chessalyzer.js');
 const chessalyzer = new Chessalyzer();
 ```
 
-3. Check out the examples or the [docs](https://peterpain.github.io/chessalyzer.js/Chessalyzer.html) for a full API description.
+3. Check out the examples or the [docs](https://peterpain.github.io/chessalyzer.js/Chessalyzer.html) for a full functional description.
 
 ## Examples
 
-Lets start with a basic example:
+Let's start with a basic example:
 
 ```javascript
 // import the library
-const Chessalyzer = require('chessalyzer');
+const Chessalyzer = require('chessalyzer.js');
 const chessalyzer = new Chessalyzer();
 
 // start a batch analysis for the PGN file at <pathToPgnFile>
@@ -108,6 +108,14 @@ chessalyzer
 	});
 ```
 
+## Heatmap analyis functions
+
+The function you create for heatmap generation gets passed three parameters inside `genereateHeatMap()`: `board, sqrCoords, loopCoords`:
+
+-   `board`: Includes a `stats` object for general board stats and a 8x8 array of ChessTiles. Each ChessTile represents a tile on the chess board. You can get the data of one specific tile by accessing the array `board.tiles`. The ChessTile at the indices `[0][0]` represents the A8 square, the ChessTile at `[7][7]` is the H1 square. If you are interested in the data of one specific tile, you can just access it by `board.tiles[row][col]`. The ChessTiles themself contain various data described at [Tracked statistics](#tracked-statistics). Moreover the Tiles contain a `defaultPiece` class member of Type `ChessPiece`. Because the tiles from row 2 to 5 (0-based) contain no pieces at the start of the game, the `defaultPiece` for these rows is `null`.
+-   `sqrCoords`: Contain the coordinates of the square you passed into the `genereateHeatMap()` function
+-   `loopCoords`: Contains the coordinates of the square the current heatmap value is calculated for. The `genereateHeatMap()` function loops over every square of the board to calculate a heat map value for each tile.
+
 ## Tracked statistics
 
 Currently the following stats are generated:
@@ -123,7 +131,7 @@ General:
 Tile:
 
 -   `ChessTile.stats.at[x][y].wasOnTile`  
-    How often was each piece on this tile
+    How often was the piece thats starts at `[x][y]` on this tile
 
 -   `ChessTile.stats.cntHasPiece[color]`  
     How often did a piece of which color occupate this tile

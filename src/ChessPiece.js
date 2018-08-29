@@ -41,7 +41,7 @@ class ChessPiece {
 		this.alive = true; // piece alive?
 
 		/**
-		 * Other stats about this piece: { cntMoved, cntWasKilled, cntHasKilled }
+		 * Object that contains the tracked statistics
 		 * @member {Object}
 		 */
 		this.stats = {};
