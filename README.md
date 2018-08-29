@@ -38,7 +38,7 @@ const chessalyzer = new Chessalyzer();
 // start a batch analysis for the PGN file at <pathToPgnFile>
 chessalyzer.startBatch('<pathToPgnFile>').then(() => {
 	// create a analysis function that evaluates a specific stat
-	// in this example we want to know how often each piece was on a specific tile
+	// in this example we want to know how often each piece was on the tile at sqrCoords
 	let fun = (board, sqrCoords, loopCoords) => {
 		let val =
 			board.tiles[sqrCoords[0]][sqrCoords[1]].stats.at[loopCoords[0]][
@@ -97,7 +97,7 @@ chessalyzer
 			.then(() => {
 				// generate the comparison heatmap
 				let heatmapData = chessalyzer.generateComparisonHeatmap(
-					'a1', // note that this heatmap doesn't depent on a specific square, so pass a random square
+					'a1', // this analysis function doesn't depent on a specific square, so pass a random square
 					fun,
 					0, // first bank
 					1 // second bank
