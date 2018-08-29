@@ -141,7 +141,7 @@ Tile:
 
 Piece:
 
--   `ChessPiece.stats.at[row][col].movedToTile`  
+-   `ChessPiece.stats.at[row][col].movedTo`  
     How often did this piece move to the tile at `[row][col]`
 
 -   `ChessPiece.stats.at[row][col].killedBy`  
