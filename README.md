@@ -184,13 +184,16 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 4. Build via `npm run build` or `npm run dev`
 
-## Related
-
-Check out my standalone electron project [Chessalyzer](https://github.com/PeterPain/chessalyzer-nuxt) which uses chessalyzer.js and heatboard.js for visualizing game data.
-
 ## TODOs
 
 -   [ ] Check functionality for non-lichess PGN files
 -   [ ] Write Mocha tests
 -   [ ] Update jsdoc
--   [ ] Track statistics for promoted pieces and en passant moves
+-   [ ] Track statistics for promoted pieces and en passant moves. Currently stats for those are not tracked
+-   [ ] Provide function for parsing notation from algebraic (e4 e5) to long algebraic (e2-e4 e7-e5). Internally already available, but no API yet.
+- 	[ ] If possible, rebuilt code to be able to just run a comparison function between 'before move' and 'after move' and generate all stats in that function. Currently the stats are tracked at multiple places which makes adding more stats a bit confusing.
+
+
+## Related
+
+Check out my standalone electron project [Chessalyzer](https://github.com/PeterPain/chessalyzer-nuxt) which uses chessalyzer.js and heatboard.js for visualizing game data. It's still work in progress though.
