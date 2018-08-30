@@ -108,7 +108,7 @@ chessalyzer
 	});
 ```
 
-## Heatmap analyis functions
+## Heatmap analysis functions
 
 The function you create for heatmap generation gets passed three parameters inside `genereateHeatMap()`: `board, sqrCoords, loopCoords`:
 
