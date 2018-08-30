@@ -5,8 +5,8 @@ A JavaScript library for batch analyzing chess games.
 ## Features
 
 -   Batch process PGN files
--   Replay each game and track statistics for each piece and tile
--   Generate heat maps out of the generated data
+-   Replays each game internally and tracks statistics for each piece and tile
+-   Generate heatmaps out of the generated data
 -   It's fast (500.000 moves/s on a i5-2500k)
 
 ## Usage
