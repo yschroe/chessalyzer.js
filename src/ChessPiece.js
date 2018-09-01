@@ -57,6 +57,7 @@ class ChessPiece {
 		// currently unused, costs a lot of performance
 		this.logHistory = false;
 		this.history = []; // position history
+
 		this.history.push(pos);
 		this.maxHistory = 2000; // max length of history array
 	}

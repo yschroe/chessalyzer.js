@@ -23,8 +23,6 @@ class ChessBoard {
 		 */
 		this.pieces = [];
 
-		this.alivePieces = [];
-
 		/**
 		 * 8x8 array of {@link ChessTile}s
 		 * @member {Array[]}
@@ -145,20 +143,16 @@ class ChessBoard {
 	 *  call {@link ChessBoard#resetStats}. */
 	reset() {
 		this.stats.cntGames += 1;
-		// reset the pieces to default
+		// reset tiles and pieces to default
 		for (let i = 0; i < this.pieces.length; i += 1) {
-			this.pieces[i].reset();
+			const piece = this.pieces[i];
+			this.tiles[piece.pos[0]][piece.pos[1]].resetPiece();
+			this.tiles[piece.defaultPos[0]][piece.defaultPos[1]].resetPiece();
+			piece.reset();
 		}
 
 		// remove promoted pieces
 		this.pieces = this.pieces.slice(0, 32);
-
-		// reset the tiles
-		for (let row = 0; row < 8; row += 1) {
-			for (let col = 0; col < 8; col += 1) {
-				this.tiles[row][col].resetPiece();
-			}
-		}
 	}
 
 	/** Resets the stats recorded. */
