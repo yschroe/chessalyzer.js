@@ -53,7 +53,7 @@ class ChessBoard {
 	/**
 	 * Moves a piece from source to target. Automatically handles the events 'move',
 	 *  'take', 'en passant', 'castle' and 'promote'.
-	 * Use this function instead of {@link ChessBoard.processMove()} to input a move to the board!
+	 * Use this function instead of {@link ChessBoard#processMove} to input a move to the board!
 	 * @param {Object} moveData
 	 * @param {Object[]} moveData.moves - An array containing up to 2 moves in the
 	 *  syntax {from: [], to: []}
@@ -193,6 +193,7 @@ class ChessBoard {
 
 	/**
 	 * Promotes a pawn to a piece.
+	 * @private
 	 * @param {Number[]} coords An array containing the row and column of the pawn to be promoted.
 	 * @param {String} pieceType Target piece type in SAN notation ('N', 'B', 'Q', 'R').
 	 */
@@ -227,6 +228,7 @@ class ChessBoard {
 
 	/** Is called after each {@link ChessBoard#move} to record the stats for the ChessTiles.
 	 * Only every tile, that has a piece on it, is updated.
+	 * @private
 	 */
 	updateTileStats() {
 		for (let i = 0; i < 32; i += 1) {

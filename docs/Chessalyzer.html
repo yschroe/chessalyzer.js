@@ -255,77 +255,6 @@ heat map comparison. Each object contains the following keys:
     
 </dd>
 
-        
-            
-<hr>
-<dt class="name" id="gameProcessor">
-    <h4 id="gameProcessor"><span class="type-signature"></span>gameProcessor<span class="type-signature"> :<a href="GameProcessor.html">GameProcessor</a></span></h4>
-
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        Does the analysis part
-    </div>
-    
-
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type"><a href="GameProcessor.html">GameProcessor</a></span>
-
-
-
-            </li>
-        </ul>
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-</dd>
-
         </dl>
     
 
@@ -690,7 +619,7 @@ saved data. See <a href="Chessalyzer.html#generateHeatmap">Chessalyzer#generateH
 
             
 
-            <td class="description last">Path the analysis file shall be loaded from</td>
+            <td class="description last">The data bank the data shall be taken from</td>
         </tr>
 
     
@@ -716,7 +645,7 @@ saved data. See <a href="Chessalyzer.html#generateHeatmap">Chessalyzer#generateH
 
             <td class="description last">The square the data shall be generated for. For example, if you
 wanted to know how often a specific piece was on a specific tile, you would pass the
-identifiert of the tile to the function, e.g. "a2"</td>
+identifier of the tile to the function, e.g. "a2"</td>
         </tr>
 
     
@@ -847,7 +776,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             
 <hr>
 <dt>
-    <h4 class="name" id="loadAnalysis"><span class="type-signature"></span>loadAnalysis(path [, bank])</h4>
+    <h4 class="name" id="loadData"><span class="type-signature"></span>loadData(path [, bank])</h4>
     
     
 </dt>
@@ -855,7 +784,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
 
     
     <div class="description">
-        Loads a analysis file (JSON) to a data bank
+        Loads the stats of a previous batch run (JSON) to a data bank
     </div>
     
 
@@ -923,7 +852,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
                 </td>
             
 
-            <td class="description last">Path the analysis file shall be loaded from</td>
+            <td class="description last">Path the data file shall be loaded from</td>
         </tr>
 
     
@@ -1055,7 +984,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             
 <hr>
 <dt>
-    <h4 class="name" id="saveAnalysis"><span class="type-signature"></span>saveAnalysis(path [, bank])</h4>
+    <h4 class="name" id="saveData"><span class="type-signature"></span>saveData(path [, bank])</h4>
     
     
 </dt>
@@ -1063,7 +992,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
 
     
     <div class="description">
-        Saves a completed analysis to a JSON file
+        Saves a completed batch run to a JSON file
     </div>
     
 
@@ -1131,7 +1060,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
                 </td>
             
 
-            <td class="description last">Path the analysis file shall be saved to</td>
+            <td class="description last">Path the data file shall be saved to</td>
         </tr>
 
     
@@ -1239,7 +1168,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             
 <hr>
 <dt>
-    <h4 class="name" id="startBatch"><span class="type-signature"></span>startBatch(path [, bank] [, refreshRate])</h4>
+    <h4 class="name" id="startBatch"><span class="type-signature"></span>startBatch(path, cfg [, bank] [, refreshRate])</h4>
     
     
 </dt>
@@ -1322,6 +1251,116 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
 
         <tr>
             
+                <td class="name"><code>cfg</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">
+                <h6 class="method-params-label method-subparams-label">Properties</h6>
+                
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>filter</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Filter function for selecting games</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>cntGames</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Max amount of games to process</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
                 <td class="name"><code>bank</code></td>
             
 
@@ -1397,7 +1436,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
 
             <td class="description last">Defines how often the current status of the
  analysis shall be exposed. Every number of processed games an event is emitted
-containing the current number of processed games. The event can be handled via
+ containing the current number of processed games. The event can be handled via
  "chessalyzer.gameProcessor.on('status', function(gameCnt) {// do handling here});",
  e.g. to update an UI.</td>
         </tr>
@@ -1537,7 +1576,7 @@ containing the current number of processed games. The event can be handled via
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a>
 	
-		on 2018-08-29T20:47:34+02:00
+		on 2018-09-01T09:31:50+02:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

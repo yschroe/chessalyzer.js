@@ -29,6 +29,7 @@ class Chessalyzer {
 		this.dataStore = new Array(2);
 		/**
 		 * Does the analysis part
+		 * @private
 		 * @member {GameProcessor}
 		 */
 		this.gameProcessor = new GameProcessor();
@@ -37,10 +38,13 @@ class Chessalyzer {
 	/**
 	 * Starts the batch processing for the selected file
 	 * @param {String} path - Path to the PGN file that should be analyzed
+	 * @param {Object} cfg
+	 * @param {Function} cfg.filter - Filter function for selecting games
+	 * @param {Function} cfg.cntGames - Max amount of games to process
 	 * @param {Number} [bank = 0] - The data bank the results shall be saved to
 	 * @param {Number} [refreshRate = 250] - Defines how often the current status of the
 	 *  analysis shall be exposed. Every number of processed games an event is emitted
-	 * containing the current number of processed games. The event can be handled via
+	 *  containing the current number of processed games. The event can be handled via
 	 *  "chessalyzer.gameProcessor.on('status', function(gameCnt) {// do handling here});",
 	 *  e.g. to update an UI.
 	 * @returns {Promise} Promise that contains the number of processed games when finished
@@ -70,11 +74,11 @@ class Chessalyzer {
 	}
 
 	/**
-	 * Saves a completed analysis to a JSON file
-	 * @param {String} path - Path the analysis file shall be saved to
+	 * Saves a completed batch run to a JSON file
+	 * @param {String} path - Path the data file shall be saved to
 	 * @param {Number} [bank = 0] - The data bank the data shall be taken from
 	 */
-	saveAnalysis(path, bank = 0) {
+	saveData(path, bank = 0) {
 		fs.writeFile(path, JSON.stringify(this.dataStore[bank]), (err) => {
 			if (err) {
 				console.error(err);
@@ -85,12 +89,12 @@ class Chessalyzer {
 	}
 
 	/**
-	 * Loads a analysis file (JSON) to a data bank
-	 * @param {String} path - Path the analysis file shall be loaded from
+	 * Loads the stats of a previous batch run (JSON) to a data bank
+	 * @param {String} path - Path the data file shall be loaded from
 	 * @param {Number} [bank = 0] - The data bank the data shall be loaded to.
 	 * @returns {Number} Count of loaded games
 	 */
-	loadAnalysis(path, bank) {
+	loadData(path, bank) {
 		this.dataStore[bank] = JSON.parse(fs.readFileSync(path, 'utf8'));
 		console.log(`File '${path}' has been loaded to bank ${bank}.`);
 		return this.dataStore[bank].cntGames;
@@ -98,10 +102,10 @@ class Chessalyzer {
 
 	/**
 	 * Generates a heatmap out of the tracked data.
-	 * @param {Number} bank - Path the analysis file shall be loaded from
+	 * @param {Number} bank - The data bank the data shall be taken from
 	 * @param {String} square - The square the data shall be generated for. For example, if you
 	 * wanted to know how often a specific piece was on a specific tile, you would pass the
-	 * identifiert of the tile to the function, e.g. "a2"
+	 * identifier of the tile to the function, e.g. "a2"
 	 * @param {Function} fun - The evaluation function that generates the heatmap out of the
 	 * saved data. This function gets passed the following arguments:
 	 * <ol>

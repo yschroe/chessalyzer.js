@@ -25,6 +25,7 @@ class ChessTile {
 
 	/**
 	 * Places a piece on this tile. Should only be called at board init.
+	 * @private
 	 * @param {ChessPiece} piece The piece that is on this square by default.
 	 */
 	initPiece(piece) {
@@ -34,6 +35,7 @@ class ChessTile {
 
 	/**
 	 * Sets the currently active piece of this square to the default piece.
+	 * @private
 	 */
 	resetPiece() {
 		this.piece = this.defaultPiece;
@@ -41,6 +43,7 @@ class ChessTile {
 
 	/**
 	 * Updates the statistics of this tile.
+	 * @private
 	 */
 	updateOccupationStats() {
 		// this.stats.cntHasPiece[this.piece.color] is slow for some reason, so use if
@@ -64,6 +67,7 @@ class ChessTile {
 
 	/**
 	 * Inits the statistics array. Is called by the constructor.
+	 * @private
 	 */
 	initStats() {
 		this.stats.cntHasPiece = { white: 0, black: 0 };

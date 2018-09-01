@@ -63,6 +63,7 @@ class ChessPiece {
 
 	/**
 	 * Resets this piece to its default position and denotes a new game in the move history tracker.
+	 * @private
 	 */
 	reset() {
 		if (this.logHistory && this.history.length < this.maxHistory) {
@@ -76,6 +77,7 @@ class ChessPiece {
 
 	/**
 	 * Moves this piece to a new position and updates move statistics.
+	 * @private
 	 * @param {Number[]} pos Target row and column of the tile the piece shall move to.
 	 */
 	updatePosition(pos) {
@@ -89,6 +91,7 @@ class ChessPiece {
 
 	/**
 	 * Marks this piece as taken and updates the statistics of the piece it was taken by.
+	 * @private
 	 * @param {ChessPiece} killedBy Piece this piece was taken by.
 	 */
 	killPiece(killedByPiece) {
@@ -118,6 +121,7 @@ class ChessPiece {
 
 	/**
 	 * Inits the statistics array of this piece.
+	 * @private
 	 */
 	initStats() {
 		this.stats = { cntMoved: 0, cntWasKilled: 0, cntHasKilled: 0 };

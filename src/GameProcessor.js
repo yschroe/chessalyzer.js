@@ -49,16 +49,16 @@ class GameProcessor extends EventEmitter {
 					game[key] = value;
 
 					// moves
-				} else if (
-					line.startsWith('1') &&
-					(cfg.filter(game) || !cfg.hasFilter)
-				) {
+				} else if (line.startsWith('1')) {
 					game.moves = line
 						.replace(/\{(.*?)\}\s/g, '')
 						.replace(/\d+\.+\s/g, '')
-						.replace(' *', '');
+						.replace(' *', '')
+						.split(' ');
 
-					this.processGame(game);
+					if (cfg.filter(game) || !cfg.hasFilter) {
+						this.processGame(game);
+					}
 
 					// emit event
 					if (this.board.stats.cntGames % refreshRate === 0) {
@@ -95,7 +95,7 @@ class GameProcessor extends EventEmitter {
 	}
 
 	processGame(game) {
-		const moves = game.moves.split(' ');
+		const { moves } = game;
 
 		for (let i = 0; i < moves.length; i += 1) {
 			this.activePlayer = i % 2;
