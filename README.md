@@ -5,8 +5,8 @@ A JavaScript library for batch analyzing chess games.
 ## Features
 
 -   Batch process PGN files
--   Replay each game and track statistics for each piece and tile
--   Generate heat maps out of the generated data
+-   Replays each game internally and tracks statistics for each piece and tile
+-   Generate heatmaps out of the generated data
 -   It's fast (500.000 moves/s on a i5-2500k)
 
 ## Usage
@@ -184,13 +184,16 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 4. Build via `npm run build` or `npm run dev`
 
-## Related
-
-Check out my standalone electron project [Chessalyzer](https://github.com/PeterPain/chessalyzer-nuxt) which uses chessalyzer.js and heatboard.js for visualizing game data.
-
 ## TODOs
 
 -   [ ] Check functionality for non-lichess PGN files
 -   [ ] Write Mocha tests
 -   [ ] Update jsdoc
--   [ ] Track statistics for promoted pieces and en passant moves
+-   [ ] Track statistics for promoted pieces and en passant moves. Currently stats for those are not tracked
+-   [ ] Provide function for parsing notation from algebraic (e4 e5) to long algebraic (e2-e4 e7-e5). Internally already available, but no API yet.
+- 	[ ] If possible, rebuilt code to be able to just run a comparison function between 'before move' and 'after move' and generate all stats in that function. Currently the stats are tracked at multiple places which makes adding more stats a bit confusing.
+
+
+## Related
+
+Check out my standalone electron project [Chessalyzer](https://github.com/PeterPain/chessalyzer-nuxt) which uses chessalyzer.js and heatboard.js for visualizing game data. It's still work in progress though.
