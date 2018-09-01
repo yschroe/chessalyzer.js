@@ -24,6 +24,10 @@ class GameProcessor extends EventEmitter {
 			? config.cntGames
 			: Infinity;
 
+		cfg.stats = Object.prototype.hasOwnProperty.call(config, 'stats')
+			? config.stats
+			: {};
+
 		// TODO: currently without function
 		cfg.split = Object.prototype.hasOwnProperty.call(config, 'split')
 			? config.split
@@ -34,6 +38,8 @@ class GameProcessor extends EventEmitter {
 
 	processPGN(path, config, refreshRate) {
 		const cfg = GameProcessor.checkConfig(config);
+
+		this.board.setConfig(cfg.stats);
 
 		return new Promise((resolve, reject) => {
 			const lr = new LineByLineReader(path, { skipEmptyLines: true });

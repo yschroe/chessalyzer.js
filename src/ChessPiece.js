@@ -55,11 +55,9 @@ class ChessPiece {
 
 		// option to track the move history of each piece
 		// currently unused, costs a lot of performance
-		this.logHistory = false;
 		this.history = []; // position history
 
-		this.history.push(pos);
-		this.maxHistory = 2000; // max length of history array
+		this.histCol = [];
 	}
 
 	/**
@@ -67,9 +65,9 @@ class ChessPiece {
 	 * @private
 	 */
 	reset() {
-		if (this.logHistory && this.history.length < this.maxHistory) {
-			this.history.push(null);
-			this.history.push(this.defaultPos);
+		if (this.histCol.length > 0) {
+			this.history.push(this.histCol);
+			this.histCol = [];
 		}
 
 		this.pos = this.defaultPos;
@@ -84,10 +82,11 @@ class ChessPiece {
 	updatePosition(pos) {
 		this.stats.cntMoved += 1;
 		this.pos = pos;
-		if (this.logHistory && this.history.length < this.maxHistory) {
-			this.history.push(pos);
-		}
 		this.stats.at[pos[0]][pos[1]].movedTo += 1;
+	}
+
+	updateHistory() {
+		this.histCol.push(this.pos);
 	}
 
 	/**

@@ -8,10 +8,15 @@ for (let i = 0; i < 1; i += 1) {
 		'C:/Users/yanni/Documents/GitHub/archive/Chessalyzer_p5js/lichess_db_standard_rated_2013-01.pgn',
 		{
 			split: false,
-			cntGames: 100000
+			cntGames: 10000,
+			stats: {
+				logTileOccupation: true,
+				logPieceHistory: false
+			}
 			// filter: (game) => game.WhiteElo > 1800
 		}
 	).then(() => {
+		// console.log(c1.dataStore[0].tiles[0][0].defaultPiece.history);
 		// c1.startBatch(
 		// 	'C:/Users/yanni/Downloads/lichess_db_standard_rated_2017-04.pgn'
 		// 'C:/Users/yanni/Documents/GitHub/archive/Chessalyzer_p5js/lichess_db_standard_rated_2013-01.pgn',

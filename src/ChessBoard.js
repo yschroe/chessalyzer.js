@@ -7,7 +7,7 @@ const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 /** Class that contains the board status and tracks statistics. */
 class ChessBoard {
 	/** Creates a new 8x8 Chessboard out of 64 {@link ChessTile}s and 32 {@link ChessPiece}s */
-	constructor() {
+	constructor(cfg = {}) {
 		/**
 		 * Tracks number of moves and games
 		 * @member {Object}
@@ -16,6 +16,9 @@ class ChessBoard {
 			cntMoves: 0,
 			cntGames: 0
 		};
+
+		this.cfg = {};
+		this.setConfig(cfg);
 
 		/**
 		 * Contains all pieces on the board
@@ -87,7 +90,9 @@ class ChessBoard {
 				this.processMove(moves[1]);
 			}
 
-			this.updateTileStats();
+			if (this.cfg.logPieceHistory || this.cfg.logTileOccupation) {
+				this.updateTileStats();
+			}
 		}
 	}
 
@@ -208,6 +213,21 @@ class ChessBoard {
 		}
 	}
 
+	setConfig(config) {
+		this.cfg.logPieceHistory = Object.prototype.hasOwnProperty.call(
+			config,
+			'logPieceHistory'
+		)
+			? config.logPieceHistory
+			: false;
+		this.cfg.logTileOccupation = Object.prototype.hasOwnProperty.call(
+			config,
+			'logTileOccupation'
+		)
+			? config.logTileOccupation
+			: true;
+	}
+
 	/** Is called after each {@link ChessBoard#move} to record the stats for the ChessTiles.
 	 * Only every tile, that has a piece on it, is updated.
 	 * @private
@@ -215,9 +235,15 @@ class ChessBoard {
 	updateTileStats() {
 		for (let i = 0; i < 32; i += 1) {
 			if (this.pieces[i].alive) {
-				this.tiles[this.pieces[i].pos[0]][
-					this.pieces[i].pos[1]
-				].updateOccupationStats();
+				if (this.cfg.logTileOccupation) {
+					this.tiles[this.pieces[i].pos[0]][
+						this.pieces[i].pos[1]
+					].updateOccupationStats();
+				}
+
+				if (this.stats.cntMoves % 2 === 0 && this.cfg.logPieceHistory) {
+					this.pieces[i].updateHistory();
+				}
 			}
 		}
 	}
