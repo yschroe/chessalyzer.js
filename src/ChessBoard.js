@@ -23,6 +23,8 @@ class ChessBoard {
 		 */
 		this.pieces = [];
 
+		this.alivePieces = [];
+
 		/**
 		 * 8x8 array of {@link ChessTile}s
 		 * @member {Array[]}
@@ -72,45 +74,10 @@ class ChessBoard {
 			if (moves.length === 1) {
 				const move = moves[0];
 
-				switch (takes) {
-					case true:
-						// en passant
-						if (this.tiles[move.to[0]][move.to[1]].piece === null) {
-							if (
-								this.tiles[move.from[0]][move.from[1]].piece
-									.color === 'white'
-							) {
-								this.tiles[move.to[0] + 1][
-									move.to[1]
-								].piece.alive = false;
-								this.tiles[move.to[0] + 1][
-									move.to[1]
-								].piece = null;
-								this.tiles[move.to[0] + 1][
-									move.to[1]
-								].updateDeadCount();
-							} else {
-								this.tiles[move.to[0] - 1][
-									move.to[1]
-								].piece.alive = false;
-								this.tiles[move.to[0] - 1][
-									move.to[1]
-								].piece = null;
-								this.tiles[move.to[0] - 1][
-									move.to[1]
-								].updateDeadCount();
-							}
-						} else {
-							this.tiles[move.to[0]][
-								move.to[1]
-							].updateDeadCount();
-						}
-						break;
-					case false:
-						break;
-					default:
-						break;
+				if (takes) {
+					this.processTakes(move);
 				}
+
 				this.processMove(move);
 
 				if (promotes !== null) {
@@ -127,25 +94,46 @@ class ChessBoard {
 	}
 
 	/**
-	 * Handles the move commanded by {@link ChessBoard#move}. Don't call this function directly,
-	 *  use {@link ChessBoard#move} to input a move!
+	 * Handles the 'takes' processing commanded by {@link ChessBoard#move}.
+	 * Don't call this function directly, use {@link ChessBoard#move} to input a move!
+	 * @private
+	 * @param {Object} move
+	 * @param {Number[]} move.from - Coordinates of start tile
+	 * @param {Number[]} move.to - Coordinates of target tile
+	 */
+	processTakes(move) {
+		const { from } = move;
+		const { to } = move;
+		let offset = 0;
+
+		// en passant
+		if (this.tiles[to[0]][to[1]].piece === null) {
+			offset =
+				this.tiles[from[0]][from[1]].piece.color === 'white' ? 1 : -1;
+		}
+		const toPiece = this.tiles[to[0] + offset][to[1]].piece;
+		const fromPiece = this.tiles[from[0]][from[1]].piece;
+
+		toPiece.killPiece(fromPiece);
+		fromPiece.killedPiece(toPiece);
+
+		this.tiles[to[0] + offset][to[1]].piece = null;
+		this.tiles[to[0] + offset][to[1]].updateDeadCount();
+	}
+
+	/**
+	 * Handles the 'move' processing commanded by {@link ChessBoard#move}.
+	 * Don't call this function directly, use {@link ChessBoard#move} to input a move!
 	 * @private
 	 * @param {Object} move
 	 * @param {Number[]} move.from - Coordinates of start tile
 	 * @param {Number[]} move.to - Coordinates of target tile
 	 */
 	processMove(move) {
-		// takes?
 		const { from } = move;
 		const { to } = move;
-		const toPiece = this.tiles[to[0]][to[1]].piece;
-		const fromPiece = this.tiles[from[0]][from[1]].piece;
 
-		if (toPiece !== null) {
-			toPiece.killPiece(fromPiece);
-			fromPiece.killedPiece(toPiece);
-		}
-		this.tiles[to[0]][to[1]].piece = fromPiece;
+		this.tiles[to[0]][to[1]].piece = this.tiles[from[0]][from[1]].piece;
 		this.tiles[to[0]][to[1]].piece.updatePosition(to);
 		this.tiles[from[0]][from[1]].piece = null;
 	}
