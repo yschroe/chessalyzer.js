@@ -241,7 +241,13 @@ class ChessBoard {
 					].updateOccupationStats();
 				}
 
-				if (this.stats.cntMoves % 2 === 0 && this.cfg.logPieceHistory) {
+				if (
+					this.cfg.logPieceHistory &&
+					((this.stats.cntMoves % 2 === 0 &&
+						this.pieces[i].color === 'black') ||
+						(this.stats.cntMoves % 2 === 1 &&
+							this.pieces[i].color === 'white'))
+				) {
 					this.pieces[i].updateHistory();
 				}
 			}

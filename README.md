@@ -110,11 +110,12 @@ chessalyzer
 
 ## Heatmap analysis functions
 
-The function you create for heatmap generation gets passed three parameters inside `genereateHeatMap()`: `board, sqrCoords, loopCoords`:
+The function you create for heatmap generation gets passed up to four parameters inside `genereateHeatMap()`: `board, sqrCoords, loopCoords, optData`:
 
 -   `board`: Includes a `stats` object for general board stats and a 8x8 array of ChessTiles. Each ChessTile represents a tile on the chess board. You can get the data of one specific tile by accessing the array `board.tiles`. The ChessTile at the indices `[0][0]` represents the A8 square, the ChessTile at `[7][7]` is the H1 square. If you are interested in the data of one specific tile, you can just access it by `board.tiles[row][col]`. The ChessTiles themself contain various data described at [Tracked statistics](#tracked-statistics). Moreover the Tiles contain a `defaultPiece` class member of Type `ChessPiece`. Because the tiles from row 2 to 5 (0-based) contain no pieces at the start of the game, the `defaultPiece` for these rows is `null`.
 -   `sqrCoords`: Contain the coordinates of the square you passed into the `genereateHeatMap()` function
 -   `loopCoords`: Contains the coordinates of the square the current heatmap value is calculated for. The `genereateHeatMap()` function loops over every square of the board to calculate a heat map value for each tile.
+-   `optData`: Optional data you may need in this function. For example, if you wanted to generate a heatmap to show the average position of a piece after X moves, you could pass that 'X' here.
 
 ## Tracked statistics
 
@@ -130,10 +131,10 @@ General:
 
 Tile:
 
--   `ChessTile.stats.at[x][y].wasOnTile`  
+-   `ChessTile.stats.at[x][y].wasOnTile` (Option: cfg.stats.logTileOccupation)  
     How often was the piece thats starts at `[x][y]` on this tile
 
--   `ChessTile.stats.cntHasPiece[color]`  
+-   `ChessTile.stats.cntHasPiece[color]` (Option: cfg.stats.logTileOccupation)  
     How often did a piece of which color occupate this tile
 
 -   `ChessTile.stats.cntTakenPieces`  
@@ -157,7 +158,10 @@ Piece:
     How often was this piece taken
 
 -   `ChessPiece.stats.cntKilled`  
-    How often did this piece take another piece:
+    How often did this piece take another piece
+
+-   `ChessPiece.history` (Option: cfg.stats.logPieceHistory)  
+    The complete position history of this piece in an array (x axis: game nr; y axis: move nr).
 
 If you need another stat tracked, let me know or create a pull request.
 
@@ -191,8 +195,7 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 -   [ ] Update jsdoc
 -   [ ] Track statistics for promoted pieces and en passant moves. Currently stats for those are not tracked
 -   [ ] Provide function for parsing notation from algebraic (e4 e5) to long algebraic (e2-e4 e7-e5). Internally already available, but no API yet.
-- 	[ ] If possible, rebuilt code to be able to just run a comparison function between 'before move' and 'after move' and generate all stats in that function. Currently the stats are tracked at multiple places which makes adding more stats a bit confusing.
-
+-                   [ ] If possible, rebuilt code to be able to just run a comparison function between 'before move' and 'after move' and generate all stats in that function. Currently the stats are tracked at multiple places which makes adding more stats a bit confusing.
 
 ## Related
 

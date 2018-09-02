@@ -265,7 +265,7 @@ heat map comparison. Each object contains the following keys:
             
 <hr>
 <dt>
-    <h4 class="name" id="generateComparisonHeatmap"><span class="type-signature"></span>generateComparisonHeatmap(square, fun [, bank1] [, bank2])</h4>
+    <h4 class="name" id="generateComparisonHeatmap"><span class="type-signature"></span>generateComparisonHeatmap(square, fun [, bank1] [, bank2], optData)</h4>
     
     
 </dt>
@@ -466,6 +466,36 @@ saved data. See <a href="Chessalyzer.html#generateHeatmap">Chessalyzer#generateH
         </tr>
 
     
+
+        <tr>
+            
+                <td class="name"><code>optData</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">Optional data you may need in your eval function</td>
+        </tr>
+
+    
     </tbody>
 </table>
 
@@ -559,7 +589,7 @@ saved data. See <a href="Chessalyzer.html#generateHeatmap">Chessalyzer#generateH
             
 <hr>
 <dt>
-    <h4 class="name" id="generateHeatmap"><span class="type-signature"></span>generateHeatmap(bank, square, fun)</h4>
+    <h4 class="name" id="generateHeatmap"><span class="type-signature"></span>generateHeatmap(bank, square, fun, optData)</h4>
     
     
 </dt>
@@ -674,12 +704,31 @@ saved data. This function gets passed the following arguments:
 <ol>
 <li>The complete data stored in the chosen bank. See the member description of the dataStore
 member to see which data is available.</li>
-<li>The coords of the tile passed as the square argument.</li>
+<li>The coords of the tile passed as the 'square' argument.</li>
 <li>The current coordinates of the tile the data should be generated for.
 The function must return a Number with the heat map value for the square passed as the
 third argument.</li>
+<li>An optional data field, you passed for 'optData'</li>
 </ol>
 See ./src/exampleHeatmapConfig for examples of such a function.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>optData</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Optional data you may need in your eval function</td>
         </tr>
 
     
@@ -1168,7 +1217,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             
 <hr>
 <dt>
-    <h4 class="name" id="startBatch"><span class="type-signature"></span>startBatch(path, cfg [, bank] [, refreshRate])</h4>
+    <h4 class="name" id="startBatch"><span class="type-signature"></span>startBatch(path [, cfg] [, bank] [, refreshRate])</h4>
     
     
 </dt>
@@ -1267,6 +1316,8 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             
                 <td class="attributes">
                 
+                    &lt;optional><br>
+                
 
                 
 
@@ -1276,6 +1327,8 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
 
             
                 <td class="default">
+                
+                    {}
                 
                 </td>
             
@@ -1294,7 +1347,11 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
         <th>Type</th>
 
         
+        <th>Argument</th>
+        
 
+        
+        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -1320,7 +1377,23 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
 
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    ()=>true
+                
+                </td>
             
 
             <td class="description last">Filter function for selecting games</td>
@@ -1336,7 +1409,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             <td class="type">
             
                 
-<span class="param-type">function</span>
+<span class="param-type">Number</span>
 
 
 
@@ -1344,10 +1417,174 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
 
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    Infinite
+                
+                </td>
             
 
             <td class="description last">Max amount of games to process</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>stats</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">Configuration for data aquisition
+                <h6 class="method-params-label method-subparams-label">Properties</h6>
+                
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>logPieceHistory</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last">Option for logging the position
+of every piece.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>logTileOccupation</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last">Option for logging the piece
+on every tile after every move.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -1576,7 +1813,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a>
 	
-		on 2018-09-01T09:31:50+02:00
+		on 2018-09-02T09:29:58+02:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

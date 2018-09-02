@@ -38,9 +38,14 @@ class Chessalyzer {
 	/**
 	 * Starts the batch processing for the selected file
 	 * @param {String} path - Path to the PGN file that should be analyzed
-	 * @param {Object} cfg
-	 * @param {Function} cfg.filter - Filter function for selecting games
-	 * @param {Function} cfg.cntGames - Max amount of games to process
+	 * @param {Object} [cfg = {}]
+	 * @param {Function} [cfg.filter = ()=>true] - Filter function for selecting games
+	 * @param {Number} [cfg.cntGames = Infinite ] - Max amount of games to process
+	 * @param {Object} cfg.stats - Configuration for data aquisition
+	 * @param {Boolean} [cfg.stats.logPieceHistory = false] - Option for logging the position
+	 * of every piece.
+	 * @param {Boolean} [cfg.stats.logTileOccupation = true] - Option for logging the piece
+	 * on every tile after every move.
 	 * @param {Number} [bank = 0] - The data bank the results shall be saved to
 	 * @param {Number} [refreshRate = 250] - Defines how often the current status of the
 	 *  analysis shall be exposed. Every number of processed games an event is emitted
@@ -111,12 +116,14 @@ class Chessalyzer {
 	 * <ol>
 	 * <li>The complete data stored in the chosen bank. See the member description of the dataStore
 	 * member to see which data is available.</li>
-	 * <li>The coords of the tile passed as the square argument.</li>
+	 * <li>The coords of the tile passed as the 'square' argument.</li>
 	 * <li>The current coordinates of the tile the data should be generated for.
 	 * The function must return a Number with the heat map value for the square passed as the
 	 * third argument.</li>
+	 * <li>An optional data field, you passed for 'optData'</li>
 	 * </ol>
 	 * See ./src/exampleHeatmapConfig for examples of such a function.
+	 * @param {} optData - Optional data you may need in your eval function
 	 * @returns {Array} Array with 3 entries:
 	 * <ol>
 	 * <li>8x8 Array containing the heat map values for each tile</li>
@@ -124,16 +131,16 @@ class Chessalyzer {
 	 * <li>The maximum value in the heatmap.</li>
 	 * </ol>
 	 */
-	generateHeatmap(bank, square, fun) {
+	generateHeatmap(bank, square, fun, optData) {
 		const coords = GameProcessor.algebraicToCoords(square);
 		const map = [];
 		let max = 0;
-		let min = 100000;
+		let min = 1000000;
 
 		for (let i = 0; i < 8; i += 1) {
 			const dataRow = new Array(8);
 			for (let j = 0; j < 8; j += 1) {
-				dataRow[j] = fun(this.dataStore[bank], coords, [i, j]);
+				dataRow[j] = fun(this.dataStore[bank], coords, [i, j], optData);
 				if (dataRow[j] > max) max = dataRow[j];
 				if (dataRow[j] < min) min = dataRow[j];
 			}
@@ -154,6 +161,7 @@ class Chessalyzer {
 	 * saved data. See {@link Chessalyzer#generateHeatmap} for a more detailed description.
 	 * @param {Number} [bank1 = 0] - Bank number of dataset 1
 	 * @param {Number} [bank2 = 1] - Bank number of dataset 2
+	 * @param {} optData - Optional data you may need in your eval function
 	 * @returns {Array} Array with 3 entries:
 	 * <ol>
 	 * <li>8x8 Array containing the heat map values for each tile</li>
@@ -161,14 +169,14 @@ class Chessalyzer {
 	 * <li>The maximum value in the heatmap.</li>
 	 * </ol>
 	 */
-	generateComparisonHeatmap(square, fun, bank1 = 0, bank2 = 1) {
+	generateComparisonHeatmap(square, fun, bank1 = 0, bank2 = 1, optData) {
 		const map = [];
 		let max = 0;
 		let min = 100000;
 
 		// comparison heatmap
-		const data0 = this.generateHeatmap(bank1, square, fun);
-		const data1 = this.generateHeatmap(bank2, square, fun);
+		const data0 = this.generateHeatmap(bank1, square, fun, optData);
+		const data1 = this.generateHeatmap(bank2, square, fun, optData);
 
 		for (let i = 0; i < 8; i += 1) {
 			const dataRow = new Array(8);
