@@ -24,8 +24,6 @@ for (let i = 0; i < 1; i += 1) {
 	});
 }
 
-//
-
 // b.printPosition();
 // b.move({
 // 	moves: [{ from: [1, 0], to: [2, 0] }],
