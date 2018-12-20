@@ -57,24 +57,18 @@ class Chessalyzer {
 	startBatch(path, cfg = {}, bank = 0, refreshRate = 250) {
 		return new Promise((resolve) => {
 			const t0 = performance.now();
-			this.gameProcessor
-				.processPGN(path, cfg, refreshRate)
-				.then((board) => {
-					const dataset = {};
-					dataset.stats = board.stats;
-					dataset.tiles = board.tiles;
-					this.dataStore[bank] = JSON.parse(JSON.stringify(dataset));
-					const t1 = performance.now();
-					const tdiff = Math.round(t1 - t0) / 1000;
-					const mps = Math.round(dataset.stats.cntMoves / tdiff);
-					console.log(
-						`${dataset.stats.cntGames} games (${
-							dataset.stats.cntMoves
-						} moves) processed in ${tdiff}s (${mps} moves/s)`
-					);
-					this.gameProcessor.reset();
-					resolve(this.dataStore[bank].stats.cntGames);
-				});
+			this.gameProcessor.processPGN(path, cfg, refreshRate).then(() => {
+				const t1 = performance.now();
+				const tdiff = Math.round(t1 - t0) / 1000;
+				const mps = Math.round(this.gameProcessor.cntMoves / tdiff);
+				console.log(
+					`${this.gameProcessor.cntGames} games (${
+						this.gameProcessor.cntMoves
+					} moves) processed in ${tdiff}s (${mps} moves/s)`
+				);
+				this.gameProcessor.reset();
+				resolve();
+			});
 		});
 	}
 

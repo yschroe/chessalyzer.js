@@ -8,15 +8,6 @@ const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 class ChessBoard {
 	/** Creates a new 8x8 Chessboard out of 64 {@link ChessTile}s and 32 {@link ChessPiece}s */
 	constructor(cfg = {}) {
-		/**
-		 * Tracks number of moves and games
-		 * @member {Object}
-		 */
-		this.stats = {
-			cntMoves: 0,
-			cntGames: 0
-		};
-
 		this.cfg = {};
 		this.setConfig(cfg);
 
@@ -65,8 +56,6 @@ class ChessBoard {
 	 */
 	move(moveData) {
 		if (moveData !== null) {
-			this.stats.cntMoves += 1;
-
 			const { moves } = moveData;
 			const { takes } = moveData;
 			const { promotes } = moveData;
@@ -89,10 +78,6 @@ class ChessBoard {
 				this.processMove(moves[0]);
 				this.processMove(moves[1]);
 			}
-
-			if (this.cfg.logPieceHistory || this.cfg.logTileOccupation) {
-				this.updateTileStats();
-			}
 		}
 	}
 
@@ -114,14 +99,8 @@ class ChessBoard {
 			offset =
 				this.tiles[from[0]][from[1]].piece.color === 'white' ? 1 : -1;
 		}
-		const toPiece = this.tiles[to[0] + offset][to[1]].piece;
-		const fromPiece = this.tiles[from[0]][from[1]].piece;
-
-		toPiece.killPiece(fromPiece);
-		fromPiece.killedPiece(toPiece);
-
+		this.tiles[to[0] + offset][to[1]].piece.killPiece();
 		this.tiles[to[0] + offset][to[1]].piece = null;
-		this.tiles[to[0] + offset][to[1]].updateDeadCount();
 	}
 
 	/**
@@ -147,7 +126,6 @@ class ChessBoard {
 	 *  Does not reset the stats recorded. If you wish to reset the stats,
 	 *  call {@link ChessBoard#resetStats}. */
 	reset() {
-		this.stats.cntGames += 1;
 		// reset tiles and pieces to default
 		for (let i = 0; i < this.pieces.length; i += 1) {
 			const piece = this.pieces[i];
@@ -158,24 +136,6 @@ class ChessBoard {
 
 		// remove promoted pieces
 		this.pieces = this.pieces.slice(0, 32);
-	}
-
-	/** Resets the stats recorded. */
-	resetStats() {
-		// reset the tiles
-		for (let row = 0; row < 8; row += 1) {
-			for (let col = 0; col < 8; col += 1) {
-				this.tiles[row][col].initStats();
-			}
-		}
-
-		// reset the pieces to default
-		for (let i = 0; i < this.pieces.length; i += 1) {
-			this.pieces[i].initStats();
-		}
-
-		this.stats.cntMoves = 0;
-		this.stats.cntGames = 0;
 	}
 
 	/**
@@ -226,32 +186,6 @@ class ChessBoard {
 		)
 			? config.logTileOccupation
 			: true;
-	}
-
-	/** Is called after each {@link ChessBoard#move} to record the stats for the ChessTiles.
-	 * Only every tile, that has a piece on it, is updated.
-	 * @private
-	 */
-	updateTileStats() {
-		for (let i = 0; i < 32; i += 1) {
-			if (this.pieces[i].alive) {
-				if (this.cfg.logTileOccupation) {
-					this.tiles[this.pieces[i].pos[0]][
-						this.pieces[i].pos[1]
-					].updateOccupationStats();
-				}
-
-				if (
-					this.cfg.logPieceHistory &&
-					((this.stats.cntMoves % 2 === 0 &&
-						this.pieces[i].color === 'black') ||
-						(this.stats.cntMoves % 2 === 1 &&
-							this.pieces[i].color === 'white'))
-				) {
-					this.pieces[i].updateHistory();
-				}
-			}
-		}
 	}
 }
 

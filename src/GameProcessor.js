@@ -13,6 +13,8 @@ class GameProcessor extends EventEmitter {
 		super();
 		this.board = new ChessBoard();
 		this.activePlayer = 0;
+		this.cntMoves = 0;
+		this.cntGames = 0;
 	}
 
 	static checkConfig(config) {
@@ -67,13 +69,13 @@ class GameProcessor extends EventEmitter {
 					}
 
 					// emit event
-					if (this.board.stats.cntGames % refreshRate === 0) {
-						this.emit('status', this.board.stats.cntGames);
+					if (this.cntGames % refreshRate === 0) {
+						this.emit('status', this.cntGames);
 					}
 
 					game = {};
 				}
-				if (this.board.stats.cntGames >= cfg.cntGames) {
+				if (this.cntGames >= cfg.cntGames) {
 					lr.close();
 					lr.end();
 				} else {
@@ -95,7 +97,7 @@ class GameProcessor extends EventEmitter {
 
 			lr.on('end', () => {
 				console.log('Read entire file.');
-				resolve(this.board);
+				resolve();
 			});
 		});
 	}
@@ -108,12 +110,13 @@ class GameProcessor extends EventEmitter {
 			const moveData = this.parseMove(moves[i]);
 			this.board.move(moveData);
 		}
+		this.cntMoves += moves.length;
+		this.cntGames += 1;
 		this.board.reset();
 	}
 
 	reset() {
 		this.board.reset();
-		this.board.resetStats();
 		this.activePlayer = 0;
 	}
 

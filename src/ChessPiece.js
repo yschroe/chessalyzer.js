@@ -39,25 +39,6 @@ class ChessPiece {
 		}
 
 		this.alive = true; // piece alive?
-
-		/**
-		 * Object that contains the tracked statistics
-		 * @member {Object}
-		 */
-		this.stats = {};
-
-		/**
-		 * Is this piece alive?
-		 * @member {Object}
-		 */
-
-		this.initStats();
-
-		// option to track the move history of each piece
-		// currently unused, costs a lot of performance
-		this.history = []; // position history
-
-		this.histCol = [];
 	}
 
 	/**
@@ -65,11 +46,6 @@ class ChessPiece {
 	 * @private
 	 */
 	reset() {
-		if (this.histCol.length > 0) {
-			this.history.push(this.histCol);
-			this.histCol = [];
-		}
-
 		this.pos = this.defaultPos;
 		this.alive = true;
 	}
@@ -80,13 +56,7 @@ class ChessPiece {
 	 * @param {Number[]} pos Target row and column of the tile the piece shall move to.
 	 */
 	updatePosition(pos) {
-		this.stats.cntMoved += 1;
 		this.pos = pos;
-		this.stats.at[pos[0]][pos[1]].movedTo += 1;
-	}
-
-	updateHistory() {
-		this.histCol.push(this.pos);
 	}
 
 	/**
@@ -94,45 +64,8 @@ class ChessPiece {
 	 * @private
 	 * @param {ChessPiece} killedBy Piece this piece was taken by.
 	 */
-	killPiece(killedByPiece) {
+	killPiece() {
 		this.alive = false;
-		this.stats.cntWasKilled += 1;
-
-		// if killer is not promoted pawn...
-		if (!(killedByPiece.name.length === 1 || this.name.length === 1)) {
-			// update killedBy of this piece
-			this.stats.at[killedByPiece.defaultPos[0]][
-				killedByPiece.defaultPos[1]
-			].killedBy += 1;
-		}
-	}
-
-	killedPiece(killedPiece) {
-		this.stats.cntHasKilled += 1;
-
-		// if killer is not promoted pawn...
-		if (!(killedPiece.name.length === 1 || this.name.length === 1)) {
-			// update killed stat of killer piece
-			this.stats.at[killedPiece.defaultPos[0]][
-				killedPiece.defaultPos[1]
-			].killed += 1;
-		}
-	}
-
-	/**
-	 * Inits the statistics array of this piece.
-	 * @private
-	 */
-	initStats() {
-		this.stats = { cntMoved: 0, cntWasKilled: 0, cntHasKilled: 0 };
-		this.stats.at = new Array(8);
-		for (let row = 0; row < 8; row += 1) {
-			const currRow = new Array(8);
-			for (let col = 0; col < 8; col += 1) {
-				currRow[col] = { movedTo: 0, killedBy: 0, killed: 0 };
-			}
-			this.stats.at[row] = currRow;
-		}
 	}
 }
 
