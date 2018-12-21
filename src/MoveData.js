@@ -2,6 +2,7 @@ class MoveData {
 	constructor() {
 		this.san = '';
 		this.player = '';
+		this.piece = '';
 		this.castles = '';
 		this.takes = {};
 		this.promotesTo = '';
@@ -12,6 +13,7 @@ class MoveData {
 	reset() {
 		this.san = '';
 		this.player = '';
+		this.piece = '';
 		this.castles = '';
 		this.takes = {};
 		this.promotesTo = '';

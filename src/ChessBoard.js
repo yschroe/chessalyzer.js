@@ -1,160 +1,83 @@
-import ChessTile from './ChessTile';
 import ChessPiece from './ChessPiece';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
-/** Class that contains the board status and tracks statistics. */
 class ChessBoard {
-	/** Creates a new 8x8 Chessboard out of 64 {@link ChessTile}s and 32 {@link ChessPiece}s */
-	constructor(cfg = {}) {
-		this.cfg = {};
-		this.setConfig(cfg);
-
-		/**
-		 * Contains all pieces on the board
-		 * @member {ChessPiece[]}
-		 */
-		this.pieces = [];
-
-		/**
-		 * 8x8 array of {@link ChessTile}s
-		 * @member {Array[]}
-		 */
+	constructor() {
 		this.tiles = new Array(8);
 		for (let row = 0; row < 8; row += 1) {
 			const currRow = new Array(8);
 			for (let col = 0; col < 8; col += 1) {
-				currRow[col] = new ChessTile();
+				currRow[col] = null;
+				const color = row === 0 || row === 1 ? 'b' : 'w';
 
 				// init pieces
 				if (row === 0 || row === 7) {
-					this.pieces.push(
-						new ChessPiece(pieceTemplate[col], [row, col])
-					);
-					currRow[col].initPiece(this.pieces[this.pieces.length - 1]);
+					currRow[col] = new ChessPiece(pieceTemplate[col], color);
 				} else if (row === 1 || row === 6) {
-					this.pieces.push(
-						new ChessPiece(pawnTemplate[col], [row, col])
-					);
-					currRow[col].initPiece(this.pieces[this.pieces.length - 1]);
+					currRow[col] = new ChessPiece(pawnTemplate[col], color);
 				}
 			}
 			this.tiles[row] = currRow;
 		}
+		this.defaultTiles = this.tiles.map((arr) => arr.slice());
+		this.kingPos = { w: [7, 4], b: [0, 4] };
 	}
 
-	/**
-	 * Moves a piece from source to target. Automatically handles the events 'move',
-	 *  'take', 'en passant', 'castle' and 'promote'.
-	 * Use this function instead of {@link ChessBoard#processMove} to input a move to the board!
-	 * @param {Object} moveData
-	 * @param {Object[]} moveData.moves - An array containing up to 2 moves in the
-	 *  syntax {from: [], to: []}
-	 * @param {Boolean} moveData.takes - True if the move takes a piece
-	 * @param {String} moveData.promotes - Type of promoted piece in case of pawn promotion, else null
-	 */
 	move(moveData) {
-		if (moveData !== null) {
-			const { moves } = moveData;
-			const { takes } = moveData;
-			const { promotes } = moveData;
+		const { from } = moveData;
+		const { to } = moveData;
 
-			// move
-			if (moves.length === 1) {
-				const move = moves[0];
+		// castles
+		if (moveData.castles !== '') {
+			this.castle(moveData.castles, moveData.player);
 
-				if (takes) {
-					this.processTakes(move);
-				}
+			// moves/takes
+		} else if (from[0] !== -1) {
+			// takes
+			if ('pos' in moveData.takes) {
+				this.tiles[moveData.takes.pos[0]][moveData.takes.pos[1]] = null;
+			}
+			// moves
+			this.tiles[to[0]][to[1]] = this.tiles[from[0]][from[1]];
+			this.tiles[from[0]][from[1]] = null;
 
-				this.processMove(move);
+			if (moveData.promotesTo !== '') {
+				this.tiles[to[0]][to[1]] = new ChessPiece(
+					moveData.promotesTo,
+					moveData.player
+				);
+			}
 
-				if (promotes !== null) {
-					this.promotePiece(move.to, promotes);
-				}
-				// castle
-			} else {
-				this.processMove(moves[0]);
-				this.processMove(moves[1]);
+			if (moveData.san.substring(0, 1) === 'K') {
+				this.kingPos[moveData.player] = to;
 			}
 		}
 	}
 
-	/**
-	 * Handles the 'takes' processing commanded by {@link ChessBoard#move}.
-	 * Don't call this function directly, use {@link ChessBoard#move} to input a move!
-	 * @private
-	 * @param {Object} move
-	 * @param {Number[]} move.from - Coordinates of start tile
-	 * @param {Number[]} move.to - Coordinates of target tile
-	 */
-	processTakes(move) {
-		const { from } = move;
-		const { to } = move;
-		let offset = 0;
+	castle(move, player) {
+		const row = player === 'w' ? 7 : 0;
+		const scrKingCol = 4;
+		let tarKingCol = 6;
+		let srcRookCol = 7;
+		let tarRookCol = 5;
 
-		// en passant
-		if (this.tiles[to[0]][to[1]].piece === null) {
-			offset =
-				this.tiles[from[0]][from[1]].piece.color === 'white' ? 1 : -1;
+		if (move === 'O-O-O') {
+			tarKingCol = 2;
+			tarRookCol = 3;
+			srcRookCol = 0;
 		}
-		this.tiles[to[0] + offset][to[1]].piece.killPiece();
-		this.tiles[to[0] + offset][to[1]].piece = null;
+		this.tiles[row][tarKingCol] = this.tiles[row][scrKingCol];
+		this.tiles[row][tarRookCol] = this.tiles[row][srcRookCol];
+		this.tiles[row][scrKingCol] = null;
+		this.tiles[row][srcRookCol] = null;
+		this.kingPos[player] = [row, tarKingCol];
 	}
 
-	/**
-	 * Handles the 'move' processing commanded by {@link ChessBoard#move}.
-	 * Don't call this function directly, use {@link ChessBoard#move} to input a move!
-	 * @private
-	 * @param {Object} move
-	 * @param {Number[]} move.from - Coordinates of start tile
-	 * @param {Number[]} move.to - Coordinates of target tile
-	 */
-	processMove(move) {
-		const { from } = move;
-		const { to } = move;
-
-		this.tiles[to[0]][to[1]].piece = this.tiles[from[0]][from[1]].piece;
-		this.tiles[to[0]][to[1]].piece.updatePosition(to);
-		this.tiles[from[0]][from[1]].piece = null;
-	}
-
-	/** Resets the board to the default state: removes promoted pieces and puts the standard
-	 *  pieces back to their starting positions.
-	 *
-	 *  Does not reset the stats recorded. If you wish to reset the stats,
-	 *  call {@link ChessBoard#resetStats}. */
 	reset() {
-		// reset tiles and pieces to default
-		for (let i = 0; i < this.pieces.length; i += 1) {
-			const piece = this.pieces[i];
-			this.tiles[piece.pos[0]][piece.pos[1]].resetPiece();
-			this.tiles[piece.defaultPos[0]][piece.defaultPos[1]].resetPiece();
-			piece.reset();
-		}
-
-		// remove promoted pieces
-		this.pieces = this.pieces.slice(0, 32);
-	}
-
-	/**
-	 * Promotes a pawn to a piece.
-	 * @private
-	 * @param {Number[]} coords An array containing the row and column of the pawn to be promoted.
-	 * @param {String} pieceType Target piece type in SAN notation ('N', 'B', 'Q', 'R').
-	 */
-	promotePiece(coords, pieceType) {
-		// change alive directly instead of killPiece to not update stats
-		this.tiles[coords[0]][coords[1]].piece.alive = false;
-		this.tiles[coords[0]][coords[1]].piece = null;
-
-		this.pieces.push(
-			new ChessPiece(pieceType, [coords[0], coords[1]], true)
-		);
-		this.tiles[coords[0]][coords[1]].piece = this.pieces[
-			this.pieces.length - 1
-		];
+		this.tiles = this.defaultTiles.map((arr) => arr.slice());
+		this.kingPos = { w: [7, 4], b: [0, 4] };
 	}
 
 	/** Prints the current board position to the console. */
@@ -162,30 +85,15 @@ class ChessBoard {
 		for (let row = 0; row < 8; row += 1) {
 			const rowArray = [];
 			for (let col = 0; col < 8; col += 1) {
-				const { piece } = this.tiles[row][col];
+				const piece = this.tiles[row][col];
 				if (piece !== null) {
-					rowArray.push(piece.name);
+					rowArray.push(piece.color + piece.name);
 				} else {
-					rowArray.push('..');
+					rowArray.push('...');
 				}
 			}
 			console.log(rowArray);
 		}
-	}
-
-	setConfig(config) {
-		this.cfg.logPieceHistory = Object.prototype.hasOwnProperty.call(
-			config,
-			'logPieceHistory'
-		)
-			? config.logPieceHistory
-			: false;
-		this.cfg.logTileOccupation = Object.prototype.hasOwnProperty.call(
-			config,
-			'logTileOccupation'
-		)
-			? config.logTileOccupation
-			: true;
 	}
 }
 

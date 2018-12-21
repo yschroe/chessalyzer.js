@@ -8,7 +8,7 @@ for (let i = 0; i < 1; i += 1) {
 		'C:/Users/yanni/Documents/Workspace/JavaScript/Archiv/Chessalyzer_p5js/lichess_db_standard_rated_2013-01.pgn',
 		{
 			split: false,
-			cntGames: 50000,
+			cntGames: 100000,
 			stats: {
 				logTileOccupation: true,
 				logPieceHistory: false

@@ -1,5 +1,6 @@
-import ChessBoard2 from './ChessBoard2';
+import ChessBoard from './ChessBoard';
 import MoveData from './MoveData';
+import PieceTracker from './PieceTracker';
 
 const LineByLineReader = require('line-by-line');
 const EventEmitter = require('events');
@@ -12,8 +13,9 @@ const files = 'abcdefgh';
 class GameProcessor extends EventEmitter {
 	constructor() {
 		super();
-		this.board = new ChessBoard2();
+		this.board = new ChessBoard();
 		this.currentMove = new MoveData();
+		this.pieceTracker = new PieceTracker();
 		this.activePlayer = 0;
 		this.cntMoves = 0;
 		this.cntGames = 0;
@@ -97,6 +99,7 @@ class GameProcessor extends EventEmitter {
 
 			lr.on('end', () => {
 				console.log('Read entire file.');
+				console.log(this.pieceTracker.pieces.w.Pe);
 				resolve();
 			});
 		});
@@ -112,7 +115,7 @@ class GameProcessor extends EventEmitter {
 			this.parseMove(moves[i]);
 
 			// ___ PLACE ANALYZERS HERE ___
-
+			this.pieceTracker.track(this.currentMove);
 			// ___ END
 
 			this.board.move(this.currentMove);
@@ -128,17 +131,9 @@ class GameProcessor extends EventEmitter {
 	}
 
 	/**
-	 * @typedef {Object} MoveData
-	 * @property {Object[]} moves - Array of {from: [], to: []} objects
-	 * @property {Boolean} takes - Move takes a piece true/false
-	 * @property {String} promotes - Piece type in case of pawn promotion else null
-	 */
-
-	/**
 	 * Parses a move in string format to board coordinates. Wrapper function for
 	 *  the different move algorithms.
 	 * @param {string} rawMove The move to be parsed, e.g. 'Ne5+'.
-	 * @returns {MoveData}
 	 */
 	parseMove(rawMove) {
 		const token = rawMove.substring(0, 1);
@@ -163,7 +158,6 @@ class GameProcessor extends EventEmitter {
 	/**
 	 * Returns the board coordinates for the move if it is a pawn move.
 	 * @param {string} moveSan The move to be parsed, e.g. 'e5'.
-	 * @returns {MoveData}
 	 */
 	pawnMove(moveSan) {
 		const direction = -2 * (this.activePlayer % 2) + 1;
@@ -211,6 +205,7 @@ class GameProcessor extends EventEmitter {
 
 		this.currentMove.to = to;
 		this.currentMove.from = from;
+		this.currentMove.piece = this.board.tiles[from[0]][from[1]].name;
 
 		// promotes
 		if (move.includes('=')) {
@@ -274,7 +269,7 @@ class GameProcessor extends EventEmitter {
 		if (takes) {
 			this.currentMove.takes.piece = this.board.tiles[
 				this.currentMove.to[0]
-			][this.currentMove.to[1]];
+			][this.currentMove.to[1]].name;
 			this.currentMove.takes.pos = this.currentMove.to;
 		}
 	}
@@ -344,6 +339,9 @@ class GameProcessor extends EventEmitter {
 
 		this.currentMove.from = move.from;
 		this.currentMove.to = move.to;
+		this.currentMove.piece = this.board.tiles[move.from[0]][
+			move.from[1]
+		].name;
 	}
 
 	/**
