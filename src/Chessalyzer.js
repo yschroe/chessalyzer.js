@@ -54,7 +54,7 @@ class Chessalyzer {
 	 *  e.g. to update an UI.
 	 * @returns {Promise} Promise that contains the number of processed games when finished
 	 */
-	startBatch(path, cfg = {}, bank = 0, refreshRate = 250) {
+	startBatch(path, cfg = {}, refreshRate = 250) {
 		return new Promise((resolve) => {
 			const t0 = performance.now();
 			this.gameProcessor.processPGN(path, cfg, refreshRate).then(() => {

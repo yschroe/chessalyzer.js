@@ -1,4 +1,5 @@
-import ChessBoard from './ChessBoard';
+import ChessBoard2 from './ChessBoard2';
+import MoveData from './MoveData';
 
 const LineByLineReader = require('line-by-line');
 const EventEmitter = require('events');
@@ -11,7 +12,8 @@ const files = 'abcdefgh';
 class GameProcessor extends EventEmitter {
 	constructor() {
 		super();
-		this.board = new ChessBoard();
+		this.board = new ChessBoard2();
+		this.currentMove = new MoveData();
 		this.activePlayer = 0;
 		this.cntMoves = 0;
 		this.cntGames = 0;
@@ -40,8 +42,6 @@ class GameProcessor extends EventEmitter {
 
 	processPGN(path, config, refreshRate) {
 		const cfg = GameProcessor.checkConfig(config);
-
-		this.board.setConfig(cfg.stats);
 
 		return new Promise((resolve, reject) => {
 			const lr = new LineByLineReader(path, { skipEmptyLines: true });
@@ -107,10 +107,17 @@ class GameProcessor extends EventEmitter {
 
 		for (let i = 0; i < moves.length; i += 1) {
 			this.activePlayer = i % 2;
-			const moveData = this.parseMove(moves[i]);
-			this.board.move(moveData);
+
+			// fetch move data into this.currentMove
+			this.parseMove(moves[i]);
+
+			// ___ PLACE ANALYZERS HERE ___
+
+			// ___ END
+
+			this.board.move(this.currentMove);
 		}
-		this.cntMoves += moves.length;
+		this.cntMoves += moves.length - 1; // don't count result (e.g. 1-0)
 		this.cntGames += 1;
 		this.board.reset();
 	}
@@ -135,22 +142,22 @@ class GameProcessor extends EventEmitter {
 	 */
 	parseMove(rawMove) {
 		const token = rawMove.substring(0, 1);
-		let moveData = {};
-
 		const move = GameProcessor.preProcess(rawMove);
 
-		// game end on '1-0', '0-1' or '1/2-1/2' (check for digit as first char)
-		if (token.match(/\d/) !== null) {
-			moveData = null;
-		} else if (token.toLowerCase() === token) {
-			moveData = this.pawnMove(move);
-		} else if (token !== 'O') {
-			moveData = this.pieceMove(move);
-		} else {
-			moveData = this.castle(move);
-		}
+		this.currentMove.reset();
+		this.currentMove.san = rawMove;
+		this.currentMove.player = this.activePlayer === 0 ? 'w' : 'b';
 
-		return moveData;
+		// game end on '1-0', '0-1' or '1/2-1/2' (check for digit as first char)
+		if (token.match(/\d/) === null) {
+			if (token.toLowerCase() === token) {
+				this.pawnMove(move);
+			} else if (token !== 'O') {
+				this.pieceMove(move);
+			} else {
+				this.currentMove.castles = move;
+			}
+		}
 	}
 
 	/**
@@ -159,25 +166,30 @@ class GameProcessor extends EventEmitter {
 	 * @returns {MoveData}
 	 */
 	pawnMove(moveSan) {
+		const direction = -2 * (this.activePlayer % 2) + 1;
 		const from = [];
 		const to = [];
-		const moveData = {
-			moves: [],
-			takes: false,
-			promotes: null
-		};
-		const direction = -2 * (this.activePlayer % 2) + 1;
 		let move = moveSan;
+		let offset = 0;
 
 		// takes
 		if (move.includes('x')) {
-			moveData.takes = true;
 			move = move.replace('x', '');
 
 			to[0] = 8 - parseInt(move.substring(2, 3), 10);
 			to[1] = files.indexOf(move.substring(1, 2));
 			from[0] = to[0] + direction;
 			from[1] = files.indexOf(move.substring(0, 1));
+
+			// en passant
+			if (this.board.tiles[to[0]][to[1]] === null) {
+				offset = this.currentMove.player === 'w' ? 1 : -1;
+			}
+
+			this.currentMove.takes.piece = this.board.tiles[to[0] + offset][
+				to[1]
+			].name;
+			this.currentMove.takes.pos = [to[0] + offset, to[1]];
 
 			// moves
 		} else {
@@ -188,22 +200,25 @@ class GameProcessor extends EventEmitter {
 			to[0] = tarRow;
 			to[1] = tarCol;
 			for (let i = tarRow + direction; i < 8 && i >= 0; i += direction) {
-				if (this.board.tiles[i][tarCol].piece !== null) {
-					if (this.board.tiles[i][tarCol].piece.name.includes('P')) {
+				if (this.board.tiles[i][tarCol] !== null) {
+					if (this.board.tiles[i][tarCol].name.includes('P')) {
 						from[0] = i;
 						break;
 					}
 				}
 			}
 		}
-		moveData.moves.push({ from, to });
+
+		this.currentMove.to = to;
+		this.currentMove.from = from;
 
 		// promotes
 		if (move.includes('=')) {
-			moveData.promotes = move.substring(move.length - 1, move.length);
+			this.currentMove.promotesTo = move.substring(
+				move.length - 1,
+				move.length
+			);
 		}
-
-		return moveData;
 	}
 
 	/**
@@ -212,14 +227,8 @@ class GameProcessor extends EventEmitter {
 	 * @returns {MoveData}
 	 */
 	pieceMove(moveSan) {
-		const from = [];
-		const to = [];
-		const moveData = {
-			moves: [],
-			takes: false,
-			promotes: null
-		};
 		let move = moveSan;
+		let takes = false;
 		const token = move.substring(0, 1);
 
 		// remove token
@@ -227,17 +236,16 @@ class GameProcessor extends EventEmitter {
 
 		// takes
 		if (move.includes('x')) {
-			moveData.takes = true;
+			takes = true;
 			move = move.replace('x', '');
 		}
 
 		// e.g. Re3f5
 		if (move.length === 4) {
-			from[0] = 8 - parseInt(move.substring(1, 2), 10);
-			from[1] = files.indexOf(move.substring(0, 1));
-			to[0] = 8 - parseInt(move.substring(3, 4), 10);
-			to[1] = files.indexOf(move.substring(2, 3));
-			moveData.moves.push({ from, to });
+			this.currentMove.from[0] = 8 - parseInt(move.substring(1, 2), 10);
+			this.currentMove.from[1] = files.indexOf(move.substring(0, 1));
+			this.currentMove.to[0] = 8 - parseInt(move.substring(3, 4), 10);
+			this.currentMove.to[1] = files.indexOf(move.substring(2, 3));
 
 			// e.g. Ref3
 		} else if (move.length === 3) {
@@ -254,18 +262,21 @@ class GameProcessor extends EventEmitter {
 			} else {
 				mustBeInRow = 8 - parseInt(move.substring(0, 1), 10);
 			}
-			moveData.moves.push(
-				this.findPiece(tarRow, tarCol, mustBeInRow, mustBeInCol, token)
-			);
+			this.findPiece(tarRow, tarCol, mustBeInRow, mustBeInCol, token);
 
 			// e.g. Rf3
 		} else {
 			const tarRow = 8 - parseInt(move.substring(1, 2), 10);
 			const tarCol = files.indexOf(move.substring(0, 1));
-			moveData.moves.push(this.findPiece(tarRow, tarCol, -1, -1, token));
+			this.findPiece(tarRow, tarCol, -1, -1, token);
 		}
 
-		return moveData;
+		if (takes) {
+			this.currentMove.takes.piece = this.board.tiles[
+				this.currentMove.to[0]
+			][this.currentMove.to[1]];
+			this.currentMove.takes.pos = this.currentMove.to;
+		}
 	}
 
 	/**
@@ -326,10 +337,13 @@ class GameProcessor extends EventEmitter {
 			console.log(
 				`Error: no piece for move ${token} to (${tarRow},${tarCol}) found!`
 			);
+			console.log(this.cntGames);
+			console.log(this.currentMove);
 			this.board.printPosition();
 		}
 
-		return move;
+		this.currentMove.from = move.from;
+		this.currentMove.to = move.to;
 	}
 
 	/**
@@ -342,7 +356,7 @@ class GameProcessor extends EventEmitter {
 	 * @returns {Object}
 	 */
 	findDiag(tarRow, tarCol, mustBeInRow, mustBeInCol, token) {
-		const color = this.activePlayer % 2 ? 'black' : 'white';
+		const color = this.currentMove.player;
 
 		const from = [];
 		const to = [];
@@ -366,9 +380,9 @@ class GameProcessor extends EventEmitter {
 					col1 >= 0 &&
 					col1 < 8 &&
 					!obstructed1 &&
-					this.board.tiles[row1][col1].piece !== null
+					this.board.tiles[row1][col1] !== null
 				) {
-					const { piece } = this.board.tiles[row1][col1];
+					const piece = this.board.tiles[row1][col1];
 					if (
 						piece.name.includes(token) &&
 						piece.color === color &&
@@ -391,9 +405,9 @@ class GameProcessor extends EventEmitter {
 					col2 >= 0 &&
 					col2 < 8 &&
 					!obstructed2 &&
-					this.board.tiles[row2][col2].piece !== null
+					this.board.tiles[row2][col2] !== null
 				) {
-					const { piece } = this.board.tiles[row2][col2];
+					const piece = this.board.tiles[row2][col2];
 					if (
 						piece.name.includes(token) &&
 						piece.color === color &&
@@ -424,7 +438,7 @@ class GameProcessor extends EventEmitter {
 	 * @returns {Object}
 	 */
 	findLine(tarRow, tarCol, mustBeInRow, mustBeInCol, token) {
-		const color = this.activePlayer % 2 ? 'black' : 'white';
+		const color = this.currentMove.player;
 		const from = [];
 		const to = [];
 		from[0] = -1;
@@ -447,9 +461,9 @@ class GameProcessor extends EventEmitter {
 					col1 >= 0 &&
 					col1 < 8 &&
 					!obstructed1 &&
-					this.board.tiles[row1][col1].piece !== null
+					this.board.tiles[row1][col1] !== null
 				) {
-					const { piece } = this.board.tiles[row1][col1];
+					const piece = this.board.tiles[row1][col1];
 					if (
 						piece.name.includes(token) &&
 						piece.color === color &&
@@ -471,9 +485,9 @@ class GameProcessor extends EventEmitter {
 					col2 >= 0 &&
 					col2 < 8 &&
 					!obstructed2 &&
-					this.board.tiles[row2][col2].piece !== null
+					this.board.tiles[row2][col2] !== null
 				) {
-					const { piece } = this.board.tiles[row2][col2];
+					const piece = this.board.tiles[row2][col2];
 					if (
 						piece.name.includes(token) &&
 						piece.color === color &&
@@ -504,7 +518,7 @@ class GameProcessor extends EventEmitter {
 	 * @returns {Object}
 	 */
 	findKnight(tarRow, tarCol, mustBeInRow, mustBeInCol, token) {
-		const color = this.activePlayer % 2 ? 'black' : 'white';
+		const color = this.currentMove.player;
 		const from = [];
 		const to = [];
 		from[0] = -1;
@@ -523,9 +537,9 @@ class GameProcessor extends EventEmitter {
 					row1 < 8 &&
 					col1 >= 0 &&
 					col1 < 8 &&
-					this.board.tiles[row1][col1].piece !== null
+					this.board.tiles[row1][col1] !== null
 				) {
-					const { piece } = this.board.tiles[row1][col1];
+					const piece = this.board.tiles[row1][col1];
 					if (
 						piece.name.includes(token) &&
 						piece.color === color &&
@@ -544,9 +558,9 @@ class GameProcessor extends EventEmitter {
 					row2 < 8 &&
 					col2 >= 0 &&
 					col2 < 8 &&
-					this.board.tiles[row2][col2].piece !== null
+					this.board.tiles[row2][col2] !== null
 				) {
-					const { piece } = this.board.tiles[row2][col2];
+					const piece = this.board.tiles[row2][col2];
 					if (
 						piece.name.includes(token) &&
 						piece.color === color &&
@@ -572,9 +586,9 @@ class GameProcessor extends EventEmitter {
 	 * @returns {boolean} After the move, the king will be in check true/false.
 	 */
 	checkCheck(from, to) {
-		const color = this.activePlayer % 2 ? 'black' : 'white';
-		const opColor = this.activePlayer % 2 ? 'white' : 'black';
-		const king = this.board.pieces[color === 'white' ? 28 : 4].pos;
+		const color = this.currentMove.player;
+		const opColor = this.currentMove.player === 'w' ? 'b' : 'w';
+		const king = this.board.kingPos[color];
 		let isInCheck = false;
 
 		// if king move, no check is possible, exit function
@@ -597,12 +611,12 @@ class GameProcessor extends EventEmitter {
 		if (diff[0] !== 0) diff[0] /= Math.abs(diff[0]);
 		if (diff[1] !== 0) diff[1] /= Math.abs(diff[1]);
 
-		const srcTilePiece = this.board.tiles[from[0]][from[1]].piece;
-		const tarTilePiece = this.board.tiles[to[0]][to[1]].piece;
+		const srcTilePiece = this.board.tiles[from[0]][from[1]];
+		const tarTilePiece = this.board.tiles[to[0]][to[1]];
 
 		// premove and check if check
-		this.board.tiles[from[0]][from[1]].piece = null;
-		this.board.tiles[to[0]][to[1]].piece = srcTilePiece;
+		this.board.tiles[from[0]][from[1]] = null;
+		this.board.tiles[to[0]][to[1]] = srcTilePiece;
 
 		// check for check
 		let obstructed = false;
@@ -615,9 +629,9 @@ class GameProcessor extends EventEmitter {
 				row < 8 &&
 				col >= 0 &&
 				col < 8 &&
-				this.board.tiles[row][col].piece !== null
+				this.board.tiles[row][col] !== null
 			) {
-				const { piece } = this.board.tiles[row][col];
+				const piece = this.board.tiles[row][col];
 				if (
 					(piece.name.includes(checkFor[0]) ||
 						piece.name.includes(checkFor[1])) &&
@@ -630,54 +644,10 @@ class GameProcessor extends EventEmitter {
 			}
 		}
 
-		this.board.tiles[from[0]][from[1]].piece = srcTilePiece;
-		this.board.tiles[to[0]][to[1]].piece = tarTilePiece;
+		this.board.tiles[from[0]][from[1]] = srcTilePiece;
+		this.board.tiles[to[0]][to[1]] = tarTilePiece;
 
 		return isInCheck;
-	}
-
-	/**
-	 * Returns the board coordinates for castling.
-	 * @param {string} move The move to be parsed, e.g. 'O-O'.
-	 * @returns {MoveData.moves}
-	 */
-	castle(move) {
-		const row = this.activePlayer % 2 ? 0 : 7;
-		const from1 = [];
-		const from2 = [];
-		const to1 = [];
-		const to2 = [];
-		const moveData = {
-			moves: [],
-			takes: false,
-			promotes: null
-		};
-
-		// O-O
-		if (move.length === 3) {
-			from1[0] = row;
-			from1[1] = 4;
-			to1[0] = row;
-			to1[1] = 6;
-			from2[0] = row;
-			from2[1] = 7;
-			to2[0] = row;
-			to2[1] = 5;
-
-			// O-O-O
-		} else {
-			from1[0] = row;
-			from1[1] = 4;
-			to1[0] = row;
-			to1[1] = 2;
-			from2[0] = row;
-			from2[1] = 0;
-			to2[0] = row;
-			to2[1] = 3;
-		}
-		moveData.moves.push({ from: from1, to: to1 });
-		moveData.moves.push({ from: from2, to: to2 });
-		return moveData;
 	}
 
 	static algebraicToCoords(square) {
