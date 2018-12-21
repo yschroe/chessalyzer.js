@@ -4,22 +4,28 @@ const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 class PieceTracker {
 	constructor() {
 		this.pieces = { b: {}, w: {} };
-		for (let i = 0; i < 8; i += 1) {
-			this.pieces.b[pawnTemplate[i]] = {};
-			this.pieces.b[pieceTemplate[i]] = {};
-			this.pieces.w[pawnTemplate[i]] = {};
-			this.pieces.w[pieceTemplate[i]] = {};
-			for (let j = 0; j < 8; j += 1) {
-				this.pieces.w[pawnTemplate[i]][pawnTemplate[j]] = { took: 0 };
-				this.pieces.w[pawnTemplate[i]][pieceTemplate[j]] = { took: 0 };
-				this.pieces.w[pieceTemplate[i]][pawnTemplate[j]] = { took: 0 };
-				this.pieces.w[pieceTemplate[i]][pieceTemplate[j]] = { took: 0 };
-				this.pieces.b[pawnTemplate[i]][pawnTemplate[j]] = { took: 0 };
-				this.pieces.b[pawnTemplate[i]][pieceTemplate[j]] = { took: 0 };
-				this.pieces.b[pieceTemplate[i]][pawnTemplate[j]] = { took: 0 };
-				this.pieces.b[pieceTemplate[i]][pieceTemplate[j]] = { took: 0 };
-			}
-		}
+
+		// first layer
+		pawnTemplate.forEach((val) => {
+			this.pieces.w[val] = {};
+			this.pieces.b[val] = {};
+		});
+		pieceTemplate.forEach((val) => {
+			this.pieces.w[val] = {};
+			this.pieces.b[val] = {};
+		});
+
+		// second layer
+		Object.keys(this.pieces.w).forEach((key) => {
+			pawnTemplate.forEach((val) => {
+				this.pieces.w[key][val] = { took: 0 };
+				this.pieces.b[key][val] = { took: 0 };
+			});
+			pieceTemplate.forEach((val) => {
+				this.pieces.w[key][val] = { took: 0 };
+				this.pieces.b[key][val] = { took: 0 };
+			});
+		});
 	}
 
 	track(moveData) {

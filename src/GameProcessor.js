@@ -1,6 +1,7 @@
 import ChessBoard from './ChessBoard';
 import MoveData from './MoveData';
 import PieceTracker from './PieceTracker';
+import TileTracker from './TileTracker';
 
 const LineByLineReader = require('line-by-line');
 const EventEmitter = require('events');
@@ -16,6 +17,7 @@ class GameProcessor extends EventEmitter {
 		this.board = new ChessBoard();
 		this.currentMove = new MoveData();
 		this.pieceTracker = new PieceTracker();
+		this.tileTracker = new TileTracker();
 		this.activePlayer = 0;
 		this.cntMoves = 0;
 		this.cntGames = 0;
@@ -99,7 +101,8 @@ class GameProcessor extends EventEmitter {
 
 			lr.on('end', () => {
 				console.log('Read entire file.');
-				console.log(this.pieceTracker.pieces.w.Pe);
+				// console.log(this.pieceTracker.pieces.w.Pe);
+				console.log(this.tileTracker.tiles);
 				resolve();
 			});
 		});
@@ -116,6 +119,7 @@ class GameProcessor extends EventEmitter {
 
 			// ___ PLACE ANALYZERS HERE ___
 			this.pieceTracker.track(this.currentMove);
+			this.tileTracker.track(this.currentMove);
 			// ___ END
 
 			this.board.move(this.currentMove);
