@@ -1,12 +1,25 @@
 import ChessBoard from './ChessBoard';
-import MoveData from './MoveData';
 import PieceTracker from './PieceTracker';
 import TileTracker from './TileTracker';
+import GameTracker from './GameTracker';
 
 const LineByLineReader = require('line-by-line');
 const EventEmitter = require('events');
 
 const files = 'abcdefgh';
+
+class MoveData {
+	constructor() {
+		this.san = '';
+		this.player = '';
+		this.piece = '';
+		this.castles = '';
+		this.takes = {};
+		this.promotesTo = '';
+		this.from = [-1, -1];
+		this.to = [-1, -1];
+	}
+}
 
 /**
  * Class that processes games.
@@ -18,6 +31,7 @@ class GameProcessor extends EventEmitter {
 		this.currentMove = new MoveData();
 		this.pieceTracker = new PieceTracker();
 		this.tileTracker = new TileTracker();
+		this.gameTracker = new GameTracker();
 		this.activePlayer = 0;
 		this.cntMoves = 0;
 		this.cntGames = 0;
@@ -54,7 +68,8 @@ class GameProcessor extends EventEmitter {
 			// process current line
 			const processLine = (line) => {
 				// data tag
-				if (line.startsWith('[') && cfg.hasFilter) {
+				if (line.startsWith('[')) {
+					// && cfg.hasFilter
 					const key = line.match(/\[(.*?)\s/)[1];
 					const value = line.match(/"(.*?)"/)[1];
 
@@ -103,6 +118,7 @@ class GameProcessor extends EventEmitter {
 				console.log('Read entire file.');
 				// console.log(this.pieceTracker.pieces.w.Pe);
 				// console.log(this.tileTracker.tiles);
+				console.log(this.gameTracker.wins);
 				resolve();
 			});
 		});
@@ -117,7 +133,7 @@ class GameProcessor extends EventEmitter {
 			// fetch move data into this.currentMove
 			this.parseMove(moves[i]);
 
-			// ___ PLACE ANALYZERS HERE ___
+			// ___ PLACE MOVE-ANALYZERS HERE ___
 			this.pieceTracker.track(this.currentMove);
 			this.tileTracker.track(this.currentMove);
 			// ___ END
@@ -127,6 +143,10 @@ class GameProcessor extends EventEmitter {
 		this.cntMoves += moves.length - 1; // don't count result (e.g. 1-0)
 		this.cntGames += 1;
 		this.board.reset();
+
+		// ___ PLACE GAME-ANALYZERS HERE ___
+		this.gameTracker.track(game);
+		// ___ END
 	}
 
 	reset() {
@@ -143,7 +163,7 @@ class GameProcessor extends EventEmitter {
 		const token = rawMove.substring(0, 1);
 		const move = GameProcessor.preProcess(rawMove);
 
-		this.currentMove.reset();
+		this.currentMove = new MoveData();
 		this.currentMove.san = rawMove;
 		this.currentMove.player = this.activePlayer === 0 ? 'w' : 'b';
 

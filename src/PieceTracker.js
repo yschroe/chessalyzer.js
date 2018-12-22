@@ -35,9 +35,13 @@ class PieceTracker {
 
 		if ('piece' in takes) {
 			if (piece.length > 1 && takes.piece.length > 1) {
-				this.pieces[player][piece][takes.piece].took += 1;
+				this.processTakes(player, piece, takes.piece);
 			}
 		}
+	}
+
+	processTakes(player, takingPiece, takenPiece) {
+		this.pieces[player][takingPiece][takenPiece].took += 1;
 	}
 }
 export default PieceTracker;
