@@ -1,9 +1,13 @@
-class GameTracker {
+import BaseTracker from './BaseTracker';
+
+class GameTracker extends BaseTracker {
 	constructor() {
+		super();
 		this.wins = [0, 0, 0];
 	}
 
 	track(game) {
+		this.startTimer();
 		switch (game.Result) {
 			case '1-0':
 				this.wins[0] += 1;
@@ -20,6 +24,7 @@ class GameTracker {
 			default:
 				break;
 		}
+		this.endTimer();
 	}
 }
 

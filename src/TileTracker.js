@@ -1,3 +1,5 @@
+import BaseTracker from './BaseTracker';
+
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
@@ -10,8 +12,9 @@ class TileStats {
 	}
 }
 
-class TileTracker {
+class TileTracker extends BaseTracker {
 	constructor() {
+		super();
 		this.tiles = new Array(8);
 		for (let row = 0; row < 8; row += 1) {
 			const currRow = new Array(8);
@@ -33,6 +36,8 @@ class TileTracker {
 	}
 
 	track(moveData) {
+		this.startTimer();
+
 		const { to } = moveData;
 		const { player } = moveData;
 		const { piece } = moveData;
@@ -61,6 +66,7 @@ class TileTracker {
 			this.processMove([row, tarKingCol], player, 'Ke');
 			this.processMove([row, tarRookCol], player, rook);
 		}
+		this.endTimer();
 	}
 
 	processMove(to, player, piece) {

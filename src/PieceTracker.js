@@ -1,8 +1,11 @@
+import BaseTracker from './BaseTracker';
+
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
-class PieceTracker {
+class PieceTracker extends BaseTracker {
 	constructor() {
+		super();
 		this.pieces = { b: {}, w: {} };
 
 		// first layer
@@ -29,6 +32,7 @@ class PieceTracker {
 	}
 
 	track(moveData) {
+		this.startTimer();
 		const { player } = moveData;
 		const { piece } = moveData;
 		const { takes } = moveData;
@@ -38,6 +42,7 @@ class PieceTracker {
 				this.processTakes(player, piece, takes.piece);
 			}
 		}
+		this.endTimer();
 	}
 
 	processTakes(player, takingPiece, takenPiece) {

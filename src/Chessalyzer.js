@@ -1,5 +1,9 @@
 import GameProcessor from './GameProcessor';
 
+import PieceTracker from './PieceTracker';
+import TileTracker from './TileTracker';
+import GameTracker from './GameTracker';
+
 const { performance } = require('perf_hooks');
 
 const fs = require('fs');
@@ -33,6 +37,19 @@ class Chessalyzer {
 		 * @member {GameProcessor}
 		 */
 		this.gameProcessor = new GameProcessor();
+
+		this.analyzers = { move: [], game: [] };
+		this.analyzers.move.push(new PieceTracker());
+		this.analyzers.move.push(new TileTracker());
+		this.analyzers.game.push(new GameTracker());
+	}
+
+	addMoveAnalyzer(analyzer) {
+		this.analyzers.move.push(analyzer);
+	}
+
+	addGameAnalyzer(analyzer) {
+		this.analyzers.game.push(analyzer);
 	}
 
 	/**
@@ -57,18 +74,20 @@ class Chessalyzer {
 	startBatch(path, cfg = {}, refreshRate = 250) {
 		return new Promise((resolve) => {
 			const t0 = performance.now();
-			this.gameProcessor.processPGN(path, cfg, refreshRate).then(() => {
-				const t1 = performance.now();
-				const tdiff = Math.round(t1 - t0) / 1000;
-				const mps = Math.round(this.gameProcessor.cntMoves / tdiff);
-				console.log(
-					`${this.gameProcessor.cntGames} games (${
-						this.gameProcessor.cntMoves
-					} moves) processed in ${tdiff}s (${mps} moves/s)`
-				);
-				this.gameProcessor.reset();
-				resolve();
-			});
+			this.gameProcessor
+				.processPGN(path, cfg, refreshRate, this.analyzers)
+				.then(() => {
+					const t1 = performance.now();
+					const tdiff = Math.round(t1 - t0) / 1000;
+					const mps = Math.round(this.gameProcessor.cntMoves / tdiff);
+					console.log(
+						`${this.gameProcessor.cntGames} games (${
+							this.gameProcessor.cntMoves
+						} moves) processed in ${tdiff}s (${mps} moves/s)`
+					);
+					this.gameProcessor.reset();
+					resolve();
+				});
 		});
 	}
 

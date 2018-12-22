@@ -1,7 +1,4 @@
 import ChessBoard from './ChessBoard';
-import PieceTracker from './PieceTracker';
-import TileTracker from './TileTracker';
-import GameTracker from './GameTracker';
 
 const LineByLineReader = require('line-by-line');
 const EventEmitter = require('events');
@@ -29,9 +26,6 @@ class GameProcessor extends EventEmitter {
 		super();
 		this.board = new ChessBoard();
 		this.currentMove = new MoveData();
-		this.pieceTracker = new PieceTracker();
-		this.tileTracker = new TileTracker();
-		this.gameTracker = new GameTracker();
 		this.activePlayer = 0;
 		this.cntMoves = 0;
 		this.cntGames = 0;
@@ -58,7 +52,7 @@ class GameProcessor extends EventEmitter {
 		return cfg;
 	}
 
-	processPGN(path, config, refreshRate) {
+	processPGN(path, config, refreshRate, analyzers) {
 		const cfg = GameProcessor.checkConfig(config);
 
 		return new Promise((resolve, reject) => {
@@ -84,7 +78,7 @@ class GameProcessor extends EventEmitter {
 						.split(' ');
 
 					if (cfg.filter(game) || !cfg.hasFilter) {
-						this.processGame(game);
+						this.processGame(game, analyzers);
 					}
 
 					// emit event
@@ -116,15 +110,12 @@ class GameProcessor extends EventEmitter {
 
 			lr.on('end', () => {
 				console.log('Read entire file.');
-				// console.log(this.pieceTracker.pieces.w.Pe);
-				// console.log(this.tileTracker.tiles);
-				console.log(this.gameTracker.wins);
 				resolve();
 			});
 		});
 	}
 
-	processGame(game) {
+	processGame(game, analyzers) {
 		const { moves } = game;
 
 		for (let i = 0; i < moves.length; i += 1) {
@@ -133,10 +124,10 @@ class GameProcessor extends EventEmitter {
 			// fetch move data into this.currentMove
 			this.parseMove(moves[i]);
 
-			// ___ PLACE MOVE-ANALYZERS HERE ___
-			this.pieceTracker.track(this.currentMove);
-			this.tileTracker.track(this.currentMove);
-			// ___ END
+			// move based analyzers
+			analyzers.move.forEach((a) => {
+				a.track(this.currentMove);
+			});
 
 			this.board.move(this.currentMove);
 		}
@@ -144,9 +135,10 @@ class GameProcessor extends EventEmitter {
 		this.cntGames += 1;
 		this.board.reset();
 
-		// ___ PLACE GAME-ANALYZERS HERE ___
-		this.gameTracker.track(game);
-		// ___ END
+		// game based analyzers
+		analyzers.game.forEach((a) => {
+			a.track(game);
+		});
 	}
 
 	reset() {

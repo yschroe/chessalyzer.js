@@ -16,6 +16,10 @@ for (let i = 0; i < 1; i += 1) {
 			// filter: (game) => game.WhiteElo > 1800
 		}
 	).then(() => {
+		console.log(c1.analyzers.game[0].wins);
+		console.log('Piece: ' + Math.round(c1.analyzers.move[0].time) / 1000);
+		console.log('Tile: ' + Math.round(c1.analyzers.move[1].time) / 1000);
+		console.log('Game: ' + Math.round(c1.analyzers.game[0].time) / 1000);
 		// console.log(c1.dataStore[0].tiles[0][0].defaultPiece.history);
 		// c1.startBatch(
 		// 	'C:/Users/yanni/Downloads/lichess_db_standard_rated_2017-04.pgn'
