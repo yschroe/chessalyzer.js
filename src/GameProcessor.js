@@ -102,7 +102,7 @@ class GameProcessor extends EventEmitter {
 			lr.on('end', () => {
 				console.log('Read entire file.');
 				// console.log(this.pieceTracker.pieces.w.Pe);
-				console.log(this.tileTracker.tiles);
+				// console.log(this.tileTracker.tiles);
 				resolve();
 			});
 		});
@@ -223,11 +223,11 @@ class GameProcessor extends EventEmitter {
 	/**
 	 * Returns the board coordinates for a piece (!= pawn) move.
 	 * @param {string} moveSan The move to be parsed, e.g. 'Be3'.
-	 * @returns {MoveData}
 	 */
 	pieceMove(moveSan) {
 		let move = moveSan;
 		let takes = false;
+		let coords = { from: [], to: [] };
 		const token = move.substring(0, 1);
 
 		// remove token
@@ -241,10 +241,10 @@ class GameProcessor extends EventEmitter {
 
 		// e.g. Re3f5
 		if (move.length === 4) {
-			this.currentMove.from[0] = 8 - parseInt(move.substring(1, 2), 10);
-			this.currentMove.from[1] = files.indexOf(move.substring(0, 1));
-			this.currentMove.to[0] = 8 - parseInt(move.substring(3, 4), 10);
-			this.currentMove.to[1] = files.indexOf(move.substring(2, 3));
+			coords.from[0] = 8 - parseInt(move.substring(1, 2), 10);
+			coords.from[1] = files.indexOf(move.substring(0, 1));
+			coords.to[0] = 8 - parseInt(move.substring(3, 4), 10);
+			coords.to[1] = files.indexOf(move.substring(2, 3));
 
 			// e.g. Ref3
 		} else if (move.length === 3) {
@@ -261,14 +261,27 @@ class GameProcessor extends EventEmitter {
 			} else {
 				mustBeInRow = 8 - parseInt(move.substring(0, 1), 10);
 			}
-			this.findPiece(tarRow, tarCol, mustBeInRow, mustBeInCol, token);
+			coords = this.findPiece(
+				tarRow,
+				tarCol,
+				mustBeInRow,
+				mustBeInCol,
+				token
+			);
 
 			// e.g. Rf3
 		} else {
 			const tarRow = 8 - parseInt(move.substring(1, 2), 10);
 			const tarCol = files.indexOf(move.substring(0, 1));
-			this.findPiece(tarRow, tarCol, -1, -1, token);
+			coords = this.findPiece(tarRow, tarCol, -1, -1, token);
 		}
+
+		// set move data
+		this.currentMove.from = coords.from;
+		this.currentMove.to = coords.to;
+		this.currentMove.piece = this.board.tiles[coords.from[0]][
+			coords.from[1]
+		].name;
 
 		if (takes) {
 			this.currentMove.takes.piece = this.board.tiles[
@@ -341,11 +354,7 @@ class GameProcessor extends EventEmitter {
 			this.board.printPosition();
 		}
 
-		this.currentMove.from = move.from;
-		this.currentMove.to = move.to;
-		this.currentMove.piece = this.board.tiles[move.from[0]][
-			move.from[1]
-		].name;
+		return move;
 	}
 
 	/**
