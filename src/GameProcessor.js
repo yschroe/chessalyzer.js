@@ -40,10 +40,6 @@ class GameProcessor extends EventEmitter {
 			? config.cntGames
 			: Infinity;
 
-		cfg.stats = Object.prototype.hasOwnProperty.call(config, 'stats')
-			? config.stats
-			: {};
-
 		// TODO: currently without function
 		cfg.split = Object.prototype.hasOwnProperty.call(config, 'split')
 			? config.split
@@ -54,6 +50,7 @@ class GameProcessor extends EventEmitter {
 
 	processPGN(path, config, refreshRate, analyzers) {
 		const cfg = GameProcessor.checkConfig(config);
+		const cntGameAnalyers = analyzers.game.length;
 
 		return new Promise((resolve, reject) => {
 			const lr = new LineByLineReader(path, { skipEmptyLines: true });
@@ -62,8 +59,10 @@ class GameProcessor extends EventEmitter {
 			// process current line
 			const processLine = (line) => {
 				// data tag
-				if (line.startsWith('[')) {
-					// && cfg.hasFilter
+				if (
+					line.startsWith('[') &&
+					(cfg.hasFilter || cntGameAnalyers > 0)
+				) {
 					const key = line.match(/\[(.*?)\s/)[1];
 					const value = line.match(/"(.*?)"/)[1];
 
@@ -398,11 +397,11 @@ class GameProcessor extends EventEmitter {
 				const col2 = to[1] - j;
 
 				if (
+					!obstructed1 &&
 					row1 >= 0 &&
 					row1 < 8 &&
 					col1 >= 0 &&
 					col1 < 8 &&
-					!obstructed1 &&
 					this.board.tiles[row1][col1] !== null
 				) {
 					const piece = this.board.tiles[row1][col1];
@@ -423,11 +422,11 @@ class GameProcessor extends EventEmitter {
 				}
 
 				if (
+					!obstructed2 &&
 					row2 >= 0 &&
 					row2 < 8 &&
 					col2 >= 0 &&
 					col2 < 8 &&
-					!obstructed2 &&
 					this.board.tiles[row2][col2] !== null
 				) {
 					const piece = this.board.tiles[row2][col2];
@@ -479,11 +478,11 @@ class GameProcessor extends EventEmitter {
 				const col2 = to[1];
 
 				if (
+					!obstructed1 &&
 					row1 >= 0 &&
 					row1 < 8 &&
 					col1 >= 0 &&
 					col1 < 8 &&
-					!obstructed1 &&
 					this.board.tiles[row1][col1] !== null
 				) {
 					const piece = this.board.tiles[row1][col1];
@@ -503,11 +502,11 @@ class GameProcessor extends EventEmitter {
 					}
 				}
 				if (
+					!obstructed2 &&
 					row2 >= 0 &&
 					row2 < 8 &&
 					col2 >= 0 &&
 					col2 < 8 &&
-					!obstructed2 &&
 					this.board.tiles[row2][col2] !== null
 				) {
 					const piece = this.board.tiles[row2][col2];

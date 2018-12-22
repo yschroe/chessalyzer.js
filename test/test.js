@@ -8,18 +8,14 @@ for (let i = 0; i < 1; i += 1) {
 		'C:/Users/yanni/Documents/Workspace/JavaScript/Archiv/Chessalyzer_p5js/lichess_db_standard_rated_2013-01.pgn',
 		{
 			split: false,
-			cntGames: 100000,
-			stats: {
-				logTileOccupation: true,
-				logPieceHistory: false
-			}
-			// filter: (game) => game.WhiteElo > 1800
+			cntGames: 100000
+			//filter: (game) => game.WhiteElo > 1800
 		}
 	).then(() => {
-		console.log(c1.analyzers.game[0].wins);
 		console.log('Piece: ' + Math.round(c1.analyzers.move[0].time) / 1000);
 		console.log('Tile: ' + Math.round(c1.analyzers.move[1].time) / 1000);
 		console.log('Game: ' + Math.round(c1.analyzers.game[0].time) / 1000);
+		// c1.saveData('C:/Users/yanni/Documents/Workspace/JavaScript/save.json');
 		// console.log(c1.dataStore[0].tiles[0][0].defaultPiece.history);
 		// c1.startBatch(
 		// 	'C:/Users/yanni/Downloads/lichess_db_standard_rated_2017-04.pgn'

@@ -58,11 +58,6 @@ class Chessalyzer {
 	 * @param {Object} [cfg = {}]
 	 * @param {Function} [cfg.filter = ()=>true] - Filter function for selecting games
 	 * @param {Number} [cfg.cntGames = Infinite ] - Max amount of games to process
-	 * @param {Object} cfg.stats - Configuration for data aquisition
-	 * @param {Boolean} [cfg.stats.logPieceHistory = false] - Option for logging the position
-	 * of every piece.
-	 * @param {Boolean} [cfg.stats.logTileOccupation = true] - Option for logging the piece
-	 * on every tile after every move.
 	 * @param {Number} [bank = 0] - The data bank the results shall be saved to
 	 * @param {Number} [refreshRate = 250] - Defines how often the current status of the
 	 *  analysis shall be exposed. Every number of processed games an event is emitted
@@ -86,6 +81,9 @@ class Chessalyzer {
 						} moves) processed in ${tdiff}s (${mps} moves/s)`
 					);
 					this.gameProcessor.reset();
+					this.dataStore[0] = JSON.parse(
+						JSON.stringify(this.analyzers)
+					);
 					resolve();
 				});
 		});
