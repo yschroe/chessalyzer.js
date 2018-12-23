@@ -8,12 +8,10 @@ class BaseTracker {
 		this.t0 = 0;
 
 		if (this.track === undefined) {
-			throw new TypeError(
-				'Your analyzer must implement a track() method!'
-			);
+			throw new Error('Your analyzer must implement a track() method!');
 		}
 		if (this.type === undefined) {
-			throw new TypeError('Your analyzer must specify a type!');
+			throw new Error('Your analyzer must specify a type!');
 		}
 	}
 

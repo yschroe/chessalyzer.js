@@ -13,51 +13,6 @@ const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
 /** Main class for batch processing and generating heat maps */
 class Chessalyzer {
-	constructor() {
-		/**
-		 * Contains the tracked data of the processed PGN files. Has two different banks for
-		 * heat map comparison. Each object contains the following keys:
-		 * <ul>
-		 * <li>data: {cntMoves, cntGames}. Information about the count of processed moves and games</li>
-		 * <li>tiles: 8x8 array of {@link ChessTile}s.</li>
-		 * </ul>
-		 * @member {Object[]}
-		 */
-		this.dataStore = new Array(2);
-
-		/**
-		 * Does the analysis part
-		 * @private
-		 * @member {GameProcessor}
-		 */
-		this.gameProcessor = new GameProcessor();
-
-		// this.analyzers = { move: [], game: [] };
-		// this.addMoveAnalyzer(new PieceTracker());
-		// this.addMoveAnalyzer(new TileTracker());
-		// this.addGameAnalyzer(new GameTracker());
-	}
-
-	// addMoveAnalyzer(analyzer) {
-	// 	this.analyzers.move.push(analyzer);
-	// }
-
-	// addGameAnalyzer(analyzer) {
-	// 	this.analyzers.game.push(analyzer);
-	// }
-
-	static getGameTracker() {
-		return new GameTracker();
-	}
-
-	static getPieceTracker() {
-		return new PieceTracker();
-	}
-
-	static getTileTracker() {
-		return new TileTracker();
-	}
-
 	/**
 	 * Starts the batch processing for the selected file
 	 * @param {String} path - Path to the PGN file that should be analyzed
@@ -72,12 +27,22 @@ class Chessalyzer {
 	 *  e.g. to update an UI.
 	 * @returns {Promise} Promise that contains the number of processed games when finished
 	 */
-	static startBatch(path, cfg = {}, analyzers, refreshRate = 250) {
+	static startBatch(
+		path,
+		cfg = {},
+		analyzers,
+		callback = { fun: () => {}, rate: 250 }
+	) {
 		const gameProcessor = new GameProcessor();
+
+		gameProcessor.on('status', (gameCnt) => {
+			callback.fun(gameCnt);
+		});
+
 		return new Promise((resolve) => {
 			const t0 = performance.now();
 			gameProcessor
-				.processPGN(path, cfg, analyzers, refreshRate)
+				.processPGN(path, cfg, analyzers, callback.rate)
 				.then(() => {
 					const t1 = performance.now();
 					const tdiff = Math.round(t1 - t0) / 1000;
@@ -88,11 +53,6 @@ class Chessalyzer {
 							gameProcessor.cntMoves
 						} moves) processed in ${tdiff}s (${mps} moves/s)`
 					);
-
-					// this.gameProcessor.reset();
-					// this.dataStore[bank] = JSON.parse(
-					// 	JSON.stringify(this.analyzers)
-					// );
 					resolve();
 				});
 		});
@@ -101,15 +61,15 @@ class Chessalyzer {
 	/**
 	 * Saves a completed batch run to a JSON file
 	 * @param {String} path - Path the data file shall be saved to
-	 * @param {Number} [bank = 0] - The data bank the data shall be taken from
+	 * @param {Number} data - The data bank the data shall be taken from
 	 */
-	saveData(path, bank = 0) {
-		fs.writeFile(path, JSON.stringify(this.dataStore[bank]), (err) => {
+	static saveData(path, data) {
+		fs.writeFile(path, JSON.stringify(data), (err) => {
 			if (err) {
 				console.error(err);
 				return;
 			}
-			console.log('File has been created');
+			console.log('File has been created.');
 		});
 	}
 
@@ -119,10 +79,10 @@ class Chessalyzer {
 	 * @param {Number} [bank = 0] - The data bank the data shall be loaded to.
 	 * @returns {Number} Count of loaded games
 	 */
-	loadData(path, bank) {
-		this.dataStore[bank] = JSON.parse(fs.readFileSync(path, 'utf8'));
-		console.log(`File '${path}' has been loaded to bank ${bank}.`);
-		return this.dataStore[bank].cntGames;
+	static loadData(path) {
+		const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+		console.log(`File '${path}' has been loaded.`);
+		return data;
 	}
 
 	/**
@@ -189,20 +149,20 @@ class Chessalyzer {
 	 * <li>The maximum value in the heatmap.</li>
 	 * </ol>
 	 */
-	generateComparisonHeatmap(square, fun, bank1 = 0, bank2 = 1, optData) {
+	static generateComparisonHeatmap(square, fun, data1, data2, optData) {
 		const map = [];
 		let max = 0;
 		let min = 100000;
 
 		// comparison heatmap
-		const data0 = this.generateHeatmap(bank1, square, fun, optData);
-		const data1 = this.generateHeatmap(bank2, square, fun, optData);
+		const map0 = Chessalyzer.generateHeatmap(data1, square, fun, optData);
+		const map1 = Chessalyzer.generateHeatmap(data2, square, fun, optData);
 
 		for (let i = 0; i < 8; i += 1) {
 			const dataRow = new Array(8);
 			for (let j = 0; j < 8; j += 1) {
-				const a = data0[0][i][j];
-				const b = data1[0][i][j];
+				const a = map0[0][i][j];
+				const b = map1[0][i][j];
 				if (a === 0 || b === 0) dataRow[j] = 0;
 				else dataRow[j] = (a >= b ? a / b - 1 : -b / a + 1) * 100;
 
@@ -233,5 +193,9 @@ class Chessalyzer {
 		return list;
 	}
 }
+
+Chessalyzer.GameTracker = GameTracker;
+Chessalyzer.PieceTracker = PieceTracker;
+Chessalyzer.TileTracker = TileTracker;
 
 export default Chessalyzer;

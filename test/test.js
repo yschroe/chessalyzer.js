@@ -8,9 +8,10 @@ const fun = (data, sqrCoords, loopCoords) => {
 	return val;
 };
 
-const a = Chessalyzer.getGameTracker();
-const b = Chessalyzer.getPieceTracker();
-const c = Chessalyzer.getTileTracker();
+// const a = Chessalyzer.getGameTracker();
+const a = new Chessalyzer.GameTracker();
+const b = new Chessalyzer.PieceTracker();
+const c = new Chessalyzer.TileTracker();
 
 for (let i = 0; i < 1; i += 1) {
 	Chessalyzer.startBatch(
@@ -20,15 +21,27 @@ for (let i = 0; i < 1; i += 1) {
 			cntGames: 100000
 			//filter: (game) => game.WhiteElo > 1800
 		},
-		[a, b, c]
+		[a, b],
+		{ fun: (cnt) => console.log(cnt), rate: 2500 }
 	).then(() => {
-		// console.log(a);
+		console.log(a);
+		Chessalyzer.startBatch(
+			'C:/Users/yanni/Documents/Workspace/JavaScript/Archiv/Chessalyzer_p5js/lichess_db_standard_rated_2013-01.pgn',
+			{
+				split: false,
+				cntGames: 1000
+				//filter: (game) => game.WhiteElo > 1800
+			},
+			[a]
+		).then(() => {
+			console.log(a);
+		});
 		// console.log(b);
 		// console.log('Piece: ' + Math.round(c1.analyzers.move[0].time) / 1000);
 		// console.log('Tile: ' + Math.round(c1.analyzers.move[1].time) / 1000);
 		// console.log('Game: ' + Math.round(c1.analyzers.game[0].time) / 1000);
-		let stats = Chessalyzer.generateHeatmap(c, 'a1', fun);
-		console.log(stats);
+		// let stats = Chessalyzer.generateHeatmap(c, 'a1', fun);
+		// console.log(stats);
 		// c1.saveData('C:/Users/yanni/Documents/Workspace/JavaScript/save.json');
 		// console.log(c1.dataStore[0].tiles[0][0].defaultPiece.history);
 		// c1.startBatch(
