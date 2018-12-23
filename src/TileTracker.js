@@ -14,7 +14,7 @@ class TileStats {
 
 class TileTracker extends BaseTracker {
 	constructor() {
-		super();
+		super('move');
 		this.tiles = new Array(8);
 		for (let row = 0; row < 8; row += 1) {
 			const currRow = new Array(8);

@@ -11,13 +11,6 @@ const fs = require('fs');
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
-/**
- * @typedef {Object} cfg
- * @property {Function} filter - Descr
- * @property {Number} cntGames - Descr
- * @property {Boolean} split - Descr
- */
-
 /** Main class for batch processing and generating heat maps */
 class Chessalyzer {
 	constructor() {
@@ -31,6 +24,7 @@ class Chessalyzer {
 		 * @member {Object[]}
 		 */
 		this.dataStore = new Array(2);
+
 		/**
 		 * Does the analysis part
 		 * @private
@@ -38,18 +32,30 @@ class Chessalyzer {
 		 */
 		this.gameProcessor = new GameProcessor();
 
-		this.analyzers = { move: [], game: [] };
-		this.analyzers.move.push(new PieceTracker());
-		this.analyzers.move.push(new TileTracker());
-		this.analyzers.game.push(new GameTracker());
+		// this.analyzers = { move: [], game: [] };
+		// this.addMoveAnalyzer(new PieceTracker());
+		// this.addMoveAnalyzer(new TileTracker());
+		// this.addGameAnalyzer(new GameTracker());
 	}
 
-	addMoveAnalyzer(analyzer) {
-		this.analyzers.move.push(analyzer);
+	// addMoveAnalyzer(analyzer) {
+	// 	this.analyzers.move.push(analyzer);
+	// }
+
+	// addGameAnalyzer(analyzer) {
+	// 	this.analyzers.game.push(analyzer);
+	// }
+
+	static getGameTracker() {
+		return new GameTracker();
 	}
 
-	addGameAnalyzer(analyzer) {
-		this.analyzers.game.push(analyzer);
+	static getPieceTracker() {
+		return new PieceTracker();
+	}
+
+	static getTileTracker() {
+		return new TileTracker();
 	}
 
 	/**
@@ -66,24 +72,27 @@ class Chessalyzer {
 	 *  e.g. to update an UI.
 	 * @returns {Promise} Promise that contains the number of processed games when finished
 	 */
-	startBatch(path, cfg = {}, refreshRate = 250) {
+	static startBatch(path, cfg = {}, analyzers, refreshRate = 250) {
+		const gameProcessor = new GameProcessor();
 		return new Promise((resolve) => {
 			const t0 = performance.now();
-			this.gameProcessor
-				.processPGN(path, cfg, refreshRate, this.analyzers)
+			gameProcessor
+				.processPGN(path, cfg, analyzers, refreshRate)
 				.then(() => {
 					const t1 = performance.now();
 					const tdiff = Math.round(t1 - t0) / 1000;
-					const mps = Math.round(this.gameProcessor.cntMoves / tdiff);
+					const mps = Math.round(gameProcessor.cntMoves / tdiff);
+
 					console.log(
-						`${this.gameProcessor.cntGames} games (${
-							this.gameProcessor.cntMoves
+						`${gameProcessor.cntGames} games (${
+							gameProcessor.cntMoves
 						} moves) processed in ${tdiff}s (${mps} moves/s)`
 					);
-					this.gameProcessor.reset();
-					this.dataStore[0] = JSON.parse(
-						JSON.stringify(this.analyzers)
-					);
+
+					// this.gameProcessor.reset();
+					// this.dataStore[bank] = JSON.parse(
+					// 	JSON.stringify(this.analyzers)
+					// );
 					resolve();
 				});
 		});
@@ -142,7 +151,7 @@ class Chessalyzer {
 	 * <li>The maximum value in the heatmap.</li>
 	 * </ol>
 	 */
-	generateHeatmap(bank, square, fun, optData) {
+	static generateHeatmap(data, square, fun, optData) {
 		const coords = GameProcessor.algebraicToCoords(square);
 		const map = [];
 		let max = 0;
@@ -151,7 +160,7 @@ class Chessalyzer {
 		for (let i = 0; i < 8; i += 1) {
 			const dataRow = new Array(8);
 			for (let j = 0; j < 8; j += 1) {
-				dataRow[j] = fun(this.dataStore[bank], coords, [i, j], optData);
+				dataRow[j] = fun(data, coords, [i, j], optData);
 				if (dataRow[j] > max) max = dataRow[j];
 				if (dataRow[j] < min) min = dataRow[j];
 			}

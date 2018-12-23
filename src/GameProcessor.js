@@ -29,6 +29,8 @@ class GameProcessor extends EventEmitter {
 		this.activePlayer = 0;
 		this.cntMoves = 0;
 		this.cntGames = 0;
+		this.gameAnalyzers = [];
+		this.moveAnalyzers = [];
 	}
 
 	static checkConfig(config) {
@@ -48,9 +50,18 @@ class GameProcessor extends EventEmitter {
 		return cfg;
 	}
 
-	processPGN(path, config, refreshRate, analyzers) {
+	processPGN(path, config, analyzers, refreshRate) {
 		const cfg = GameProcessor.checkConfig(config);
-		const cntGameAnalyers = analyzers.game.length;
+
+		analyzers.forEach((a) => {
+			if (a.type === 'move') {
+				this.moveAnalyzers.push(a);
+			} else if (a.type === 'game') {
+				this.gameAnalyzers.push(a);
+			}
+		});
+
+		const cntGameAnalyers = this.gameAnalyzers.length;
 
 		return new Promise((resolve, reject) => {
 			const lr = new LineByLineReader(path, { skipEmptyLines: true });
@@ -77,7 +88,7 @@ class GameProcessor extends EventEmitter {
 						.split(' ');
 
 					if (cfg.filter(game) || !cfg.hasFilter) {
-						this.processGame(game, analyzers);
+						this.processGame(game);
 					}
 
 					// emit event
@@ -114,7 +125,7 @@ class GameProcessor extends EventEmitter {
 		});
 	}
 
-	processGame(game, analyzers) {
+	processGame(game) {
 		const { moves } = game;
 
 		for (let i = 0; i < moves.length; i += 1) {
@@ -124,7 +135,7 @@ class GameProcessor extends EventEmitter {
 			this.parseMove(moves[i]);
 
 			// move based analyzers
-			analyzers.move.forEach((a) => {
+			this.moveAnalyzers.forEach((a) => {
 				a.track(this.currentMove);
 			});
 
@@ -135,7 +146,7 @@ class GameProcessor extends EventEmitter {
 		this.board.reset();
 
 		// game based analyzers
-		analyzers.game.forEach((a) => {
+		this.gameAnalyzers.forEach((a) => {
 			a.track(game);
 		});
 	}

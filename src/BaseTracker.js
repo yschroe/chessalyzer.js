@@ -1,7 +1,8 @@
 const { performance } = require('perf_hooks');
 
 class BaseTracker {
-	constructor() {
+	constructor(type) {
+		this.type = type;
 		this.profilingActive = false;
 		this.time = 0;
 		this.t0 = 0;
@@ -10,6 +11,9 @@ class BaseTracker {
 			throw new TypeError(
 				'Your analyzer must implement a track() method!'
 			);
+		}
+		if (this.type === undefined) {
+			throw new TypeError('Your analyzer must specify a type!');
 		}
 	}
 

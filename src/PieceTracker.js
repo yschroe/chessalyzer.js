@@ -5,7 +5,7 @@ const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
 class PieceTracker extends BaseTracker {
 	constructor() {
-		super();
+		super('move');
 		this.b = {};
 		this.w = {};
 
