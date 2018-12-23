@@ -19,13 +19,11 @@ class Chessalyzer {
 	 * @param {Object} [cfg = {}]
 	 * @param {Function} [cfg.filter = ()=>true] - Filter function for selecting games
 	 * @param {Number} [cfg.cntGames = Infinite ] - Max amount of games to process
-	 * @param {Number} [bank = 0] - The data bank the results shall be saved to
-	 * @param {Number} [refreshRate = 250] - Defines how often the current status of the
-	 *  analysis shall be exposed. Every number of processed games an event is emitted
-	 *  containing the current number of processed games. The event can be handled via
-	 *  "chessalyzer.gameProcessor.on('status', function(gameCnt) {// do handling here});",
-	 *  e.g. to update an UI.
-	 * @returns {Promise} Promise that contains the number of processed games when finished
+	 * @param {Array} analyzers - The analysis functions that shall be run during batch processing
+	 * @param {Object} callback - Callback object
+	 * @param {Function} [callback.fun] - Callback function that is called every callback.rate games
+	 * @param {Function} [callback.rate] - Every 'rate' games the callback function is called.
+	 * @returns {Promise}
 	 */
 	static startBatch(
 		path,
@@ -61,7 +59,7 @@ class Chessalyzer {
 	/**
 	 * Saves a completed batch run to a JSON file
 	 * @param {String} path - Path the data file shall be saved to
-	 * @param {Number} data - The data bank the data shall be taken from
+	 * @param {Object} data - The data that shall be saved
 	 */
 	static saveData(path, data) {
 		fs.writeFile(path, JSON.stringify(data), (err) => {
@@ -76,8 +74,7 @@ class Chessalyzer {
 	/**
 	 * Loads the stats of a previous batch run (JSON) to a data bank
 	 * @param {String} path - Path the data file shall be loaded from
-	 * @param {Number} [bank = 0] - The data bank the data shall be loaded to.
-	 * @returns {Number} Count of loaded games
+	 * @returns {Object} Returns the loaded data
 	 */
 	static loadData(path) {
 		const data = JSON.parse(fs.readFileSync(path, 'utf8'));
@@ -87,7 +84,7 @@ class Chessalyzer {
 
 	/**
 	 * Generates a heatmap out of the tracked data.
-	 * @param {Number} bank - The data bank the data shall be taken from
+	 * @param {Object} data - Where the data shall be taken from
 	 * @param {String} square - The square the data shall be generated for. For example, if you
 	 * wanted to know how often a specific piece was on a specific tile, you would pass the
 	 * identifier of the tile to the function, e.g. "a2"
@@ -139,8 +136,8 @@ class Chessalyzer {
 	 * @param {String} square - The square the data shall be generated for.
 	 * @param {Function} fun - The evaluation function that generates the heatmap out of the
 	 * saved data. See {@link Chessalyzer#generateHeatmap} for a more detailed description.
-	 * @param {Number} [bank1 = 0] - Bank number of dataset 1
-	 * @param {Number} [bank2 = 1] - Bank number of dataset 2
+	 * @param {Object} data1 - Dataset 1
+	 * @param {Object} data2 - Dataset 2
 	 * @param {} optData - Optional data you may need in your eval function
 	 * @returns {Array} Array with 3 entries:
 	 * <ol>
