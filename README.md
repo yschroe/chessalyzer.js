@@ -2,12 +2,15 @@
 
 A JavaScript library for batch analyzing chess games.
 
+NOTE: In Version 0.1.0 the API changed dramatically. Following description is not up to date!
+
 ## Features
 
 -   Batch process PGN files
--   Replays each game internally and tracks statistics for each piece and tile
+-   Tracks statistics for each piece and tile
+-   Fully modular, track only the stats you need to preserve speed
 -   Generate heatmaps out of the generated data
--   It's fast (500.000 moves/s on a i5-2500k)
+-   It's fast (>800.000 moves/s on a i5-7200U; only PGN parsing)
 
 ## Usage
 
@@ -17,11 +20,10 @@ A JavaScript library for batch analyzing chess games.
 npm install --save chessalyzer.js
 ```
 
-2. Import the Chessalyzer object and create a new instance
+2. Import the Chessalyzer object
 
 ```javascript
 const Chessalyzer = require('chessalyzer.js');
-const chessalyzer = new Chessalyzer();
 ```
 
 3. Check out the examples or the [docs](https://peterpain.github.io/chessalyzer.js/Chessalyzer.html) for a full functional description.
@@ -33,10 +35,9 @@ Let's start with a basic example:
 ```javascript
 // import the library
 const Chessalyzer = require('chessalyzer.js');
-const chessalyzer = new Chessalyzer();
 
 // start a batch analysis for the PGN file at <pathToPgnFile>
-chessalyzer.startBatch('<pathToPgnFile>').then(() => {
+Chessalyzer.startBatch('<pathToPgnFile>').then(() => {
 	// create a analysis function that evaluates a specific stat
 	// in this example we want to know how often each piece was on the tile at sqrCoords
 	let fun = (board, sqrCoords, loopCoords) => {
@@ -195,7 +196,7 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 -   [ ] Update jsdoc
 -   [ ] Track statistics for promoted pieces and en passant moves. Currently stats for those are not tracked
 -   [ ] Provide function for parsing notation from algebraic (e4 e5) to long algebraic (e2-e4 e7-e5). Internally already available, but no API yet.
--                   [ ] If possible, rebuilt code to be able to just run a comparison function between 'before move' and 'after move' and generate all stats in that function. Currently the stats are tracked at multiple places which makes adding more stats a bit confusing.
+-                     [ ] If possible, rebuilt code to be able to just run a comparison function between 'before move' and 'after move' and generate all stats in that function. Currently the stats are tracked at multiple places which makes adding more stats a bit confusing.
 
 ## Related
 
