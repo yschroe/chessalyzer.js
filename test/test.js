@@ -21,27 +21,25 @@ for (let i = 0; i < 1; i += 1) {
 		[a, b, c],
 		{
 			split: false,
-			cntGames: 1000
+			cntGames: 100000
 			//filter: (game) => game.WhiteElo > 1800
-		},
-		{ fun: (cnt) => console.log(cnt), rate: 2500 }
+		}
+		//{ fun: (cnt) => console.log(cnt), rate: 2500 }
 	).then(() => {
-		// console.log(a);
-
-		let stats = Chessalyzer.generateHeatmap(c, 'a1', fun);
-		console.log(stats);
-
-		Chessalyzer.startBatch(
-			'C:/Users/yanni/Documents/Workspace/JavaScript/Archiv/Chessalyzer_p5js/lichess_db_standard_rated_2013-01.pgn',
-			a,
-			{
-				split: false,
-				cntGames: 1000
-				//filter: (game) => game.WhiteElo > 1800
-			}
-		).then(() => {
-			console.log(a);
-		});
+		console.log(c.tiles[0][1].b.Nb);
+		// let stats = Chessalyzer.generateHeatmap(c, 'a1', fun);
+		// console.log(stats);
+		// Chessalyzer.startBatch(
+		// 	'C:/Users/yanni/Documents/Workspace/JavaScript/Archiv/Chessalyzer_p5js/lichess_db_standard_rated_2013-01.pgn',
+		// 	a,
+		// 	{
+		// 		split: false,
+		// 		cntGames: 1000
+		// 		//filter: (game) => game.WhiteElo > 1800
+		// 	}
+		// ).then(() => {
+		// 	console.log(a);
+		// });
 		// console.log(b);
 		// console.log('Piece: ' + Math.round(c1.analyzers.move[0].time) / 1000);
 		// console.log('Tile: ' + Math.round(c1.analyzers.move[1].time) / 1000);

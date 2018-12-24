@@ -81,11 +81,11 @@ let fil = function(game) {
 	return game.WhiteElo > 2000;
 };
 
-chessalyzer
-	.startBatch('<pathToPgnFile>', tileTracker, { filter: fil })
-	.then(() => {
+Chessalyzer.startBatch('<pathToPgnFile>', tileTracker, { filter: fil }).then(
+	() => {
 		// do something
-	});
+	}
+);
 ```
 
 ### Compare Analyses
@@ -102,32 +102,33 @@ let fil2 = function(game) {
 };
 
 // create a evaluation function for the heat map
-// (sqrCoords isn't used by this analysis, but needs to be an argument nevertheless)
-let fun = (board, sqrCoords, loopCoords) => {
-	let val = board.tiles[loopCoords[0]][loopCoords[1]].stats.cntHasPiece.white;
+// (sqrData isn't used by this analysis, but needs to be an argument nevertheless)
+let fun = (data, sqrData, loopSqrData) => {
+	let val = data.tiles[loopCoords[0]][loopCoords[1]].stats.cntHasPiece.white;
 	val = (val * 100) / board.stats.cntMoves;
 	return val;
 };
 
-// start the first analysis and save the results to bank 0
-chessalyzer
-	.startBatch('<pathToPgnFile>', { filter: fil1, cntGames: 1000 }, 0)
-	.then(() => {
-		// start the second analysis and save the results to bank 1
-		chessalyzer
-			.startBatch('<pathToPgnFile>', { filter: fil2, cntGames: 1000 }, 1)
-			.then(() => {
-				// generate the comparison heatmap
-				let heatmapData = chessalyzer.generateComparisonHeatmap(
-					'a1', // this analysis function doesn't depent on a specific square, so pass a random square
-					fun,
-					0, // first bank
-					1 // second bank
-				);
+// start the first analysis
+Chessalyzer.startBatch('<pathToPgnFile>', {
+	filter: fil1,
+	cntGames: 1000
+}).then(() => {
+	// start the second analysis
+	Chessalyzer.startBatch(
+		'<pathToPgnFile>',
+		{ filter: fil2, cntGames: 1000 },
+		1
+	).then(() => {
+		// generate the comparison heatmap
+		let heatmapData = Chessalyzer.generateComparisonHeatmap(
+			'a1', // this analysis function doesn't depent on a specific square, so pass a random square
+			fun
+		);
 
-				// use heatmapData
-			});
+		// use heatmapData
 	});
+});
 ```
 
 ## Heatmap analysis functions
@@ -182,21 +183,28 @@ If you want to have other stats tracked you can easily create a custom tracker. 
 Your tracker must have the following two properties:
 
 -   `type`:  
-    The type of your tracker. Either move based (`type = 'move'`) or game based (`type = 'game'`).
+    The type of your tracker. Either move based (`this.type = 'move'`) or game based (`this.type = 'game'`).
 
 -   `track(data)`:  
     The main analysis function that is called during the PGN processing. Depending on your `type` the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The `data` object contains the following properties:
+
     -   For move-typed trackers:
+
         -   `san`: The processed move in standard algebraic notation (e.g. `'Nxe3'`)
         -   `player`: The moving player (`'b'` or `'w'`)
         -   `piece`: The moving piece (e.g. `Pa` for the a-pawn)
         -   `castles`: If the move is castling it's either `'O-O'` or `'O-O-O'`. Empty string else
         -   `takes`: If the move contains taking another piece, takes is an object with following properties:
+
             -   `piece`: The piece that is taken (e.g. `Pa` for the a-pawn)
             -   `pos`: Board coordinates of the taken piece. Is equal to the `to` property in all cases but 'en passant'
+
+            Is `{}` if no piece is taken
+
         -   `promotesTo`: In case of pawn promotion contains the piece the pawn promotes to (e.g. 'Q'), empty string else
         -   `from`: Start coordinates of the move (e.g. `[0,0]`). `[-1,-1]` in case the move is the result (e.g. `1-0`).
         -   `to`: Target coordinates of the move (e.g. `[7,0]`). `[-1,-1]` in case the move is the result (e.g. `1-0`).
+
     -   For game-typed trackers:  
         `data` is an object that contains `{key: value}` entries, where `key` is the property in the PGN (e.g. `'WhiteElo'`, case sensitive) and `value` is the respective value of the property. The property `data.moves` is an array that contains the moves of the game in standard algebraic notation.
 
@@ -225,7 +233,8 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 ## Changelog
 
-0.1.0: Significantly changed the API to allow for more modularity. If you are already using an older version (<=0.4.0) consider changing your code to adapt to the new API.
+-   0.1.0:  
+    Significantly changed the API to allow for more modularity. If you are already using an older version (<=0.4.0) consider changing your code to adapt to the new API.
 
 ## TODOs
 

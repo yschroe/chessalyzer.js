@@ -163,11 +163,11 @@ class Chessalyzer {
 	 * and then the relative differences between both banks are calculated. For example,
 	 * if the heatmap value for "a1" of bank1 is 10 and the value of bank2 is 5, the returned
 	 * value for "a1" would be 100% ([[10/5] -1] *100).
+	 * @param {Object} data1 - Dataset 1
+	 * @param {Object} data2 - Dataset 2
 	 * @param {String} square - The square the data shall be generated for.
 	 * @param {Function} fun - The evaluation function that generates the heatmap out of the
 	 * saved data. See {@link Chessalyzer#generateHeatmap} for a more detailed description.
-	 * @param {Object} data1 - Dataset 1
-	 * @param {Object} data2 - Dataset 2
 	 * @param {} optData - Optional data you may need in your eval function
 	 * @returns {Array} Array with 3 entries:
 	 * <ol>
@@ -176,7 +176,7 @@ class Chessalyzer {
 	 * <li>The maximum value in the heatmap.</li>
 	 * </ol>
 	 */
-	static generateComparisonHeatmap(square, fun, data1, data2, optData) {
+	static generateComparisonHeatmap(data1, data2, square, fun, optData) {
 		const map = [];
 		let max = 0;
 		let min = 100000;
