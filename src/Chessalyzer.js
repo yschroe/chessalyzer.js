@@ -16,10 +16,10 @@ class Chessalyzer {
 	/**
 	 * Starts the batch processing for the selected file
 	 * @param {String} path - Path to the PGN file that should be analyzed
+	 * @param {Array} analyzers - The analysis functions that shall be run during batch processing
 	 * @param {Object} [cfg = {}]
 	 * @param {Function} [cfg.filter = ()=>true] - Filter function for selecting games
 	 * @param {Number} [cfg.cntGames = Infinite ] - Max amount of games to process
-	 * @param {Array} analyzers - The analysis functions that shall be run during batch processing
 	 * @param {Object} callback - Callback object
 	 * @param {Function} [callback.fun] - Callback function that is called every callback.rate games
 	 * @param {Function} [callback.rate] - Every 'rate' games the callback function is called.
@@ -27,8 +27,8 @@ class Chessalyzer {
 	 */
 	static startBatch(
 		path,
-		cfg = {},
 		analyzers,
+		cfg = {},
 		callback = { fun: () => {}, rate: 250 }
 	) {
 		const gameProcessor = new GameProcessor();
@@ -85,20 +85,12 @@ class Chessalyzer {
 	/**
 	 * Generates a heatmap out of the tracked data.
 	 * @param {Object} data - Where the data shall be taken from
-	 * @param {String} square - The square the data shall be generated for. For example, if you
+	 * @param {String|Array[Number]} square - The square the data shall be generated for.
+	 * For example, if you
 	 * wanted to know how often a specific piece was on a specific tile, you would pass the
 	 * identifier of the tile to the function, e.g. "a2"
 	 * @param {Function} fun - The evaluation function that generates the heatmap out of the
-	 * saved data. This function gets passed the following arguments:
-	 * <ol>
-	 * <li>The complete data stored in the chosen bank. See the member description of the dataStore
-	 * member to see which data is available.</li>
-	 * <li>The coords of the tile passed as the 'square' argument.</li>
-	 * <li>The current coordinates of the tile the data should be generated for.
-	 * The function must return a Number with the heat map value for the square passed as the
-	 * third argument.</li>
-	 * <li>An optional data field, you passed for 'optData'</li>
-	 * </ol>
+	 * data.
 	 * See ./src/exampleHeatmapConfig for examples of such a function.
 	 * @param {} optData - Optional data you may need in your eval function
 	 * @returns {Array} Array with 3 entries:
@@ -109,7 +101,26 @@ class Chessalyzer {
 	 * </ol>
 	 */
 	static generateHeatmap(data, square, fun, optData) {
-		const coords = GameProcessor.algebraicToCoords(square);
+		let sqrCoords;
+		let sqrAlg;
+
+		// square input type 'a2'
+		if (typeof square === 'string') {
+			sqrCoords = GameProcessor.algebraicToCoords(square);
+			sqrAlg = square;
+
+			// input type [6,0]
+		} else {
+			sqrCoords = square;
+			sqrAlg = GameProcessor.coordsToAlgebraic(square);
+		}
+
+		const startingPiece = Chessalyzer.getStartingPiece(sqrCoords);
+		const sqrData = {
+			alg: sqrAlg,
+			coords: sqrCoords,
+			piece: startingPiece
+		};
 		const map = [];
 		let max = 0;
 		let min = 1000000;
@@ -117,7 +128,18 @@ class Chessalyzer {
 		for (let i = 0; i < 8; i += 1) {
 			const dataRow = new Array(8);
 			for (let j = 0; j < 8; j += 1) {
-				dataRow[j] = fun(data, coords, [i, j], optData);
+				const loopSqrCoords = [i, j];
+				const loopSqrAlg = GameProcessor.coordsToAlgebraic(
+					loopSqrCoords
+				);
+				const loopPiece = Chessalyzer.getStartingPiece(loopSqrCoords);
+				const loopSqrData = {
+					alg: loopSqrAlg,
+					coords: loopSqrCoords,
+					piece: loopPiece
+				};
+
+				dataRow[j] = fun(data, sqrData, loopSqrData, optData);
 				if (dataRow[j] > max) max = dataRow[j];
 				if (dataRow[j] < min) min = dataRow[j];
 			}
@@ -129,7 +151,7 @@ class Chessalyzer {
 
 	/**
 	 * Generates a comparison heatmap out of the tracked data. There needs to data in both
-	 * banks you pass as bank1 and bank2 params. The heatmap for both banks are calculated
+	 * banks you pass as bank1 and bank2 params. The heatmap for both banks is calculated
 	 * and then the relative differences between both banks are calculated. For example,
 	 * if the heatmap value for "a1" of bank1 is 10 and the value of bank2 is 5, the returned
 	 * value for "a1" would be 100% ([[10/5] -1] *100).
@@ -188,6 +210,26 @@ class Chessalyzer {
 		}
 		list.sort((a, b) => b[1] - a[1]);
 		return list;
+	}
+
+	static getStartingPiece(sqr) {
+		let color = '';
+		let name = '';
+		if (sqr[0] === 0) {
+			color = 'b';
+			name = pieceTemplate[sqr[1]];
+		} else if (sqr[0] === 1) {
+			color = 'b';
+			name = pawnTemplate[sqr[1]];
+		} else if (sqr[0] === 6) {
+			color = 'w';
+			name = pawnTemplate[sqr[1]];
+		} else if (sqr[0] === 7) {
+			color = 'w';
+			name = pieceTemplate[sqr[1]];
+		}
+
+		return { color, name };
 	}
 }
 

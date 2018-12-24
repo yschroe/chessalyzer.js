@@ -7,8 +7,9 @@ NOTE: In Version 0.1.0 the API changed dramatically. Following description is no
 ## Features
 
 -   Batch process PGN files
--   Tracks statistics for each piece and tile
--   Fully modular, track only the stats you need to preserve speed
+-   Filter games (e.g. only analyze games where WhiteElo > 1800)
+-   Track statistics for each piece and tile
+-   Fully modular, track only the stats you need to preserve performance
 -   Generate heatmaps out of the generated data
 -   It's fast (>800.000 moves/s on a i5-7200U; only PGN parsing)
 
@@ -36,20 +37,27 @@ Let's start with a basic example:
 // import the library
 const Chessalyzer = require('chessalyzer.js');
 
+// create basic tile tracker
+const tileTracker = new Chessalyzer.TileTracker();
+
 // start a batch analysis for the PGN file at <pathToPgnFile>
-Chessalyzer.startBatch('<pathToPgnFile>').then(() => {
+Chessalyzer.startBatch('<pathToPgnFile>', [tileTracker]).then(() => {
 	// create a analysis function that evaluates a specific stat
-	// in this example we want to know how often each piece was on the tile at sqrCoords
-	let fun = (board, sqrCoords, loopCoords) => {
-		let val =
-			board.tiles[sqrCoords[0]][sqrCoords[1]].stats.at[loopCoords[0]][
-				loopCoords[1]
-			].wasOnTile;
+	// in this example we want to know how often each piece moved to the tile at sqrCoords
+	let fun = (data, sqrData, loopSqrData) => {
+		let val = 0;
+		const { coords } = sqrData;
+		const { piece } = loopSqrData;
+		if (piece.color !== undefined) {
+			let val =
+				data.tiles[coords[0]][coords[1]][piece.color][piece.name]
+					.movedTo;
+		}
 		return val;
 	};
 
 	// generate a heat map for the data of 'a1' based on your evaluation function
-	let heatmapData = chessalyzer.generateHeatmap(0, 'a1', fun);
+	let heatmapData = Chessalyzer.generateHeatmap(tileTracker, 'a1', fun);
 
 	// use heatmapData with your favourite frontend
 });
@@ -59,12 +67,12 @@ You can also filter the PGN file for specific criteria, e.g. only evaluate games
 
 ```javascript
 // create filter function that returns true for all games where WhiteElo > 2000
-// the 'game' object passed contains every key included in the pgn file
+// the 'game' object passed contains every key included in the pgn file (case sensitive)
 let fil = function(game) {
 	return game.WhiteElo > 2000;
 };
 
-chessalyzer.startBatch('<pathToPgnFile>', { filter: fil }).then(() => {
+chessalyzer.startBatch('<pathToPgnFile>', [], { filter: fil }).then(() => {
 	// do something
 });
 ```
@@ -189,6 +197,10 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 4. Build via `npm run build` or `npm run dev`
 
+## Changelog
+
+0.1.0: Significantly changed the API to allow for more modularity. If you are already using an older version (<=0.4.0) consider changing your code to adapt to the new API.
+
 ## TODOs
 
 -   [ ] Check functionality for non-lichess PGN files
@@ -196,7 +208,6 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 -   [ ] Update jsdoc
 -   [ ] Track statistics for promoted pieces and en passant moves. Currently stats for those are not tracked
 -   [ ] Provide function for parsing notation from algebraic (e4 e5) to long algebraic (e2-e4 e7-e5). Internally already available, but no API yet.
--                     [ ] If possible, rebuilt code to be able to just run a comparison function between 'before move' and 'after move' and generate all stats in that function. Currently the stats are tracked at multiple places which makes adding more stats a bit confusing.
 
 ## Related
 
