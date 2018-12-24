@@ -12,6 +12,14 @@ class TileStats {
 	}
 }
 
+class Piece {
+	constructor(piece, color) {
+		this.piece = piece;
+		this.color = color;
+		this.lastMovedOn = 0;
+	}
+}
+
 class TileTracker extends BaseTracker {
 	constructor() {
 		super('move');
@@ -21,12 +29,6 @@ class TileTracker extends BaseTracker {
 			const currRow = new Array(8);
 			for (let col = 0; col < 8; col += 1) {
 				currRow[col] = { b: {}, w: {} };
-
-				currRow[col].currentPiece = {
-					color: '',
-					piece: '',
-					movedOn: 0
-				};
 
 				currRow[col].b = new TileStats();
 				currRow[col].w = new TileStats();
@@ -50,21 +52,33 @@ class TileTracker extends BaseTracker {
 	}
 
 	resetCurrentPiece(row, col) {
-		const piece = { color: '', piece: '', movedOn: 0 };
+		let color;
+		let piece;
+		let hasPiece = false;
+
 		if (row === 0) {
-			piece.color = 'b';
-			piece.piece = pieceTemplate[col];
+			color = 'b';
+			piece = pieceTemplate[col];
+			hasPiece = true;
 		} else if (row === 1) {
-			piece.color = 'b';
-			piece.piece = pawnTemplate[col];
+			color = 'b';
+			piece = pawnTemplate[col];
+			hasPiece = true;
 		} else if (row === 6) {
-			piece.color = 'w';
-			piece.piece = pawnTemplate[col];
+			color = 'w';
+			piece = pawnTemplate[col];
+			hasPiece = true;
 		} else if (row === 7) {
-			piece.color = 'w';
-			piece.piece = pieceTemplate[col];
+			color = 'w';
+			piece = pieceTemplate[col];
+			hasPiece = true;
 		}
-		this.tiles[row][col].currentPiece = piece;
+
+		if (hasPiece) {
+			this.tiles[row][col].currentPiece = new Piece(piece, color);
+		} else {
+			this.tiles[row][col].currentPiece = null;
+		}
 	}
 
 	track(moveData) {
@@ -81,11 +95,11 @@ class TileTracker extends BaseTracker {
 
 		// move
 		if (to[0] !== -1) {
-			this.processMove(from, to, player, piece);
-
 			if (takes.piece !== undefined) {
 				this.processTakes(takes.pos, player, piece, takes.piece);
 			}
+
+			this.processMove(from, to, player, piece);
 
 			// castle
 		} else if (castles !== '') {
@@ -113,10 +127,12 @@ class TileTracker extends BaseTracker {
 			for (let row = 0; row < 8; row += 1) {
 				for (let col = 0; col < 8; col += 1) {
 					const { currentPiece } = this.tiles[row][col];
-					if (currentPiece.piece !== '') {
+					if (currentPiece !== null) {
+						const toAdd =
+							this.cntMoves - currentPiece.lastMovedOn - 1;
 						this.tiles[row][col][currentPiece.color][
 							currentPiece.piece
-						].wasOn += this.cntMoves - currentPiece.movedOn - 1;
+						].wasOn += toAdd;
 					}
 					this.resetCurrentPiece(row, col);
 				}
@@ -128,32 +144,43 @@ class TileTracker extends BaseTracker {
 
 	processMove(from, to, player, piece) {
 		if (piece.length > 1) {
-			const { movedOn } = this.tiles[from[0]][from[1]].currentPiece;
-			this.tiles[from[0]][from[1]][player].wasOn +=
-				this.cntMoves - movedOn - 1;
-			this.tiles[from[0]][from[1]][player][piece].wasOn +=
-				this.cntMoves - movedOn - 1;
-			this.tiles[from[0]][from[1]].currentPiece.color = '';
-			this.tiles[from[0]][from[1]].currentPiece.piece = '';
-			this.tiles[from[0]][from[1]].currentPiece.movedOn = 0;
+			this.addOccupation(from);
+
+			this.tiles[to[0]][to[1]].currentPiece = this.tiles[from[0]][
+				from[1]
+			].currentPiece;
+			this.tiles[to[0]][to[1]].currentPiece.lastMovedOn = this.cntMoves;
+
+			this.tiles[from[0]][from[1]].currentPiece = null;
 
 			this.tiles[to[0]][to[1]][player].movedTo += 1;
 			this.tiles[to[0]][to[1]][player][piece].movedTo += 1;
-
-			this.tiles[to[0]][to[1]].currentPiece.color = player;
-			this.tiles[to[0]][to[1]].currentPiece.piece = piece;
-			this.tiles[to[0]][to[1]].currentPiece.movedOn = this.cntMoves;
 		}
 	}
 
 	processTakes(pos, player, takingPiece, takenPiece) {
-		if (takingPiece.length > 1 && takenPiece.length > 1) {
+		if (takenPiece.length > 1) {
 			const opPlayer = player === 'w' ? 'b' : 'w';
-			this.tiles[pos[0]][pos[1]][player].killedOn += 1;
-			this.tiles[pos[0]][pos[1]][player][takingPiece].killedOn += 1;
 			this.tiles[pos[0]][pos[1]][opPlayer].wasKilledOn += 1;
 			this.tiles[pos[0]][pos[1]][opPlayer][takenPiece].wasKilledOn += 1;
+
+			this.addOccupation(pos);
+			this.tiles[pos[0]][pos[1]].currentPiece = null;
 		}
+
+		if (takingPiece.length > 1) {
+			this.tiles[pos[0]][pos[1]][player].killedOn += 1;
+			this.tiles[pos[0]][pos[1]][player][takingPiece].killedOn += 1;
+		}
+	}
+
+	addOccupation(pos) {
+		const { currentPiece } = this.tiles[pos[0]][pos[1]];
+		const toAdd = this.cntMoves - currentPiece.lastMovedOn - 1;
+		this.tiles[pos[0]][pos[1]][currentPiece.color].wasOn += toAdd;
+		this.tiles[pos[0]][pos[1]][currentPiece.color][
+			currentPiece.piece
+		].wasOn += toAdd;
 	}
 }
 
