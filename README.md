@@ -2,16 +2,17 @@
 
 A JavaScript library for batch analyzing chess games.
 
-NOTE: In Version 0.1.0 the API changed dramatically. Following description is not up to date!
+NOTE: In Version 0.1.0 the API changed significantly!
 
 ## Features
 
 -   Batch process PGN files
 -   Filter games (e.g. only analyze games where WhiteElo > 1800)
--   Track statistics for each piece and tile
+-   Track statistics
 -   Fully modular, track only the stats you need to preserve performance
 -   Generate heatmaps out of the generated data
 -   It's fast (>800.000 moves/s on a i5-7200U; only PGN parsing)
+-   Handles big files easily
 
 ## Usage
 
@@ -31,24 +32,30 @@ const Chessalyzer = require('chessalyzer.js');
 
 ## Examples
 
+### Basic Usage
+
 Let's start with a basic example:
 
 ```javascript
 // import the library
 const Chessalyzer = require('chessalyzer.js');
 
+// get the builtin trackers
+const { Tracker } = Chessalyzer;
+
 // create basic tile tracker
-const tileTracker = new Chessalyzer.TileTracker();
+const tileTracker = new Tracker.Tile();
 
 // start a batch analysis for the PGN file at <pathToPgnFile>
-Chessalyzer.startBatch('<pathToPgnFile>', [tileTracker]).then(() => {
+// the analysis is saved in the 'tileTracker' object
+Chessalyzer.startBatch('<pathToPgnFile>', tileTracker).then(() => {
 	// create a analysis function that evaluates a specific stat
 	// in this example we want to know how often each piece moved to the tile at sqrCoords
 	let fun = (data, sqrData, loopSqrData) => {
 		let val = 0;
 		const { coords } = sqrData;
 		const { piece } = loopSqrData;
-		if (piece.color !== undefined) {
+		if (piece.color !== '') {
 			let val =
 				data.tiles[coords[0]][coords[1]][piece.color][piece.name]
 					.movedTo;
@@ -63,6 +70,8 @@ Chessalyzer.startBatch('<pathToPgnFile>', [tileTracker]).then(() => {
 });
 ```
 
+### Filtering
+
 You can also filter the PGN file for specific criteria, e.g. only evaluate games where `WhiteElo > 2000`:
 
 ```javascript
@@ -72,10 +81,14 @@ let fil = function(game) {
 	return game.WhiteElo > 2000;
 };
 
-chessalyzer.startBatch('<pathToPgnFile>', [], { filter: fil }).then(() => {
-	// do something
-});
+chessalyzer
+	.startBatch('<pathToPgnFile>', tileTracker, { filter: fil })
+	.then(() => {
+		// do something
+	});
 ```
+
+### Compare Analyses
 
 You can also generate a comparison heat map where you can compare the data of two different analyses. Let's say you wanted to compare how the white player occupates the board between a lower rated player and a higher rated player. To get comparable results 1000 games of each shall be evaluated:
 
@@ -119,60 +132,73 @@ chessalyzer
 
 ## Heatmap analysis functions
 
-The function you create for heatmap generation gets passed up to four parameters inside `genereateHeatMap()`: `board, sqrCoords, loopCoords, optData`:
+The function you create for heatmap generation gets passed up to four parameters inside `generateHeatMap()`: `data, sqrData, loopData, optData`:
 
--   `board`: Includes a `stats` object for general board stats and a 8x8 array of ChessTiles. Each ChessTile represents a tile on the chess board. You can get the data of one specific tile by accessing the array `board.tiles`. The ChessTile at the indices `[0][0]` represents the A8 square, the ChessTile at `[7][7]` is the H1 square. If you are interested in the data of one specific tile, you can just access it by `board.tiles[row][col]`. The ChessTiles themself contain various data described at [Tracked statistics](#tracked-statistics). Moreover the Tiles contain a `defaultPiece` class member of Type `ChessPiece`. Because the tiles from row 2 to 5 (0-based) contain no pieces at the start of the game, the `defaultPiece` for these rows is `null`.
--   `sqrCoords`: Contain the coordinates of the square you passed into the `genereateHeatMap()` function
--   `loopCoords`: Contains the coordinates of the square the current heatmap value is calculated for. The `genereateHeatMap()` function loops over every square of the board to calculate a heat map value for each tile.
+-   `data`: The data that is the basis for the heatmap. Typically this object is an analyzer you passed into the `startBatch()` function.
+-   `sqrData`: Contains informations about the square you passed into the `generateHeatMap()` function. `sqrData` is an object with the following entries:
+
+    -   `alg`: The square in algebraic notation (e.g. 'a2'),
+    -   `coords`: The square in board coordinates (e.g. [6,0]),
+    -   `piece`: The piece that starts at the passed square. `piece` is an object with the properties:
+
+        -   `name`: Name of the piece (e.g. 'Pa' for the a-pawn)
+        -   `color`: Color of the piece ('b' or 'w').
+
+        If no piece starts at the passed square, `name` and `color` are empty strings.
+
+-   `loopData`: Contains informations about the square the current heatmap value shall be calculated for. The structure of `loopData` is the same as of `sqrData`. The `generateHeatMap()` function loops over every square of the board to calculate a heat map value for each tile.
 -   `optData`: Optional data you may need in this function. For example, if you wanted to generate a heatmap to show the average position of a piece after X moves, you could pass that 'X' here.
 
 ## Tracked statistics
 
-Currently the following stats are generated:
+### Built-in
 
-General:
+chessalyzer.js comes with three builtin trackers, available from the `Chessalyzer.Tracker` object:
 
--   `ChessBoard.stats.cntGames`  
+`Tracker.Game`:
+
+-   `wins`  
+    [white wins, draws, black wins]
+
+-   `cntGames`  
     Number of games processed
 
--   `ChessBoard.stats.cntMoves`  
-    Number of moves processed
+`Tracker.Piece`:
 
-Tile:
+-   `b`  
+    Blacks pieces. Tracks how often a specific black piece took a specific white piece. E.g. `b.Pa.Qd` tracks how often the black a-pawn took whites queen.
 
--   `ChessTile.stats.at[x][y].wasOnTile` (Option: cfg.stats.logTileOccupation)  
-    How often was the piece thats starts at `[x][y]` on this tile
+-   `w`  
+    Same for whites pieces.
 
--   `ChessTile.stats.cntHasPiece[color]` (Option: cfg.stats.logTileOccupation)  
-    How often did a piece of which color occupate this tile
+`Tracker.Tile`:
 
--   `ChessTile.stats.cntTakenPieces`  
-    How often was a piece taken on this tile
+-   Text
 
-Piece:
+### Custom Trackers
 
--   `ChessPiece.stats.at[row][col].movedTo`  
-    How often did this piece move to the tile at `[row][col]`
+If you want to have other stats tracked you can easily create a custom tracker. Ideally you derive your tracker from the `Tracker.Base` class, which comes with built-in performance tracking and warnings, if the structure of your tracker isn't correct.
 
--   `ChessPiece.stats.at[row][col].killedBy`  
-    How often was this piece taken by the piece that starts at `[row][col]`
+Your tracker must have the following two properties:
 
--   `ChessPiece.stats.at[row][col].killed`  
-    How often did this piece take the piece that starts at `[row][col]`
+-   `type`:  
+    The type of your tracker. Either move based (`type = 'move'`) or game based (`type = 'game'`).
 
--   `ChessPiece.stats.cntMoved`  
-    How often did this piece move
-
--   `ChessPiece.stats.cntWasKilled`  
-    How often was this piece taken
-
--   `ChessPiece.stats.cntKilled`  
-    How often did this piece take another piece
-
--   `ChessPiece.history` (Option: cfg.stats.logPieceHistory)  
-    The complete position history of this piece in an array (x axis: game nr; y axis: move nr).
-
-If you need another stat tracked, let me know or create a pull request.
+-   `track(data)`:  
+    The main analysis function that is called during the PGN processing. Depending on your `type` the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The `data` object contains the following properties:
+    -   For move-typed trackers:
+        -   `san`: The processed move in standard algebraic notation (e.g. `'Nxe3'`)
+        -   `player`: The moving player (`'b'` or `'w'`)
+        -   `piece`: The moving piece (e.g. `Pa` for the a-pawn)
+        -   `castles`: If the move is castling it's either `'O-O'` or `'O-O-O'`. Empty string else
+        -   `takes`: If the move contains taking another piece, takes is an object with following properties:
+            -   `piece`: The piece that is taken (e.g. `Pa` for the a-pawn)
+            -   `pos`: Board coordinates of the taken piece. Is equal to the `to` property in all cases but 'en passant'
+        -   `promotesTo`: In case of pawn promotion contains the piece the pawn promotes to (e.g. 'Q'), empty string else
+        -   `from`: Start coordinates of the move (e.g. `[0,0]`). `[-1,-1]` in case the move is the result (e.g. `1-0`).
+        -   `to`: Target coordinates of the move (e.g. `[7,0]`). `[-1,-1]` in case the move is the result (e.g. `1-0`).
+    -   For game-typed trackers:  
+        `data` is an object that contains `{key: value}` entries, where `key` is the property in the PGN (e.g. `'WhiteElo'`, case sensitive) and `value` is the respective value of the property. The property `data.moves` is an array that contains the moves of the game in standard algebraic notation.
 
 ## Visualisation
 

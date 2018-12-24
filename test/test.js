@@ -1,5 +1,6 @@
 /*eslint-disable*/
 const Chessalyzer = require('../lib/chessalyzer');
+const { Tracker } = Chessalyzer;
 
 // const c1 = new Chessalyzer();
 const fun = (data, sqrData, loopSqrData) => {
@@ -10,9 +11,9 @@ const fun = (data, sqrData, loopSqrData) => {
 };
 
 // const a = Chessalyzer.getGameTracker();
-const a = new Chessalyzer.GameTracker();
-const b = new Chessalyzer.PieceTracker();
-const c = new Chessalyzer.TileTracker();
+const a = new Tracker.Game();
+const b = new Tracker.Piece();
+const c = new Tracker.Tile();
 
 for (let i = 0; i < 1; i += 1) {
 	Chessalyzer.startBatch(
@@ -32,14 +33,14 @@ for (let i = 0; i < 1; i += 1) {
 
 		Chessalyzer.startBatch(
 			'C:/Users/yanni/Documents/Workspace/JavaScript/Archiv/Chessalyzer_p5js/lichess_db_standard_rated_2013-01.pgn',
-			[a],
+			a,
 			{
 				split: false,
 				cntGames: 1000
 				//filter: (game) => game.WhiteElo > 1800
 			}
 		).then(() => {
-			// console.log(a);
+			console.log(a);
 		});
 		// console.log(b);
 		// console.log('Piece: ' + Math.round(c1.analyzers.move[0].time) / 1000);

@@ -3,6 +3,7 @@ import GameProcessor from './GameProcessor';
 import PieceTracker from './PieceTracker';
 import TileTracker from './TileTracker';
 import GameTracker from './GameTracker';
+import BaseTracker from './BaseTracker';
 
 const { performance } = require('perf_hooks');
 
@@ -16,7 +17,7 @@ class Chessalyzer {
 	/**
 	 * Starts the batch processing for the selected file
 	 * @param {String} path - Path to the PGN file that should be analyzed
-	 * @param {Array} analyzers - The analysis functions that shall be run during batch processing
+	 * @param {Array} analyzer - The analysis functions that shall be run during batch processing
 	 * @param {Object} [cfg = {}]
 	 * @param {Function} [cfg.filter = ()=>true] - Filter function for selecting games
 	 * @param {Number} [cfg.cntGames = Infinite ] - Max amount of games to process
@@ -27,12 +28,19 @@ class Chessalyzer {
 	 */
 	static startBatch(
 		path,
-		analyzers,
+		analyzer,
 		cfg = {},
 		callback = { fun: () => {}, rate: 250 }
 	) {
+		// check if single analyzer or array is passed
+		let analyzerArray = analyzer;
+		if (!Array.isArray(analyzerArray)) {
+			analyzerArray = [analyzer];
+		}
+
 		const gameProcessor = new GameProcessor();
 
+		// callback handler
 		gameProcessor.on('status', (gameCnt) => {
 			callback.fun(gameCnt);
 		});
@@ -40,7 +48,7 @@ class Chessalyzer {
 		return new Promise((resolve) => {
 			const t0 = performance.now();
 			gameProcessor
-				.processPGN(path, cfg, analyzers, callback.rate)
+				.processPGN(path, cfg, analyzerArray, callback.rate)
 				.then(() => {
 					const t1 = performance.now();
 					const tdiff = Math.round(t1 - t0) / 1000;
@@ -233,8 +241,11 @@ class Chessalyzer {
 	}
 }
 
-Chessalyzer.GameTracker = GameTracker;
-Chessalyzer.PieceTracker = PieceTracker;
-Chessalyzer.TileTracker = TileTracker;
+Chessalyzer.Tracker = {
+	Game: GameTracker,
+	Piece: PieceTracker,
+	Tile: TileTracker,
+	Base: BaseTracker
+};
 
 export default Chessalyzer;
