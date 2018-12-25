@@ -156,7 +156,7 @@ The function you create for heatmap generation gets passed up to four parameters
 
         If no piece starts at the passed square, `name` and `color` are empty strings.
 
--   `loopData`: Contains informations about the square the current heatmap value shall be calculated for. The structure of `loopData` is the same as of `sqrData`. The `generateHeatMap()` function loops over every square of the board to calculate a heat map value for each tile.
+-   `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The structure of `loopSqrData` is the same as of `sqrData`. The `generateHeatMap()` function loops over every square of the board to calculate a heat map value for each tile.
 -   `optData`: Optional data you may need in this function. For example, if you wanted to generate a heatmap to show the average position of a piece after X moves, you could pass that 'X' here.
 
 ## Tracked statistics
