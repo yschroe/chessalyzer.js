@@ -2,7 +2,7 @@
 
 A JavaScript library for batch analyzing chess games.
 
-NOTE: In Version 0.1.0 the API changed significantly! Check the examples for a description.
+NOTE: In Version 1.0.0 the API changed significantly! Check the examples for a description.
 
 ## Features
 
@@ -252,7 +252,7 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 ## Changelog
 
--   0.1.0:  
+-   1.0.0:  
     Significantly changed the API to allow for more modularity. If you are already using an older version (<=0.4.0) consider changing your code to adapt to the new API.
 
 ## TODOs
