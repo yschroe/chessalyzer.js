@@ -26,7 +26,7 @@ for (let i = 0; i < 1; i += 1) {
 		}
 		//{ fun: (cnt) => console.log(cnt), rate: 2500 }
 	).then(() => {
-		console.log(c.tiles[0][1].b.Nb);
+		// console.log(c.tiles[0][0].b);
 		// let stats = Chessalyzer.generateHeatmap(c, 'a1', fun);
 		// console.log(stats);
 		// Chessalyzer.startBatch(

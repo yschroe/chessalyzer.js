@@ -158,7 +158,7 @@ class GameProcessor extends EventEmitter {
 
 	/**
 	 * Parses a move in string format to board coordinates. Wrapper function for
-	 *  the different move algorithms.
+	 * the different move algorithms.
 	 * @param {string} rawMove The move to be parsed, e.g. 'Ne5+'.
 	 */
 	parseMove(rawMove) {

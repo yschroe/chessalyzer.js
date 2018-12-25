@@ -23,7 +23,8 @@ class Piece {
 class TileTracker extends BaseTracker {
 	constructor() {
 		super('move');
-		this.cntMoves = 0;
+		this.cntMovesGame = 0;
+		this.cntMovesTotal = 0;
 		this.tiles = new Array(8);
 		for (let row = 0; row < 8; row += 1) {
 			const currRow = new Array(8);
@@ -91,10 +92,10 @@ class TileTracker extends BaseTracker {
 		const { takes } = moveData;
 		const { castles } = moveData;
 
-		this.cntMoves += 1;
-
 		// move
 		if (to[0] !== -1) {
+			this.cntMovesGame += 1;
+
 			if (takes.piece !== undefined) {
 				this.processTakes(takes.pos, player, piece, takes.piece);
 			}
@@ -103,6 +104,8 @@ class TileTracker extends BaseTracker {
 
 			// castle
 		} else if (castles !== '') {
+			this.cntMovesGame += 1;
+
 			const row = player === 'w' ? 7 : 0;
 			let rook = 'Rh';
 			let tarKingCol = 6;
@@ -128,16 +131,13 @@ class TileTracker extends BaseTracker {
 				for (let col = 0; col < 8; col += 1) {
 					const { currentPiece } = this.tiles[row][col];
 					if (currentPiece !== null) {
-						const toAdd =
-							this.cntMoves - currentPiece.lastMovedOn - 1;
-						this.tiles[row][col][currentPiece.color][
-							currentPiece.piece
-						].wasOn += toAdd;
+						this.addOccupation([row, col]);
 					}
 					this.resetCurrentPiece(row, col);
 				}
 			}
-			this.cntMoves = 0;
+			this.cntMovesTotal += this.cntMovesGame;
+			this.cntMovesGame = 0;
 		}
 		this.endTimer();
 	}
@@ -149,7 +149,9 @@ class TileTracker extends BaseTracker {
 			this.tiles[to[0]][to[1]].currentPiece = this.tiles[from[0]][
 				from[1]
 			].currentPiece;
-			this.tiles[to[0]][to[1]].currentPiece.lastMovedOn = this.cntMoves;
+			this.tiles[to[0]][
+				to[1]
+			].currentPiece.lastMovedOn = this.cntMovesGame;
 
 			this.tiles[from[0]][from[1]].currentPiece = null;
 
@@ -176,7 +178,7 @@ class TileTracker extends BaseTracker {
 
 	addOccupation(pos) {
 		const { currentPiece } = this.tiles[pos[0]][pos[1]];
-		const toAdd = this.cntMoves - currentPiece.lastMovedOn - 1;
+		const toAdd = this.cntMovesGame - currentPiece.lastMovedOn;
 		this.tiles[pos[0]][pos[1]][currentPiece.color].wasOn += toAdd;
 		this.tiles[pos[0]][pos[1]][currentPiece.color][
 			currentPiece.piece

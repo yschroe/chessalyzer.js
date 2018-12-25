@@ -33,14 +33,7 @@
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="Chessalyzer.html">Chessalyzer</a></li><li><a href="ChessBoard.html">ChessBoard</a></li><li><a href="ChessPiece.html">ChessPiece</a></li><li><a href="ChessTile.html">ChessTile</a></li><li><a href="GameProcessor.html">GameProcessor</a></li>
-				</ul>
-			</li>
-			
-			<li class="dropdown">
-				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
-				<ul class="dropdown-menu ">
-					<li><a href="global.html">Global</a></li>
+					<li><a href="Chessalyzer.html">Chessalyzer</a></li><li><a href="GameProcessor.html">GameProcessor</a></li>
 				</ul>
 			</li>
 			
@@ -177,86 +170,6 @@
     
 
     
-        <h3 class="subsection-title">Members</h3>
-
-        <dl>
-            
-<hr>
-<dt class="name" id="dataStore">
-    <h4 id="dataStore"><span class="type-signature"></span>dataStore<span class="type-signature"> :Array.&lt;Object></span></h4>
-
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        Contains the tracked data of the processed PGN files. Has two different banks for
-heat map comparison. Each object contains the following keys:
-<ul>
-<li>data: {cntMoves, cntGames}. Information about the count of processed moves and games</li>
-<li>tiles: 8x8 array of <a href="ChessTile.html">ChessTile</a>s.</li>
-</ul>
-    </div>
-    
-
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type">Array.&lt;Object></span>
-
-
-
-            </li>
-        </ul>
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-</dd>
-
-        </dl>
-    
 
     
         <h3 class="subsection-title">Methods</h3>
@@ -265,7 +178,7 @@ heat map comparison. Each object contains the following keys:
             
 <hr>
 <dt>
-    <h4 class="name" id="generateComparisonHeatmap"><span class="type-signature"></span>generateComparisonHeatmap(square, fun [, bank1] [, bank2], optData)</h4>
+    <h4 class="name" id=".generateComparisonHeatmap"><span class="type-signature">&lt;static> </span>generateComparisonHeatmap(data1, data2, square, fun, optData)</h4>
     
     
 </dt>
@@ -274,7 +187,7 @@ heat map comparison. Each object contains the following keys:
     
     <div class="description">
         Generates a comparison heatmap out of the tracked data. There needs to data in both
-banks you pass as bank1 and bank2 params. The heatmap for both banks are calculated
+banks you pass as bank1 and bank2 params. The heatmap for both banks is calculated
 and then the relative differences between both banks are calculated. For example,
 if the heatmap value for "a1" of bank1 is 10 and the value of bank2 is 5, the returned
 value for "a1" would be 100% ([[10/5] -1] *100).
@@ -300,11 +213,7 @@ value for "a1" would be 100% ([[10/5] -1] *100).
         <th>Type</th>
 
         
-        <th>Argument</th>
-        
 
-        
-        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -312,6 +221,54 @@ value for "a1" would be 100% ([[10/5] -1] *100).
     </thead>
 
     <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>data1</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Dataset 1</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>data2</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Dataset 2</td>
+        </tr>
+
     
 
         <tr>
@@ -330,19 +287,7 @@ value for "a1" would be 100% ([[10/5] -1] *100).
             </td>
 
             
-                <td class="attributes">
-                
 
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">The square the data shall be generated for.</td>
@@ -366,103 +311,11 @@ value for "a1" would be 100% ([[10/5] -1] *100).
             </td>
 
             
-                <td class="attributes">
-                
 
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">The evaluation function that generates the heatmap out of the
-saved data. See <a href="Chessalyzer.html#generateHeatmap">Chessalyzer#generateHeatmap</a> for a more detailed description.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>bank1</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    0
-                
-                </td>
-            
-
-            <td class="description last">Bank number of dataset 1</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>bank2</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    1
-                
-                </td>
-            
-
-            <td class="description last">Bank number of dataset 2</td>
+saved data. See Chessalyzer#generateHeatmap for a more detailed description.</td>
         </tr>
 
     
@@ -477,19 +330,7 @@ saved data. See <a href="Chessalyzer.html#generateHeatmap">Chessalyzer#generateH
             </td>
 
             
-                <td class="attributes">
-                
 
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">Optional data you may need in your eval function</td>
@@ -589,7 +430,7 @@ saved data. See <a href="Chessalyzer.html#generateHeatmap">Chessalyzer#generateH
             
 <hr>
 <dt>
-    <h4 class="name" id="generateHeatmap"><span class="type-signature"></span>generateHeatmap(bank, square, fun, optData)</h4>
+    <h4 class="name" id=".generateHeatmap"><span class="type-signature">&lt;static> </span>generateHeatmap(data, square, fun, optData)</h4>
     
     
 </dt>
@@ -632,13 +473,13 @@ saved data. See <a href="Chessalyzer.html#generateHeatmap">Chessalyzer#generateH
 
         <tr>
             
-                <td class="name"><code>bank</code></td>
+                <td class="name"><code>data</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">Object</span>
 
 
 
@@ -649,7 +490,7 @@ saved data. See <a href="Chessalyzer.html#generateHeatmap">Chessalyzer#generateH
 
             
 
-            <td class="description last">The data bank the data shall be taken from</td>
+            <td class="description last">Where the data shall be taken from</td>
         </tr>
 
     
@@ -663,6 +504,9 @@ saved data. See <a href="Chessalyzer.html#generateHeatmap">Chessalyzer#generateH
             
                 
 <span class="param-type">String</span>
+|
+
+<span class="param-type">Array</span>
 
 
 
@@ -673,9 +517,9 @@ saved data. See <a href="Chessalyzer.html#generateHeatmap">Chessalyzer#generateH
 
             
 
-            <td class="description last">The square the data shall be generated for. For example, if you
-wanted to know how often a specific piece was on a specific tile, you would pass the
-identifier of the tile to the function, e.g. "a2"</td>
+            <td class="description last">The square the data shall be generated for.
+For example, if you wanted to know how often a specific piece was on a specific tile,
+you would pass the identifier of the tile to the function, e.g. "a2" or [7,1].</td>
         </tr>
 
     
@@ -700,16 +544,7 @@ identifier of the tile to the function, e.g. "a2"</td>
             
 
             <td class="description last">The evaluation function that generates the heatmap out of the
-saved data. This function gets passed the following arguments:
-<ol>
-<li>The complete data stored in the chosen bank. See the member description of the dataStore
-member to see which data is available.</li>
-<li>The coords of the tile passed as the 'square' argument.</li>
-<li>The current coordinates of the tile the data should be generated for.
-The function must return a Number with the heat map value for the square passed as the
-third argument.</li>
-<li>An optional data field, you passed for 'optData'</li>
-</ol>
+data.
 See ./src/exampleHeatmapConfig for examples of such a function.</td>
         </tr>
 
@@ -825,7 +660,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             
 <hr>
 <dt>
-    <h4 class="name" id="loadData"><span class="type-signature"></span>loadData(path [, bank])</h4>
+    <h4 class="name" id=".loadData"><span class="type-signature">&lt;static> </span>loadData(path)</h4>
     
     
 </dt>
@@ -856,11 +691,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
         <th>Type</th>
 
         
-        <th>Argument</th>
-        
 
-        
-        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -886,62 +717,10 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             </td>
 
             
-                <td class="attributes">
-                
 
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">Path the data file shall be loaded from</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>bank</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    0
-                
-                </td>
-            
-
-            <td class="description last">The data bank the data shall be loaded to.</td>
         </tr>
 
     
@@ -1005,7 +784,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
     
             
 <div class="param-desc">
-    Count of loaded games
+    Returns the loaded data
 </div>
 
 
@@ -1016,7 +795,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
     </dt>
     <dd>
         
-<span class="param-type">Number</span>
+<span class="param-type">Object</span>
 
 
 
@@ -1033,7 +812,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             
 <hr>
 <dt>
-    <h4 class="name" id="saveData"><span class="type-signature"></span>saveData(path [, bank])</h4>
+    <h4 class="name" id=".saveData"><span class="type-signature">&lt;static> </span>saveData(path, data)</h4>
     
     
 </dt>
@@ -1064,11 +843,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
         <th>Type</th>
 
         
-        <th>Argument</th>
-        
 
-        
-        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -1094,19 +869,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             </td>
 
             
-                <td class="attributes">
-                
 
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">Path the data file shall be saved to</td>
@@ -1116,13 +879,13 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
 
         <tr>
             
-                <td class="name"><code>bank</code></td>
+                <td class="name"><code>data</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">Object</span>
 
 
 
@@ -1130,26 +893,10 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             </td>
 
             
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
 
             
-                <td class="default">
-                
-                    0
-                
-                </td>
-            
 
-            <td class="description last">The data bank the data shall be taken from</td>
+            <td class="description last">The data that shall be saved</td>
         </tr>
 
     
@@ -1217,7 +964,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             
 <hr>
 <dt>
-    <h4 class="name" id="startBatch"><span class="type-signature"></span>startBatch(path [, cfg] [, bank] [, refreshRate])</h4>
+    <h4 class="name" id=".startBatch"><span class="type-signature">&lt;static> </span>startBatch(path, analyzer [, cfg], callback)</h4>
     
     
 </dt>
@@ -1294,6 +1041,46 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             
 
             <td class="description last">Path to the PGN file that should be analyzed</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>analyzer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+|
+
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">The analysis functions that shall be run
+ during batch processing</td>
         </tr>
 
     
@@ -1440,10 +1227,17 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
         </tr>
 
     
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
 
         <tr>
             
-                <td class="name"><code>stats</code></td>
+                <td class="name"><code>callback</code></td>
             
 
             <td class="type">
@@ -1472,7 +1266,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
                 </td>
             
 
-            <td class="description last">Configuration for data aquisition
+            <td class="description last">Callback object
                 <h6 class="method-params-label method-subparams-label">Properties</h6>
                 
 
@@ -1490,8 +1284,6 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
@@ -1502,13 +1294,13 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
 
         <tr>
             
-                <td class="name"><code>logPieceHistory</code></td>
+                <td class="name"><code>fun</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Boolean</span>
+<span class="param-type">function</span>
 
 
 
@@ -1528,28 +1320,21 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
             
 
             
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
 
-            <td class="description last">Option for logging the position
-of every piece.</td>
+            <td class="description last">Callback function that is called every callback.rate games</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>logTileOccupation</code></td>
+                <td class="name"><code>rate</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Boolean</span>
+<span class="param-type">function</span>
 
 
 
@@ -1569,15 +1354,8 @@ of every piece.</td>
             
 
             
-                <td class="default">
-                
-                    true
-                
-                </td>
-            
 
-            <td class="description last">Option for logging the piece
-on every tile after every move.</td>
+            <td class="description last">Every 'rate' games the callback function is called.</td>
         </tr>
 
     
@@ -1585,97 +1363,6 @@ on every tile after every move.</td>
 </table>
 
             </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>bank</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    0
-                
-                </td>
-            
-
-            <td class="description last">The data bank the results shall be saved to</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>refreshRate</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    250
-                
-                </td>
-            
-
-            <td class="description last">Defines how often the current status of the
- analysis shall be exposed. Every number of processed games an event is emitted
- containing the current number of processed games. The event can be handled via
- "chessalyzer.gameProcessor.on('status', function(gameCnt) {// do handling here});",
- e.g. to update an UI.</td>
         </tr>
 
     
@@ -1738,10 +1425,6 @@ on every tile after every move.</td>
     <h5>Returns:</h5>
     
             
-<div class="param-desc">
-    Promise that contains the number of processed games when finished
-</div>
-
 
 
 <dl>
@@ -1813,7 +1496,7 @@ on every tile after every move.</td>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a>
 	
-		on 2018-09-02T09:29:58+02:00
+		on 2018-12-25T11:05:02+01:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

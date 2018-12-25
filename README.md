@@ -2,7 +2,7 @@
 
 A JavaScript library for batch analyzing chess games.
 
-NOTE: In Version 0.1.0 the API changed significantly!
+NOTE: In Version 0.1.0 the API changed significantly! Check the examples for a description.
 
 ## Features
 
@@ -28,7 +28,7 @@ npm install --save chessalyzer.js
 const Chessalyzer = require('chessalyzer.js');
 ```
 
-3. Check out the examples or the [docs](https://peterpain.github.io/chessalyzer.js/Chessalyzer.html) for a full functional description.
+3. Check out the examples or the [docs (outdated)](https://peterpain.github.io/chessalyzer.js/Chessalyzer.html) for a full functional description.
 
 ## Examples
 
@@ -36,6 +36,7 @@ const Chessalyzer = require('chessalyzer.js');
 
 Let's start with a basic example:
 
+<!-- prettier-ignore -->
 ```javascript
 // import the library
 const Chessalyzer = require('chessalyzer.js');
@@ -49,24 +50,23 @@ const tileTracker = new Tracker.Tile();
 // start a batch analysis for the PGN file at <pathToPgnFile>
 // the analysis is saved in the 'tileTracker' object
 Chessalyzer.startBatch('<pathToPgnFile>', tileTracker).then(() => {
-	// create a analysis function that evaluates a specific stat
-	// in this example we want to know how often each piece moved to the tile at sqrCoords
-	let fun = (data, sqrData, loopSqrData) => {
-		let val = 0;
-		const { coords } = sqrData;
-		const { piece } = loopSqrData;
-		if (piece.color !== '') {
-			let val =
-				data.tiles[coords[0]][coords[1]][piece.color][piece.name]
-					.movedTo;
-		}
-		return val;
-	};
+    // create a analysis function that evaluates a specific stat
+    // in this example we want to know how often each piece moved to the tile at sqrData.coords
+    let fun = (data, sqrData, loopSqrData) => {
+        let val = 0;
+        const { coords } = sqrData;
+        const { piece } = loopSqrData;
+        if (piece.color !== '') {
+            let val =
+                data.tiles[coords[0]][coords[1]][piece.color][piece.name].movedTo;
+        }
+        return val;
+    };
 
-	// generate a heat map for the data of 'a1' based on your evaluation function
-	let heatmapData = Chessalyzer.generateHeatmap(tileTracker, 'a1', fun);
+    // generate a heat map for the data of 'a1' based on your evaluation function
+    let heatmapData = Chessalyzer.generateHeatmap(tileTracker, 'a1', fun);
 
-	// use heatmapData with your favourite frontend
+    // use heatmapData with your favourite frontend
 });
 ```
 
@@ -74,17 +74,17 @@ Chessalyzer.startBatch('<pathToPgnFile>', tileTracker).then(() => {
 
 You can also filter the PGN file for specific criteria, e.g. only evaluate games where `WhiteElo > 2000`:
 
+<!-- prettier-ignore -->
 ```javascript
 // create filter function that returns true for all games where WhiteElo > 2000
 // the 'game' object passed contains every key included in the pgn file (case sensitive)
 let fil = function(game) {
-	return game.WhiteElo > 2000;
+    return game.WhiteElo > 2000;
 };
 
-Chessalyzer.startBatch('<pathToPgnFile>', tileTracker, { filter: fil }).then(
-	() => {
-		// do something
-	}
+Chessalyzer.startBatch('<pathToPgnFile>', tileTracker, { filter: fil }).then(() => {
+        // do something
+    }
 );
 ```
 
@@ -92,42 +92,51 @@ Chessalyzer.startBatch('<pathToPgnFile>', tileTracker, { filter: fil }).then(
 
 You can also generate a comparison heat map where you can compare the data of two different analyses. Let's say you wanted to compare how the white player occupates the board between a lower rated player and a higher rated player. To get comparable results 1000 games of each shall be evaluated:
 
+<!-- prettier-ignore -->
 ```javascript
 // create two filters
 let fil1 = function(game) {
-	return game.WhiteElo > 2000;
+    return game.WhiteElo > 2000;
 };
 let fil2 = function(game) {
-	return game.WhiteElo < 1200;
+    return game.WhiteElo < 1200;
 };
+
+// create two TileTrackers
+const tileT1 = new Tracker.Tile();
+const tileT2 = new Tracker.Tile();
 
 // create a evaluation function for the heat map
 // (sqrData isn't used by this analysis, but needs to be an argument nevertheless)
 let fun = (data, sqrData, loopSqrData) => {
-	let val = data.tiles[loopCoords[0]][loopCoords[1]].stats.cntHasPiece.white;
-	val = (val * 100) / board.stats.cntMoves;
-	return val;
+    const { coords } = loopSqrData;
+    let val = data.tiles[coords[0]][coords[1]].w.wasOn;
+    val = (val * 100) / data.cntMovesTotal;
+    return val;
 };
 
 // start the first analysis
-Chessalyzer.startBatch('<pathToPgnFile>', {
-	filter: fil1,
-	cntGames: 1000
-}).then(() => {
-	// start the second analysis
-	Chessalyzer.startBatch(
-		'<pathToPgnFile>',
-		{ filter: fil2, cntGames: 1000 },
-		1
-	).then(() => {
-		// generate the comparison heatmap
-		let heatmapData = Chessalyzer.generateComparisonHeatmap(
-			'a1', // this analysis function doesn't depent on a specific square, so pass a random square
-			fun
-		);
+Chessalyzer.startBatch(
+    '<pathToPgnFile>',
+    tileT1,
+    { filter: fil1, cntGames: 1000 }
+).then(() => {
+    // start the second analysis
+    Chessalyzer.startBatch(
+        '<pathToPgnFile>',
+        tileT2,
+        { filter: fil2, cntGames: 1000 }
+    ).then(() => {
+        // generate the comparison heatmap
+        let heatmapData = Chessalyzer.generateComparisonHeatmap(
+            tileT1,
+            tileT2,
+            'a1', // this analysis function doesn't depent on a specific square, so pass a random square
+            fun
+        );
 
-		// use heatmapData
-	});
+        // use heatmapData
+    });
 });
 ```
 
@@ -174,7 +183,17 @@ chessalyzer.js comes with three builtin trackers, available from the `Chessalyze
 
 `Tracker.Tile`:
 
--   Text
+-   `tiles[][]`  
+    Represents the tiles of the board. Has two objects (`b`, `w`) on the first layer, and then each piece inside these objects as a second layer (`Pa`, `Ra` etc.). For each piece following stats are tracked:
+
+    -   `movedTo`: How often the piece moved to this tile
+    -   `wasOn`: Amount of half-moves the piece was on this tile
+    -   `killedOn`: How often the piece took another piece on this tile
+    -   `wasKilledOn`: How often the piece was taken on this tile.
+
+    These stats are also tracked for black and white as a whole. Simply omit the piece name to get the total stats of one side for a specific tile, e.g. `tiles[0][6].b.wasOn`.
+
+-   `cntMovesTotal`: Amount of moves processed in total.
 
 ### Custom Trackers
 
@@ -241,8 +260,7 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 -   [ ] Check functionality for non-lichess PGN files
 -   [ ] Write Mocha tests
 -   [ ] Update jsdoc
--   [ ] Track statistics for promoted pieces and en passant moves. Currently stats for those are not tracked
--   [ ] Provide function for parsing notation from algebraic (e4 e5) to long algebraic (e2-e4 e7-e5). Internally already available, but no API yet.
+-   [ ] Track statistics for promoted pieces. Currently stats for those are not tracked
 
 ## Related
 

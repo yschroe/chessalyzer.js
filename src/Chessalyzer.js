@@ -17,7 +17,8 @@ class Chessalyzer {
 	/**
 	 * Starts the batch processing for the selected file
 	 * @param {String} path - Path to the PGN file that should be analyzed
-	 * @param {Array} analyzer - The analysis functions that shall be run during batch processing
+	 * @param {Array|Object} analyzer - The analysis functions that shall be run
+	 *  during batch processing
 	 * @param {Object} [cfg = {}]
 	 * @param {Function} [cfg.filter = ()=>true] - Filter function for selecting games
 	 * @param {Number} [cfg.cntGames = Infinite ] - Max amount of games to process
@@ -93,10 +94,9 @@ class Chessalyzer {
 	/**
 	 * Generates a heatmap out of the tracked data.
 	 * @param {Object} data - Where the data shall be taken from
-	 * @param {String|Array[Number]} square - The square the data shall be generated for.
-	 * For example, if you
-	 * wanted to know how often a specific piece was on a specific tile, you would pass the
-	 * identifier of the tile to the function, e.g. "a2"
+	 * @param {String|Array} square - The square the data shall be generated for.
+	 * For example, if you wanted to know how often a specific piece was on a specific tile,
+	 * you would pass the identifier of the tile to the function, e.g. "a2" or [7,1].
 	 * @param {Function} fun - The evaluation function that generates the heatmap out of the
 	 * data.
 	 * See ./src/exampleHeatmapConfig for examples of such a function.
