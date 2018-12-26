@@ -42,11 +42,6 @@ class GameProcessor extends EventEmitter {
 			? config.cntGames
 			: Infinity;
 
-		// TODO: currently without function
-		cfg.split = Object.prototype.hasOwnProperty.call(config, 'split')
-			? config.split
-			: false;
-
 		return cfg;
 	}
 

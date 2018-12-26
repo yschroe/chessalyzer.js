@@ -17,14 +17,14 @@ class Chessalyzer {
 	/**
 	 * Starts the batch processing for the selected file
 	 * @param {String} path - Path to the PGN file that should be analyzed
-	 * @param {Array|Object} analyzer - The analysis functions that shall be run
-	 *  during batch processing
+	 * @param {(Object|Object[])} analyzer - The analysis functions that shall be run
+	 *  during batch processing. Can be one single analyzer or an array of analyzers.
 	 * @param {Object} [cfg = {}]
 	 * @param {Function} [cfg.filter = ()=>true] - Filter function for selecting games
 	 * @param {Number} [cfg.cntGames = Infinite ] - Max amount of games to process
 	 * @param {Object} callback - Callback object
 	 * @param {Function} [callback.fun] - Callback function that is called every callback.rate games
-	 * @param {Function} [callback.rate] - Every 'rate' games the callback function is called.
+	 * @param {Number} [callback.rate] - Every 'rate' games the callback function is called.
 	 * @returns {Promise}
 	 */
 	static startBatch(
@@ -94,7 +94,7 @@ class Chessalyzer {
 	/**
 	 * Generates a heatmap out of the tracked data.
 	 * @param {Object} data - Where the data shall be taken from
-	 * @param {String|Array} square - The square the data shall be generated for.
+	 * @param {(String|Array)} square - The square the data shall be generated for.
 	 * For example, if you wanted to know how often a specific piece was on a specific tile,
 	 * you would pass the identifier of the tile to the function, e.g. "a2" or [7,1].
 	 * @param {Function} fun - The evaluation function that generates the heatmap out of the
@@ -165,9 +165,10 @@ class Chessalyzer {
 	 * value for "a1" would be 100% ([[10/5] -1] *100).
 	 * @param {Object} data1 - Dataset 1
 	 * @param {Object} data2 - Dataset 2
-	 * @param {String} square - The square the data shall be generated for.
+	 * @param {(String|Array)} square - The square the data shall be generated for. Notation
+	 * can be 'a1' or [7,0].
 	 * @param {Function} fun - The evaluation function that generates the heatmap out of the
-	 * saved data. See {@link Chessalyzer#generateHeatmap} for a more detailed description.
+	 * saved data. See {@link generateHeatmap} for a more detailed description.
 	 * @param {} optData - Optional data you may need in your eval function
 	 * @returns {Array} Array with 3 entries:
 	 * <ol>
@@ -200,24 +201,6 @@ class Chessalyzer {
 		}
 
 		return [map, min, max];
-	}
-
-	static generateList(map) {
-		const list = [];
-		for (let i = 0; i < 8; i += 1) {
-			for (let j = 0; j < 8; j += 1) {
-				let val = map[i][j];
-				val = val.toFixed(2);
-				if (Math.abs(val) > 0.001) {
-					if (i === 0) list.push([`b${pieceTemplate[j]}`, val]);
-					else if (i === 1) list.push([`b${pawnTemplate[j]}`, val]);
-					else if (i === 6) list.push([`w${pawnTemplate[j]}`, val]);
-					else if (i === 7) list.push([`w${pieceTemplate[j]}`, val]);
-				}
-			}
-		}
-		list.sort((a, b) => b[1] - a[1]);
-		return list;
 	}
 
 	static getStartingPiece(sqr) {

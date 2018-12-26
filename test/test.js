@@ -41,9 +41,9 @@ for (let i = 0; i < 1; i += 1) {
 		// 	console.log(a);
 		// });
 		// console.log(b);
-		// console.log('Piece: ' + Math.round(c1.analyzers.move[0].time) / 1000);
-		// console.log('Tile: ' + Math.round(c1.analyzers.move[1].time) / 1000);
-		// console.log('Game: ' + Math.round(c1.analyzers.game[0].time) / 1000);
+		console.log('Piece: ' + Math.round(b.time) / 1000);
+		console.log('Tile: ' + Math.round(c.time) / 1000);
+		console.log('Game: ' + Math.round(a.time) / 1000);
 		// let stats = Chessalyzer.generateHeatmap(c, 'a1', fun);
 		// console.log(stats);
 		// c1.saveData('C:/Users/yanni/Documents/Workspace/JavaScript/save.json');

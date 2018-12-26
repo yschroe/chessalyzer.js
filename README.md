@@ -1,5 +1,7 @@
 # chessalyzer.js
 
+[![npm version](https://badge.fury.io/js/chessalyzer.js.svg)](https://badge.fury.io/js/chessalyzer.js)
+
 A JavaScript library for batch analyzing chess games.
 
 NOTE: In Version 1.0.0 the API changed significantly! Check the examples for a description.
@@ -28,7 +30,7 @@ npm install --save chessalyzer.js
 const Chessalyzer = require('chessalyzer.js');
 ```
 
-3. Check out the examples or the [docs (outdated)](https://peterpain.github.io/chessalyzer.js/Chessalyzer.html) for a full functional description.
+3. Check out the examples or the [docs](https://peterpain.github.io/chessalyzer.js/Chessalyzer.html).
 
 ## Examples
 
@@ -47,22 +49,23 @@ const { Tracker } = Chessalyzer;
 // create basic tile tracker
 const tileTracker = new Tracker.Tile();
 
+// create a analysis function that evaluates a specific stat
+// in this example we want to know how often each piece moved to the tile at sqrData.coords
+let fun = (data, sqrData, loopSqrData) => {
+	let val = 0;
+	const { coords } = sqrData;
+	const { piece } = loopSqrData;
+	if (piece.color !== '') {
+		let val =
+			data.tiles[coords[0]][coords[1]][piece.color][piece.name].movedTo;
+	}
+	return val;
+};
+
 // start a batch analysis for the PGN file at <pathToPgnFile>
 // the analysis is saved in the 'tileTracker' object
 Chessalyzer.startBatch('<pathToPgnFile>', tileTracker).then(() => {
-    // create a analysis function that evaluates a specific stat
-    // in this example we want to know how often each piece moved to the tile at sqrData.coords
-    let fun = (data, sqrData, loopSqrData) => {
-        let val = 0;
-        const { coords } = sqrData;
-        const { piece } = loopSqrData;
-        if (piece.color !== '') {
-            let val =
-                data.tiles[coords[0]][coords[1]][piece.color][piece.name].movedTo;
-        }
-        return val;
-    };
-
+    
     // generate a heat map for the data of 'a1' based on your evaluation function
     let heatmapData = Chessalyzer.generateHeatmap(tileTracker, 'a1', fun);
 
@@ -142,7 +145,7 @@ Chessalyzer.startBatch(
 
 ## Heatmap analysis functions
 
-The function you create for heatmap generation gets passed up to four parameters inside `generateHeatMap()`: `data, sqrData, loopData, optData`:
+The function you create for heatmap generation gets passed up to four parameters (inside `generateHeatMap()`):
 
 -   `data`: The data that is the basis for the heatmap. Typically this object is an analyzer you passed into the `startBatch()` function.
 -   `sqrData`: Contains informations about the square you passed into the `generateHeatMap()` function. `sqrData` is an object with the following entries:
@@ -163,7 +166,7 @@ The function you create for heatmap generation gets passed up to four parameters
 
 ### Built-in
 
-chessalyzer.js comes with three builtin trackers, available from the `Chessalyzer.Tracker` object:
+chessalyzer.js comes with three built-in trackers, available from the `Chessalyzer.Tracker` object:
 
 `Tracker.Game`:
 
@@ -229,7 +232,7 @@ Your tracker must have the following two properties:
 
 ## Visualisation
 
-Please note that chessalyzer.js only provides the raw data of the analyses. If you want to visualize the data you will need a separate library. The following examples were created with my my fork of [chessboardjs](https://github.com/PeterPain/heatboard.js) with added heatmap functionality.
+Please note that chessalyzer.js only provides the raw data of the analyses. If you want to visualize the data you will need a separate library. The following examples were created with my fork of [chessboardjs](https://github.com/PeterPain/heatboard.js) with added heatmap functionality.
 
 White tile occupation  
 <img src="https://i.imgur.com/2naX1mg.png" width="30%">
