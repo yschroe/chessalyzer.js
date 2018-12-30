@@ -83,8 +83,6 @@ class TileTracker extends BaseTracker {
 	}
 
 	track(moveData) {
-		this.startTimer();
-
 		const { to } = moveData;
 		const { from } = moveData;
 		const { player } = moveData;
@@ -139,7 +137,6 @@ class TileTracker extends BaseTracker {
 			this.cntMovesTotal += this.cntMovesGame;
 			this.cntMovesGame = 0;
 		}
-		this.endTimer();
 	}
 
 	processMove(from, to, player, piece) {

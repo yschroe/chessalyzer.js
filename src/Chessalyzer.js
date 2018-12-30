@@ -50,17 +50,17 @@ class Chessalyzer {
 			const t0 = performance.now();
 			gameProcessor
 				.processPGN(path, cfg, analyzerArray, callback.rate)
-				.then(() => {
+				.then((header) => {
 					const t1 = performance.now();
 					const tdiff = Math.round(t1 - t0) / 1000;
-					const mps = Math.round(gameProcessor.cntMoves / tdiff);
+					const mps = Math.round(header.cntMoves / tdiff);
 
 					console.log(
-						`${gameProcessor.cntGames} games (${
-							gameProcessor.cntMoves
+						`${header.cntGames} games (${
+							header.cntMoves
 						} moves) processed in ${tdiff}s (${mps} moves/s)`
 					);
-					resolve();
+					resolve(header);
 				});
 		});
 	}

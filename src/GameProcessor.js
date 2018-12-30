@@ -115,7 +115,7 @@ class GameProcessor extends EventEmitter {
 
 			lr.on('end', () => {
 				console.log('Read entire file.');
-				resolve();
+				resolve({ cntGames: this.cntGames, cntMoves: this.cntMoves });
 			});
 		});
 	}
@@ -131,7 +131,7 @@ class GameProcessor extends EventEmitter {
 
 			// move based analyzers
 			this.moveAnalyzers.forEach((a) => {
-				a.track(this.currentMove);
+				a.analyze(this.currentMove);
 			});
 
 			this.board.move(this.currentMove);
@@ -142,7 +142,7 @@ class GameProcessor extends EventEmitter {
 
 		// game based analyzers
 		this.gameAnalyzers.forEach((a) => {
-			a.track(game);
+			a.analyze(game);
 		});
 	}
 

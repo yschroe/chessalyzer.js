@@ -8,9 +8,7 @@ class GameTracker extends BaseTracker {
 	}
 
 	track(game) {
-		this.startTimer();
 		this.cntGames += 1;
-
 		switch (game.Result) {
 			case '1-0':
 				this.wins[0] += 1;
@@ -27,7 +25,6 @@ class GameTracker extends BaseTracker {
 			default:
 				break;
 		}
-		this.endTimer();
 	}
 }
 

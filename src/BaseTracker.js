@@ -15,11 +15,9 @@ class BaseTracker {
 		}
 	}
 
-	startTimer() {
+	analyze(data) {
 		if (this.profilingActive) this.t0 = performance.now();
-	}
-
-	endTimer() {
+		this.track(data);
 		if (this.profilingActive) this.time += performance.now() - this.t0;
 	}
 }

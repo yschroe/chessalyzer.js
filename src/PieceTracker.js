@@ -33,7 +33,6 @@ class PieceTracker extends BaseTracker {
 	}
 
 	track(moveData) {
-		this.startTimer();
 		const { player } = moveData;
 		const { piece } = moveData;
 		const { takes } = moveData;
@@ -43,7 +42,6 @@ class PieceTracker extends BaseTracker {
 				this.processTakes(player, piece, takes.piece);
 			}
 		}
-		this.endTimer();
 	}
 
 	processTakes(player, takingPiece, takenPiece) {

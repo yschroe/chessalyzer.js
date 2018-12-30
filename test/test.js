@@ -27,8 +27,8 @@ for (let i = 0; i < 1; i += 1) {
 		//{ fun: (cnt) => console.log(cnt), rate: 2500 }
 	).then(() => {
 		// console.log(c.tiles[0][0].b);
-		// let stats = Chessalyzer.generateHeatmap(c, 'a1', fun);
-		// console.log(stats);
+		let stats = Chessalyzer.generateHeatmap(c, 'a1', fun);
+		console.log(stats);
 		// Chessalyzer.startBatch(
 		// 	'C:/Users/yanni/Documents/Workspace/JavaScript/Archiv/Chessalyzer_p5js/lichess_db_standard_rated_2013-01.pgn',
 		// 	a,
