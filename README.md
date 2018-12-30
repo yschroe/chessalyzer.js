@@ -255,6 +255,9 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 ## Changelog
 
+-   1.0.1:
+    -   Moved the performance tracking for the Trackers into the Tracker.Base class.
+    -   The Promise returned by the startBatch function now contains the number of processed games and moves.
 -   1.0.0:  
     Significantly changed the API to allow for more modularity. If you are already using an older version (<=0.4.0) consider changing your code to adapt to the new API.
 
