@@ -48,7 +48,7 @@ class GameProcessor extends EventEmitter {
 	processPGN(path, config, analyzers, refreshRate) {
 		const cfg = GameProcessor.checkConfig(config);
 
-		analyzers.forEach((a) => {
+		analyzers.forEach(a => {
 			if (a.type === 'move') {
 				this.moveAnalyzers.push(a);
 			} else if (a.type === 'game') {
@@ -63,7 +63,7 @@ class GameProcessor extends EventEmitter {
 			let game = {};
 
 			// process current line
-			const processLine = (line) => {
+			const processLine = line => {
 				// data tag
 				if (
 					line.startsWith('[') &&
@@ -101,12 +101,12 @@ class GameProcessor extends EventEmitter {
 				}
 			};
 
-			lr.on('error', (err) => {
+			lr.on('error', err => {
 				console.log(err);
 				reject();
 			});
 
-			lr.on('line', (line) => {
+			lr.on('line', line => {
 				// pause emitting of lines...
 				lr.pause();
 
@@ -130,7 +130,7 @@ class GameProcessor extends EventEmitter {
 			this.parseMove(moves[i]);
 
 			// move based analyzers
-			this.moveAnalyzers.forEach((a) => {
+			this.moveAnalyzers.forEach(a => {
 				a.analyze(this.currentMove);
 			});
 
@@ -141,7 +141,7 @@ class GameProcessor extends EventEmitter {
 		this.board.reset();
 
 		// game based analyzers
-		this.gameAnalyzers.forEach((a) => {
+		this.gameAnalyzers.forEach(a => {
 			a.analyze(game);
 		});
 	}

@@ -1,4 +1,14 @@
 {
-	"presets": ["env"],
+	"presets": [
+		[
+			"@babel/preset-env",
+			{
+				"modules": "umd",
+				"targets": {
+					"node": "current"
+				}
+			}
+		]
+	],
 	"plugins": ["babel-plugin-add-module-exports"]
 }

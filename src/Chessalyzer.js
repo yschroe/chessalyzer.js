@@ -42,15 +42,15 @@ class Chessalyzer {
 		const gameProcessor = new GameProcessor();
 
 		// callback handler
-		gameProcessor.on('status', (gameCnt) => {
+		gameProcessor.on('status', gameCnt => {
 			callback.fun(gameCnt);
 		});
 
-		return new Promise((resolve) => {
+		return new Promise(resolve => {
 			const t0 = performance.now();
 			gameProcessor
 				.processPGN(path, cfg, analyzerArray, callback.rate)
-				.then((header) => {
+				.then(header => {
 					const t1 = performance.now();
 					const tdiff = Math.round(t1 - t0) / 1000;
 					const mps = Math.round(header.cntMoves / tdiff);
@@ -71,7 +71,7 @@ class Chessalyzer {
 	 * @param {Object} data - The data that shall be saved
 	 */
 	static saveData(path, data) {
-		fs.writeFile(path, JSON.stringify(data), (err) => {
+		fs.writeFile(path, JSON.stringify(data), err => {
 			if (err) {
 				console.error(err);
 				return;

@@ -10,22 +10,22 @@ class PieceTracker extends BaseTracker {
 		this.w = {};
 
 		// first layer
-		pawnTemplate.forEach((val) => {
+		pawnTemplate.forEach(val => {
 			this.w[val] = {};
 			this.b[val] = {};
 		});
-		pieceTemplate.forEach((val) => {
+		pieceTemplate.forEach(val => {
 			this.w[val] = {};
 			this.b[val] = {};
 		});
 
 		// second layer
-		Object.keys(this.w).forEach((key) => {
-			pawnTemplate.forEach((val) => {
+		Object.keys(this.w).forEach(key => {
+			pawnTemplate.forEach(val => {
 				this.w[key][val] = 0;
 				this.b[key][val] = 0;
 			});
-			pieceTemplate.forEach((val) => {
+			pieceTemplate.forEach(val => {
 				this.w[key][val] = 0;
 				this.b[key][val] = 0;
 			});

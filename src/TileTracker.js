@@ -33,11 +33,11 @@ class TileTracker extends BaseTracker {
 
 				currRow[col].b = new TileStats();
 				currRow[col].w = new TileStats();
-				pawnTemplate.forEach((val) => {
+				pawnTemplate.forEach(val => {
 					currRow[col].b[val] = new TileStats();
 					currRow[col].w[val] = new TileStats();
 				});
-				pieceTemplate.forEach((val) => {
+				pieceTemplate.forEach(val => {
 					currRow[col].b[val] = new TileStats();
 					currRow[col].w[val] = new TileStats();
 				});

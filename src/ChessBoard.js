@@ -26,7 +26,7 @@ class ChessBoard {
 			}
 			this.tiles[row] = currRow;
 		}
-		this.defaultTiles = this.tiles.map((arr) => arr.slice());
+		this.defaultTiles = this.tiles.map(arr => arr.slice());
 		this.kingPos = { w: [7, 4], b: [0, 4] };
 	}
 
@@ -81,7 +81,7 @@ class ChessBoard {
 	}
 
 	reset() {
-		this.tiles = this.defaultTiles.map((arr) => arr.slice());
+		this.tiles = this.defaultTiles.map(arr => arr.slice());
 		this.kingPos = { w: [7, 4], b: [0, 4] };
 	}
 
