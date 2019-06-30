@@ -1,4 +1,5 @@
 import GameProcessor from './GameProcessor';
+import processMulti from './GameProcessorMulti';
 
 import PieceTracker from '../tracker/PieceTracker';
 import TileTracker from '../tracker/TileTracker';
@@ -62,6 +63,31 @@ class Chessalyzer {
 					);
 					resolve(header);
 				});
+		});
+	}
+
+	static startMultiCore(path, analyzer, cfg = {}) {
+		// check if single analyzer or array is passed
+		let analyzerArray = analyzer;
+		if (!Array.isArray(analyzerArray)) {
+			analyzerArray = [analyzer];
+		}
+		const t0 = performance.now();
+		return new Promise(resolve => {
+			processMulti(path, cfg, analyzerArray).then(() => {
+				const t1 = performance.now();
+				const tdiff = Math.round(t1 - t0) / 1000;
+
+				console.log(`Processed in ${tdiff}s`);
+				resolve();
+			});
+
+			// gameProcessor
+			// 	.processPGNMultiCore(path, cfg, analyzer, callback.rate)
+			// 	.then(() => {
+			// 		console.log('its done');
+			// 		resolve();
+			// 	});
 		});
 	}
 

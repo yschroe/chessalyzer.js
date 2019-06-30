@@ -1,5 +1,5 @@
 /*eslint-disable*/
-const Chessalyzer = require("../lib/chessalyzer");
+const Chessalyzer = require('../lib/chessalyzer');
 const { Tracker } = Chessalyzer;
 
 // const c1 = new Chessalyzer();
@@ -17,7 +17,7 @@ const c = new Tracker.Tile();
 
 for (let i = 0; i < 1; i += 1) {
 	Chessalyzer.startBatch(
-		"C:/Users/yanni/Downloads/lichess_db_standard_rated_2013-01.pgn",
+		'C:/Users/yanni/Downloads/lichess_db_standard_rated_2013-01.pgn',
 		[a, b, c],
 		{
 			split: false,
@@ -25,8 +25,8 @@ for (let i = 0; i < 1; i += 1) {
 			//filter: (game) => game.WhiteElo > 1800
 		}
 	).then(() => {
-		let stats = Chessalyzer.generateHeatmap(c, "a1", fun);
-		console.log(stats);
+		//let stats = Chessalyzer.generateHeatmap(c, "a1", fun);
+		//console.log(stats);
 		// Chessalyzer.startBatch(
 		// 	'C:/Users/yanni/Documents/Workspace/JavaScript/Archiv/Chessalyzer_p5js/lichess_db_standard_rated_2013-01.pgn',
 		// 	a,
@@ -39,9 +39,9 @@ for (let i = 0; i < 1; i += 1) {
 		// 	console.log(a);
 		// });
 		// console.log(b);
-		console.log("Piece: " + Math.round(b.time) / 1000);
-		console.log("Tile: " + Math.round(c.time) / 1000);
-		console.log("Game: " + Math.round(a.time) / 1000);
+		console.log('Piece: ' + Math.round(b.time) / 1000);
+		console.log('Tile: ' + Math.round(c.time) / 1000);
+		console.log('Game: ' + Math.round(a.time) / 1000);
 		// let stats = Chessalyzer.generateHeatmap(c, 'a1', fun);
 		// console.log(stats);
 		// c1.saveData('C:/Users/yanni/Documents/Workspace/JavaScript/save.json');

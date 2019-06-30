@@ -45,9 +45,7 @@ class GameProcessor extends EventEmitter {
 		return cfg;
 	}
 
-	processPGN(path, config, analyzers, refreshRate) {
-		const cfg = GameProcessor.checkConfig(config);
-
+	attachAnalyzers(analyzers) {
 		analyzers.forEach(a => {
 			if (a.type === 'move') {
 				this.moveAnalyzers.push(a);
@@ -55,6 +53,69 @@ class GameProcessor extends EventEmitter {
 				this.gameAnalyzers.push(a);
 			}
 		});
+	}
+
+	static parseGames(path, config, cntGameAnalyers) {
+		const cfg = GameProcessor.checkConfig(config);
+		const games = [];
+		return new Promise((resolve, reject) => {
+			const lr = new LineByLineReader(path, { skipEmptyLines: true });
+			let game = {};
+			const processLine = line => {
+				// data tag
+				if (
+					line.startsWith('[') &&
+					(cfg.hasFilter || cntGameAnalyers > 0)
+				) {
+					const key = line.match(/\[(.*?)\s/)[1];
+					const value = line.match(/"(.*?)"/)[1];
+
+					game[key] = value;
+
+					// moves
+				} else if (line.startsWith('1')) {
+					game.moves = line
+						.replace(/\{(.*?)\}\s/g, '')
+						.replace(/\d+\.+\s/g, '')
+						.replace(' *', '')
+						.split(' ');
+
+					if (cfg.filter(game) || !cfg.hasFilter) {
+						games.push(game);
+					}
+
+					game = {};
+				}
+				if (games.length >= cfg.cntGames) {
+					lr.close();
+					lr.end();
+				} else {
+					lr.resume();
+				}
+			};
+
+			lr.on('error', err => {
+				console.log(err);
+				reject(err);
+			});
+
+			lr.on('line', line => {
+				// pause emitting of lines...
+				lr.pause();
+				processLine(line);
+			});
+
+			lr.on('end', () => {
+				console.log('Read entire file.');
+				resolve(games);
+			});
+		});
+	}
+
+	processPGN(path, config, analyzers, refreshRate) {
+		const cfg = GameProcessor.checkConfig(config);
+
+		this.attachAnalyzers(analyzers);
 
 		const cntGameAnalyers = this.gameAnalyzers.length;
 
