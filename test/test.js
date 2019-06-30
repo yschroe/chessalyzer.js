@@ -21,7 +21,7 @@ for (let i = 0; i < 1; i += 1) {
 		[a, b, c],
 		{
 			split: false,
-			cntGames: 100000
+			cntGames: 1000000
 			//filter: (game) => game.WhiteElo > 1800
 		}
 	).then(() => {
@@ -42,6 +42,7 @@ for (let i = 0; i < 1; i += 1) {
 		console.log('Piece: ' + Math.round(b.time) / 1000);
 		console.log('Tile: ' + Math.round(c.time) / 1000);
 		console.log('Game: ' + Math.round(a.time) / 1000);
+		console.log(a.wins);
 		// let stats = Chessalyzer.generateHeatmap(c, 'a1', fun);
 		// console.log(stats);
 		// c1.saveData('C:/Users/yanni/Documents/Workspace/JavaScript/save.json');

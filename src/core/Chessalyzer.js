@@ -66,7 +66,7 @@ class Chessalyzer {
 		});
 	}
 
-	static startMultiCore(path, analyzer, cfg = {}) {
+	static startMultiCore(path, analyzer, cfg = {}, nCores = -1) {
 		// check if single analyzer or array is passed
 		let analyzerArray = analyzer;
 		if (!Array.isArray(analyzerArray)) {
@@ -74,7 +74,7 @@ class Chessalyzer {
 		}
 		const t0 = performance.now();
 		return new Promise(resolve => {
-			processMulti(path, cfg, analyzerArray).then(() => {
+			processMulti(path, cfg, analyzerArray, nCores).then(() => {
 				const t1 = performance.now();
 				const tdiff = Math.round(t1 - t0) / 1000;
 

@@ -7,6 +7,14 @@ class GameTracker extends BaseTracker {
 		this.cntGames = 0;
 	}
 
+	add(tracker) {
+		this.wins[0] += tracker.wins[0];
+		this.wins[1] += tracker.wins[1];
+		this.wins[2] += tracker.wins[2];
+		this.cntGames += tracker.cntGames;
+		this.time += tracker.time;
+	}
+
 	track(game) {
 		this.cntGames += 1;
 		switch (game.Result) {

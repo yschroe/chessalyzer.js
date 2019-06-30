@@ -21,4 +21,6 @@ Chessalyzer.startMultiCore(
 	console.log('Piece: ' + Math.round(b.time) / 1000);
 	console.log('Tile: ' + Math.round(c.time) / 1000);
 	console.log('Game: ' + Math.round(a.time) / 1000);
+
+	console.log(a.wins);
 });

@@ -7,13 +7,17 @@ const numCPUs = require('os').cpus().length;
  * Class that processes games.
  */
 
-const processMulti = (path, cfg, analyzer) => {
-	console.log(`Doing Shit with ${numCPUs} CPUs`);
+const processMulti = (path, cfg, analyzer, nCoresTar) => {
+	console.log();
 	return new Promise(resolve => {
 		// Master
 		if (cluster.isMaster) {
 			// Parse games first
 			let cntGameAnalyzer = 0;
+			const analyzerStore = analyzer;
+			const nCores =
+				nCoresTar === -1 || nCoresTar > numCPUs ? numCPUs : nCoresTar;
+
 			analyzer.forEach(a => {
 				if (a.type === 'game') cntGameAnalyzer += 1;
 			});
@@ -25,7 +29,7 @@ const processMulti = (path, cfg, analyzer) => {
 					const workers = [];
 					const workersFinished = [];
 					// const data = [];
-					const batchSize = games.length / numCPUs;
+					const batchSize = games.length / nCores;
 
 					const allWorkersFinished = () => {
 						let status = true;
@@ -37,24 +41,20 @@ const processMulti = (path, cfg, analyzer) => {
 						return status;
 					};
 
-					// split data
-					// for (let i = 0; i < numCPUs; i += 1) {
-					// 	data.push(
-					// 		games.slice(
-					// 			i * batchSize,
-					// 			i * batchSize + batchSize
-					// 		)
-					// 	);
-					// }
+					const addTrackerData = tracker => {
+						analyzerStore[0].add(tracker[0]);
+					};
 
 					// split to different threads
-					for (let i = 0; i < numCPUs; i += 1) {
+					for (let i = 0; i < nCores; i += 1) {
 						workers.push(cluster.fork());
 						workersFinished.push(false);
 
 						console.log(
 							`Sending Batch of size ${batchSize} to Child ${i}!`
 						);
+
+						// send batch to worker
 						workers[i].send(
 							games.slice(
 								i * batchSize,
@@ -62,12 +62,14 @@ const processMulti = (path, cfg, analyzer) => {
 							)
 						);
 
+						// on worker finish
 						workers[i].on('message', msg => {
 							console.log(`Child ${i} is done`);
-							console.log(msg);
 							workersFinished[i] = true;
+							addTrackerData(msg.gameAnalyzers);
 							workers[i].kill();
 
+							// if all workers finished, resolve promise
 							if (allWorkersFinished()) {
 								resolve();
 							}
@@ -81,9 +83,11 @@ const processMulti = (path, cfg, analyzer) => {
 			process.on('message', msg => {
 				const proc = new GameProcessor();
 				proc.attachAnalyzers(analyzer);
+
 				msg.forEach(game => {
 					proc.processGame(game);
 				});
+				//
 				process.send(proc);
 			});
 		}
