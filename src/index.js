@@ -1,4 +1,4 @@
 /* eslint-disable */
-import Chessalyzer from './Chessalyzer';
+import Chessalyzer from './core/Chessalyzer';
 
 export default Chessalyzer;

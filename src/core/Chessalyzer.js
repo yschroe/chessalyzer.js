@@ -1,9 +1,9 @@
 import GameProcessor from './GameProcessor';
 
-import PieceTracker from './PieceTracker';
-import TileTracker from './TileTracker';
-import GameTracker from './GameTracker';
-import BaseTracker from './BaseTracker';
+import PieceTracker from '../tracker/PieceTracker';
+import TileTracker from '../tracker/TileTracker';
+import GameTracker from '../tracker/GameTracker';
+import BaseTracker from '../tracker/BaseTracker';
 
 const { performance } = require('perf_hooks');
 
