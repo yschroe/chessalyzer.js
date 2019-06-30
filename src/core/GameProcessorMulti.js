@@ -7,23 +7,31 @@ const numCPUs = require('os').cpus().length;
  * Class that processes games.
  */
 
-const processMulti = (path, cfg, analyzer, nCoresTar) => {
-	console.log();
-	return new Promise(resolve => {
+const processMulti = (path, cfg, analyzer, nCoresTar) =>
+	new Promise(resolve => {
 		// Master
 		if (cluster.isMaster) {
-			// Parse games first
 			let cntGameAnalyzer = 0;
-			const analyzerStore = analyzer;
+			const gameAnalyzerStore = [];
+			const moveAnalyzerStore = [];
+			let cntGames = 0;
+			let cntMoves = 0;
+
 			const nCores =
 				nCoresTar === -1 || nCoresTar > numCPUs ? numCPUs : nCoresTar;
 
 			analyzer.forEach(a => {
-				if (a.type === 'game') cntGameAnalyzer += 1;
+				if (a.type === 'game') {
+					cntGameAnalyzer += 1;
+					gameAnalyzerStore.push(a);
+				} else if (a.type === 'move') {
+					moveAnalyzerStore.push(a);
+				}
 			});
 
 			const config = GameProcessor.checkConfig(cfg);
 
+			// Parse games first
 			GameProcessor.parseGames(path, config, cntGameAnalyzer).then(
 				games => {
 					const workers = [];
@@ -31,18 +39,35 @@ const processMulti = (path, cfg, analyzer, nCoresTar) => {
 					// const data = [];
 					const batchSize = games.length / nCores;
 
-					const allWorkersFinished = () => {
+					const checkAllWorkersFinished = () => {
 						let status = true;
 						workersFinished.forEach(stat => {
 							if (stat === false) {
 								status = false;
 							}
 						});
-						return status;
+						if (status) {
+							resolve({
+								cntGames,
+								cntMoves
+							});
+						}
 					};
 
-					const addTrackerData = tracker => {
-						analyzerStore[0].add(tracker[0]);
+					const addTrackerData = (
+						gameTracker,
+						moveTracker,
+						nGames,
+						nMoves
+					) => {
+						for (let i = 0; i < gameAnalyzerStore.length; i += 1) {
+							gameAnalyzerStore[i].add(gameTracker[i]);
+						}
+						for (let i = 0; i < moveAnalyzerStore.length; i += 1) {
+							moveAnalyzerStore[i].add(moveTracker[i]);
+						}
+						cntGames += nGames;
+						cntMoves += nMoves;
 					};
 
 					// split to different threads
@@ -50,9 +75,9 @@ const processMulti = (path, cfg, analyzer, nCoresTar) => {
 						workers.push(cluster.fork());
 						workersFinished.push(false);
 
-						console.log(
-							`Sending Batch of size ${batchSize} to Child ${i}!`
-						);
+						// console.log(
+						// 	`Sending Batch of size ${batchSize} to Child ${i}!`
+						// );
 
 						// send batch to worker
 						workers[i].send(
@@ -64,15 +89,20 @@ const processMulti = (path, cfg, analyzer, nCoresTar) => {
 
 						// on worker finish
 						workers[i].on('message', msg => {
-							console.log(`Child ${i} is done`);
+							// console.log(`Child ${i} is done`);
 							workersFinished[i] = true;
-							addTrackerData(msg.gameAnalyzers);
+
+							addTrackerData(
+								msg.gameAnalyzers,
+								msg.moveAnalyzers,
+								msg.cntGames,
+								msg.cntMoves
+							);
+
 							workers[i].kill();
 
 							// if all workers finished, resolve promise
-							if (allWorkersFinished()) {
-								resolve();
-							}
+							checkAllWorkersFinished();
 						});
 					}
 				}
@@ -80,18 +110,18 @@ const processMulti = (path, cfg, analyzer, nCoresTar) => {
 
 			// Worker
 		} else {
+			// process data sent by master
 			process.on('message', msg => {
+				// console.log(msg.length);
 				const proc = new GameProcessor();
 				proc.attachAnalyzers(analyzer);
 
 				msg.forEach(game => {
 					proc.processGame(game);
 				});
-				//
 				process.send(proc);
 			});
 		}
 	});
-};
 
 export default processMulti;

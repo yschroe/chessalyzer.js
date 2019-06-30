@@ -52,6 +52,76 @@ class TileTracker extends BaseTracker {
 		}
 	}
 
+	add(tracker) {
+		this.time += tracker.time;
+
+		for (let row = 0; row < 8; row += 1) {
+			for (let col = 0; col < 8; col += 1) {
+				this.tiles[row][col].b.movedTo +=
+					tracker.tiles[row][col].b.movedTo;
+				this.tiles[row][col].w.movedTo +=
+					tracker.tiles[row][col].w.movedTo;
+
+				this.tiles[row][col].b.wasOn += tracker.tiles[row][col].b.wasOn;
+				this.tiles[row][col].w.wasOn += tracker.tiles[row][col].w.wasOn;
+
+				this.tiles[row][col].b.killedOn +=
+					tracker.tiles[row][col].b.killedOn;
+				this.tiles[row][col].w.killedOn +=
+					tracker.tiles[row][col].w.killedOn;
+
+				this.tiles[row][col].b.wasKilledOn +=
+					tracker.tiles[row][col].b.wasKilledOn;
+				this.tiles[row][col].w.wasKilledOn +=
+					tracker.tiles[row][col].w.wasKilledOn;
+
+				pawnTemplate.forEach(piece => {
+					this.tiles[row][col].b[piece].movedTo +=
+						tracker.tiles[row][col].b[piece].movedTo;
+					this.tiles[row][col].w[piece].movedTo +=
+						tracker.tiles[row][col].w[piece].movedTo;
+
+					this.tiles[row][col].b[piece].wasOn +=
+						tracker.tiles[row][col].b[piece].wasOn;
+					this.tiles[row][col].w[piece].wasOn +=
+						tracker.tiles[row][col].w[piece].wasOn;
+
+					this.tiles[row][col].b[piece].killedOn +=
+						tracker.tiles[row][col].b[piece].killedOn;
+					this.tiles[row][col].w[piece].killedOn +=
+						tracker.tiles[row][col].w[piece].killedOn;
+
+					this.tiles[row][col].b[piece].wasKilledOn +=
+						tracker.tiles[row][col].b[piece].wasKilledOn;
+					this.tiles[row][col].w[piece].wasKilledOn +=
+						tracker.tiles[row][col].w[piece].wasKilledOn;
+				});
+
+				pieceTemplate.forEach(piece => {
+					this.tiles[row][col].b[piece].movedTo +=
+						tracker.tiles[row][col].b[piece].movedTo;
+					this.tiles[row][col].w[piece].movedTo +=
+						tracker.tiles[row][col].w[piece].movedTo;
+
+					this.tiles[row][col].b[piece].wasOn +=
+						tracker.tiles[row][col].b[piece].wasOn;
+					this.tiles[row][col].w[piece].wasOn +=
+						tracker.tiles[row][col].w[piece].wasOn;
+
+					this.tiles[row][col].b[piece].killedOn +=
+						tracker.tiles[row][col].b[piece].killedOn;
+					this.tiles[row][col].w[piece].killedOn +=
+						tracker.tiles[row][col].w[piece].killedOn;
+
+					this.tiles[row][col].b[piece].wasKilledOn +=
+						tracker.tiles[row][col].b[piece].wasKilledOn;
+					this.tiles[row][col].w[piece].wasKilledOn +=
+						tracker.tiles[row][col].w[piece].wasKilledOn;
+				});
+			}
+		}
+	}
+
 	resetCurrentPiece(row, col) {
 		let color;
 		let piece;

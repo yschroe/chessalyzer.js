@@ -74,20 +74,18 @@ class Chessalyzer {
 		}
 		const t0 = performance.now();
 		return new Promise(resolve => {
-			processMulti(path, cfg, analyzerArray, nCores).then(() => {
+			processMulti(path, cfg, analyzerArray, nCores).then(header => {
 				const t1 = performance.now();
 				const tdiff = Math.round(t1 - t0) / 1000;
+				const mps = Math.round(header.cntMoves / tdiff);
 
-				console.log(`Processed in ${tdiff}s`);
-				resolve();
+				console.log(
+					`${header.cntGames} games (${
+						header.cntMoves
+					} moves) processed in ${tdiff}s (${mps} moves/s)`
+				);
+				resolve(header);
 			});
-
-			// gameProcessor
-			// 	.processPGNMultiCore(path, cfg, analyzer, callback.rate)
-			// 	.then(() => {
-			// 		console.log('its done');
-			// 		resolve();
-			// 	});
 		});
 	}
 

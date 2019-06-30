@@ -32,6 +32,31 @@ class PieceTracker extends BaseTracker {
 		});
 	}
 
+	add(tracker) {
+		this.time += tracker.time;
+
+		pawnTemplate.forEach(pawn => {
+			pieceTemplate.forEach(piece => {
+				this.w[pawn][piece] += tracker.w[pawn][piece];
+				this.b[pawn][piece] += tracker.b[pawn][piece];
+			});
+			pawnTemplate.forEach(pawn2 => {
+				this.w[pawn][pawn2] += tracker.w[pawn][pawn2];
+				this.b[pawn][pawn2] += tracker.b[pawn][pawn2];
+			});
+		});
+		pieceTemplate.forEach(piece => {
+			pieceTemplate.forEach(piece2 => {
+				this.w[piece][piece2] += tracker.w[piece][piece2];
+				this.b[piece][piece2] += tracker.b[piece][piece2];
+			});
+			pawnTemplate.forEach(pawn => {
+				this.w[piece][pawn] += tracker.w[piece][pawn];
+				this.b[piece][pawn] += tracker.b[piece][pawn];
+			});
+		});
+	}
+
 	track(moveData) {
 		const { player } = moveData;
 		const { piece } = moveData;
