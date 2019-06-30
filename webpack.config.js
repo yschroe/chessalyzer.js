@@ -1,11 +1,8 @@
 /* global __dirname, require, module */
-
-// const webpack = require('webpack');
-// const path = require('path');
-
 const { env } = require('yargs').argv; // use --env with webpack 2
 const nodeExternals = require('webpack-node-externals');
-// const pkg = require('./package.json');
+const stylish = require('eslint/lib/cli-engine/formatters/stylish');
+const TerserPlugin = require('terser-webpack-plugin');
 
 const libraryName = 'chessalyzer';
 
@@ -31,6 +28,9 @@ const config = {
 		libraryTarget: 'umd',
 		umdNamedDefine: true
 	},
+	optimization: {
+		minimizer: [new TerserPlugin()]
+	},
 	module: {
 		rules: [
 			{
@@ -40,8 +40,15 @@ const config = {
 			},
 			{
 				test: /(\.jsx|\.js)$/,
-				loader: 'eslint-loader',
-				exclude: /node_modules/
+				exclude: /node_modules/,
+				use: [
+					{
+						loader: 'eslint-loader',
+						options: {
+							formatter: stylish
+						}
+					}
+				]
 			}
 		]
 	},
