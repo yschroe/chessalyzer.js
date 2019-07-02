@@ -10,14 +10,13 @@ const c = new Tracker.Tile();
 // b.profilingActive = true;
 // c.profilingActive = true;
 
-Chessalyzer.startMultiCore(
+Chessalyzer.startBatchMultiCore(
 	'C:/Users/yanni/Downloads/lichess_db_standard_rated_2013-12.pgn',
 	[a, b, c],
 	{
-		cntGames: 100000
+		cntGames: 200000
 		//filter: (game) => game.WhiteElo > 1800
-	},
-	6
+	}
 ).then(() => {
 	console.log('Piece: ' + Math.round(b.time) / 1000);
 	console.log('Tile: ' + Math.round(c.time) / 1000);
@@ -26,19 +25,19 @@ Chessalyzer.startMultiCore(
 	console.log(a.wins);
 	// console.log(b);
 
-	Chessalyzer.startBatch(
-		'C:/Users/yanni/Downloads/lichess_db_standard_rated_2013-12.pgn',
-		[a, b, c],
-		{
-			cntGames: 100000
-			//filter: (game) => game.WhiteElo > 1800
-		}
-	).then(() => {
-		console.log('Piece: ' + Math.round(b.time) / 1000);
-		console.log('Tile: ' + Math.round(c.time) / 1000);
-		console.log('Game: ' + Math.round(a.time) / 1000);
+	// Chessalyzer.startBatch(
+	// 	'C:/Users/yanni/Downloads/lichess_db_standard_rated_2013-12.pgn',
+	// 	[a, b, c],
+	// 	{
+	// 		cntGames: 100000
+	// 		//filter: (game) => game.WhiteElo > 1800
+	// 	}
+	// ).then(() => {
+	// 	console.log('Piece: ' + Math.round(b.time) / 1000);
+	// 	console.log('Tile: ' + Math.round(c.time) / 1000);
+	// 	console.log('Game: ' + Math.round(a.time) / 1000);
 
-		console.log(a.wins);
-		// console.log(b);
-	});
+	// 	console.log(a.wins);
+	// 	// console.log(b);
+	// });
 });

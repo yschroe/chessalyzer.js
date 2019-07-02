@@ -1,5 +1,5 @@
 import GameProcessor from './GameProcessor';
-import processMulti from './GameProcessorMulti';
+// import processMulti from './GameProcessorMulti';
 
 import PieceTracker from '../tracker/PieceTracker';
 import TileTracker from '../tracker/TileTracker';
@@ -66,7 +66,7 @@ class Chessalyzer {
 		});
 	}
 
-	static startMultiCore(path, analyzer, cfg = {}, nCores = -1) {
+	static startBatchMultiCore(path, analyzer, cfg = {}, nCores = -1) {
 		// check if single analyzer or array is passed
 		let analyzerArray = analyzer;
 		if (!Array.isArray(analyzerArray)) {
@@ -74,7 +74,12 @@ class Chessalyzer {
 		}
 		const t0 = performance.now();
 		return new Promise(resolve => {
-			processMulti(path, cfg, analyzerArray, nCores).then(header => {
+			GameProcessor.processPGNMultiCore(
+				path,
+				cfg,
+				analyzerArray,
+				nCores
+			).then(header => {
 				const t1 = performance.now();
 				const tdiff = Math.round(t1 - t0) / 1000;
 				const mps = Math.round(header.cntMoves / tdiff);

@@ -7,8 +7,8 @@ const numCPUs = require('os').cpus().length;
  * Class that processes games.
  */
 
-const processMulti = (path, cfg, analyzer, nCoresTar) =>
-	new Promise(resolve => {
+function processMulti(path, cfg, analyzer, nCoresTar) {
+	return new Promise(resolve => {
 		// Master
 		if (cluster.isMaster) {
 			let cntGameAnalyzer = 0;
@@ -34,32 +34,23 @@ const processMulti = (path, cfg, analyzer, nCoresTar) =>
 			// Parse games first
 			GameProcessor.parseGames(path, config, cntGameAnalyzer).then(
 				games => {
-					const workers = [];
-					const workersFinished = [];
-					// const data = [];
 					const batchSize = games.length / nCores;
 
-					const checkAllWorkersFinished = () => {
-						let status = true;
-						workersFinished.forEach(stat => {
-							if (stat === false) {
-								status = false;
-							}
-						});
-						if (status) {
+					function checkAllWorkersFinished() {
+						if (Object.keys(cluster.workers).length === 0) {
 							resolve({
 								cntGames,
 								cntMoves
 							});
 						}
-					};
+					}
 
-					const addTrackerData = (
+					function addTrackerData(
 						gameTracker,
 						moveTracker,
 						nGames,
 						nMoves
-					) => {
+					) {
 						for (let i = 0; i < gameAnalyzerStore.length; i += 1) {
 							gameAnalyzerStore[i].add(gameTracker[i]);
 						}
@@ -68,19 +59,14 @@ const processMulti = (path, cfg, analyzer, nCoresTar) =>
 						}
 						cntGames += nGames;
 						cntMoves += nMoves;
-					};
+					}
 
 					// split to different threads
 					for (let i = 0; i < nCores; i += 1) {
-						workers.push(cluster.fork());
-						workersFinished.push(false);
-
-						// console.log(
-						// 	`Sending Batch of size ${batchSize} to Child ${i}!`
-						// );
+						const w = cluster.fork();
 
 						// send batch to worker
-						workers[i].send(
+						w.send(
 							games.slice(
 								i * batchSize,
 								i * batchSize + batchSize
@@ -88,10 +74,7 @@ const processMulti = (path, cfg, analyzer, nCoresTar) =>
 						);
 
 						// on worker finish
-						workers[i].on('message', msg => {
-							// console.log(`Child ${i} is done`);
-							workersFinished[i] = true;
-
+						w.on('message', msg => {
 							addTrackerData(
 								msg.gameAnalyzers,
 								msg.moveAnalyzers,
@@ -99,7 +82,7 @@ const processMulti = (path, cfg, analyzer, nCoresTar) =>
 								msg.cntMoves
 							);
 
-							workers[i].kill();
+							w.kill();
 
 							// if all workers finished, resolve promise
 							checkAllWorkersFinished();
@@ -112,16 +95,25 @@ const processMulti = (path, cfg, analyzer, nCoresTar) =>
 		} else {
 			// process data sent by master
 			process.on('message', msg => {
-				// console.log(msg.length);
+				// create new GameProcessor object and attach analyzers
 				const proc = new GameProcessor();
 				proc.attachAnalyzers(analyzer);
 
+				// analyze each game
 				msg.forEach(game => {
 					proc.processGame(game);
 				});
-				process.send(proc);
+
+				// send result of batch to master
+				process.send({
+					cntMoves: proc.cntMoves,
+					cntGames: proc.cntGames,
+					gameAnalyzers: proc.gameAnalyzers,
+					moveAnalyzers: proc.moveAnalyzers
+				});
 			});
 		}
 	});
+}
 
 export default processMulti;
