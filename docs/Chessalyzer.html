@@ -37,6 +37,13 @@
 				</ul>
 			</li>
 			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#processMulti">processMulti</a></li>
+				</ul>
+			</li>
+			
 		</ul>
         
             <div class="col-sm-3 col-md-3">
@@ -976,7 +983,7 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
 
     
     <div class="description">
-        Starts the batch processing for the selected file
+        Starts the singlethreaded batch processing for the selected file
     </div>
     
 
@@ -1450,6 +1457,331 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
     
 </dd>
 
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id=".startBatchMultiCore"><span class="type-signature">&lt;static> </span>startBatchMultiCore(path, analyzer [, nCores])</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Starts the multithreaded batch processing for the selected file
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>path</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">Path to the PGN file that should be analyzed</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>analyzer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+|
+
+<span class="param-type">Array.&lt;Object></span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">The analysis functions that shall be run
+ during batch processing. Can be one single analyzer or an array of analyzers.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>nCores</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Numer</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    -1
+                
+                </td>
+            
+
+            <td class="description last">Numbers of threads to use. Is limited to the max. amount
+ of threads of the running machine.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>cfg.filter</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    ()=>true
+                
+                </td>
+            
+
+            <td class="description last">Filter function for selecting games</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>cfg.cntGames</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    Infinite
+                
+                </td>
+            
+
+            <td class="description last">Max amount of games to process</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
         </dl>
     
 
@@ -1498,9 +1830,9 @@ See ./src/exampleHeatmapConfig for examples of such a function.</td>
 
 
 <span class="jsdoc-message">
-	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a>
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.2</a>
 	
-		on 2018-12-26T15:47:45+01:00
+		on 2019-07-02T18:46:04+02:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

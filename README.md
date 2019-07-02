@@ -13,7 +13,7 @@ NOTE: In Version 1.0.0 the API changed significantly! Check the examples for a d
 -   Track statistics
 -   Fully modular, track only the stats you need to preserve performance
 -   Generate heatmaps out of the generated data
--   It's fast (>800.000 moves/s on a i5-7200U; only PGN parsing)
+-   It's fast (>1.300.000 moves/s on a Ryzen 5 2600X using all 12 threads; only PGN parsing)
 -   Handles big files easily
 
 ## Usage
@@ -52,14 +52,14 @@ const tileTracker = new Tracker.Tile();
 // create a analysis function that evaluates a specific stat
 // in this example we want to know how often each piece moved to the tile at sqrData.coords
 let fun = (data, sqrData, loopSqrData) => {
-	let val = 0;
-	const { coords } = sqrData;
-	const { piece } = loopSqrData;
-	if (piece.color !== '') {
-		let val =
-			data.tiles[coords[0]][coords[1]][piece.color][piece.name].movedTo;
-	}
-	return val;
+    let val = 0;
+    const { coords } = sqrData;
+    const { piece } = loopSqrData;
+    if (piece.color !== '') {
+        let val =
+            data.tiles[coords[0]][coords[1]][piece.color][piece.name].movedTo;
+    }
+    return val;
 };
 
 // start a batch analysis for the PGN file at <pathToPgnFile>
@@ -89,6 +89,39 @@ Chessalyzer.startBatch('<pathToPgnFile>', tileTracker, { filter: fil }).then(() 
         // do something
     }
 );
+```
+
+### Multithreaded analyses (New in 1.1.0)
+
+Version 1.1.0 added experimental multithreading with much better processing speeds (>50% more analyzed moves/s). To use multithreading use the function `Chessalyzer.startBatchMultiCore` instead of `Chessalyzer.startBatch`:
+
+```javascript
+// start a multithreaded batch analysis for the PGN file at <pathToPgnFile>
+Chessalyzer.startBatchMultiCore(
+	'<pathToPgnFile>',
+	tileTracker,
+	{ cntGames: 10000 },
+	4
+).then(() => {
+	// ...
+});
+```
+
+`Chessalyzer.startBatchMultiCore` accepts an additional fourth argument `nCores` which defines how many threads you want to use. `nCores` is limited to your amount of available threads on your machine.
+
+##### Important
+
+-   The usage of the multithreaded functions requires an additional amount of memory since a new analysis object must be created for each additional thread.
+-   To use a custom tracker with your multithreaded analysis the tracker need to define an `add()` function. This function gets passed another Tracker object of the same type and is used to merge the data of the two tracker objects. For example, the add() function of the built-in GameTracker looks like this:
+
+```javascript
+add(tracker) {
+		this.wins[0] += tracker.wins[0];
+		this.wins[1] += tracker.wins[1];
+		this.wins[2] += tracker.wins[2];
+		this.cntGames += tracker.cntGames;
+		this.time += tracker.time;
+	}
 ```
 
 ### Compare Analyses
@@ -230,6 +263,9 @@ Your tracker must have the following two properties:
     -   For game-typed trackers:  
         `data` is an object that contains `{key: value}` entries, where `key` is the property in the PGN (e.g. `'WhiteElo'`, case sensitive) and `value` is the respective value of the property. The property `data.moves` is an array that contains the moves of the game in standard algebraic notation.
 
+-   `add(tracker)`:
+    Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. See [Multithreaded analyses section](<#-Multithreaded-analyses-(New-in-1.1.0)>) for an example.
+
 ## Visualisation
 
 Please note that chessalyzer.js only provides the raw data of the analyses. If you want to visualize the data you will need a separate library. The following examples were created with my fork of [chessboardjs](https://github.com/PeterPain/heatboard.js) with added heatmap functionality.
@@ -255,6 +291,8 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 ## Changelog
 
+-   1.1.0:
+    -   Added Multithreading
 -   1.0.1:
     -   Moved the performance tracking for the Trackers into the Tracker.Base class.
     -   The Promise returned by the startBatch function now contains the number of processed games and moves.

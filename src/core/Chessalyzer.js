@@ -16,7 +16,7 @@ const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 /** Main class for batch processing and generating heat maps */
 class Chessalyzer {
 	/**
-	 * Starts the batch processing for the selected file
+	 * Starts the singlethreaded batch processing for the selected file
 	 * @param {String} path - Path to the PGN file that should be analyzed
 	 * @param {(Object|Object[])} analyzer - The analysis functions that shall be run
 	 *  during batch processing. Can be one single analyzer or an array of analyzers.
@@ -66,6 +66,17 @@ class Chessalyzer {
 		});
 	}
 
+	/**
+	 * Starts the multithreaded batch processing for the selected file
+	 * @param {String} path - Path to the PGN file that should be analyzed
+	 * @param {(Object|Object[])} analyzer - The analysis functions that shall be run
+	 *  during batch processing. Can be one single analyzer or an array of analyzers.
+	 * @param {Numer} [nCores = -1] Numbers of threads to use. Is limited to the max. amount
+	 *  of threads of the running machine.
+	 * @param {Function} [cfg.filter = ()=>true] - Filter function for selecting games
+	 * @param {Number} [cfg.cntGames = Infinite ] - Max amount of games to process
+	 * @returns {Promise}
+	 */
 	static startBatchMultiCore(path, analyzer, cfg = {}, nCores = -1) {
 		// check if single analyzer or array is passed
 		let analyzerArray = analyzer;
