@@ -28,7 +28,7 @@ class Chessalyzer {
 	 * @param {Number} [callback.rate] - Every 'rate' games the callback function is called.
 	 * @returns {Promise}
 	 */
-	static startBatch(
+	static async startBatch(
 		path,
 		analyzer,
 		cfg = {},
@@ -47,23 +47,25 @@ class Chessalyzer {
 			callback.fun(gameCnt);
 		});
 
-		return new Promise(resolve => {
-			const t0 = performance.now();
-			gameProcessor
-				.processPGN(path, cfg, analyzerArray, callback.rate)
-				.then(header => {
-					const t1 = performance.now();
-					const tdiff = Math.round(t1 - t0) / 1000;
-					const mps = Math.round(header.cntMoves / tdiff);
+		const t0 = performance.now();
 
-					console.log(
-						`${header.cntGames} games (${
-							header.cntMoves
-						} moves) processed in ${tdiff}s (${mps} moves/s)`
-					);
-					resolve(header);
-				});
-		});
+		const header = await gameProcessor.processPGN(
+			path,
+			cfg,
+			analyzerArray,
+			callback.rate
+		);
+
+		const t1 = performance.now();
+		const tdiff = Math.round(t1 - t0) / 1000;
+		const mps = Math.round(header.cntMoves / tdiff);
+
+		console.log(
+			`${header.cntGames} games (${
+				header.cntMoves
+			} moves) processed in ${tdiff}s (${mps} moves/s)`
+		);
+		return header;
 	}
 
 	/**
@@ -77,32 +79,31 @@ class Chessalyzer {
 	 * @param {Number} [cfg.cntGames = Infinite ] - Max amount of games to process
 	 * @returns {Promise}
 	 */
-	static startBatchMultiCore(path, analyzer, cfg = {}, nCores = -1) {
+	static async startBatchMultiCore(path, analyzer, cfg = {}, nCores = -1) {
 		// check if single analyzer or array is passed
 		let analyzerArray = analyzer;
 		if (!Array.isArray(analyzerArray)) {
 			analyzerArray = [analyzer];
 		}
 		const t0 = performance.now();
-		return new Promise(resolve => {
-			GameProcessor.processPGNMultiCore(
-				path,
-				cfg,
-				analyzerArray,
-				nCores
-			).then(header => {
-				const t1 = performance.now();
-				const tdiff = Math.round(t1 - t0) / 1000;
-				const mps = Math.round(header.cntMoves / tdiff);
 
-				console.log(
-					`${header.cntGames} games (${
-						header.cntMoves
-					} moves) processed in ${tdiff}s (${mps} moves/s)`
-				);
-				resolve(header);
-			});
-		});
+		const header = await GameProcessor.processPGNMultiCore(
+			path,
+			cfg,
+			analyzerArray,
+			nCores
+		);
+
+		const t1 = performance.now();
+		const tdiff = Math.round(t1 - t0) / 1000;
+		const mps = Math.round(header.cntMoves / tdiff);
+
+		console.log(
+			`${header.cntGames} games (${
+				header.cntMoves
+			} moves) processed in ${tdiff}s (${mps} moves/s)`
+		);
+		return header;
 	}
 
 	/**
