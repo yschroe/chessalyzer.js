@@ -14,7 +14,7 @@ let c = new Tracker.Tile();
 		'C:/Users/yanni/Downloads/lichess_db_standard_rated_2013-12.pgn',
 		[a],
 		{
-			cntGames: 100000
+			cntGames: 99999
 			//filter: (game) => game.WhiteElo > 1800
 		}
 	);

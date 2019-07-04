@@ -70,6 +70,7 @@ class GameProcessor extends EventEmitter {
 				const moveAnalyzerStore = [];
 				let cntGames = 0;
 				let cntMoves = 0;
+				let readerFinished = false;
 
 				analyzer.forEach(a => {
 					if (a.type === 'game') {
@@ -81,7 +82,10 @@ class GameProcessor extends EventEmitter {
 				});
 
 				function checkAllWorkersFinished() {
-					if (Object.keys(cluster.workers).length === 0) {
+					if (
+						Object.keys(cluster.workers).length === 0 &&
+						readerFinished
+					) {
 						resolve({
 							cntGames,
 							cntMoves
@@ -195,6 +199,8 @@ class GameProcessor extends EventEmitter {
 
 				lr.on('end', () => {
 					console.log('Read entire file.');
+					readerFinished = true;
+					checkAllWorkersFinished();
 				});
 
 				// Worker
