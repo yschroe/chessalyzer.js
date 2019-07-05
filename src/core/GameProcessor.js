@@ -4,8 +4,6 @@ import ChessBoard from './ChessBoard';
 const LineByLineReader = require('line-by-line');
 const EventEmitter = require('events');
 
-const { performance } = require('perf_hooks');
-
 const files = 'abcdefgh';
 
 const cluster = require('cluster');
@@ -61,7 +59,7 @@ class GameProcessor extends EventEmitter {
 		});
 	}
 
-	static processPGNMultiCore(path, config, analyzer) {
+	static processPGNMultiCore(path, config, analyzer, batchSize, nThreads) {
 		return new Promise(resolve => {
 			// Master
 			if (cluster.isMaster) {
@@ -103,6 +101,25 @@ class GameProcessor extends EventEmitter {
 					cntMoves += nMoves;
 				}
 
+				function forkWorker(games) {
+					const w = cluster.fork();
+					w.send(games);
+
+					// on worker finish
+					w.on('message', msg => {
+						addTrackerData(
+							msg.gameAnalyzers,
+							msg.moveAnalyzers,
+							msg.cntMoves
+						);
+
+						w.kill();
+
+						// if all workers finished, resolve promise
+						checkAllWorkersFinished();
+					});
+				}
+
 				const cfg = GameProcessor.checkConfig(config);
 
 				let games = [];
@@ -111,7 +128,14 @@ class GameProcessor extends EventEmitter {
 				});
 
 				let game = {};
-				const processLine = line => {
+
+				lr.on('error', err => {
+					console.log(err);
+				});
+
+				lr.on('line', line => {
+					lr.pause();
+
 					// data tag
 					if (
 						line.startsWith('[') &&
@@ -134,29 +158,17 @@ class GameProcessor extends EventEmitter {
 							cntGames += 1;
 							games.push(game);
 
-							if (cntGames % 10000 === 0) {
-								console.log(
-									`Forking! ${
-										Object.keys(cluster.workers).length
-									}`
-								);
-								const w = cluster.fork();
-								w.send(games);
-								games = [];
-
-								// on worker finish
-								w.on('message', msg => {
-									addTrackerData(
-										msg.gameAnalyzers,
-										msg.moveAnalyzers,
-										msg.cntMoves
+							if (cntGames % (batchSize * nThreads) === 0) {
+								for (let i = 0; i < nThreads; i += 1) {
+									forkWorker(
+										games.slice(
+											i * batchSize,
+											i * batchSize + batchSize
+										)
 									);
+								}
 
-									w.kill();
-
-									// if all workers finished, resolve promise
-									checkAllWorkersFinished();
-								});
+								games = [];
 							}
 						}
 
@@ -164,21 +176,21 @@ class GameProcessor extends EventEmitter {
 					}
 					if (cntGames >= cfg.cntGames) {
 						if (games.length > 0) {
-							const w = cluster.fork();
-							w.send(games);
-							// on worker finish
-							w.on('message', msg => {
-								addTrackerData(
-									msg.gameAnalyzers,
-									msg.moveAnalyzers,
-									msg.cntMoves
+							if (games.length > batchSize) {
+								const nEndForks = Math.ceil(
+									games.length / batchSize
 								);
-
-								w.kill();
-
-								// if all workers finished, resolve promise
-								checkAllWorkersFinished();
-							});
+								for (let i = 0; i < nEndForks; i += 1) {
+									forkWorker(
+										games.slice(
+											i * batchSize,
+											i * batchSize + batchSize
+										)
+									);
+								}
+							} else {
+								forkWorker(games);
+							}
 						}
 
 						lr.close();
@@ -186,19 +198,9 @@ class GameProcessor extends EventEmitter {
 					} else {
 						lr.resume();
 					}
-				};
-
-				lr.on('error', err => {
-					console.log(err);
-				});
-
-				lr.on('line', line => {
-					lr.pause();
-					processLine(line);
 				});
 
 				lr.on('end', () => {
-					console.log('Read entire file.');
 					readerFinished = true;
 					checkAllWorkersFinished();
 				});
@@ -207,7 +209,6 @@ class GameProcessor extends EventEmitter {
 			} else {
 				// process data sent by master
 				process.on('message', msg => {
-					const t0 = performance.now();
 					// create new GameProcessor object and attach analyzers
 					const proc = new GameProcessor();
 					proc.attachAnalyzers(analyzer);
@@ -216,15 +217,6 @@ class GameProcessor extends EventEmitter {
 					msg.forEach(game => {
 						proc.processGame(game);
 					});
-
-					const t1 = performance.now();
-					const tdiff = Math.round(t1 - t0) / 1000;
-					const mps = Math.round(proc.cntMoves / tdiff);
-					console.log(
-						`Worker: ${proc.cntGames} games (${
-							proc.cntMoves
-						} moves) processed in ${tdiff}s (${mps} moves/s)`
-					);
 
 					// send result of batch to master
 					process.send({

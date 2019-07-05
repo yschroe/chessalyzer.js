@@ -79,7 +79,13 @@ class Chessalyzer {
 	 * @param {Number} [cfg.cntGames = Infinite ] - Max amount of games to process
 	 * @returns {Promise}
 	 */
-	static async startBatchMultiCore(path, analyzer, cfg = {}) {
+	static async startBatchMultiCore(
+		path,
+		analyzer,
+		cfg = {},
+		batchSize = 6000,
+		nThreads = 2
+	) {
 		// check if single analyzer or array is passed
 		let analyzerArray = analyzer;
 		if (!Array.isArray(analyzerArray)) {
@@ -90,7 +96,9 @@ class Chessalyzer {
 		const header = await GameProcessor.processPGNMultiCore(
 			path,
 			cfg,
-			analyzerArray
+			analyzerArray,
+			batchSize,
+			nThreads
 		);
 
 		const t1 = performance.now();
