@@ -51,24 +51,24 @@ const tileTracker = new Tracker.Tile();
 // create a analysis function that evaluates a specific stat
 // in this example we want to know how often each piece moved to the tile at sqrData.coords
 let fun = (data, sqrData, loopSqrData) => {
-	let val = 0;
-	const { coords } = sqrData;
-	const { piece } = loopSqrData;
-	if (piece.color !== '') {
-		let val = data.tiles[coords[0]][coords[1]][piece.color][piece.name].movedTo;
-	}
-	return val;
+  let val = 0;
+  const { coords } = sqrData;
+  const { piece } = loopSqrData;
+  if (piece.color !== '') {
+    let val = data.tiles[coords[0]][coords[1]][piece.color][piece.name].movedTo;
+  }
+  return val;
 };
 
 (async () => {
-	// start a batch analysis for the PGN file at <pathToPgnFile>
-	// the analysis is saved directly in the 'tileTracker' object
-	await Chessalyzer.startBatch('<pathToPgnFile>', tileTracker);
+  // start a batch analysis for the PGN file at <pathToPgnFile>
+  // the analysis is saved directly in the 'tileTracker' object
+  await Chessalyzer.startBatch('<pathToPgnFile>', tileTracker);
 
-	// generate a heat map for the data of 'a1' based on your evaluation function
-	let heatmapData = Chessalyzer.generateHeatmap(tileTracker, 'a1', fun);
+  // generate a heat map for the data of 'a1' based on your evaluation function
+  let heatmapData = Chessalyzer.generateHeatmap(tileTracker, 'a1', fun);
 
-	// ...use heatmapData with your favourite frontend
+  // ...use heatmapData with your favourite frontend
 })();
 ```
 
@@ -80,13 +80,13 @@ You can also filter the PGN file for specific criteria, e.g. only evaluate games
 // create filter function that returns true for all games where WhiteElo > 2000
 // the 'game' object passed contains every key included in the pgn file (case sensitive)
 let fil = function(game) {
-	return game.WhiteElo > 2000;
+  return game.WhiteElo > 2000;
 };
 
 (async () => {
-	await Chessalyzer.startBatch('<pathToPgnFile>', tileTracker, { filter: fil });
+  await Chessalyzer.startBatch('<pathToPgnFile>', tileTracker, { filter: fil });
 
-	// ...do something with the tileTracker data
+  // ...do something with the tileTracker data
 })();
 ```
 
@@ -97,17 +97,17 @@ Version 1.1.0 added experimental multithreading with much better processing spee
 ```javascript
 // start a multithreaded batch analysis for the PGN file at <pathToPgnFile>
 (async () => {
-	await Chessalyzer.startBatchMultiCore(
-		'<pathToPgnFile>',
-		tileTracker,
-		{
-			cntGames: 10000
-		},
-		6000,
-		2
-	);
+  await Chessalyzer.startBatchMultiCore(
+    '<pathToPgnFile>',
+    tileTracker,
+    {
+      cntGames: 10000
+    },
+    6000,
+    2
+  );
 
-	// ...
+  // ...
 })();
 ```
 
@@ -135,10 +135,10 @@ You can also generate a comparison heat map where you can compare the data of tw
 ```javascript
 // create two filters
 let fil1 = function(game) {
-	return game.WhiteElo > 2000;
+  return game.WhiteElo > 2000;
 };
 let fil2 = function(game) {
-	return game.WhiteElo < 1200;
+  return game.WhiteElo < 1200;
 };
 
 // create two TileTrackers
@@ -148,34 +148,34 @@ const tileT2 = new Tracker.Tile();
 // create a evaluation function for the heat map
 // (sqrData isn't used by this analysis, but needs to be an argument nevertheless)
 let fun = (data, sqrData, loopSqrData) => {
-	const { coords } = loopSqrData;
-	let val = data.tiles[coords[0]][coords[1]].w.wasOn;
-	val = (val * 100) / data.cntMovesTotal;
-	return val;
+  const { coords } = loopSqrData;
+  let val = data.tiles[coords[0]][coords[1]].w.wasOn;
+  val = (val * 100) / data.cntMovesTotal;
+  return val;
 };
 
 (async () => {
-	// start the first analysis
-	await Chessalyzer.startBatch('<pathToPgnFile>', tileT1, {
-		filter: fil1,
-		cntGames: 1000
-	});
+  // start the first analysis
+  await Chessalyzer.startBatch('<pathToPgnFile>', tileT1, {
+    filter: fil1,
+    cntGames: 1000
+  });
 
-	// start the second analysis
-	await Chessalyzer.startBatch('<pathToPgnFile>', tileT2, {
-		filter: fil2,
-		cntGames: 1000
-	});
+  // start the second analysis
+  await Chessalyzer.startBatch('<pathToPgnFile>', tileT2, {
+    filter: fil2,
+    cntGames: 1000
+  });
 
-	// generate the comparison heatmap
-	let heatmapData = Chessalyzer.generateComparisonHeatmap(
-		tileT1,
-		tileT2,
-		'a1', // this analysis function doesn't depent on a specific square, so pass a random square
-		fun
-	);
+  // generate the comparison heatmap
+  let heatmapData = Chessalyzer.generateComparisonHeatmap(
+    tileT1,
+    tileT2,
+    'a1', // this analysis function doesn't depent on a specific square, so pass a random square
+    fun
+  );
 
-	// use heatmapData
+  // use heatmapData
 })();
 ```
 
@@ -294,6 +294,10 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 ## Changelog
 
+- 1.2.1:
+  - Fixed bug with multithreading and fully read files. The last chunk wasn't processed before
+- 1.2.0:
+  - Significantly increased performance for multithreading
 - 1.1.0:
   - Added Multithreading
 - 1.0.1:
