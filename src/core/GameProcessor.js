@@ -175,24 +175,6 @@ class GameProcessor extends EventEmitter {
 						game = {};
 					}
 					if (cntGames >= cfg.cntGames) {
-						if (games.length > 0) {
-							if (games.length > batchSize) {
-								const nEndForks = Math.ceil(
-									games.length / batchSize
-								);
-								for (let i = 0; i < nEndForks; i += 1) {
-									forkWorker(
-										games.slice(
-											i * batchSize,
-											i * batchSize + batchSize
-										)
-									);
-								}
-							} else {
-								forkWorker(games);
-							}
-						}
-
 						lr.close();
 						lr.end();
 					} else {
@@ -201,6 +183,23 @@ class GameProcessor extends EventEmitter {
 				});
 
 				lr.on('end', () => {
+					if (games.length > 0) {
+						if (games.length > batchSize) {
+							const nEndForks = Math.ceil(
+								games.length / batchSize
+							);
+							for (let i = 0; i < nEndForks; i += 1) {
+								forkWorker(
+									games.slice(
+										i * batchSize,
+										i * batchSize + batchSize
+									)
+								);
+							}
+						} else {
+							forkWorker(games);
+						}
+					}
 					readerFinished = true;
 					checkAllWorkersFinished();
 				});

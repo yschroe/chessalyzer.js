@@ -11,8 +11,8 @@ let c = new Tracker.Tile();
 // c.profilingActive = true;
 (async () => {
 	await Chessalyzer.startBatchMultiCore(
-		'C:/Users/yanni/Downloads/lichess_db_standard_rated_2013-12.pgn',
-		[a],
+		'./test/lichess_db_standard_rated_2013-01_min.pgn',
+		[a, b, c],
 		{
 			cntGames: 100000
 			//filter: (game) => game.WhiteElo > 1800
@@ -29,7 +29,7 @@ let c = new Tracker.Tile();
 	c = new Tracker.Tile();
 
 	await Chessalyzer.startBatch(
-		'C:/Users/yanni/Downloads/lichess_db_standard_rated_2013-12.pgn',
+		'./test/lichess_db_standard_rated_2013-01_min.pgn',
 		[a, b, c],
 		{
 			cntGames: 100000
