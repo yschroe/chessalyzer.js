@@ -16,14 +16,13 @@ const d = new CustomTracker.CustomGame();
 (async () => {
 	await Chessalyzer.startBatchMultiCore(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
-		[d, a],
+		[a, d],
 		{
 			cntGames: 100000
 			//filter: (game) => game.WhiteElo > 1800
 		},
 		undefined,
-		undefined,
-		'C:/Users/yanni/Documents/GitHub/chessalyzer.js/test/CustomTracker.js'
+		undefined
 	);
 	console.log('Piece: ' + Math.round(b.time) / 1000);
 	console.log('Tile: ' + Math.round(c.time) / 1000);
@@ -38,9 +37,9 @@ const d = new CustomTracker.CustomGame();
 
 	await Chessalyzer.startBatch(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
-		[a, b, c, d],
+		[a, d],
 		{
-			cntGames: 10000
+			cntGames: 100000
 			//filter: (game) => game.WhiteElo > 1800
 		}
 	);

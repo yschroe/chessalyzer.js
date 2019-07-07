@@ -7,7 +7,6 @@ const EventEmitter = require('events');
 const files = 'abcdefgh';
 
 const cluster = require('cluster');
-// const numCPUs = require('os').cpus().length;
 
 class MoveData {
 	constructor() {
@@ -59,14 +58,7 @@ class GameProcessor extends EventEmitter {
 		});
 	}
 
-	static processPGNMultiCore(
-		path,
-		config,
-		analyzer,
-		batchSize,
-		nThreads,
-		customPath
-	) {
+	static processPGNMultiCore(path, config, analyzer, batchSize, nThreads) {
 		return new Promise(resolve => {
 			let cntGameAnalyzer = 0;
 			const gameAnalyzerStore = [];
@@ -75,6 +67,7 @@ class GameProcessor extends EventEmitter {
 			let cntGames = 0;
 			let cntMoves = 0;
 			let readerFinished = false;
+			let customPath = '';
 
 			// eslint-disable-next-line no-undef
 			cluster.setupMaster({
@@ -89,6 +82,9 @@ class GameProcessor extends EventEmitter {
 					moveAnalyzerStore.push(a);
 				}
 				analyzerNames.push(a.name);
+				if (Object.prototype.hasOwnProperty.call(a, 'path')) {
+					customPath = a.path;
+				}
 			});
 
 			function checkAllWorkersFinished() {

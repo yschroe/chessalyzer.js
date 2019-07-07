@@ -4,6 +4,7 @@ const customName = 'CustomGame';
 class MyCustomTracker extends Tracker.Base {
 	constructor() {
 		super('game', customName);
+		this.path = __filename;
 		this.wins = [0, 0, 0];
 		this.cntGames = 0;
 	}
@@ -37,7 +38,7 @@ class MyCustomTracker extends Tracker.Base {
 	}
 }
 
-const TrackerList = {};
-TrackerList[customName] = MyCustomTracker;
+const CustomTracker = {};
+CustomTracker[customName] = MyCustomTracker;
 
-module.exports = TrackerList;
+module.exports = CustomTracker;
