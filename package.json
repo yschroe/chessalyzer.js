@@ -52,6 +52,7 @@
 		"webpack": "^4.35.0",
 		"webpack-cli": "^3.3.5",
 		"webpack-node-externals": "^1.7.2",
+		"worker-loader": "^2.0.0",
 		"yargs": "^13.2.4"
 	},
 	"dependencies": {

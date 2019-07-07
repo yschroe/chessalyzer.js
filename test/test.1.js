@@ -6,15 +6,19 @@ let a = new Tracker.Game();
 let b = new Tracker.Piece();
 let c = new Tracker.Tile();
 
+const GameTracker = require('./CustomTracker');
+
+const d = new GameTracker();
 // a.profilingActive = true;
 // b.profilingActive = true;
 // c.profilingActive = true;
+
 (async () => {
 	await Chessalyzer.startBatchMultiCore(
-		'./test/lichess_db_standard_rated_2013-01_min.pgn',
+		'./test/lichess_db_standard_rated_2013-12.pgn',
 		[a, b, c],
 		{
-			cntGames: 100000
+			cntGames: 10000
 			//filter: (game) => game.WhiteElo > 1800
 		}
 	);
@@ -29,10 +33,10 @@ let c = new Tracker.Tile();
 	c = new Tracker.Tile();
 
 	await Chessalyzer.startBatch(
-		'./test/lichess_db_standard_rated_2013-01_min.pgn',
+		'./test/lichess_db_standard_rated_2013-12.pgn',
 		[a, b, c],
 		{
-			cntGames: 100000
+			cntGames: 10000
 			//filter: (game) => game.WhiteElo > 1800
 		}
 	);
@@ -41,4 +45,5 @@ let c = new Tracker.Tile();
 	console.log('Game: ' + Math.round(a.time) / 1000);
 
 	console.log(a.wins);
+	console.log(d.wins);
 })();

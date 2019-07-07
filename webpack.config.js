@@ -19,11 +19,16 @@ if (env === 'build') {
 
 const config = {
 	mode,
-	entry: `${__dirname}/src/index.js`,
+	// entry: `${__dirname}/src/index.js`,
+	entry: {
+		chessalyzer: `${__dirname}/src/index.js`,
+		worker: `${__dirname}/src/core/Processor.worker.js`
+	},
 	devtool: 'source-map',
 	output: {
 		path: `${__dirname}/lib`,
-		filename: outputFile,
+		// filename: outputFile,
+		filename: '[name].js',
 		library: libraryName,
 		libraryTarget: 'umd',
 		umdNamedDefine: true
@@ -38,6 +43,11 @@ const config = {
 				loader: 'babel-loader',
 				exclude: /(node_modules|bower_components)/
 			},
+			// {
+			// 	test: /\.worker\.js$/,
+			// 	use: [{ loader: 'worker-loader' }, { loader: 'babel-loader' }],
+			// 	exclude: /node_modules/
+			// },
 			{
 				test: /(\.jsx|\.js)$/,
 				exclude: /node_modules/,

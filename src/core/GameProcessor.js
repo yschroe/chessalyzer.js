@@ -61,134 +61,112 @@ class GameProcessor extends EventEmitter {
 
 	static processPGNMultiCore(path, config, analyzer, batchSize, nThreads) {
 		return new Promise(resolve => {
-			// Master
-			if (cluster.isMaster) {
-				let cntGameAnalyzer = 0;
-				const gameAnalyzerStore = [];
-				const moveAnalyzerStore = [];
-				let cntGames = 0;
-				let cntMoves = 0;
-				let readerFinished = false;
+			let cntGameAnalyzer = 0;
+			const gameAnalyzerStore = [];
+			const moveAnalyzerStore = [];
+			let cntGames = 0;
+			let cntMoves = 0;
+			let readerFinished = false;
 
-				analyzer.forEach(a => {
-					if (a.type === 'game') {
-						cntGameAnalyzer += 1;
-						gameAnalyzerStore.push(a);
-					} else if (a.type === 'move') {
-						moveAnalyzerStore.push(a);
-					}
-				});
+			cluster.setupMaster({
+				exec: './lib/worker.js'
+				// exec: './Processor.worker.js'
+			});
 
-				function checkAllWorkersFinished() {
-					if (
-						Object.keys(cluster.workers).length === 0 &&
-						readerFinished
-					) {
-						resolve({
-							cntGames,
-							cntMoves
-						});
-					}
+			analyzer.forEach(a => {
+				if (a.type === 'game') {
+					cntGameAnalyzer += 1;
+					gameAnalyzerStore.push(a);
+				} else if (a.type === 'move') {
+					moveAnalyzerStore.push(a);
 				}
+			});
 
-				function addTrackerData(gameTracker, moveTracker, nMoves) {
-					for (let i = 0; i < gameAnalyzerStore.length; i += 1) {
-						gameAnalyzerStore[i].add(gameTracker[i]);
-					}
-					for (let i = 0; i < moveAnalyzerStore.length; i += 1) {
-						moveAnalyzerStore[i].add(moveTracker[i]);
-					}
-					cntMoves += nMoves;
-				}
-
-				function forkWorker(games) {
-					const w = cluster.fork();
-					w.send(games);
-
-					// on worker finish
-					w.on('message', msg => {
-						addTrackerData(
-							msg.gameAnalyzers,
-							msg.moveAnalyzers,
-							msg.cntMoves
-						);
-
-						w.kill();
-
-						// if all workers finished, resolve promise
-						checkAllWorkersFinished();
+			function checkAllWorkersFinished() {
+				if (
+					Object.keys(cluster.workers).length === 0 &&
+					readerFinished
+				) {
+					resolve({
+						cntGames,
+						cntMoves
 					});
 				}
+			}
 
-				const cfg = GameProcessor.checkConfig(config);
+			function addTrackerData(gameTracker, moveTracker, nMoves) {
+				for (let i = 0; i < gameAnalyzerStore.length; i += 1) {
+					gameAnalyzerStore[i].add(gameTracker[i]);
+				}
+				for (let i = 0; i < moveAnalyzerStore.length; i += 1) {
+					moveAnalyzerStore[i].add(moveTracker[i]);
+				}
+				cntMoves += nMoves;
+			}
 
-				let games = [];
-				const lr = new LineByLineReader(path, {
-					skipEmptyLines: true
+			function forkWorker(games) {
+				const w = cluster.fork();
+				w.send({
+					games,
+					path:
+						'C:/Users/yanni/Documents/GitHub/chessalyzer.js/test/CustomTracker.js'
 				});
 
-				let game = {};
+				// on worker finish
+				w.on('message', msg => {
+					addTrackerData(
+						msg.gameAnalyzers,
+						msg.moveAnalyzers,
+						msg.cntMoves
+					);
 
-				lr.on('error', err => {
-					console.log(err);
+					w.kill();
+
+					// if all workers finished, resolve promise
+					checkAllWorkersFinished();
 				});
+			}
 
-				lr.on('line', line => {
-					lr.pause();
+			const cfg = GameProcessor.checkConfig(config);
 
-					// data tag
-					if (
-						line.startsWith('[') &&
-						(cfg.hasFilter || cntGameAnalyzer > 0)
-					) {
-						const key = line.match(/\[(.*?)\s/)[1];
-						const value = line.match(/"(.*?)"/)[1];
+			let games = [];
+			let game = {};
 
-						game[key] = value;
+			const lr = new LineByLineReader(path, {
+				skipEmptyLines: true
+			});
 
-						// moves
-					} else if (line.startsWith('1')) {
-						game.moves = line
-							.replace(/\{(.*?)\}\s/g, '')
-							.replace(/\d+\.+\s/g, '')
-							.replace(' *', '')
-							.split(' ');
+			lr.on('error', err => {
+				console.log(err);
+			});
 
-						if (cfg.filter(game) || !cfg.hasFilter) {
-							cntGames += 1;
-							games.push(game);
+			lr.on('line', line => {
+				lr.pause();
 
-							if (cntGames % (batchSize * nThreads) === 0) {
-								for (let i = 0; i < nThreads; i += 1) {
-									forkWorker(
-										games.slice(
-											i * batchSize,
-											i * batchSize + batchSize
-										)
-									);
-								}
+				// data tag
+				if (
+					line.startsWith('[') &&
+					(cfg.hasFilter || cntGameAnalyzer > 0)
+				) {
+					const key = line.match(/\[(.*?)\s/)[1];
+					const value = line.match(/"(.*?)"/)[1];
 
-								games = [];
-							}
-						}
+					game[key] = value;
 
-						game = {};
-					}
-					if (cntGames >= cfg.cntGames) {
-						lr.close();
-						lr.end();
-					} else {
-						lr.resume();
-					}
-				});
+					// moves
+				} else if (line.startsWith('1')) {
+					game.moves = line
+						.replace(/\{(.*?)\}\s/g, '')
+						.replace(/\d+\.+\s/g, '')
+						.replace(' *', '')
+						.split(' ');
 
-				lr.on('end', () => {
-					if (games.length > 0) {
-						if (games.length > batchSize) {
-							const nEndForks = Math.ceil(
-								games.length / batchSize
-							);
-							for (let i = 0; i < nEndForks; i += 1) {
+					if (cfg.filter(game) || !cfg.hasFilter) {
+						cntGames += 1;
+						games.push(game);
+
+						if (cntGames % (batchSize * nThreads) === 0) {
+							for (let i = 0; i < nThreads; i += 1) {
 								forkWorker(
 									games.slice(
 										i * batchSize,
@@ -196,35 +174,40 @@ class GameProcessor extends EventEmitter {
 									)
 								);
 							}
-						} else {
-							forkWorker(games);
+
+							games = [];
 						}
 					}
-					readerFinished = true;
-					checkAllWorkersFinished();
-				});
 
-				// Worker
-			} else {
-				// process data sent by master
-				process.on('message', msg => {
-					// create new GameProcessor object and attach analyzers
-					const proc = new GameProcessor();
-					proc.attachAnalyzers(analyzer);
+					game = {};
+				}
+				if (cntGames >= cfg.cntGames) {
+					lr.close();
+					lr.end();
+				} else {
+					lr.resume();
+				}
+			});
 
-					// analyze each game
-					msg.forEach(game => {
-						proc.processGame(game);
-					});
-
-					// send result of batch to master
-					process.send({
-						cntMoves: proc.cntMoves,
-						gameAnalyzers: proc.gameAnalyzers,
-						moveAnalyzers: proc.moveAnalyzers
-					});
-				});
-			}
+			lr.on('end', () => {
+				if (games.length > 0) {
+					if (games.length > batchSize) {
+						const nEndForks = Math.ceil(games.length / batchSize);
+						for (let i = 0; i < nEndForks; i += 1) {
+							forkWorker(
+								games.slice(
+									i * batchSize,
+									i * batchSize + batchSize
+								)
+							);
+						}
+					} else {
+						forkWorker(games);
+					}
+				}
+				readerFinished = true;
+				checkAllWorkersFinished();
+			});
 		});
 	}
 
