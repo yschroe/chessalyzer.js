@@ -62,7 +62,10 @@ const config = {
 			}
 		]
 	},
-	target: 'node', // in order to ignore built-in modules like path, fs, etc.
+	target: 'node', // in order to ignore built-in modules like path, fs, etc.,
+	node: {
+		__dirname: false
+	},
 	externals: [nodeExternals()]
 };
 

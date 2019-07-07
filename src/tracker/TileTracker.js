@@ -22,7 +22,7 @@ class Piece {
 
 class TileTracker extends BaseTracker {
 	constructor() {
-		super('move');
+		super('move', 'BaseTile');
 		this.cntMovesGame = 0;
 		this.cntMovesTotal = 0;
 		this.tiles = new Array(8);

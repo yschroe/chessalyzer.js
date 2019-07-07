@@ -2,7 +2,7 @@ import BaseTracker from './BaseTracker';
 
 class GameTracker extends BaseTracker {
 	constructor() {
-		super('game');
+		super('game', 'BaseGame');
 		this.wins = [0, 0, 0];
 		this.cntGames = 0;
 	}

@@ -1,18 +1,35 @@
 /* eslint-disable global-require */
 /* eslint-disable import/no-dynamic-require */
+/* eslint-disable no-undef */
+
 import GameProcessor from './GameProcessor';
 import Chessalyzer from './Chessalyzer';
 
 const { Tracker } = Chessalyzer;
-
-const a = new Tracker.Game();
-const b = new Tracker.Piece();
-const c = new Tracker.Tile();
+const TrackerList = {
+	BaseGame: Tracker.Game,
+	BasePiece: Tracker.Piece,
+	BaseTile: Tracker.Tile
+};
 
 process.on('message', msg => {
 	const proc = new GameProcessor();
 
-	proc.attachAnalyzers([a, b, c]);
+	// merge available Trackers
+	if (msg.customPath !== '') {
+		const TrackerListCustom = __non_webpack_require__(msg.customPath);
+		Object.keys(TrackerListCustom).forEach(key => {
+			TrackerList[key] = TrackerListCustom[key];
+		});
+	}
+
+	// select needed analyzers
+	const analyzer = [];
+	msg.analyzerNames.forEach(name => {
+		analyzer.push(new TrackerList[name]());
+	});
+
+	proc.attachAnalyzers(analyzer);
 
 	// analyze each game
 	msg.games.forEach(game => {

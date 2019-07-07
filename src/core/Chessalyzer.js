@@ -83,7 +83,8 @@ class Chessalyzer {
 		analyzer,
 		cfg = {},
 		batchSize = 6000,
-		nThreads = 2
+		nThreads = 2,
+		customPath = ''
 	) {
 		// check if single analyzer or array is passed
 		let analyzerArray = analyzer;
@@ -97,7 +98,8 @@ class Chessalyzer {
 			cfg,
 			analyzerArray,
 			batchSize,
-			nThreads
+			nThreads,
+			customPath
 		);
 
 		const t1 = performance.now();

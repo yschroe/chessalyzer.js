@@ -59,18 +59,26 @@ class GameProcessor extends EventEmitter {
 		});
 	}
 
-	static processPGNMultiCore(path, config, analyzer, batchSize, nThreads) {
+	static processPGNMultiCore(
+		path,
+		config,
+		analyzer,
+		batchSize,
+		nThreads,
+		customPath
+	) {
 		return new Promise(resolve => {
 			let cntGameAnalyzer = 0;
 			const gameAnalyzerStore = [];
 			const moveAnalyzerStore = [];
+			const analyzerNames = [];
 			let cntGames = 0;
 			let cntMoves = 0;
 			let readerFinished = false;
 
+			// eslint-disable-next-line no-undef
 			cluster.setupMaster({
-				exec: './lib/worker.js'
-				// exec: './Processor.worker.js'
+				exec: `${__dirname}/worker.js`
 			});
 
 			analyzer.forEach(a => {
@@ -80,6 +88,7 @@ class GameProcessor extends EventEmitter {
 				} else if (a.type === 'move') {
 					moveAnalyzerStore.push(a);
 				}
+				analyzerNames.push(a.name);
 			});
 
 			function checkAllWorkersFinished() {
@@ -108,8 +117,8 @@ class GameProcessor extends EventEmitter {
 				const w = cluster.fork();
 				w.send({
 					games,
-					path:
-						'C:/Users/yanni/Documents/GitHub/chessalyzer.js/test/CustomTracker.js'
+					customPath,
+					analyzerNames
 				});
 
 				// on worker finish

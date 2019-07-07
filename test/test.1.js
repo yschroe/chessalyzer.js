@@ -6,9 +6,9 @@ let a = new Tracker.Game();
 let b = new Tracker.Piece();
 let c = new Tracker.Tile();
 
-const GameTracker = require('./CustomTracker');
+const CustomTracker = require('./CustomTracker');
 
-const d = new GameTracker();
+const d = new CustomTracker.CustomGame();
 // a.profilingActive = true;
 // b.profilingActive = true;
 // c.profilingActive = true;
@@ -16,17 +16,21 @@ const d = new GameTracker();
 (async () => {
 	await Chessalyzer.startBatchMultiCore(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
-		[a, b, c],
+		[d, a],
 		{
-			cntGames: 10000
+			cntGames: 100000
 			//filter: (game) => game.WhiteElo > 1800
-		}
+		},
+		undefined,
+		undefined,
+		'C:/Users/yanni/Documents/GitHub/chessalyzer.js/test/CustomTracker.js'
 	);
 	console.log('Piece: ' + Math.round(b.time) / 1000);
 	console.log('Tile: ' + Math.round(c.time) / 1000);
 	console.log('Game: ' + Math.round(a.time) / 1000);
 
 	console.log(a.wins);
+	console.log(d.wins);
 
 	a = new Tracker.Game();
 	b = new Tracker.Piece();
@@ -34,7 +38,7 @@ const d = new GameTracker();
 
 	await Chessalyzer.startBatch(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
-		[a, b, c],
+		[a, b, c, d],
 		{
 			cntGames: 10000
 			//filter: (game) => game.WhiteElo > 1800
