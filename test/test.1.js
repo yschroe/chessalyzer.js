@@ -19,7 +19,7 @@ const d = new CustomTracker.CustomGame();
 		[a, d],
 		{
 			cntGames: 100000
-			//filter: (game) => game.WhiteElo > 1800
+			// filter: game => game.WhiteElo > 1800
 		},
 		undefined,
 		undefined

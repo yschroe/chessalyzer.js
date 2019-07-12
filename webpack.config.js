@@ -19,7 +19,6 @@ if (env === 'build') {
 
 const config = {
 	mode,
-	// entry: `${__dirname}/src/index.js`,
 	entry: {
 		chessalyzer: `${__dirname}/src/index.js`,
 		worker: `${__dirname}/src/core/Processor.worker.js`
@@ -27,7 +26,6 @@ const config = {
 	devtool: 'source-map',
 	output: {
 		path: `${__dirname}/lib`,
-		// filename: outputFile,
 		filename: '[name].js',
 		library: libraryName,
 		libraryTarget: 'umd',
