@@ -114,12 +114,14 @@ Version 1.1.0 added experimental multithreading with much better processing spee
 })();
 ```
 
-`startBatchMultiCore(...)` reads in chunks of games of size `batchSize` (fourth argument) and starts the analysis of the curent chunk while the next chunk is read-in from the .pgn file in parallel. With the fifth argument `nThreads` you can define how many threads are started in parallel to analyze the chunk. For example: `batchSize = 1000` and `nThreads = 5` will result in a chunk size of 5000 which is split in 5 threads which analyse 1000 games each.
+`startBatchMultiCore(...)` reads in chunks of games of size `batchSize` (4th argument) times `nThreads` (5th argument) and starts the analysis of the curent chunk while the next chunk is read-in from the .pgn file in parallel. With the 5th argument `nThreads` you can define how many threads are started in parallel to analyze the chunk. For example: `batchSize = 1000` and `nThreads = 5` will result in a chunk size of 5000 which is split in 5 threads which analyse 1000 games each.
 
 ##### Important
 
 -   A larger `nThreads` does not necessary result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak `batchSize` and `nThreads` to get the best results on your system.
--   To use a custom tracker with your multithreaded analysis the tracker need to define an `add()` function. This function gets passed another Tracker object of the same type and is used to merge the data of the two tracker objects. For example, the add() function of the built-in GameTracker looks like this:
+-   To use a custom tracker with your multithreaded analysis the tracker needs to have two additional class members:
+    -   A `path` variable which contains the path of the file your custom tracker is defined in. You can use node.js global `__filename` for this. You can check out the `CustomTracker.js` file in the `/test` subfolder, which is basically a copy of the base GameTracker built as a custom tracker.
+    -   An `add()` function. This function gets passed another Tracker object of the same type and is used to merge the data of the two tracker objects. For example, the add() function of the built-in GameTracker looks like this:
 
 ```javascript
 add(tracker) {
@@ -128,7 +130,7 @@ add(tracker) {
     this.wins[2] += tracker.wins[2];
     this.cntGames += tracker.cntGames;
     this.time += tracker.time;
-	}
+}
 ```
 
 ### Compare Analyses
@@ -297,6 +299,9 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 ## Changelog
 
+-   1.3.0:
+    -   Moved the worker-thread logic into a separate file instead of cloning the entire process for multi threading. This should make it easier to include chessalyzer.js in other projects, for example a REST server. Prior this change with active multithreading every time a new worker thread was created the whole server was cloned.
+    -   Fixed the minified (chessalyzer.min.js) version to not throw unjustified errors, that the Trackers need to include a track() function.
 -   1.2.1:
     -   Fixed bug with multithreading and fully read files. The last chunk wasn't processed before
 -   1.2.0:
