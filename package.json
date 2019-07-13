@@ -3,6 +3,9 @@
 	"version": "1.3.0",
 	"description": "Batch analyze PGN and generate heat maps",
 	"main": "lib/chessalyzer.js",
+	"files": [
+		"/lib"
+	],
 	"scripts": {
 		"build": "webpack --env dev && webpack --env build",
 		"dev": "webpack --progress --colors --watch --env dev",
