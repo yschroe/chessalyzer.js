@@ -82,8 +82,8 @@ class Chessalyzer {
 		path,
 		analyzer,
 		cfg = {},
-		batchSize = 6000,
-		nThreads = 2
+		batchSize = 8000,
+		nThreads = 1
 	) {
 		// check if single analyzer or array is passed
 		let analyzerArray = analyzer;
@@ -109,6 +109,7 @@ class Chessalyzer {
 				header.cntMoves
 			} moves) processed in ${tdiff}s (${mps} moves/s)`
 		);
+		header.mps = mps;
 		return header;
 	}
 

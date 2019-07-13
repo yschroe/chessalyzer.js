@@ -4,8 +4,6 @@
 
 A JavaScript library for batch analyzing chess games.
 
-NOTE: In Version 1.0.0 the API changed significantly! Check the examples for a description.
-
 ## Features
 
 -   Batch process PGN files
@@ -13,7 +11,7 @@ NOTE: In Version 1.0.0 the API changed significantly! Check the examples for a d
 -   Track statistics
 -   Fully modular, track only the stats you need to preserve performance
 -   Generate heatmaps out of the generated data
--   It's fast (>1.300.000 moves/s on a Ryzen 5 2600X using all 12 threads; only PGN parsing)
+-   It's fast (>2.200.000 moves/s on a Ryzen 5 2600X; only PGN parsing)
 -   Handles big files easily
 
 ## Usage
@@ -95,7 +93,7 @@ let fil = function(game) {
 
 ### Multithreaded analysis (New in 1.1.0)
 
-Version 1.1.0 added experimental multithreading with much better processing speeds (up to 3x). To use multithreading use the function `Chessalyzer.startBatchMultiCore` instead of `Chessalyzer.startBatch`:
+Version 1.1.0 added multithreading / parallel processing with much better processing speeds (up to 3x). To use multithreading use the function `Chessalyzer.startBatchMultiCore` instead of `Chessalyzer.startBatch`:
 
 ```javascript
 // start a multithreaded batch analysis for the PGN file at <pathToPgnFile>
@@ -118,7 +116,7 @@ Version 1.1.0 added experimental multithreading with much better processing spee
 
 ##### Important
 
--   A larger `nThreads` does not necessary result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak `batchSize` and `nThreads` to get the best results on your system.
+-   A larger `nThreads` does not necessary result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak `batchSize` and `nThreads` to get the best results on your system. On my system I achieved the best resuts with `nThreads = 1` and `batchSize = 8000`. Note that `nThreads = 1` doesn't mean that the analysis is single-threaded but that 1 _additional_ thread in addition to the thread that parses the PGN file is used.
 -   To use a custom tracker with your multithreaded analysis the tracker needs to have two additional class members:
     -   A `path` variable which contains the path of the file your custom tracker is defined in. You can use node.js global `__filename` for this. You can check out the `CustomTracker.js` file in the `/test` subfolder, which is basically a copy of the base GameTracker built as a custom tracker.
     -   An `add()` function. This function gets passed another Tracker object of the same type and is used to merge the data of the two tracker objects. For example, the add() function of the built-in GameTracker looks like this:

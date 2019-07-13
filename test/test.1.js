@@ -17,9 +17,9 @@ const d = new CustomTracker.CustomGame();
 (async () => {
 	await Chessalyzer.startBatchMultiCore(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
-		[a, d],
+		[],
 		{
-			cntGames: 100000
+			cntGames: 250000
 			// filter: game => game.WhiteElo > 1800
 		},
 		undefined,
@@ -36,18 +36,18 @@ const d = new CustomTracker.CustomGame();
 	b = new Tracker.Piece();
 	c = new Tracker.Tile();
 
-	await Chessalyzer.startBatch(
-		'./test/lichess_db_standard_rated_2013-12.pgn',
-		[a, d],
-		{
-			cntGames: 100000
-			//filter: (game) => game.WhiteElo > 1800
-		}
-	);
-	console.log('Piece: ' + Math.round(b.time) / 1000);
-	console.log('Tile: ' + Math.round(c.time) / 1000);
-	console.log('Game: ' + Math.round(a.time) / 1000);
+	// await Chessalyzer.startBatch(
+	// 	'./test/lichess_db_standard_rated_2013-12.pgn',
+	// 	[a, d],
+	// 	{
+	// 		cntGames: 100000
+	// 		//filter: (game) => game.WhiteElo > 1800
+	// 	}
+	// );
+	// console.log('Piece: ' + Math.round(b.time) / 1000);
+	// console.log('Tile: ' + Math.round(c.time) / 1000);
+	// console.log('Game: ' + Math.round(a.time) / 1000);
 
-	console.log(a.wins);
-	console.log(d.wins);
+	// console.log(a.wins);
+	// console.log(d.wins);
 })();
