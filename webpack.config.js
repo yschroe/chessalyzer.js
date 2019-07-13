@@ -1,4 +1,3 @@
-/* global __dirname, require, module */
 const { env } = require('yargs').argv; // use --env with webpack 2
 const nodeExternals = require('webpack-node-externals');
 const stylish = require('eslint/lib/cli-engine/formatters/stylish');
@@ -6,15 +5,12 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 const libraryName = 'chessalyzer';
 
-let outputFile;
 let mode;
 
 if (env === 'build') {
 	mode = 'production';
-	outputFile = `${libraryName}.min.js`;
 } else {
 	mode = 'development';
-	outputFile = `${libraryName}.js`;
 }
 
 const config = {
@@ -26,13 +22,20 @@ const config = {
 	devtool: 'source-map',
 	output: {
 		path: `${__dirname}/lib`,
-		filename: '[name].js',
+		filename: `[name]${mode === 'production' ? '.min' : ''}.js`,
+		// filename: '[name].js',
 		library: libraryName,
 		libraryTarget: 'umd',
 		umdNamedDefine: true
 	},
 	optimization: {
-		minimizer: [new TerserPlugin()]
+		minimizer: [
+			new TerserPlugin({
+				terserOptions: {
+					keep_fnames: true
+				}
+			})
+		]
 	},
 	module: {
 		rules: [
@@ -41,11 +44,6 @@ const config = {
 				loader: 'babel-loader',
 				exclude: /(node_modules|bower_components)/
 			},
-			// {
-			// 	test: /\.worker\.js$/,
-			// 	use: [{ loader: 'worker-loader' }, { loader: 'babel-loader' }],
-			// 	exclude: /node_modules/
-			// },
 			{
 				test: /(\.jsx|\.js)$/,
 				exclude: /node_modules/,

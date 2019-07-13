@@ -81,7 +81,7 @@ class GameProcessor extends EventEmitter {
 				} else if (a.type === 'move') {
 					moveAnalyzerStore.push(a);
 				}
-				analyzerNames.push(a.name);
+				analyzerNames.push(a.constructor.name);
 				if (Object.prototype.hasOwnProperty.call(a, 'path')) {
 					customPath = a.path;
 				}

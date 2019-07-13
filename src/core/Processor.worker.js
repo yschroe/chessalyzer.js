@@ -6,20 +6,21 @@ import GameProcessor from './GameProcessor';
 import Chessalyzer from './Chessalyzer';
 
 const { Tracker } = Chessalyzer;
-const TrackerList = {
-	BaseGame: Tracker.Game,
-	BasePiece: Tracker.Piece,
-	BaseTile: Tracker.Tile
-};
 
 process.on('message', msg => {
+	const TrackerList = {};
 	const proc = new GameProcessor();
+
+	Object.keys(Tracker).forEach(key => {
+		TrackerList[Tracker[key].name] = Tracker[key];
+	});
 
 	// merge available Trackers
 	if (msg.customPath !== '') {
 		const TrackerListCustom = __non_webpack_require__(msg.customPath);
+
 		Object.keys(TrackerListCustom).forEach(key => {
-			TrackerList[key] = TrackerListCustom[key];
+			TrackerList[TrackerListCustom[key].name] = TrackerListCustom[key];
 		});
 	}
 

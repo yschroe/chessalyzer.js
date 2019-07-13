@@ -1,8 +1,8 @@
 import BaseTracker from './BaseTracker';
 
-class GameTracker extends BaseTracker {
+class GameTrackerBase extends BaseTracker {
 	constructor() {
-		super('game', 'BaseGame');
+		super('game');
 		this.wins = [0, 0, 0];
 		this.cntGames = 0;
 	}
@@ -36,4 +36,4 @@ class GameTracker extends BaseTracker {
 	}
 }
 
-export default GameTracker;
+export default GameTrackerBase;

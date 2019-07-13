@@ -9,6 +9,7 @@ let c = new Tracker.Tile();
 const CustomTracker = require('./CustomTracker');
 
 const d = new CustomTracker.CustomGame();
+
 // a.profilingActive = true;
 // b.profilingActive = true;
 // c.profilingActive = true;

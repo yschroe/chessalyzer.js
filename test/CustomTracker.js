@@ -1,9 +1,8 @@
 const { Tracker } = require('../lib/chessalyzer');
 
-const customName = 'CustomGame';
-class MyCustomTracker extends Tracker.Base {
+class CustomGame extends Tracker.Base {
 	constructor() {
-		super('game', customName);
+		super('game');
 		this.path = __filename;
 		this.wins = [0, 0, 0];
 		this.cntGames = 0;
@@ -38,7 +37,8 @@ class MyCustomTracker extends Tracker.Base {
 	}
 }
 
-const CustomTracker = {};
-CustomTracker[customName] = MyCustomTracker;
+const CustomTracker = {
+	CustomGame
+};
 
 module.exports = CustomTracker;

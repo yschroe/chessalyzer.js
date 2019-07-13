@@ -20,9 +20,9 @@ class Piece {
 	}
 }
 
-class TileTracker extends BaseTracker {
+class TileTrackerBase extends BaseTracker {
 	constructor() {
-		super('move', 'BaseTile');
+		super('move');
 		this.cntMovesGame = 0;
 		this.cntMovesTotal = 0;
 		this.tiles = new Array(8);
@@ -253,4 +253,4 @@ class TileTracker extends BaseTracker {
 	}
 }
 
-export default TileTracker;
+export default TileTrackerBase;

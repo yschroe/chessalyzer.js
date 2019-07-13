@@ -1,9 +1,8 @@
 const { performance } = require('perf_hooks');
 
 class BaseTracker {
-	constructor(type, name) {
+	constructor(type) {
 		this.type = type;
-		this.name = name;
 		this.profilingActive = false;
 		this.time = 0;
 		this.t0 = 0;

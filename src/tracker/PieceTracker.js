@@ -3,9 +3,9 @@ import BaseTracker from './BaseTracker';
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
-class PieceTracker extends BaseTracker {
+class PieceTrackerBase extends BaseTracker {
 	constructor() {
-		super('move', 'BasePiece');
+		super('move');
 		this.b = {};
 		this.w = {};
 
@@ -73,4 +73,4 @@ class PieceTracker extends BaseTracker {
 		this[player][takingPiece][takenPiece] += 1;
 	}
 }
-export default PieceTracker;
+export default PieceTrackerBase;
