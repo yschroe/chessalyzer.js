@@ -17,7 +17,7 @@ const d = new CustomTracker.CustomGame();
 (async () => {
 	await Chessalyzer.startBatchMultiCore(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
-		[],
+		[c],
 		{
 			cntGames: 250000
 			// filter: game => game.WhiteElo > 1800
@@ -30,11 +30,7 @@ const d = new CustomTracker.CustomGame();
 	console.log('Game: ' + Math.round(a.time) / 1000);
 
 	console.log(a.wins);
-	console.log(d.wins);
-
-	a = new Tracker.Game();
-	b = new Tracker.Piece();
-	c = new Tracker.Tile();
+	console.log(c.tiles[1][2]);
 
 	// await Chessalyzer.startBatch(
 	// 	'./test/lichess_db_standard_rated_2013-12.pgn',

@@ -297,6 +297,10 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 ## Changelog
 
+-   1.3.2:
+    -   Fixed bug in the Tracker.Tile class. The `cntMovesTotal` property wasn't incremented correctly when using multithreading.
+-   1.3.1:
+    -   Removed unnecessary files from the npm package (like docs, test, etc.)
 -   1.3.0:
     -   Moved the worker-thread logic into a separate file instead of cloning the entire process for multi threading. This should make it easier to include chessalyzer.js in other projects, for example a REST server. Prior this change with active multithreading every time a new worker thread was created the whole server was cloned.
     -   Fixed the minified (chessalyzer.min.js) version to not throw unjustified errors, that the Trackers need to include a track() function.

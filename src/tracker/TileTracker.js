@@ -54,6 +54,8 @@ class TileTrackerBase extends BaseTracker {
 
 	add(tracker) {
 		this.time += tracker.time;
+		this.cntMovesGame += tracker.cntMovesGame;
+		this.cntMovesTotal += tracker.cntMovesTotal;
 
 		for (let row = 0; row < 8; row += 1) {
 			for (let col = 0; col < 8; col += 1) {
