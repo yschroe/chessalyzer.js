@@ -1,10 +1,28 @@
-# chessalyzer.js
-
-[![npm version](https://badge.fury.io/js/chessalyzer.js.svg)](https://badge.fury.io/js/chessalyzer.js)
+<img src="https://i.imgur.com/X7Q2xIx.png" style="height: 150px">
 
 A JavaScript library for batch analyzing chess games.
 
-## Features
+[![npm version](https://badge.fury.io/js/chessalyzer.js.svg)](https://badge.fury.io/js/chessalyzer.js)
+
+# Index
+
+-   [Features](#features)
+-   [Installation](#installation)
+-   [Examples](#examples)
+    -   [Basic Usage](#basic-usage)
+    -   [Filtering](#filtering)
+    -   [Multithreading](#multithreaded-analysis)
+    -   [Compare Analyses](#compare-analyses)
+-   [Heatmap analysis functions](#heatmap-analysis-functions)
+-   [Tracked statistics](#tracked-statistics)
+    -   [Built-in](#built-in)
+    -   [Custom Tracker](#custom-trackers)
+-   [Visualisation](#visualisation)
+-   [Contribute](#contribute)
+-   [Changelog](#changelog)
+-   [TODOs](#todos)
+
+# Features
 
 -   Batch process PGN files
 -   Filter games (e.g. only analyze games where WhiteElo > 1800)
@@ -14,7 +32,7 @@ A JavaScript library for batch analyzing chess games.
 -   It's fast (>2.200.000 moves/s on a Ryzen 5 2600X; only PGN parsing)
 -   Handles big files easily
 
-## Usage
+# Installation
 
 1. Install package
 
@@ -30,9 +48,9 @@ const Chessalyzer = require('chessalyzer.js');
 
 3. Check out the examples or the [docs](https://peterpain.github.io/chessalyzer.js/Chessalyzer.html).
 
-## Examples
+# Examples
 
-### Basic Usage
+## Basic Usage
 
 Let's start with a basic example:
 
@@ -71,7 +89,7 @@ let fun = (data, sqrData, loopSqrData) => {
 })();
 ```
 
-### Filtering
+## Filtering
 
 You can also filter the PGN file for specific criteria, e.g. only evaluate games where `WhiteElo > 2000`:
 
@@ -91,7 +109,7 @@ let fil = function(game) {
 })();
 ```
 
-### Multithreaded analysis (New in 1.1.0)
+## Multithreaded analysis
 
 Version 1.1.0 added multithreading / parallel processing with much better processing speeds (up to 3x). To use multithreading use the function `Chessalyzer.startBatchMultiCore` instead of `Chessalyzer.startBatch`:
 
@@ -131,7 +149,7 @@ add(tracker) {
 }
 ```
 
-### Compare Analyses
+## Compare Analyses
 
 You can also generate a comparison heat map where you can compare the data of two different analyses. Let's say you wanted to compare how the white player occupates the board between a lower rated player and a higher rated player. To get comparable results 1000 games of each shall be evaluated:
 
@@ -182,7 +200,7 @@ let fun = (data, sqrData, loopSqrData) => {
 })();
 ```
 
-## Heatmap analysis functions
+# Heatmap analysis functions
 
 The function you create for heatmap generation gets passed up to four parameters (inside `generateHeatMap()`):
 
@@ -201,9 +219,9 @@ The function you create for heatmap generation gets passed up to four parameters
 -   `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The structure of `loopSqrData` is the same as of `sqrData`. The `generateHeatMap()` function loops over every square of the board to calculate a heat map value for each tile.
 -   `optData`: Optional data you may need in this function. For example, if you wanted to generate a heatmap to show the average position of a piece after X moves, you could pass that 'X' here.
 
-## Tracked statistics
+# Tracked statistics
 
-### Built-in
+## Built-in
 
 chessalyzer.js comes with three built-in trackers, available from the `Chessalyzer.Tracker` object:
 
@@ -237,7 +255,7 @@ chessalyzer.js comes with three built-in trackers, available from the `Chessalyz
 
 -   `cntMovesTotal`: Amount of moves processed in total.
 
-### Custom Trackers
+## Custom Trackers
 
 If you want to have other stats tracked you can easily create a custom tracker. Ideally you derive your tracker from the `Tracker.Base` class, which comes with built-in performance tracking and warnings, if the structure of your tracker isn't correct.
 
@@ -272,7 +290,7 @@ Your tracker must have the following two properties:
 -   `add(tracker)`:
     Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. See [Multithreaded analyses section](<#-Multithreaded-analyses-(New-in-1.1.0)>) for an example.
 
-## Visualisation
+# Visualisation
 
 Please note that chessalyzer.js only provides the raw data of the analyses. If you want to visualize the data you will need a separate library. The following examples were created with my fork of [chessboardjs](https://github.com/PeterPain/heatboard.js) with added heatmap functionality.
 
@@ -285,7 +303,7 @@ Moves of whites e pawn
 Difference of whites tiles occupation between a higher (green) and a lower rated (red) player  
 <img src="https://i.imgur.com/tZVkPs3.png" width="30%">
 
-## Contribute
+# Contribute
 
 1. Download the project
 
@@ -295,7 +313,7 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 4. Build via `npm run build` or `npm run dev`
 
-## Changelog
+# Changelog
 
 -   1.3.2:
     -   Fixed bug in the Tracker.Tile class. The `cntMovesTotal` property wasn't incremented correctly when using multithreading.
@@ -316,7 +334,7 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 -   1.0.0:  
     Significantly changed the API to allow for more modularity. If you are already using an older version (<=0.4.0) consider changing your code to adapt to the new API.
 
-## TODOs
+# TODOs
 
 -   [ ] Check functionality for non-lichess PGN files
 -   [ ] Write Mocha tests
