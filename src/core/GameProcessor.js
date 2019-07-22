@@ -855,7 +855,6 @@ class GameProcessor extends EventEmitter {
 	static coordsToAlgebraic(coords) {
 		let name = files[coords[1]];
 		name += 8 - coords[0];
-
 		return name;
 	}
 

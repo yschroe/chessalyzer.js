@@ -1,4 +1,4 @@
-const { env } = require('yargs').argv; // use --env with webpack 2
+const { env } = require('yargs').argv;
 const nodeExternals = require('webpack-node-externals');
 const stylish = require('eslint/lib/cli-engine/formatters/stylish');
 const TerserPlugin = require('terser-webpack-plugin');
