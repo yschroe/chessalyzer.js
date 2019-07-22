@@ -16,11 +16,13 @@ const d = new CustomTracker.CustomGame();
 
 (async () => {
 	await Chessalyzer.startBatchMultiCore(
-		'./test/lichess_db_standard_rated_2013-12.pgn',
+		// './test/lichess_db_standard_rated_2013-12.pgn',
+		'./test/YanSch_Gimker.pgn',
 		[a, b, c],
 		{
-			cntGames: 250000
-			// filter: game => game.WhiteElo > 1800
+			cntGames: 250000,
+			filter: game =>
+				game.Variant === 'Standard' && game.Black === 'YanSch'
 		},
 		undefined,
 		undefined

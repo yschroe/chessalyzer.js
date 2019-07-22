@@ -1,5 +1,3 @@
-/* global describe, it, before */
-
 import chai from 'chai';
 import ChessPiece from '../src/ChessPiece';
 
@@ -10,7 +8,7 @@ let piece;
 
 describe('ChessPiece', function() {
 	const pieces = [[0, 1], [1, 0], [3, 0]];
-	pieces.forEach((val) => {
+	pieces.forEach(val => {
 		piece = new ChessPiece('', val);
 		it('Row' + val[0], function() {
 			assert(piece.name === 'black');
