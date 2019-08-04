@@ -18,10 +18,9 @@ const d = new CustomTracker.CustomGame();
 	await Chessalyzer.startBatchMultiCore(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
 		// './test/YanSch_Gimker.pgn',
-		// [a, b, c],
-		a,
+		[a, b, c, d],
 		{
-			cntGames: 250000
+			cntGames: 50000
 			// filter: game =>
 			// 	game.Variant === 'Standard' && game.Black === 'YanSch'
 		},
@@ -32,7 +31,7 @@ const d = new CustomTracker.CustomGame();
 	console.log('Tile: ' + Math.round(c.time) / 1000);
 	console.log('Game: ' + Math.round(a.time) / 1000);
 
-	// console.log(a.ECO);
+	console.log(a.ECO);
 
 	// Chessalyzer.saveData('./a.json', a);
 	// Chessalyzer.saveData('./b.json', b);

@@ -45,11 +45,12 @@ class GameTrackerBase extends BaseTracker {
 		if (Object.prototype.hasOwnProperty.call(this.ECO, game.ECO)) {
 			this.ECO[game.ECO] += 1;
 		} else {
-			this.ECO[game.ECO] = 0;
+			this.ECO[game.ECO] = 1;
 		}
 	}
 
 	finish() {
+		// sort keys
 		this.ECO = Object.keys(this.ECO)
 			.sort()
 			.reduce((accumulator, currentValue) => {
