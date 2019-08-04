@@ -5,6 +5,7 @@ class GameTrackerBase extends BaseTracker {
 		super('game');
 		this.wins = [0, 0, 0];
 		this.cntGames = 0;
+		this.ECO = {};
 	}
 
 	add(tracker) {
@@ -13,6 +14,14 @@ class GameTrackerBase extends BaseTracker {
 		this.wins[2] += tracker.wins[2];
 		this.cntGames += tracker.cntGames;
 		this.time += tracker.time;
+
+		Object.keys(tracker.ECO).forEach(key => {
+			if (Object.prototype.hasOwnProperty.call(this.ECO, key)) {
+				this.ECO[key] += tracker.ECO[key];
+			} else {
+				this.ECO[key] = tracker.ECO[key];
+			}
+		});
 	}
 
 	track(game) {
@@ -33,6 +42,20 @@ class GameTrackerBase extends BaseTracker {
 			default:
 				break;
 		}
+		if (Object.prototype.hasOwnProperty.call(this.ECO, game.ECO)) {
+			this.ECO[game.ECO] += 1;
+		} else {
+			this.ECO[game.ECO] = 0;
+		}
+	}
+
+	finish() {
+		this.ECO = Object.keys(this.ECO)
+			.sort()
+			.reduce((accumulator, currentValue) => {
+				accumulator[currentValue] = this.ECO[currentValue];
+				return accumulator;
+			}, {});
 	}
 }
 

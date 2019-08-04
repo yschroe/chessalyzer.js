@@ -136,7 +136,7 @@ Version 1.1.0 added multithreading / parallel processing with much better proces
 
 -   A larger `nThreads` does not necessary result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak `batchSize` and `nThreads` to get the best results on your system. On my system I achieved the best resuts with `nThreads = 1` and `batchSize = 8000`. Note that `nThreads = 1` doesn't mean that the analysis is single-threaded but that 1 _additional_ thread in addition to the thread that parses the PGN file is used.
 -   To use a custom tracker with your multithreaded analysis the tracker needs to have two additional class members:
-    -   A `path` variable which contains the path of the file your custom tracker is defined in. You can use node.js global `__filename` for this. You can check out the `CustomTracker.js` file in the `/test` subfolder, which is basically a copy of the base GameTracker built as a custom tracker.
+    -   A `path` variable which contains the path of the file your custom tracker is defined in. You can use node.js global `__filename` for this. You can check out the `CustomTracker.js` file in the `/test` subfolder, which is basically a copy of the base GameTracker built as a custom tracker. You can only use one custom Tracker for multithreaded analyses at the moment.
     -   An `add()` function. This function gets passed another Tracker object of the same type and is used to merge the data of the two tracker objects. For example, the add() function of the built-in GameTracker looks like this:
 
 ```javascript
@@ -230,6 +230,9 @@ chessalyzer.js comes with three built-in trackers, available from the `Chessalyz
 -   `wins`  
     [white wins, draws, black wins]
 
+-   `ECO`
+    Counts the ECO keys of the processed games. `ECO` is an object that contains the different keys, for example 'A00'.
+
 -   `cntGames`  
     Number of games processed
 
@@ -290,6 +293,9 @@ Your tracker must have the following two properties:
 -   `add(tracker)`:
     Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. See [Multithreaded analyses section](#multithreaded-analysis) for an example.
 
+-   `finish()`:
+    Optional method that is called when all games have been processed. Can be used for example to clean up or sort the data of the tracker.
+
 # Visualisation
 
 Please note that chessalyzer.js only provides the raw data of the analyses. If you want to visualize the data you will need a separate library. The following examples were created with my fork of [chessboardjs](https://github.com/PeterPain/heatboard.js) with added heatmap functionality.
@@ -315,6 +321,9 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 # Changelog
 
+-   1.4.0:
+    -   Added ECO key tracking to the `GameTrackerBase` class.
+    -   Added optional `finish()` method that is called on the trackers after all games have been processed.
 -   1.3.2:
     -   Fixed bug in the Tracker.Tile class. The `cntMovesTotal` property wasn't incremented correctly when using multithreading.
 -   1.3.1:

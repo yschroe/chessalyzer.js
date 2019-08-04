@@ -58,6 +58,18 @@ class GameProcessor extends EventEmitter {
 		});
 	}
 
+	/**
+	 * Main analysis function for multithreading. Replays every game in the file and tracks statistics
+	 * @param {string} path Path to the PGN file.
+	 * @param {Function} config.filter - Filter function for selecting games
+	 * @param {Number} config.cntGames - Max amount of games to process
+	 * @param {Array<object>} analyzer An array of tracker objects. The data in the
+	 *  analyzers is processed by reference.
+	 * @param {number} batchSize Amount of games every worker shall process.
+	 * @param {number} nThreads Amount of parallel threads that are started, when
+	 * batchSize * nThreads games have been read in.
+	 * @returns {Promise}
+	 */
 	static processPGNMultiCore(path, config, analyzer, batchSize, nThreads) {
 		return new Promise(resolve => {
 			let cntGameAnalyzer = 0;
@@ -74,6 +86,7 @@ class GameProcessor extends EventEmitter {
 				exec: `${__dirname}/worker.js`
 			});
 
+			// split game type trackers and move type trackers
 			analyzer.forEach(a => {
 				if (a.type === 'game') {
 					cntGameAnalyzer += 1;
@@ -87,11 +100,18 @@ class GameProcessor extends EventEmitter {
 				}
 			});
 
+			// checks if all games have been processed
 			function checkAllWorkersFinished() {
 				if (
 					Object.keys(cluster.workers).length === 0 &&
 					readerFinished
 				) {
+					// call finish function for each tracker
+					analyzer.forEach(a => {
+						if (a.finish) {
+							a.finish();
+						}
+					});
 					resolve({
 						cntGames,
 						cntMoves
@@ -99,6 +119,7 @@ class GameProcessor extends EventEmitter {
 				}
 			}
 
+			// adds the tracker data of one worker to the master tracker
 			function addTrackerData(gameTracker, moveTracker, nMoves) {
 				for (let i = 0; i < gameAnalyzerStore.length; i += 1) {
 					gameAnalyzerStore[i].add(gameTracker[i]);
@@ -109,8 +130,11 @@ class GameProcessor extends EventEmitter {
 				cntMoves += nMoves;
 			}
 
+			// creates a new worker, that will process an array of games
 			function forkWorker(games) {
 				const w = cluster.fork();
+
+				// send data to worker
 				w.send({
 					games,
 					customPath,
@@ -280,6 +304,18 @@ class GameProcessor extends EventEmitter {
 
 			lr.on('end', () => {
 				console.log('Read entire file.');
+
+				// call finish routine for each analyzer
+				this.gameAnalyzers.forEach(a => {
+					if (a.finish) {
+						a.finish();
+					}
+				});
+				this.moveAnalyzers.forEach(a => {
+					if (a.finish) {
+						a.finish();
+					}
+				});
 				resolve({ cntGames: this.cntGames, cntMoves: this.cntMoves });
 			});
 		});
