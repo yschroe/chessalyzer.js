@@ -16,7 +16,7 @@ const d = new CustomTracker.CustomGame();
 
 (async () => {
 	await Chessalyzer.startBatchMultiCore(
-		'./test/lichess_db_standard_rated_2013-12.pgn',
+		'./test/lichess_db_standard_rated_2013-01.pgn',
 		// './test/YanSch_Gimker.pgn',
 		[a, b, c, d],
 		{
