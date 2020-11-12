@@ -17,7 +17,7 @@ const c = new Tracker.Tile();
 
 for (let i = 0; i < 1; i += 1) {
 	Chessalyzer.startBatch(
-		'C:/Users/yanni/Downloads/lichess_db_standard_rated_2013-01.pgn',
+		'C:/Users/yanni/Downloads/lichess_db_standard_rated_2013-12.pgn',
 		[a, b, c],
 		{
 			split: false,

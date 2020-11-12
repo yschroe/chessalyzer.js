@@ -23,7 +23,6 @@ const config = {
 	output: {
 		path: `${__dirname}/lib`,
 		filename: `[name]${mode === 'production' ? '.min' : ''}.js`,
-		// filename: '[name].js',
 		library: libraryName,
 		libraryTarget: 'umd',
 		umdNamedDefine: true

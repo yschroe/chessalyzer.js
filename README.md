@@ -96,13 +96,13 @@ You can also filter the PGN file for specific criteria, e.g. only evaluate games
 ```javascript
 // create filter function that returns true for all games where WhiteElo > 2000
 // the 'game' object passed contains every key included in the pgn file (case sensitive)
-let fil = function(game) {
+let fil = function (game) {
     return game.WhiteElo > 2000;
 };
 
 (async () => {
     await Chessalyzer.startBatch('<pathToPgnFile>', tileTracker, {
-        filter: fil
+        filter: fil,
     });
 
     // ...do something with the tileTracker data
@@ -120,7 +120,7 @@ Version 1.1.0 added multithreading / parallel processing with much better proces
         '<pathToPgnFile>',
         tileTracker,
         {
-            cntGames: 10000
+            cntGames: 10000,
         },
         6000,
         2
@@ -155,10 +155,10 @@ You can also generate a comparison heat map where you can compare the data of tw
 
 ```javascript
 // create two filters
-let fil1 = function(game) {
+let fil1 = function (game) {
     return game.WhiteElo > 2000;
 };
-let fil2 = function(game) {
+let fil2 = function (game) {
     return game.WhiteElo < 1200;
 };
 
@@ -179,13 +179,13 @@ let fun = (data, sqrData, loopSqrData) => {
     // start the first analysis
     await Chessalyzer.startBatch('<pathToPgnFile>', tileT1, {
         filter: fil1,
-        cntGames: 1000
+        cntGames: 1000,
     });
 
     // start the second analysis
     await Chessalyzer.startBatch('<pathToPgnFile>', tileT2, {
         filter: fil2,
-        cntGames: 1000
+        cntGames: 1000,
     });
 
     // generate the comparison heatmap
@@ -349,3 +349,4 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 -   [ ] Write Mocha tests
 -   [ ] Update jsdoc
 -   [ ] Track statistics for promoted pieces. Currently stats for those are not tracked
+-   [ ] Fix Bug: Profiling does not work during multicore analysis.
