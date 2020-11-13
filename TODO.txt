@@ -1,0 +1,2 @@
+- HTMLs mit eingebettetem heatboard.js erzeugen, das die Analyse-Daten enthält
+- Heatmap in der Konsole ausgeben

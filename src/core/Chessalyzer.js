@@ -6,6 +6,7 @@ import GameTracker from '../tracker/GameTrackerBase';
 import BaseTracker from '../tracker/BaseTracker';
 
 const { performance } = require('perf_hooks');
+const chalk = require('chalk');
 
 const fs = require('fs');
 
@@ -42,7 +43,7 @@ class Chessalyzer {
 		const gameProcessor = new GameProcessor();
 
 		// callback handler
-		gameProcessor.on('status', gameCnt => {
+		gameProcessor.on('status', (gameCnt) => {
 			callback.fun(gameCnt);
 		});
 
@@ -60,9 +61,7 @@ class Chessalyzer {
 		const mps = Math.round(header.cntMoves / tdiff);
 
 		console.log(
-			`${header.cntGames} games (${
-				header.cntMoves
-			} moves) processed in ${tdiff}s (${mps} moves/s)`
+			`${header.cntGames} games (${header.cntMoves} moves) processed in ${tdiff}s (${mps} moves/s)`
 		);
 		return header;
 	}
@@ -105,9 +104,7 @@ class Chessalyzer {
 		const mps = Math.round(header.cntMoves / tdiff);
 
 		console.log(
-			`${header.cntGames} games (${
-				header.cntMoves
-			} moves) processed in ${tdiff}s (${mps} moves/s)`
+			`${header.cntGames} games (${header.cntMoves} moves) processed in ${tdiff}s (${mps} moves/s)`
 		);
 		header.mps = mps;
 		return header;
@@ -119,7 +116,7 @@ class Chessalyzer {
 	 * @param {Object} data - The data that shall be saved
 	 */
 	static saveData(path, data) {
-		fs.writeFile(path, JSON.stringify(data), err => {
+		fs.writeFile(path, JSON.stringify(data), (err) => {
 			if (err) {
 				console.error(err);
 				return;
@@ -149,11 +146,11 @@ class Chessalyzer {
 	 * data.
 	 * See ./src/exampleHeatmapConfig for examples of such a function.
 	 * @param {} optData - Optional data you may need in your eval function
-	 * @returns {Array} Array with 3 entries:
+	 * @returns {Object} Array with 3 entries:
 	 * <ol>
-	 * <li>8x8 Array containing the heat map values for each tile</li>
-	 * <li>The minimum value in the heatmap.</li>
-	 * <li>The maximum value in the heatmap.</li>
+	 * <li>map: 8x8 Array containing the heat map values for each tile</li>
+	 * <li>min: The minimum value in the heatmap.</li>
+	 * <li>max: The maximum value in the heatmap.</li>
 	 * </ol>
 	 */
 	static generateHeatmap(data, square, fun, optData) {
@@ -202,7 +199,7 @@ class Chessalyzer {
 			map.push(dataRow);
 		}
 
-		return [map, min, max];
+		return { map, min, max };
 	}
 
 	/**
@@ -218,11 +215,11 @@ class Chessalyzer {
 	 * @param {Function} fun - The evaluation function that generates the heatmap out of the
 	 * saved data. See {@link generateHeatmap} for a more detailed description.
 	 * @param {} optData - Optional data you may need in your eval function
-	 * @returns {Array} Array with 3 entries:
+	 * @returns {Object} Object with 3 entries:
 	 * <ol>
-	 * <li>8x8 Array containing the heat map values for each tile</li>
-	 * <li>The minimum value in the heatmap.</li>
-	 * <li>The maximum value in the heatmap.</li>
+	 * <li>map: 8x8 Array containing the heat map values for each tile</li>
+	 * <li>min: The minimum value in the heatmap.</li>
+	 * <li>max: The maximum value in the heatmap.</li>
 	 * </ol>
 	 */
 	static generateComparisonHeatmap(data1, data2, square, fun, optData) {
@@ -248,7 +245,40 @@ class Chessalyzer {
 			map.push(dataRow);
 		}
 
-		return [map, min, max];
+		return { map, min, max };
+	}
+
+	/**
+	 * Prints a heatmap to the terminal
+	 * @param {Array} map - The heatmap data. An (8x8) Array containing values.
+	 * @param {Number} min - The minimum value in map.
+	 * @param {Number} max - The maximum value in map.
+	 */
+	static printHeatmap(map, min, max) {
+		const color = [255, 128, 0];
+		const bgColor = [255, 255, 255];
+		for (let i = 0; i < map.length; i += 1) {
+			for (let cnt = 0; cnt < 2; cnt += 1) {
+				for (let j = 0; j < map[i].length; j += 1) {
+					const alpha = Math.sqrt(map[i][j] / max).toFixed(2);
+					// const value = map[i][j].toFixed(2);
+					const colorOut = [
+						Math.round(color[0] * alpha + (1 - alpha) * bgColor[0]),
+						Math.round(color[1] * alpha + (1 - alpha) * bgColor[1]),
+						Math.round(color[2] * alpha + (1 - alpha) * bgColor[2])
+					];
+
+					process.stdout.write(
+						chalk.bgRgb(
+							colorOut[0],
+							colorOut[1],
+							colorOut[2]
+						)('    ')
+					);
+				}
+				process.stdout.write('\n');
+			}
+		}
 	}
 
 	static getStartingPiece(sqr) {

@@ -102,7 +102,7 @@ let fil = function (game) {
 
 (async () => {
     await Chessalyzer.startBatch('<pathToPgnFile>', tileTracker, {
-        filter: fil,
+        filter: fil
     });
 
     // ...do something with the tileTracker data
@@ -120,7 +120,7 @@ Version 1.1.0 added multithreading / parallel processing with much better proces
         '<pathToPgnFile>',
         tileTracker,
         {
-            cntGames: 10000,
+            cntGames: 10000
         },
         6000,
         2
@@ -179,13 +179,13 @@ let fun = (data, sqrData, loopSqrData) => {
     // start the first analysis
     await Chessalyzer.startBatch('<pathToPgnFile>', tileT1, {
         filter: fil1,
-        cntGames: 1000,
+        cntGames: 1000
     });
 
     // start the second analysis
     await Chessalyzer.startBatch('<pathToPgnFile>', tileT2, {
         filter: fil2,
-        cntGames: 1000,
+        cntGames: 1000
     });
 
     // generate the comparison heatmap
@@ -321,6 +321,11 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 # Changelog
 
+-   1.5.0:
+    -   Added `printHeatmap(...)` function to print a heatmap to the console.
+    -   `generateHeatmap(...)` and `generateComparisonHeatmap(...)` now return an object instead of an array.
+-   1.4.1:
+    -   Updated dependencies
 -   1.4.0:
     -   Added ECO key tracking to the `GameTrackerBase` class.
     -   Added optional `finish()` method that is called on the trackers after all games have been processed.
