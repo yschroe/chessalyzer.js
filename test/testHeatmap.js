@@ -24,5 +24,5 @@ let fun = (data, sqrData, loopSqrData) => {
 	// generate a heat map for the data of 'a1' based on your evaluation function
 	let heatmapData = Chessalyzer.generateHeatmap(tileTracker, 'a1', fun);
 
-	Chessalyzer.print(heatmapData.map, heatmapData.min, heatmapData.max);
+	Chessalyzer.printHeatmap(heatmapData.map, heatmapData.min, heatmapData.max);
 })();
