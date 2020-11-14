@@ -1,6 +1,71 @@
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
+class PiecePositionTable {
+	constructor() {
+		this.posMap = {
+			w: {
+				R: {
+					Ra: [7, 0],
+					Rh: [7, 7]
+				},
+				N: {
+					Nb: [7, 1],
+					Ng: [7, 6]
+				},
+				B: {
+					Bc: [7, 2],
+					Bf: [7, 5]
+				},
+				Q: {
+					Qd: [7, 3]
+				},
+				K: {
+					Ke: [7, 4]
+				}
+			},
+			b: {
+				R: {
+					Ra: [0, 0],
+					Rh: [0, 7]
+				},
+				N: {
+					Nb: [0, 1],
+					Ng: [0, 6]
+				},
+				B: {
+					Bc: [0, 2],
+					Bf: [0, 5]
+				},
+				Q: {
+					Qd: [0, 3]
+				},
+				K: {
+					Ke: [0, 4]
+				}
+			}
+		};
+	}
+
+	takes(player, piece) {
+		if (!piece.includes('P')) {
+			delete this.posMap[player][piece.substring(0, 1)][piece];
+		}
+	}
+
+	moves(player, piece, to) {
+		if (!piece.includes('P')) {
+			this.posMap[player][piece.substring(0, 1)][piece] = to;
+		}
+	}
+
+	promotes(player, piece, on) {
+		if (!piece.includes('P')) {
+			this.posMap[player][piece.substring(0, 1)][piece] = on;
+		}
+	}
+}
+
 class ChessPiece {
 	constructor(name, color) {
 		this.name = name;
@@ -26,37 +91,49 @@ class ChessBoard {
 			}
 			this.tiles[row] = currRow;
 		}
-		this.defaultTiles = this.tiles.map(arr => arr.slice());
-		this.kingPos = { w: [7, 4], b: [0, 4] };
+
+		this.defaultTiles = this.tiles.map((arr) => arr.slice());
+		this.pieces = new PiecePositionTable();
+		this.promoteCounter = 0;
 	}
 
 	move(moveData) {
 		const { from } = moveData;
 		const { to } = moveData;
 
-		// castles
-		if (moveData.castles !== '') {
+		// === castles ===
+		if (moveData.castles) {
 			this.castle(moveData.castles, moveData.player);
 
 			// moves/takes
 		} else if (from[0] !== -1) {
-			// takes
-			if ('pos' in moveData.takes) {
+			// === takes ===
+			if (moveData.takes.pos) {
+				// update piece map
+				this.pieces.takes(
+					moveData.player === 'w' ? 'b' : 'w',
+					moveData.takes.piece
+				);
+
+				// update board
 				this.tiles[moveData.takes.pos[0]][moveData.takes.pos[1]] = null;
 			}
-			// moves
+			// === moves ===
+			// update piece map
+			this.pieces.moves(moveData.player, moveData.piece, to);
+
+			// update board
 			this.tiles[to[0]][to[1]] = this.tiles[from[0]][from[1]];
 			this.tiles[from[0]][from[1]] = null;
 
-			if (moveData.promotesTo !== '') {
+			if (moveData.promotesTo) {
+				const pieceName = `${moveData.promotesTo}${this.promoteCounter}`;
 				this.tiles[to[0]][to[1]] = new ChessPiece(
-					moveData.promotesTo,
+					pieceName,
 					moveData.player
 				);
-			}
-
-			if (moveData.san.substring(0, 1) === 'K') {
-				this.kingPos[moveData.player] = to;
+				this.pieces.promotes(moveData.player, pieceName, to);
+				this.promoteCounter += 1;
 			}
 		}
 	}
@@ -73,31 +150,38 @@ class ChessBoard {
 			tarRookCol = 3;
 			srcRookCol = 0;
 		}
+		// move king
+		this.pieces.moves(player, 'Ke', [row, tarKingCol]);
 		this.tiles[row][tarKingCol] = this.tiles[row][scrKingCol];
-		this.tiles[row][tarRookCol] = this.tiles[row][srcRookCol];
 		this.tiles[row][scrKingCol] = null;
+
+		// move rook
+		this.pieces.moves(player, this.tiles[row][srcRookCol].name, [
+			row,
+			tarRookCol
+		]);
+		this.tiles[row][tarRookCol] = this.tiles[row][srcRookCol];
 		this.tiles[row][srcRookCol] = null;
-		this.kingPos[player] = [row, tarKingCol];
 	}
 
 	reset() {
-		this.tiles = this.defaultTiles.map(arr => arr.slice());
-		this.kingPos = { w: [7, 4], b: [0, 4] };
+		this.tiles = this.defaultTiles.map((arr) => arr.slice());
+		this.pieces = new PiecePositionTable();
+		this.promoteCounter = 0;
 	}
 
 	/** Prints the current board position to the console. */
 	printPosition() {
 		for (let row = 0; row < 8; row += 1) {
-			const rowArray = [];
 			for (let col = 0; col < 8; col += 1) {
 				const piece = this.tiles[row][col];
 				if (piece !== null) {
-					rowArray.push(piece.color + piece.name);
+					process.stdout.write(`|${piece.color}${piece.name}|`);
 				} else {
-					rowArray.push('...');
+					process.stdout.write('|...|');
 				}
 			}
-			console.log(rowArray);
+			process.stdout.write('\n');
 		}
 	}
 }
