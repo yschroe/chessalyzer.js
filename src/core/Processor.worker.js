@@ -7,33 +7,39 @@ import Chessalyzer from './Chessalyzer';
 
 const { Tracker } = Chessalyzer;
 
-process.on('message', msg => {
+process.on('message', (msg) => {
 	const TrackerList = {};
 	const proc = new GameProcessor();
 
-	Object.keys(Tracker).forEach(key => {
+	Object.keys(Tracker).forEach((key) => {
 		TrackerList[Tracker[key].name] = Tracker[key];
 	});
 
 	// merge available Trackers
-	if (msg.customPath !== '') {
+	if (msg.customPath) {
 		const TrackerListCustom = __non_webpack_require__(msg.customPath);
 
-		Object.keys(TrackerListCustom).forEach(key => {
+		Object.keys(TrackerListCustom).forEach((key) => {
 			TrackerList[TrackerListCustom[key].name] = TrackerListCustom[key];
 		});
 	}
 
 	// select needed analyzers
 	const analyzer = [];
-	msg.analyzerNames.forEach(name => {
+	msg.analyzerNames.forEach((name) => {
 		analyzer.push(new TrackerList[name]());
 	});
+
+	if (msg.analyzerConfigs) {
+		for (let i = 0; i < analyzer.length; i += 1) {
+			analyzer[i].cfg = msg.analyzerConfigs[i];
+		}
+	}
 
 	proc.attachAnalyzers(analyzer);
 
 	// analyze each game
-	msg.games.forEach(game => {
+	msg.games.forEach((game) => {
 		proc.processGame(game);
 	});
 

@@ -10,23 +10,23 @@ const CustomTracker = require('./CustomTracker');
 
 const d = new CustomTracker.CustomGame();
 
-a.profilingActive = true;
-b.profilingActive = true;
-c.profilingActive = true;
+a.cfg.profilingActive = true;
+b.cfg.profilingActive = true;
+c.cfg.profilingActive = true;
 
 (async () => {
 	await Chessalyzer.startBatchMultiCore(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
-		[], //[a, b, c, d],
+		[c], //[a, b, c, d],
 		{
-			cntGames: 1000000
+			cntGames: 150000
 		}
 		// undefined,
 		// undefined
 	);
+	console.log('Game: ' + Math.round(a.time) / 1000);
 	console.log('Piece: ' + Math.round(b.time) / 1000);
 	console.log('Tile: ' + Math.round(c.time) / 1000);
-	console.log('Game: ' + Math.round(a.time) / 1000);
 
 	// console.log(a.ECO);
 })();

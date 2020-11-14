@@ -76,6 +76,7 @@ class GameProcessor extends EventEmitter {
 			const gameAnalyzerStore = [];
 			const moveAnalyzerStore = [];
 			const analyzerNames = [];
+			const analyzerConfigs = [];
 			let cntGames = 0;
 			let cntMoves = 0;
 			let readerFinished = false;
@@ -95,6 +96,7 @@ class GameProcessor extends EventEmitter {
 					moveAnalyzerStore.push(a);
 				}
 				analyzerNames.push(a.constructor.name);
+				analyzerConfigs.push(a.cfg);
 				if (Object.prototype.hasOwnProperty.call(a, 'path')) {
 					customPath = a.path;
 				}
@@ -138,7 +140,8 @@ class GameProcessor extends EventEmitter {
 				w.send({
 					games,
 					customPath,
-					analyzerNames
+					analyzerNames,
+					analyzerConfigs
 				});
 
 				// on worker finish

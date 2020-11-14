@@ -324,6 +324,7 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 -   1.5.0:
     -   Added `printHeatmap(...)` function to print a heatmap to the console.
     -   `generateHeatmap(...)` and `generateComparisonHeatmap(...)` now return an object instead of an array.
+    -   Simplified the internal SAN parsing logic by tracking the piece positions at all times. Results in a slight speed increase.
 -   1.4.1:
     -   Updated dependencies
 -   1.4.0:
