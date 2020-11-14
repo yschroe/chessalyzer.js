@@ -164,14 +164,17 @@ class GameProcessor extends EventEmitter {
 			let games = [];
 			let game = {};
 
+			// init line-by-line reader
 			const lr = new LineByLineReader(path, {
 				skipEmptyLines: true
 			});
 
+			// on error
 			lr.on('error', (err) => {
 				console.log(err);
 			});
 
+			// on new line
 			lr.on('line', (line) => {
 				lr.pause();
 
@@ -197,6 +200,7 @@ class GameProcessor extends EventEmitter {
 						cntGames += 1;
 						games.push(game);
 
+						// if enough games have been read in, start worker threads and let them analyze
 						if (cntGames % (batchSize * nThreads) === 0) {
 							for (let i = 0; i < nThreads; i += 1) {
 								forkWorker(
@@ -222,6 +226,7 @@ class GameProcessor extends EventEmitter {
 			});
 
 			lr.on('end', () => {
+				// if on end there are still unprocessed games, start a last worker batch
 				if (games.length > 0) {
 					if (games.length > batchSize) {
 						const nEndForks = Math.ceil(games.length / batchSize);
@@ -237,6 +242,7 @@ class GameProcessor extends EventEmitter {
 						forkWorker(games);
 					}
 				}
+
 				readerFinished = true;
 				checkAllWorkersFinished();
 			});
@@ -548,6 +554,8 @@ class GameProcessor extends EventEmitter {
 				mustBeInCol,
 				token
 			);
+
+			// if no move found diagnonally, try linear
 			if (move.from[0] === -1) {
 				move = this.findLine(
 					tarRow,

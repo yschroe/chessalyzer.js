@@ -30,10 +30,8 @@ process.on('message', (msg) => {
 		analyzer.push(new TrackerList[name]());
 	});
 
-	if (msg.analyzerConfigs) {
-		for (let i = 0; i < analyzer.length; i += 1) {
-			analyzer[i].cfg = msg.analyzerConfigs[i];
-		}
+	for (let i = 0; i < analyzer.length; i += 1) {
+		analyzer[i].cfg = msg.analyzerConfigs[i];
 	}
 
 	proc.attachAnalyzers(analyzer);

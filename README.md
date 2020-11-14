@@ -85,7 +85,10 @@ let fun = (data, sqrData, loopSqrData) => {
     // generate a heat map for the data of 'a1' based on your evaluation function
     let heatmapData = Chessalyzer.generateHeatmap(tileTracker, 'a1', fun);
 
-    // ...use heatmapData with your favourite frontend
+    // print heatmap to console for preview
+    Chessalyzer.printHeatmap(heatmapData.map, heatmapData.min, heatmapData.max);
+
+    // ...or use heatmapData with your favourite frontend
 })();
 ```
 
@@ -298,7 +301,11 @@ Your tracker must have the following two properties:
 
 # Visualisation
 
-Please note that chessalyzer.js only provides the raw data of the analyses. If you want to visualize the data you will need a separate library. The following examples were created with my fork of [chessboardjs](https://github.com/PeterPain/heatboard.js) with added heatmap functionality.
+For a quick preview you can put your heatmap data into `Chessalyzer.printHeatmap(...)` to see your heatmap in the terminal if it supports color:
+
+<img src="https://i.imgur.com/THV7gwY.png" width="40%">
+
+But generally chessalyzer.js only provides the raw data of the analyses (yet? :)). If you want to visualize the data you will need a separate library. The following examples were created with my fork of [chessboardjs](https://github.com/PeterPain/heatboard.js) with added heatmap functionality.
 
 White tile occupation  
 <img src="https://i.imgur.com/2naX1mg.png" width="30%">
@@ -325,6 +332,9 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
     -   Added `printHeatmap(...)` function to print a heatmap to the console.
     -   `generateHeatmap(...)` and `generateComparisonHeatmap(...)` now return an object instead of an array.
     -   Simplified the internal SAN parsing logic by tracking the piece positions at all times. Results in a slight speed increase.
+    -   Fixed Trackers not tracking time in multicore mode.
+    -   Trackers can now have a cfg attribute which is passed to the workers in multicore mode. `profilingActive` is now `cfg.profilingActive` for the trackers.
+    -   Interaction with promoted pawns is now tracked.
 -   1.4.1:
     -   Updated dependencies
 -   1.4.0:
@@ -354,5 +364,3 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 -   [ ] Check functionality for non-lichess PGN files
 -   [ ] Write Mocha tests
 -   [ ] Update jsdoc
--   [ ] Track statistics for promoted pieces. Currently stats for those are not tracked
--   [ ] Fix Bug: Profiling does not work during multicore analysis.
