@@ -33,11 +33,11 @@ class TileTrackerBase extends BaseTracker {
 
 				currRow[col].b = new TileStats();
 				currRow[col].w = new TileStats();
-				pawnTemplate.forEach(val => {
+				pawnTemplate.forEach((val) => {
 					currRow[col].b[val] = new TileStats();
 					currRow[col].w[val] = new TileStats();
 				});
-				pieceTemplate.forEach(val => {
+				pieceTemplate.forEach((val) => {
 					currRow[col].b[val] = new TileStats();
 					currRow[col].w[val] = new TileStats();
 				});
@@ -77,7 +77,7 @@ class TileTrackerBase extends BaseTracker {
 				this.tiles[row][col].w.wasKilledOn +=
 					tracker.tiles[row][col].w.wasKilledOn;
 
-				pawnTemplate.forEach(piece => {
+				pawnTemplate.forEach((piece) => {
 					this.tiles[row][col].b[piece].movedTo +=
 						tracker.tiles[row][col].b[piece].movedTo;
 					this.tiles[row][col].w[piece].movedTo +=
@@ -99,7 +99,7 @@ class TileTrackerBase extends BaseTracker {
 						tracker.tiles[row][col].w[piece].wasKilledOn;
 				});
 
-				pieceTemplate.forEach(piece => {
+				pieceTemplate.forEach((piece) => {
 					this.tiles[row][col].b[piece].movedTo +=
 						tracker.tiles[row][col].b[piece].movedTo;
 					this.tiles[row][col].w[piece].movedTo +=
@@ -212,7 +212,7 @@ class TileTrackerBase extends BaseTracker {
 	}
 
 	processMove(from, to, player, piece) {
-		if (piece.length > 1) {
+		if (piece.length > 1 && !piece.match(/\d/g)) {
 			this.addOccupation(from);
 
 			this.tiles[to[0]][to[1]].currentPiece = this.tiles[from[0]][
@@ -230,7 +230,7 @@ class TileTrackerBase extends BaseTracker {
 	}
 
 	processTakes(pos, player, takingPiece, takenPiece) {
-		if (takenPiece.length > 1) {
+		if (takenPiece.length > 1 && !takenPiece.match(/\d/g)) {
 			const opPlayer = player === 'w' ? 'b' : 'w';
 			this.tiles[pos[0]][pos[1]][opPlayer].wasKilledOn += 1;
 			this.tiles[pos[0]][pos[1]][opPlayer][takenPiece].wasKilledOn += 1;
@@ -239,7 +239,7 @@ class TileTrackerBase extends BaseTracker {
 			this.tiles[pos[0]][pos[1]].currentPiece = null;
 		}
 
-		if (takingPiece.length > 1) {
+		if (takingPiece.length > 1 && !takingPiece.match(/\d/g)) {
 			this.tiles[pos[0]][pos[1]][player].killedOn += 1;
 			this.tiles[pos[0]][pos[1]][player][takingPiece].killedOn += 1;
 		}

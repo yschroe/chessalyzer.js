@@ -3,7 +3,9 @@ const { performance } = require('perf_hooks');
 class BaseTracker {
 	constructor(type) {
 		this.type = type;
-		this.profilingActive = false;
+		this.cfg = {
+			profilingActive: false
+		};
 		this.time = 0;
 		this.t0 = 0;
 
@@ -16,9 +18,9 @@ class BaseTracker {
 	}
 
 	analyze(data) {
-		if (this.profilingActive) this.t0 = performance.now();
+		if (this.cfg.profilingActive) this.t0 = performance.now();
 		this.track(data);
-		if (this.profilingActive) this.time += performance.now() - this.t0;
+		if (this.cfg.profilingActive) this.time += performance.now() - this.t0;
 	}
 }
 
