@@ -49,7 +49,7 @@ class GameProcessor extends EventEmitter {
 	}
 
 	attachAnalyzers(analyzers) {
-		analyzers.forEach(a => {
+		analyzers.forEach((a) => {
 			if (a.type === 'move') {
 				this.moveAnalyzers.push(a);
 			} else if (a.type === 'game') {
@@ -71,7 +71,7 @@ class GameProcessor extends EventEmitter {
 	 * @returns {Promise}
 	 */
 	static processPGNMultiCore(path, config, analyzer, batchSize, nThreads) {
-		return new Promise(resolve => {
+		return new Promise((resolve) => {
 			let cntGameAnalyzer = 0;
 			const gameAnalyzerStore = [];
 			const moveAnalyzerStore = [];
@@ -87,7 +87,7 @@ class GameProcessor extends EventEmitter {
 			});
 
 			// split game type trackers and move type trackers
-			analyzer.forEach(a => {
+			analyzer.forEach((a) => {
 				if (a.type === 'game') {
 					cntGameAnalyzer += 1;
 					gameAnalyzerStore.push(a);
@@ -107,7 +107,7 @@ class GameProcessor extends EventEmitter {
 					readerFinished
 				) {
 					// call finish function for each tracker
-					analyzer.forEach(a => {
+					analyzer.forEach((a) => {
 						if (a.finish) {
 							a.finish();
 						}
@@ -142,7 +142,7 @@ class GameProcessor extends EventEmitter {
 				});
 
 				// on worker finish
-				w.on('message', msg => {
+				w.on('message', (msg) => {
 					addTrackerData(
 						msg.gameAnalyzers,
 						msg.moveAnalyzers,
@@ -165,11 +165,11 @@ class GameProcessor extends EventEmitter {
 				skipEmptyLines: true
 			});
 
-			lr.on('error', err => {
+			lr.on('error', (err) => {
 				console.log(err);
 			});
 
-			lr.on('line', line => {
+			lr.on('line', (line) => {
 				lr.pause();
 
 				// data tag
@@ -252,7 +252,7 @@ class GameProcessor extends EventEmitter {
 			let game = {};
 
 			// process current line
-			const processLine = line => {
+			const processLine = (line) => {
 				// data tag
 				if (
 					line.startsWith('[') &&
@@ -290,12 +290,12 @@ class GameProcessor extends EventEmitter {
 				}
 			};
 
-			lr.on('error', err => {
+			lr.on('error', (err) => {
 				console.log(err);
 				reject();
 			});
 
-			lr.on('line', line => {
+			lr.on('line', (line) => {
 				// pause emitting of lines...
 				lr.pause();
 
@@ -306,12 +306,12 @@ class GameProcessor extends EventEmitter {
 				console.log('Read entire file.');
 
 				// call finish routine for each analyzer
-				this.gameAnalyzers.forEach(a => {
+				this.gameAnalyzers.forEach((a) => {
 					if (a.finish) {
 						a.finish();
 					}
 				});
-				this.moveAnalyzers.forEach(a => {
+				this.moveAnalyzers.forEach((a) => {
 					if (a.finish) {
 						a.finish();
 					}
@@ -331,7 +331,7 @@ class GameProcessor extends EventEmitter {
 			this.parseMove(moves[i]);
 
 			// move based analyzers
-			this.moveAnalyzers.forEach(a => {
+			this.moveAnalyzers.forEach((a) => {
 				a.analyze(this.currentMove);
 			});
 
@@ -342,7 +342,7 @@ class GameProcessor extends EventEmitter {
 		this.board.reset();
 
 		// game based analyzers
-		this.gameAnalyzers.forEach(a => {
+		this.gameAnalyzers.forEach((a) => {
 			a.analyze(game);
 		});
 	}
@@ -594,67 +594,29 @@ class GameProcessor extends EventEmitter {
 		to[0] = tarRow;
 		to[1] = tarCol;
 
-		for (let i = -1; i <= 1; i += 2) {
-			let obstructed1 = false;
-			let obstructed2 = false;
-			for (let j = 1; j < 8; j += 1) {
-				const row1 = to[0] + i * j;
-				const col1 = to[1] + j;
-				const row2 = to[0] - i * j;
-				const col2 = to[1] - j;
+		// get array of positions of pieces of type <token>
+		let validPieces = Object.values(this.board.pieces.posMap[color][token]);
 
-				if (
-					!obstructed1 &&
-					row1 >= 0 &&
-					row1 < 8 &&
-					col1 >= 0 &&
-					col1 < 8 &&
-					this.board.tiles[row1][col1] !== null
-				) {
-					const piece = this.board.tiles[row1][col1];
-					if (
-						piece.name.includes(token) &&
-						piece.color === color &&
-						(mustBeInRow === -1 || row1 === mustBeInRow) &&
-						(mustBeInCol === -1 || col1 === mustBeInCol)
-					) {
-						if (!this.checkCheck([row1, col1], [to[0], to[1]])) {
-							from[0] = row1;
-							from[1] = col1;
-							return { from, to };
-						}
-					} else {
-						obstructed1 = true;
-					}
-				}
-
-				if (
-					!obstructed2 &&
-					row2 >= 0 &&
-					row2 < 8 &&
-					col2 >= 0 &&
-					col2 < 8 &&
-					this.board.tiles[row2][col2] !== null
-				) {
-					const piece = this.board.tiles[row2][col2];
-					if (
-						piece.name.includes(token) &&
-						piece.color === color &&
-						(mustBeInRow === -1 || row2 === mustBeInRow) &&
-						(mustBeInCol === -1 || col2 === mustBeInCol)
-					) {
-						if (!this.checkCheck([row2, col2], [to[0], to[1]])) {
-							from[0] = row2;
-							from[1] = col2;
-							return { from, to };
-						}
-					} else {
-						obstructed2 = true;
-					}
-				}
-			}
+		// filter pieces that can reach target square
+		if (validPieces.length > 1) {
+			validPieces = validPieces.filter(
+				(val) =>
+					Math.abs(val[0] - tarRow) === Math.abs(val[1] - tarCol) &&
+					(mustBeInRow === -1 || val[0] === mustBeInRow) &&
+					(mustBeInCol === -1 || val[1] === mustBeInCol)
+			);
 		}
-		return { from, to };
+
+		// if no piece could be found, return [-1, -1]
+		if (validPieces.length === 0) {
+			return { from, to };
+		}
+
+		// else return found piece
+		return {
+			from: validPieces[0],
+			to
+		};
 	}
 
 	/**
@@ -675,66 +637,29 @@ class GameProcessor extends EventEmitter {
 		to[0] = tarRow;
 		to[1] = tarCol;
 
-		for (let i = -1; i <= 1; i += 2) {
-			let obstructed1 = false;
-			let obstructed2 = false;
-			for (let j = 1; j < 8; j += 1) {
-				const row1 = to[0];
-				const col1 = to[1] - i * j;
-				const row2 = to[0] - i * j;
-				const col2 = to[1];
+		// get array of positions of pieces of type <token>
+		let validPieces = Object.values(this.board.pieces.posMap[color][token]);
 
-				if (
-					!obstructed1 &&
-					row1 >= 0 &&
-					row1 < 8 &&
-					col1 >= 0 &&
-					col1 < 8 &&
-					this.board.tiles[row1][col1] !== null
-				) {
-					const piece = this.board.tiles[row1][col1];
-					if (
-						piece.name.includes(token) &&
-						piece.color === color &&
-						(mustBeInRow === -1 || row1 === mustBeInRow) &&
-						(mustBeInCol === -1 || col1 === mustBeInCol)
-					) {
-						if (!this.checkCheck([row1, col1], [to[0], to[1]])) {
-							from[0] = row1;
-							from[1] = col1;
-							return { from, to };
-						}
-					} else {
-						obstructed1 = true;
-					}
-				}
-				if (
-					!obstructed2 &&
-					row2 >= 0 &&
-					row2 < 8 &&
-					col2 >= 0 &&
-					col2 < 8 &&
-					this.board.tiles[row2][col2] !== null
-				) {
-					const piece = this.board.tiles[row2][col2];
-					if (
-						piece.name.includes(token) &&
-						piece.color === color &&
-						(mustBeInRow === -1 || row2 === mustBeInRow) &&
-						(mustBeInCol === -1 || col2 === mustBeInCol)
-					) {
-						if (!this.checkCheck([row2, col2], [to[0], to[1]])) {
-							from[0] = row2;
-							from[1] = col2;
-							return { from, to };
-						}
-					} else {
-						obstructed2 = true;
-					}
-				}
-			}
+		// filter pieces that can reach target square
+		if (validPieces.length > 1) {
+			validPieces = validPieces.filter(
+				(val) =>
+					(val[0] === tarRow || val[1] === tarCol) &&
+					(mustBeInRow === -1 || val[0] === mustBeInRow) &&
+					(mustBeInCol === -1 || val[1] === mustBeInCol)
+			);
 		}
-		return { from, to };
+
+		// if no piece could be found, return [-1, -1]
+		if (validPieces.length === 0) {
+			return { from, to };
+		}
+
+		// else return found piece
+		return {
+			from: validPieces[0],
+			to
+		};
 	}
 
 	/**
@@ -755,128 +680,32 @@ class GameProcessor extends EventEmitter {
 		to[0] = tarRow;
 		to[1] = tarCol;
 
-		for (let i = -2; i <= 2; i += 4) {
-			for (let j = -1; j <= 1; j += 2) {
-				const row1 = to[0] + i;
-				const col1 = to[1] + j;
-				const row2 = to[0] + j;
-				const col2 = to[1] + i;
-				if (
-					row1 >= 0 &&
-					row1 < 8 &&
-					col1 >= 0 &&
-					col1 < 8 &&
-					this.board.tiles[row1][col1] !== null
-				) {
-					const piece = this.board.tiles[row1][col1];
-					if (
-						piece.name.includes(token) &&
-						piece.color === color &&
-						(mustBeInRow === -1 || row1 === mustBeInRow) &&
-						(mustBeInCol === -1 || col1 === mustBeInCol)
-					) {
-						if (!this.checkCheck([row1, col1], [to[0], to[1]])) {
-							from[0] = row1;
-							from[1] = col1;
-							return { from, to };
-						}
-					}
-				}
-				if (
-					row2 >= 0 &&
-					row2 < 8 &&
-					col2 >= 0 &&
-					col2 < 8 &&
-					this.board.tiles[row2][col2] !== null
-				) {
-					const piece = this.board.tiles[row2][col2];
-					if (
-						piece.name.includes(token) &&
-						piece.color === color &&
-						(mustBeInRow === -1 || row2 === mustBeInRow) &&
-						(mustBeInCol === -1 || col2 === mustBeInCol)
-					) {
-						if (!this.checkCheck([row2, col2], [to[0], to[1]])) {
-							from[0] = row2;
-							from[1] = col2;
-							return { from, to };
-						}
-					}
-				}
-			}
-		}
-		return { from, to };
-	}
+		// get array of positions of pieces of type <token>
+		let validPieces = Object.values(this.board.pieces.posMap[color][token]);
 
-	/**
-	 * Checks if the input move would be resulting with the king being in check.
-	 * @param {Number[]} from Coordinates of the source tile of the move that shall be checked.
-	 *  @param {Number[]} to Coordinates of the target tile of the move that shall be checked.
-	 * @returns {boolean} After the move, the king will be in check true/false.
-	 */
-	checkCheck(from, to) {
-		const color = this.currentMove.player;
-		const opColor = this.currentMove.player === 'w' ? 'b' : 'w';
-		const king = this.board.kingPos[color];
-		let isInCheck = false;
-
-		// if king move, no check is possible, exit function
-		if (king[0] === from[0] && king[1] === from[1]) return false;
-
-		// check if moving piece is on same line/diag as king, else exit
-		const diff = [];
-		diff[0] = from[0] - king[0];
-		diff[1] = from[1] - king[1];
-		const checkFor = [];
-		if (diff[0] === 0 || diff[1] === 0) {
-			checkFor[0] = 'Q';
-			checkFor[1] = 'R';
-		} else if (Math.abs(diff[0]) === Math.abs(diff[1])) {
-			checkFor[0] = 'Q';
-			checkFor[1] = 'B';
-		} else {
-			return false;
-		}
-		if (diff[0] !== 0) diff[0] /= Math.abs(diff[0]);
-		if (diff[1] !== 0) diff[1] /= Math.abs(diff[1]);
-
-		const srcTilePiece = this.board.tiles[from[0]][from[1]];
-		const tarTilePiece = this.board.tiles[to[0]][to[1]];
-
-		// premove and check if check
-		this.board.tiles[from[0]][from[1]] = null;
-		this.board.tiles[to[0]][to[1]] = srcTilePiece;
-
-		// check for check
-		let obstructed = false;
-		for (let j = 1; j < 8 && !isInCheck && !obstructed; j += 1) {
-			const row = king[0] + j * diff[0];
-			const col = king[1] + j * diff[1];
-
-			if (
-				row >= 0 &&
-				row < 8 &&
-				col >= 0 &&
-				col < 8 &&
-				this.board.tiles[row][col] !== null
-			) {
-				const piece = this.board.tiles[row][col];
-				if (
-					(piece.name.includes(checkFor[0]) ||
-						piece.name.includes(checkFor[1])) &&
-					piece.color === opColor
-				) {
-					isInCheck = true;
-				} else {
-					obstructed = true;
-				}
-			}
+		// filter pieces that can reach target square
+		if (validPieces.length > 1) {
+			validPieces = validPieces.filter(
+				(val) =>
+					((Math.abs(val[0] - tarRow) === 2 &&
+						Math.abs(val[1] - tarCol) === 1) ||
+						(Math.abs(val[0] - tarRow) === 1 &&
+							Math.abs(val[1] - tarCol) === 2)) &&
+					(mustBeInRow === -1 || val[0] === mustBeInRow) &&
+					(mustBeInCol === -1 || val[1] === mustBeInCol)
+			);
 		}
 
-		this.board.tiles[from[0]][from[1]] = srcTilePiece;
-		this.board.tiles[to[0]][to[1]] = tarTilePiece;
+		// if no piece could be found, return [-1, -1]
+		if (validPieces.length === 0) {
+			return { from, to };
+		}
 
-		return isInCheck;
+		// else return found piece
+		return {
+			from: validPieces[0],
+			to
+		};
 	}
 
 	static algebraicToCoords(square) {

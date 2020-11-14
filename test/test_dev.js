@@ -19,10 +19,10 @@ c.profilingActive = true;
 		'./test/lichess_db_standard_rated_2013-12.pgn',
 		[], //[a, b, c, d],
 		{
-			cntGames: 100000
-		},
-		undefined,
-		undefined
+			cntGames: 1000000
+		}
+		// undefined,
+		// undefined
 	);
 	console.log('Piece: ' + Math.round(b.time) / 1000);
 	console.log('Tile: ' + Math.round(c.time) / 1000);
