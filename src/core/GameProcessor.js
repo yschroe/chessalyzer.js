@@ -332,7 +332,6 @@ class GameProcessor extends EventEmitter {
 
 	processGame(game) {
 		const { moves } = game;
-
 		for (let i = 0; i < moves.length; i += 1) {
 			this.activePlayer = i % 2;
 
@@ -509,7 +508,6 @@ class GameProcessor extends EventEmitter {
 		this.currentMove.piece = this.board.tiles[coords.from[0]][
 			coords.from[1]
 		].name;
-
 		if (takes) {
 			this.currentMove.takes.piece = this.board.tiles[
 				this.currentMove.to[0]
@@ -519,7 +517,7 @@ class GameProcessor extends EventEmitter {
 	}
 
 	/**
-	 * Wrapper function for different piece search algorithms.
+	 * Search algorithm to find a piece.
 	 * @param {number} tarRow Target row for piece move.
 	 * @param {number} tarCol Target column for piece move.
 	 * @param {number} mustBeInRow Moving piece must be in this row. '-1' if unknown.
@@ -528,78 +526,27 @@ class GameProcessor extends EventEmitter {
 	 * @returns {Object}
 	 */
 	findPiece(tarRow, tarCol, mustBeInRow, mustBeInCol, token) {
-		let move;
-
-		if (token === 'R') {
-			move = this.findLine(
-				tarRow,
-				tarCol,
-				mustBeInRow,
-				mustBeInCol,
-				token
-			);
-		} else if (token === 'B') {
-			move = this.findDiag(
-				tarRow,
-				tarCol,
-				mustBeInRow,
-				mustBeInCol,
-				token
-			);
-		} else if (token === 'Q' || token === 'K') {
-			move = this.findDiag(
-				tarRow,
-				tarCol,
-				mustBeInRow,
-				mustBeInCol,
-				token
-			);
-
-			// if no move found diagnonally, try linear
-			if (move.from[0] === -1) {
-				move = this.findLine(
-					tarRow,
-					tarCol,
-					mustBeInRow,
-					mustBeInCol,
-					token
-				);
+		const color = this.currentMove.player;
+		const from = [];
+		const to = [];
+		const moveCfg = {
+			Q: {
+				line: true,
+				diag: true
+			},
+			R: {
+				line: true,
+				diag: false
+			},
+			B: {
+				line: false,
+				diag: true
+			},
+			N: {
+				line: false,
+				diag: false
 			}
-		} else if (token === 'N') {
-			move = this.findKnight(
-				tarRow,
-				tarCol,
-				mustBeInRow,
-				mustBeInCol,
-				token
-			);
-		}
-		if (move.from[0] === -1) {
-			console.log(
-				`Error: no piece for move ${token} to (${tarRow},${tarCol}) found!`
-			);
-			console.log(this.cntGames);
-			console.log(this.currentMove);
-			this.board.printPosition();
-		}
-
-		return move;
-	}
-
-	/**
-	 * Search algorithm to find a piece that can move diagonally.
-	 * @param {number} tarRow Target row for piece move.
-	 * @param {number} tarCol Target column for piece move.
-	 * @param {number} mustBeInRow Moving piece must be in this row. '-1' if unknown.
-	 * @param {number} mustBeInCol Moving piece must be in this column. '-1' if unknown.
-	 * @param {string} token Moving piece must be of this type, e.g 'R'.
-	 * @returns {Object}
-	 */
-	findDiag(tarRow, tarCol, mustBeInRow, mustBeInCol, token) {
-		const color = this.currentMove.player;
-
-		const from = [];
-		const to = [];
+		};
 		from[0] = -1;
 		from[1] = -1;
 		to[0] = tarRow;
@@ -610,113 +557,144 @@ class GameProcessor extends EventEmitter {
 
 		// filter pieces that can reach target square
 		if (validPieces.length > 1) {
-			validPieces = validPieces.filter(
-				(val) =>
-					Math.abs(val[0] - tarRow) === Math.abs(val[1] - tarCol) &&
+			validPieces = validPieces.filter((val) => {
+				const mustBeInFulfilled =
 					(mustBeInRow === -1 || val[0] === mustBeInRow) &&
-					(mustBeInCol === -1 || val[1] === mustBeInCol)
-			);
+					(mustBeInCol === -1 || val[1] === mustBeInCol);
+				return (
+					((moveCfg[token].line &&
+						(val[0] === tarRow || val[1] === tarCol)) ||
+						(moveCfg[token].diag &&
+							Math.abs(val[0] - tarRow) ===
+								Math.abs(val[1] - tarCol)) ||
+						(token === 'N' &&
+							((Math.abs(val[0] - tarRow) === 2 &&
+								Math.abs(val[1] - tarCol) === 1) ||
+								(Math.abs(val[0] - tarRow) === 1 &&
+									Math.abs(val[1] - tarCol) === 2)))) &&
+					mustBeInFulfilled
+				);
+			});
 		}
 
-		// if no piece could be found, return [-1, -1]
-		if (validPieces.length === 0) {
-			return { from, to };
+		if (validPieces.length === 1) {
+			return {
+				from: validPieces[0],
+				to
+			};
 		}
 
-		// else return found piece
-		return {
-			from: validPieces[0],
-			to
-		};
+		if (validPieces.length > 1) {
+			for (let idx = 0; idx < validPieces.length - 1; idx += 1) {
+				const piece = validPieces[idx];
+				const diff = [tarRow - piece[0], tarCol - piece[1]];
+				const steps = Math.max.apply(null, diff.map(Math.abs));
+				const dir = [Math.sign(diff[0]), Math.sign(diff[1])];
+				let obstructed = false;
+				if (token !== 'N') {
+					for (let i = 1; i < steps && !obstructed; i += 1) {
+						if (
+							this.board.tiles[piece[0] + i * dir[0]][
+								piece[1] + i * dir[1]
+							]
+						) {
+							obstructed = true;
+						}
+					}
+				}
+
+				if (!obstructed && !this.checkCheck(piece, to)) {
+					return {
+						from: piece,
+						to
+					};
+				}
+			}
+			return {
+				from: validPieces[validPieces.length - 1],
+				to
+			};
+		}
+
+		console.log(
+			`Error: no piece for move ${token} to (${tarRow},${tarCol}) found!`
+		);
+		console.log(this.cntGames);
+		console.log(this.currentMove);
+		this.board.printPosition();
+
+		return { from, to };
 	}
 
 	/**
-	 * Search algorithm to find a piece that can move vertically/horizontally.
-	 * @param {number} tarRow Target row for piece move.
-	 * @param {number} tarCol Target column for piece move.
-	 * @param {number} mustBeInRow Moving piece must be in this row. '-1' if unknown.
-	 * @param {number} mustBeInCol Moving piece must be in this column. '-1' if unknown.
-	 * @param {string} token Moving piece must be of this type, e.g 'R'.
-	 * @returns {Object}
+	 * Checks if the input move would be resulting with the king being in check.
+	 * @param {Number[]} from Coordinates of the source tile of the move that shall be checked.
+	 *  @param {Number[]} to Coordinates of the target tile of the move that shall be checked.
+	 * @returns {boolean} After the move, the king will be in check true/false.
 	 */
-	findLine(tarRow, tarCol, mustBeInRow, mustBeInCol, token) {
+	checkCheck(from, to) {
 		const color = this.currentMove.player;
-		const from = [];
-		const to = [];
-		from[0] = -1;
-		from[1] = -1;
-		to[0] = tarRow;
-		to[1] = tarCol;
+		const opColor = this.currentMove.player === 'w' ? 'b' : 'w';
+		const king = this.board.pieces.posMap[color].K.Ke;
+		let isInCheck = false;
 
-		// get array of positions of pieces of type <token>
-		let validPieces = Object.values(this.board.pieces.posMap[color][token]);
+		// if king move, no check is possible, exit function
+		if (king[0] === from[0] && king[1] === from[1]) return false;
 
-		// filter pieces that can reach target square
-		if (validPieces.length > 1) {
-			validPieces = validPieces.filter(
-				(val) =>
-					(val[0] === tarRow || val[1] === tarCol) &&
-					(mustBeInRow === -1 || val[0] === mustBeInRow) &&
-					(mustBeInCol === -1 || val[1] === mustBeInCol)
-			);
+		// check if moving piece is on same line/diag as king, else exit
+		const diff = [];
+		diff[0] = from[0] - king[0];
+		diff[1] = from[1] - king[1];
+		const checkFor = [];
+		if (diff[0] === 0 || diff[1] === 0) {
+			checkFor[0] = 'Q';
+			checkFor[1] = 'R';
+		} else if (Math.abs(diff[0]) === Math.abs(diff[1])) {
+			checkFor[0] = 'Q';
+			checkFor[1] = 'B';
+		} else {
+			return false;
+		}
+		if (diff[0] !== 0) diff[0] /= Math.abs(diff[0]);
+		if (diff[1] !== 0) diff[1] /= Math.abs(diff[1]);
+
+		const srcTilePiece = this.board.tiles[from[0]][from[1]];
+		const tarTilePiece = this.board.tiles[to[0]][to[1]];
+
+		// premove and check if check
+		this.board.tiles[from[0]][from[1]] = null;
+		this.board.tiles[to[0]][to[1]] = srcTilePiece;
+
+		// check for check
+		let obstructed = false;
+		for (let j = 1; j < 8 && !isInCheck && !obstructed; j += 1) {
+			const row = king[0] + j * diff[0];
+			const col = king[1] + j * diff[1];
+
+			if (
+				row >= 0 &&
+				row < 8 &&
+				col >= 0 &&
+				col < 8 &&
+				this.board.tiles[row][col] !== null
+			) {
+				const piece = this.board.tiles[row][col];
+				if (
+					(piece.name.includes(checkFor[0]) ||
+						piece.name.includes(checkFor[1])) &&
+					piece.color === opColor
+				) {
+					isInCheck = true;
+				} else {
+					obstructed = true;
+				}
+			}
 		}
 
-		// if no piece could be found, return [-1, -1]
-		if (validPieces.length === 0) {
-			return { from, to };
-		}
+		this.board.tiles[from[0]][from[1]] = srcTilePiece;
+		this.board.tiles[to[0]][to[1]] = tarTilePiece;
 
-		// else return found piece
-		return {
-			from: validPieces[0],
-			to
-		};
-	}
-
-	/**
-	 * Search algorithm to find a matching knight.
-	 * @param {number} tarRow Target row for piece move.
-	 * @param {number} tarCol Target column for piece move.
-	 * @param {number} mustBeInRow Moving piece must be in this row. '-1' if unknown.
-	 * @param {number} mustBeInCol Moving piece must be in this column. '-1' if unknown.
-	 * @param {string} token Moving piece must be of this type, e.g 'R'.
-	 * @returns {Object}
-	 */
-	findKnight(tarRow, tarCol, mustBeInRow, mustBeInCol, token) {
-		const color = this.currentMove.player;
-		const from = [];
-		const to = [];
-		from[0] = -1;
-		from[1] = -1;
-		to[0] = tarRow;
-		to[1] = tarCol;
-
-		// get array of positions of pieces of type <token>
-		let validPieces = Object.values(this.board.pieces.posMap[color][token]);
-
-		// filter pieces that can reach target square
-		if (validPieces.length > 1) {
-			validPieces = validPieces.filter(
-				(val) =>
-					((Math.abs(val[0] - tarRow) === 2 &&
-						Math.abs(val[1] - tarCol) === 1) ||
-						(Math.abs(val[0] - tarRow) === 1 &&
-							Math.abs(val[1] - tarCol) === 2)) &&
-					(mustBeInRow === -1 || val[0] === mustBeInRow) &&
-					(mustBeInCol === -1 || val[1] === mustBeInCol)
-			);
-		}
-
-		// if no piece could be found, return [-1, -1]
-		if (validPieces.length === 0) {
-			return { from, to };
-		}
-
-		// else return found piece
-		return {
-			from: validPieces[0],
-			to
-		};
+		return isInCheck;
 	}
 
 	static algebraicToCoords(square) {

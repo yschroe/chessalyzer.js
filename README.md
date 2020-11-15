@@ -328,6 +328,8 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 # Changelog
 
+-   1.5.1:
+    -   Fixed bug in PGN Parser.
 -   1.5.0:
     -   Added `printHeatmap(...)` function to print a heatmap to the console.
     -   `generateHeatmap(...)` and `generateComparisonHeatmap(...)` now return an object instead of an array.
