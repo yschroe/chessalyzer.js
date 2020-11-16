@@ -98,7 +98,6 @@ class Chessalyzer {
 			batchSize,
 			nThreads
 		);
-
 		const t1 = performance.now();
 		const tdiff = Math.round(t1 - t0) / 1000;
 		const mps = Math.round(header.cntMoves / tdiff);

@@ -1,7 +1,9 @@
 /* eslint-disable no-inner-declarations */
 import ChessBoard from './ChessBoard';
 
-const LineByLineReader = require('line-by-line');
+const { createReadStream } = require('fs');
+const { createInterface } = require('readline');
+
 const EventEmitter = require('events');
 
 const files = 'abcdefgh';
@@ -70,8 +72,14 @@ class GameProcessor extends EventEmitter {
 	 * batchSize * nThreads games have been read in.
 	 * @returns {Promise}
 	 */
-	static processPGNMultiCore(path, config, analyzer, batchSize, nThreads) {
-		return new Promise((resolve) => {
+	static async processPGNMultiCore(
+		path,
+		config,
+		analyzer,
+		batchSize,
+		nThreads
+	) {
+		try {
 			let cntGameAnalyzer = 0;
 			const gameAnalyzerStore = [];
 			const moveAnalyzerStore = [];
@@ -82,9 +90,11 @@ class GameProcessor extends EventEmitter {
 			let readerFinished = false;
 			let customPath = '';
 
+			const status = new EventEmitter();
+
 			// eslint-disable-next-line no-undef
 			cluster.setupMaster({
-				exec: `${__dirname}/worker.js`
+				exec: `${__dirname}/worker.min.js`
 			});
 
 			// split game type trackers and move type trackers
@@ -102,36 +112,6 @@ class GameProcessor extends EventEmitter {
 				}
 			});
 
-			// checks if all games have been processed
-			function checkAllWorkersFinished() {
-				if (
-					Object.keys(cluster.workers).length === 0 &&
-					readerFinished
-				) {
-					// call finish function for each tracker
-					analyzer.forEach((a) => {
-						if (a.finish) {
-							a.finish();
-						}
-					});
-					resolve({
-						cntGames,
-						cntMoves
-					});
-				}
-			}
-
-			// adds the tracker data of one worker to the master tracker
-			function addTrackerData(gameTracker, moveTracker, nMoves) {
-				for (let i = 0; i < gameAnalyzerStore.length; i += 1) {
-					gameAnalyzerStore[i].add(gameTracker[i]);
-				}
-				for (let i = 0; i < moveAnalyzerStore.length; i += 1) {
-					moveAnalyzerStore[i].add(moveTracker[i]);
-				}
-				cntMoves += nMoves;
-			}
-
 			// creates a new worker, that will process an array of games
 			function forkWorker(games) {
 				const w = cluster.fork();
@@ -146,16 +126,24 @@ class GameProcessor extends EventEmitter {
 
 				// on worker finish
 				w.on('message', (msg) => {
-					addTrackerData(
-						msg.gameAnalyzers,
-						msg.moveAnalyzers,
-						msg.cntMoves
-					);
+					// add tracker data from this worker
+					for (let i = 0; i < gameAnalyzerStore.length; i += 1) {
+						gameAnalyzerStore[i].add(msg.gameAnalyzers[i]);
+					}
+					for (let i = 0; i < moveAnalyzerStore.length; i += 1) {
+						moveAnalyzerStore[i].add(msg.moveAnalyzers[i]);
+					}
+					cntMoves += msg.cntMoves;
 
 					w.kill();
 
-					// if all workers finished, resolve promise
-					checkAllWorkersFinished();
+					// if this worker was the last one, emit 'finished' event
+					if (
+						Object.keys(cluster.workers).length === 0 &&
+						readerFinished
+					) {
+						status.emit('finished');
+					}
 				});
 			}
 
@@ -165,19 +153,13 @@ class GameProcessor extends EventEmitter {
 			let game = {};
 
 			// init line-by-line reader
-			const lr = new LineByLineReader(path, {
-				skipEmptyLines: true
-			});
-
-			// on error
-			lr.on('error', (err) => {
-				console.log(err);
+			const lr = createInterface({
+				input: createReadStream(path),
+				crlfDelay: Infinity
 			});
 
 			// on new line
 			lr.on('line', (line) => {
-				lr.pause();
-
 				// data tag
 				if (
 					line.startsWith('[') &&
@@ -219,49 +201,63 @@ class GameProcessor extends EventEmitter {
 				}
 				if (cntGames >= cfg.cntGames) {
 					lr.close();
-					lr.end();
-				} else {
-					lr.resume();
+					lr.removeAllListeners();
 				}
 			});
 
-			lr.on('end', () => {
-				// if on end there are still unprocessed games, start a last worker batch
-				if (games.length > 0) {
-					if (games.length > batchSize) {
-						const nEndForks = Math.ceil(games.length / batchSize);
-						for (let i = 0; i < nEndForks; i += 1) {
-							forkWorker(
-								games.slice(
-									i * batchSize,
-									i * batchSize + batchSize
-								)
-							);
-						}
-					} else {
-						forkWorker(games);
+			await EventEmitter.once(lr, 'close');
+
+			// if on end there are still unprocessed games, start a last worker batch
+			if (games.length > 0) {
+				if (games.length > batchSize) {
+					const nEndForks = Math.ceil(games.length / batchSize);
+					for (let i = 0; i < nEndForks; i += 1) {
+						forkWorker(
+							games.slice(
+								i * batchSize,
+								i * batchSize + batchSize
+							)
+						);
 					}
+				} else {
+					forkWorker(games);
 				}
+			}
+			readerFinished = true;
 
-				readerFinished = true;
-				checkAllWorkersFinished();
+			await EventEmitter.once(status, 'finished');
+
+			analyzer.forEach((a) => {
+				if (a.finish) {
+					a.finish();
+				}
 			});
-		});
+			return {
+				cntGames,
+				cntMoves
+			};
+		} catch (err) {
+			console.log(err);
+			return { cntGames: -1, cntMoves: -1 };
+		}
 	}
 
-	processPGN(path, config, analyzers, refreshRate) {
-		const cfg = GameProcessor.checkConfig(config);
+	async processPGN(path, config, analyzers, refreshRate) {
+		try {
+			const cfg = GameProcessor.checkConfig(config);
 
-		this.attachAnalyzers(analyzers);
+			this.attachAnalyzers(analyzers);
 
-		const cntGameAnalyers = this.gameAnalyzers.length;
+			const cntGameAnalyers = this.gameAnalyzers.length;
 
-		return new Promise((resolve, reject) => {
-			const lr = new LineByLineReader(path, { skipEmptyLines: true });
+			const lr = createInterface({
+				input: createReadStream(path),
+				crlfDelay: Infinity
+			});
+
 			let game = {};
 
-			// process current line
-			const processLine = (line) => {
+			lr.on('line', (line) => {
 				// data tag
 				if (
 					line.startsWith('[') &&
@@ -293,41 +289,30 @@ class GameProcessor extends EventEmitter {
 				}
 				if (this.cntGames >= cfg.cntGames) {
 					lr.close();
-					lr.end();
-				} else {
-					lr.resume();
+					lr.removeAllListeners();
 				}
-			};
-
-			lr.on('error', (err) => {
-				console.log(err);
-				reject();
 			});
 
-			lr.on('line', (line) => {
-				// pause emitting of lines...
-				lr.pause();
+			await EventEmitter.once(lr, 'close');
 
-				processLine(line);
+			console.log('Read entire file.');
+
+			// call finish routine for each analyzer
+			this.gameAnalyzers.forEach((a) => {
+				if (a.finish) {
+					a.finish();
+				}
 			});
-
-			lr.on('end', () => {
-				console.log('Read entire file.');
-
-				// call finish routine for each analyzer
-				this.gameAnalyzers.forEach((a) => {
-					if (a.finish) {
-						a.finish();
-					}
-				});
-				this.moveAnalyzers.forEach((a) => {
-					if (a.finish) {
-						a.finish();
-					}
-				});
-				resolve({ cntGames: this.cntGames, cntMoves: this.cntMoves });
+			this.moveAnalyzers.forEach((a) => {
+				if (a.finish) {
+					a.finish();
+				}
 			});
-		});
+			return { cntGames: this.cntGames, cntMoves: this.cntMoves };
+		} catch (err) {
+			console.error(err);
+			return { cntGames: -1, cntMoves: -1 };
+		}
 	}
 
 	processGame(game) {
