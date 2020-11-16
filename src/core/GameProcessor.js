@@ -587,11 +587,12 @@ class GameProcessor extends EventEmitter {
 		if (validPieces.length > 1) {
 			for (let idx = 0; idx < validPieces.length - 1; idx += 1) {
 				const piece = validPieces[idx];
-				const diff = [tarRow - piece[0], tarCol - piece[1]];
-				const steps = Math.max.apply(null, diff.map(Math.abs));
-				const dir = [Math.sign(diff[0]), Math.sign(diff[1])];
 				let obstructed = false;
+
 				if (token !== 'N') {
+					const diff = [tarRow - piece[0], tarCol - piece[1]];
+					const steps = Math.max.apply(null, diff.map(Math.abs));
+					const dir = [Math.sign(diff[0]), Math.sign(diff[1])];
 					for (let i = 1; i < steps && !obstructed; i += 1) {
 						if (
 							this.board.tiles[piece[0] + i * dir[0]][
@@ -655,8 +656,8 @@ class GameProcessor extends EventEmitter {
 		} else {
 			return false;
 		}
-		if (diff[0] !== 0) diff[0] /= Math.abs(diff[0]);
-		if (diff[1] !== 0) diff[1] /= Math.abs(diff[1]);
+		if (diff[0] !== 0) diff[0] = Math.sign(diff[0]);
+		if (diff[1] !== 0) diff[1] = Math.sign(diff[1]);
 
 		const srcTilePiece = this.board.tiles[from[0]][from[1]];
 		const tarTilePiece = this.board.tiles[to[0]][to[1]];
