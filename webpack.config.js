@@ -19,7 +19,7 @@ const config = {
 		chessalyzer: `${__dirname}/src/index.js`,
 		worker: `${__dirname}/src/core/Processor.worker.js`
 	},
-	devtool: 'source-map',
+	// devtool: 'source-map',
 	output: {
 		path: `${__dirname}/lib`,
 		filename: `[name]${mode === 'production' ? '.min' : ''}.js`,
