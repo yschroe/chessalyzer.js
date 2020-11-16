@@ -29,7 +29,7 @@ A JavaScript library for batch analyzing chess games.
 -   Track statistics
 -   Fully modular, track only the stats you need to preserve performance
 -   Generate heatmaps out of the generated data
--   It's fast (>2.200.000 moves/s on a Ryzen 5 2600X; only PGN parsing)
+-   It's fast (>2.500.000 moves/s on a Ryzen 5 2600X; only PGN parsing)
 -   Handles big files easily
 
 # Installation
@@ -328,6 +328,8 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 # Changelog
 
+-   1.6.0:
+    -   Switched from line-by-line package to node.js native readline module. Makes read-in even faster now.
 -   1.5.1:
     -   Fixed bug in PGN Parser.
 -   1.5.0:
