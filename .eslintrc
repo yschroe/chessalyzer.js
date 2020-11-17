@@ -1,13 +1,9 @@
 {
 	"root": true,
 	"env": {
-		"browser": true,
 		"node": true
 	},
-	"parserOptions": {
-		"parser": "babel-eslint"
-	},
-	"extends": ["airbnb"],
+	"extends": ["eslint-config-airbnb-base"],
 	"rules": {
 		"indent": ["error", "tab", { "SwitchCase": 1 }],
 		"no-tabs": 0,

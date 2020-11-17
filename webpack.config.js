@@ -1,7 +1,8 @@
 const { env } = require('yargs').argv;
 const nodeExternals = require('webpack-node-externals');
-const stylish = require('eslint/lib/cli-engine/formatters/stylish');
+
 const TerserPlugin = require('terser-webpack-plugin');
+const ESLintPlugin = require('eslint-webpack-plugin');
 
 const libraryName = 'chessalyzer';
 
@@ -16,10 +17,10 @@ if (env === 'build') {
 const config = {
 	mode,
 	entry: {
-		chessalyzer: `${__dirname}/src/index.js`,
+		chessalyzer: `${__dirname}/src/core/Chessalyzer.js`,
 		worker: `${__dirname}/src/core/Processor.worker.js`
 	},
-	// devtool: 'source-map',
+	devtool: false,
 	output: {
 		path: `${__dirname}/lib`,
 		filename: `[name]${mode === 'production' ? '.min' : ''}.js`,
@@ -36,31 +37,8 @@ const config = {
 			})
 		]
 	},
-	module: {
-		rules: [
-			{
-				test: /(\.jsx|\.js)$/,
-				loader: 'babel-loader',
-				exclude: /(node_modules|bower_components)/
-			},
-			{
-				test: /(\.jsx|\.js)$/,
-				exclude: /node_modules/,
-				use: [
-					{
-						loader: 'eslint-loader',
-						options: {
-							formatter: stylish
-						}
-					}
-				]
-			}
-		]
-	},
+	plugins: [new ESLintPlugin()],
 	target: 'node', // in order to ignore built-in modules like path, fs, etc.,
-	node: {
-		__dirname: false
-	},
 	externals: [nodeExternals()]
 };
 
