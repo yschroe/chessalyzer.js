@@ -3,9 +3,7 @@
 /* eslint-disable no-undef */
 
 import GameProcessor from './GameProcessor';
-import Chessalyzer from './Chessalyzer';
-
-const { Tracker } = Chessalyzer;
+import { Tracker } from './Chessalyzer';
 
 process.on('message', (msg) => {
 	const TrackerList = {};

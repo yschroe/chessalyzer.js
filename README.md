@@ -29,7 +29,7 @@ A JavaScript library for batch analyzing chess games.
 -   Track statistics
 -   Fully modular, track only the stats you need to preserve performance
 -   Generate heatmaps out of the generated data
--   It's fast (>2.500.000 moves/s on a Ryzen 5 2600X; only PGN parsing)
+-   It's fast: >2.900.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
 -   Handles big files easily
 
 # Installation
@@ -43,7 +43,7 @@ npm install --save chessalyzer.js
 2. Import the Chessalyzer object
 
 ```javascript
-const Chessalyzer = require('chessalyzer.js');
+const { Chessalyzer } = require('chessalyzer.js');
 ```
 
 3. Check out the examples or the [docs](https://peterpain.github.io/chessalyzer.js/Chessalyzer.html).
@@ -55,11 +55,8 @@ const Chessalyzer = require('chessalyzer.js');
 Let's start with a basic example:
 
 ```javascript
-// import the library
-const Chessalyzer = require('chessalyzer.js');
-
-// get the builtin trackers
-const { Tracker } = Chessalyzer;
+// import the library and trackers
+const { Chessalyzer, Tracker } = require('chessalyzer.js');
 
 // create basic tile tracker
 const tileTracker = new Tracker.Tile();
@@ -328,8 +325,9 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 # Changelog
 
--   1.6.0:
+-   2.0.0:
     -   Switched from line-by-line package to node.js native readline module. Makes read-in even faster now.
+    -   Changed import scheme from `const Chessalyzer = require('chessalyzer.js');` to `const { Chessalyzer, Tracker} = require('chessalyzer.js');`.
 -   1.5.1:
     -   Fixed bug in PGN Parser.
 -   1.5.0:

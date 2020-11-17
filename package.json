@@ -1,6 +1,5 @@
 {
 	"name": "chessalyzer.js",
-	"sideEffects": false,
 	"version": "1.5.1",
 	"description": "Batch analyze PGN and generate heat maps",
 	"main": "lib/chessalyzer.js",

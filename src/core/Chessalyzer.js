@@ -14,7 +14,7 @@ const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
 /** Main class for batch processing and generating heat maps */
-class Chessalyzer {
+export class Chessalyzer {
 	/**
 	 * Starts the singlethreaded batch processing for the selected file
 	 * @param {String} path - Path to the PGN file that should be analyzed
@@ -301,11 +301,9 @@ class Chessalyzer {
 	}
 }
 
-Chessalyzer.Tracker = {
+export const Tracker = {
 	Game: GameTracker,
 	Piece: PieceTracker,
 	Tile: TileTracker,
 	Base: BaseTracker
 };
-
-export default Chessalyzer;

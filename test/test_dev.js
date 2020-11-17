@@ -1,6 +1,5 @@
 /*eslint-disable*/
-const Chessalyzer = require('../lib/chessalyzer');
-const { Tracker } = Chessalyzer;
+const { Chessalyzer, Tracker } = require('../lib/chessalyzer');
 
 let a = new Tracker.Game();
 let b = new Tracker.Piece();
@@ -20,7 +19,7 @@ c.cfg.profilingActive = true;
 		'./test/lichess_db_standard_rated_2013-12.pgn',
 		[], //[a, b, c, d],
 		{
-			cntGames: 300000
+			cntGames: 500000
 		}
 		// undefined,
 		// undefined
