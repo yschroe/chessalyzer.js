@@ -228,8 +228,8 @@ export default class Chessalyzer {
 		for (let i = 0; i < 8; i += 1) {
 			const dataRow = new Array(8);
 			for (let j = 0; j < 8; j += 1) {
-				const a = map0[0][i][j];
-				const b = map1[0][i][j];
+				const a = map0.map[i][j];
+				const b = map1.map[i][j];
 				if (a === 0 || b === 0) dataRow[j] = 0;
 				else dataRow[j] = (a >= b ? a / b - 1 : -b / a + 1) * 100;
 
@@ -254,7 +254,8 @@ export default class Chessalyzer {
 		for (let i = 0; i < map.length; i += 1) {
 			for (let cnt = 0; cnt < 2; cnt += 1) {
 				for (let j = 0; j < map[i].length; j += 1) {
-					const alpha = Math.sqrt(map[i][j] / max).toFixed(2);
+					const alpha =
+						max === 0 ? 0 : Math.sqrt(map[i][j] / max).toFixed(2);
 					// const value = map[i][j].toFixed(2);
 					const colorOut = [
 						Math.round(color[0] * alpha + (1 - alpha) * bgColor[0]),

@@ -325,7 +325,9 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 # Changelog
 
--   2.0.0:
+-   1.6.1:
+    -   Fixed `generateComparisonHeatmap(...)`.
+-   1.6.0:
     -   Switched from line-by-line package to node.js native readline module. Makes read-in even faster now.
     -   Changed import scheme from `const Chessalyzer = require('chessalyzer.js');` to `const { Chessalyzer, Tracker} = require('chessalyzer.js');`.
 -   1.5.1:

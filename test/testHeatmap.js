@@ -18,11 +18,17 @@ let fun = (data, sqrData, loopSqrData) => {
 	await Chessalyzer.startBatchMultiCore(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
 		tileTracker,
-		{ cntGames: 500000 }
+		{ cntGames: 200000 }
 	);
 
 	// generate a heat map for the data of 'a1' based on your evaluation function
-	let heatmapData = Chessalyzer.generateHeatmap(tileTracker, 'a1', fun);
+	let heatmapData2 = Chessalyzer.generateHeatmap(tileTracker, 'a1', fun);
+	let heatmapData = Chessalyzer.generateComparisonHeatmap(
+		tileTracker,
+		tileTracker,
+		'a1',
+		fun
+	);
 
 	Chessalyzer.printHeatmap(heatmapData.map, heatmapData.min, heatmapData.max);
 })();
