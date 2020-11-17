@@ -1,10 +1,5 @@
 import GameProcessor from './GameProcessor';
 
-import PieceTracker from '../tracker/PieceTrackerBase';
-import TileTracker from '../tracker/TileTrackerBase';
-import GameTracker from '../tracker/GameTrackerBase';
-import BaseTracker from '../tracker/BaseTracker';
-
 const { performance } = require('perf_hooks');
 const chalk = require('chalk');
 
@@ -14,7 +9,7 @@ const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
 /** Main class for batch processing and generating heat maps */
-export class Chessalyzer {
+export default class Chessalyzer {
 	/**
 	 * Starts the singlethreaded batch processing for the selected file
 	 * @param {String} path - Path to the PGN file that should be analyzed
@@ -300,10 +295,3 @@ export class Chessalyzer {
 		return { color, name };
 	}
 }
-
-export const Tracker = {
-	Game: GameTracker,
-	Piece: PieceTracker,
-	Tile: TileTracker,
-	Base: BaseTracker
-};

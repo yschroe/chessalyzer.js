@@ -17,7 +17,7 @@ if (env === 'build') {
 const config = {
 	mode,
 	entry: {
-		chessalyzer: `${__dirname}/src/core/Chessalyzer.js`,
+		chessalyzer: `${__dirname}/src/index.js`,
 		worker: `${__dirname}/src/core/Processor.worker.js`
 	},
 	devtool: false,

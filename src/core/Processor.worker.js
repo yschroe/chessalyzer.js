@@ -3,8 +3,17 @@
 /* eslint-disable no-undef */
 
 import GameProcessor from './GameProcessor';
-import { Tracker } from './Chessalyzer';
+import PieceTracker from '../tracker/PieceTrackerBase';
+import TileTracker from '../tracker/TileTrackerBase';
+import GameTracker from '../tracker/GameTrackerBase';
+import BaseTracker from '../tracker/BaseTracker';
 
+const Tracker = {
+	Game: GameTracker,
+	Piece: PieceTracker,
+	Tile: TileTracker,
+	Base: BaseTracker
+};
 process.on('message', (msg) => {
 	const TrackerList = {};
 	const proc = new GameProcessor();
