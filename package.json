@@ -11,7 +11,8 @@
 		"/lib/worker.min.js"
 	],
 	"scripts": {
-		"build": "npx tsc && webpack --env dev && webpack --env build",
+		"build": "webpack --env dev && webpack --env build",
+		"typedefs": "npx tsc",
 		"dev": "webpack --progress --color --watch --env dev",
 		"jsdoc": "./node_modules/.bin/jsdoc -r -t ./node_modules/ink-docstrap/template src -d docs"
 	},
