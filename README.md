@@ -325,6 +325,8 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 # Changelog
 
+-   1.6.4:
+    -   Fix d.ts for Tracker constructors.
 -   1.6.3:
     -   Added d.ts files for importing the module in a Typescript environment.
 -   1.6.2:
