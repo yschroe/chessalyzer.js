@@ -3,6 +3,7 @@ const nodeExternals = require('webpack-node-externals');
 
 const TerserPlugin = require('terser-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
+const DtsBundleWebpack = require('dts-bundle-webpack');
 
 const libraryName = 'chessalyzer';
 
@@ -37,7 +38,15 @@ const config = {
 			})
 		]
 	},
-	plugins: [new ESLintPlugin()],
+	plugins: [
+		new ESLintPlugin(),
+		new DtsBundleWebpack({
+			name: `${libraryName}.js`,
+			main: 'dts/index.d.ts',
+			baseDir: 'dts',
+			out: `../lib/${libraryName}.d.ts`
+		})
+	],
 	target: 'node', // in order to ignore built-in modules like path, fs, etc.,
 	externals: [nodeExternals()]
 };
