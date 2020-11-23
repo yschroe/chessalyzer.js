@@ -1,9 +1,7 @@
+import { performance } from 'perf_hooks';
+import { readFileSync, writeFile } from 'fs';
+import chalk from 'chalk';
 import GameProcessor from './GameProcessor';
-
-const { performance } = require('perf_hooks');
-const chalk = require('chalk');
-
-const fs = require('fs');
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
@@ -110,7 +108,7 @@ export default class Chessalyzer {
 	 * @param {Object} data - The data that shall be saved
 	 */
 	static saveData(path, data) {
-		fs.writeFile(path, JSON.stringify(data), (err) => {
+		writeFile(path, JSON.stringify(data), (err) => {
 			if (err) {
 				console.error(err);
 				return;
@@ -125,7 +123,7 @@ export default class Chessalyzer {
 	 * @returns {Object} Returns the loaded data
 	 */
 	static loadData(path) {
-		const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+		const data = JSON.parse(readFileSync(path, 'utf8'));
 		console.log(`File '${path}' has been loaded.`);
 		return data;
 	}

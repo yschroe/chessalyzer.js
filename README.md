@@ -325,6 +325,8 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 # Changelog
 
+-   1.6.2:
+    -   Shipping the minified versions in the bundle.
 -   1.6.1:
     -   Fixed `generateComparisonHeatmap(...)`.
 -   1.6.0:

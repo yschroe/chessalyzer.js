@@ -1,14 +1,11 @@
 /* eslint-disable no-inner-declarations */
+import { createReadStream } from 'fs';
+import { createInterface } from 'readline';
+import EventEmitter from 'events';
+import cluster from 'cluster';
 import ChessBoard from './ChessBoard';
 
-const { createReadStream } = require('fs');
-const { createInterface } = require('readline');
-
-const EventEmitter = require('events');
-
 const files = 'abcdefgh';
-
-const cluster = require('cluster');
 
 class MoveData {
 	constructor() {

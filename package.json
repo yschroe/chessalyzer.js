@@ -2,9 +2,11 @@
 	"name": "chessalyzer.js",
 	"version": "1.6.1",
 	"description": "Batch analyze PGN and generate heat maps",
-	"main": "lib/chessalyzer.js",
+	"main": "lib/chessalyzer.min.js",
+	"sideEffects": false,
 	"files": [
-		"/lib"
+		"/lib/chessalyzer.min.js",
+		"/lib/worker.min.js"
 	],
 	"scripts": {
 		"build": "webpack --env dev && webpack --env build",
