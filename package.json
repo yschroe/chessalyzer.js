@@ -18,7 +18,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/PeterPain/chessalyzer.js"
+		"url": "https://github.com/YSchroe/chessalyzer.js"
 	},
 	"keywords": [
 		"chess",
@@ -30,9 +30,9 @@
 	"author": "Yannik Schröder",
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/PeterPain/chessalyzer.js/issues"
+		"url": "https://github.com/YSchroe/chessalyzer.js/issues"
 	},
-	"homepage": "https://github.com/PeterPain/chessalyzer.js",
+	"homepage": "https://github.com/YSchroe/chessalyzer.js",
 	"devDependencies": {
 		"dts-bundle-webpack": "^1.0.2",
 		"eslint": "^7.13.0",
