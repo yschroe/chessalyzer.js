@@ -35,20 +35,20 @@
 	"homepage": "https://github.com/YSchroe/chessalyzer.js",
 	"devDependencies": {
 		"dts-bundle-webpack": "^1.0.2",
-		"eslint": "^7.13.0",
+		"eslint": "^7.31.0",
 		"eslint-config-airbnb-base": "^14.2.1",
-		"eslint-plugin-import": "^2.22.1",
-		"eslint-webpack-plugin": "^2.3.0",
+		"eslint-plugin-import": "^2.23.4",
+		"eslint-webpack-plugin": "^2.5.4",
 		"ink-docstrap": "^1.3.2",
-		"jsdoc": "^3.6.6",
-		"terser-webpack-plugin": "^5.0.3",
-		"typescript": "^4.1.2",
-		"webpack": "^5.5.0",
-		"webpack-cli": "^4.2.0",
-		"webpack-node-externals": "^2.5.2",
-		"yargs": "^16.1.1"
+		"jsdoc": "^3.6.7",
+		"terser-webpack-plugin": "^5.1.4",
+		"typescript": "^4.3.5",
+		"webpack": "^5.45.1",
+		"webpack-cli": "^4.7.2",
+		"webpack-node-externals": "^3.0.0",
+		"yargs": "^17.0.1"
 	},
 	"dependencies": {
-		"chalk": "^4.1.0"
+		"chalk": "^4.1.1"
 	}
 }

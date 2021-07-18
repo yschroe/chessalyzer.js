@@ -15,12 +15,13 @@ c.cfg.profilingActive = true;
 
 (async () => {
 	await Chessalyzer.startBatchMultiCore(
-		// await Chessalyzer.startBatch(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
 		[], //[a, b, c, d],
 		{
 			cntGames: 500000
-		}
+		},
+		25000,
+		1
 		// undefined,
 		// undefined
 	);
