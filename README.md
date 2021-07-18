@@ -29,7 +29,7 @@ A JavaScript library for batch analyzing chess games.
 -   Track statistics
 -   Fully modular, track only the stats you need to preserve performance
 -   Generate heatmaps out of the generated data
--   It's fast: >3.3000.000 moves/s on a Apple M1, >2.900.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
+-   It's fast: >3.300.000 moves/s on a Apple M1, >2.900.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
 -   Handles big files easily
 
 # Installation
