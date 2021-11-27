@@ -8,7 +8,7 @@
 	"files": [
 		"/lib/chessalyzer.js",
 		"/lib/chessalyzer.d.ts",
-		"/lib/worker.js"
+		"/lib/Processor.worker.js"
 	],
 	"engines": {
 		"node": "^12.20.0 || ^14.13.1 || >=16.0.0"
@@ -16,8 +16,8 @@
 	"scripts": {
 		"build": "rollup --config",
 		"typedefs": "npx tsc",
-		"dev": "webpack --progress --color --watch --env dev",
-		"jsdoc": "./node_modules/.bin/jsdoc -r -t ./node_modules/ink-docstrap/template src -d docs"
+		"dev": "rollup --config --watch",
+		"jsdoc": "jsdoc -r -t ./node_modules/ink-docstrap/template src -d docs"
 	},
 	"repository": {
 		"type": "git",
