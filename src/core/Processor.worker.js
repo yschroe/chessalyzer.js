@@ -2,7 +2,6 @@ import GameProcessor from './GameProcessor.js';
 import Tracker from '../tracker/Tracker.js';
 
 process.on('message', (msg) => {
-	console.log('WORKER GOT DATAS', msg.games.length);
 	const TrackerList = {};
 	const proc = new GameProcessor();
 
@@ -43,3 +42,6 @@ process.on('message', (msg) => {
 		moveAnalyzers: proc.moveAnalyzers
 	});
 });
+
+// only needed for workaround for https://github.com/nodejs/node/issues/39854
+process.send('readyForData');

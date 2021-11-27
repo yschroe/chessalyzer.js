@@ -117,35 +117,38 @@ class GameProcessor extends EventEmitter {
 
 				// on worker finish
 				w.on('message', function (msg) {
-					// add tracker data from this worker
-					for (let i = 0; i < gameAnalyzerStore.length; i += 1) {
-						gameAnalyzerStore[i].add(msg.gameAnalyzers[i]);
-					}
-					for (let i = 0; i < moveAnalyzerStore.length; i += 1) {
-						moveAnalyzerStore[i].add(msg.moveAnalyzers[i]);
-					}
-					cntMoves += msg.cntMoves;
+					// normally we could use w.send(...) outside of this listener
+					// there is a bug in node though, which sometimes sends the data too early
+					// --> wait until the worker sends a custom ready message
+					// see: https://github.com/nodejs/node/issues/39854
+					if (msg === 'readyForData') {
+						w.send({
+							games,
+							customPath,
+							analyzerNames,
+							analyzerConfigs
+						});
+					} else {
+						// add tracker data from this worker
+						for (let i = 0; i < gameAnalyzerStore.length; i += 1) {
+							gameAnalyzerStore[i].add(msg.gameAnalyzers[i]);
+						}
+						for (let i = 0; i < moveAnalyzerStore.length; i += 1) {
+							moveAnalyzerStore[i].add(msg.moveAnalyzers[i]);
+						}
+						cntMoves += msg.cntMoves;
 
-					w.kill();
+						w.kill();
 
-					// if this worker was the last one, emit 'finished' event
-					if (
-						Object.keys(cluster.workers).length === 0 &&
-						readerFinished
-					) {
-						status.emit('finished');
+						// if this worker was the last one, emit 'finished' event
+						if (
+							Object.keys(cluster.workers).length === 0 &&
+							readerFinished
+						) {
+							status.emit('finished');
+						}
 					}
 				});
-
-				// TODO: Find out, why data cannot be sent without waiting
-				setTimeout(() => {
-					w.send({
-						games,
-						customPath,
-						analyzerNames,
-						analyzerConfigs
-					});
-				}, 50);
 			};
 
 			const cfg = GameProcessor.checkConfig(config);
@@ -184,7 +187,6 @@ class GameProcessor extends EventEmitter {
 						games.push(game);
 
 						// if enough games have been read in, start worker threads and let them analyze
-						// console.log(cntGames, batchSize * nThreads);
 						if (cntGames % (batchSize * nThreads) === 0) {
 							for (let i = 0; i < nThreads; i += 1) {
 								forkWorker(
