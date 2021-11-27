@@ -1,13 +1,12 @@
-/*eslint-disable*/
-const { Chessalyzer, Tracker } = require('../lib/chessalyzer');
+import { Chessalyzer, Tracker } from '../src/index.js';
 
 let a = new Tracker.Game();
 let b = new Tracker.Piece();
 let c = new Tracker.Tile();
 
-const CustomTracker = require('./CustomTracker');
+// const CustomTracker = require('./CustomTracker');
 
-const d = new CustomTracker.CustomGame();
+// const d = new CustomTracker.CustomGame();
 
 a.cfg.profilingActive = true;
 b.cfg.profilingActive = true;
@@ -18,9 +17,9 @@ c.cfg.profilingActive = true;
 		'./test/lichess_db_standard_rated_2013-12.pgn',
 		[], //[a, b, c, d],
 		{
-			cntGames: 500000
+			cntGames: 50000
 		},
-		25000,
+		12500,
 		1
 		// undefined,
 		// undefined

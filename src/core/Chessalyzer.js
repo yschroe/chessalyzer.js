@@ -1,7 +1,7 @@
 import { performance } from 'perf_hooks';
 import { readFileSync, writeFile } from 'fs';
 import chalk from 'chalk';
-import GameProcessor from './GameProcessor';
+import GameProcessor from './GameProcessor.js';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
@@ -174,9 +174,8 @@ export default class Chessalyzer {
 			const dataRow = new Array(8);
 			for (let j = 0; j < 8; j += 1) {
 				const loopSqrCoords = [i, j];
-				const loopSqrAlg = GameProcessor.coordsToAlgebraic(
-					loopSqrCoords
-				);
+				const loopSqrAlg =
+					GameProcessor.coordsToAlgebraic(loopSqrCoords);
 				const loopPiece = Chessalyzer.getStartingPiece(loopSqrCoords);
 				const loopSqrData = {
 					alg: loopSqrAlg,

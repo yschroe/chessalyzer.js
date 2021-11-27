@@ -1,28 +1,28 @@
-/*eslint-disable*/
-const { Chessalyzer, Tracker } = require('../lib/chessalyzer.min');
-// const { Tracker } = Chessalyzer;
+import { Chessalyzer, Tracker } from '../lib/chessalyzer.js';
 
 const a = new Tracker.Game();
 const b = new Tracker.Piece();
 const c = new Tracker.Tile();
 
-const CustomTracker = require('./CustomTracker');
+// import CustomTracker from './CustomTracker.js';
 
-const d = new CustomTracker.CustomGame();
+// const d = new CustomTracker.CustomGame();
 
-a.profilingActive = true;
-b.profilingActive = true;
-c.profilingActive = true;
+a.cfg.profilingActive = true;
+b.cfg.profilingActive = true;
+c.cfg.profilingActive = true;
 
 (async () => {
 	await Chessalyzer.startBatchMultiCore(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
 		[],
 		{
-			cntGames: 500000
+			cntGames: 50000
 		},
-		undefined,
-		undefined
+		25001,
+		1
+		// undefined,
+		// undefined
 	);
 	console.log(a);
 	console.log('Game: ' + Math.round(a.time) / 1000);

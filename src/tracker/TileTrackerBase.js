@@ -1,4 +1,4 @@
-import BaseTracker from './BaseTracker';
+import BaseTracker from './BaseTracker.js';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
@@ -215,12 +215,10 @@ class TileTrackerBase extends BaseTracker {
 		if (piece.length > 1 && !piece.match(/\d/g)) {
 			this.addOccupation(from);
 
-			this.tiles[to[0]][to[1]].currentPiece = this.tiles[from[0]][
-				from[1]
-			].currentPiece;
-			this.tiles[to[0]][
-				to[1]
-			].currentPiece.lastMovedOn = this.cntMovesGame;
+			this.tiles[to[0]][to[1]].currentPiece =
+				this.tiles[from[0]][from[1]].currentPiece;
+			this.tiles[to[0]][to[1]].currentPiece.lastMovedOn =
+				this.cntMovesGame;
 
 			this.tiles[from[0]][from[1]].currentPiece = null;
 

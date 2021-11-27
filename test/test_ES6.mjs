@@ -1,4 +1,4 @@
-import pkg from '../lib/chessalyzer.js';
+import pkg from '../lib/chessalyzer';
 const { Chessalyzer, Tracker } = pkg;
 
 const a = new Tracker.Game();

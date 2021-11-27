@@ -1,7 +1,7 @@
-import PieceTracker from './PieceTrackerBase';
-import TileTracker from './TileTrackerBase';
-import GameTracker from './GameTrackerBase';
-import BaseTracker from './BaseTracker';
+import PieceTracker from './PieceTrackerBase.js';
+import TileTracker from './TileTrackerBase.js';
+import GameTracker from './GameTrackerBase.js';
+import BaseTracker from './BaseTracker.js';
 
 const Tracker = {
 	Game: GameTracker,

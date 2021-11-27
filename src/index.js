@@ -1,5 +1,5 @@
 /* eslint-disable */
-import Chessalyzer from './core/Chessalyzer';
-import Tracker from './tracker/Tracker';
+import Chessalyzer from './core/Chessalyzer.js';
+import Tracker from './tracker/Tracker.js';
 
 export { Chessalyzer, Tracker };

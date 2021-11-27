@@ -1,4 +1,4 @@
-import BaseTracker from './BaseTracker';
+import BaseTracker from './BaseTracker.js';
 
 class GameTrackerBase extends BaseTracker {
 	constructor() {
@@ -15,7 +15,7 @@ class GameTrackerBase extends BaseTracker {
 		this.cntGames += tracker.cntGames;
 		this.time += tracker.time;
 
-		Object.keys(tracker.ECO).forEach(key => {
+		Object.keys(tracker.ECO).forEach((key) => {
 			if (Object.prototype.hasOwnProperty.call(this.ECO, key)) {
 				this.ECO[key] += tracker.ECO[key];
 			} else {

@@ -1,9 +1,12 @@
-/* eslint-disable no-inner-declarations */
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
 import EventEmitter from 'events';
 import cluster from 'cluster';
-import ChessBoard from './ChessBoard';
+import ChessBoard from './ChessBoard.js';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const files = 'abcdefgh';
 
@@ -89,9 +92,8 @@ class GameProcessor extends EventEmitter {
 
 			const status = new EventEmitter();
 
-			// eslint-disable-next-line no-undef
-			cluster.setupMaster({
-				exec: `${__dirname}/worker.min.js`
+			cluster.setupPrimary({
+				exec: `${__dirname}/Processor.worker.js`
 			});
 
 			// split game type trackers and move type trackers
@@ -110,19 +112,11 @@ class GameProcessor extends EventEmitter {
 			});
 
 			// creates a new worker, that will process an array of games
-			function forkWorker(games) {
+			const forkWorker = function (games) {
 				const w = cluster.fork();
 
-				// send data to worker
-				w.send({
-					games,
-					customPath,
-					analyzerNames,
-					analyzerConfigs
-				});
-
 				// on worker finish
-				w.on('message', (msg) => {
+				w.on('message', function (msg) {
 					// add tracker data from this worker
 					for (let i = 0; i < gameAnalyzerStore.length; i += 1) {
 						gameAnalyzerStore[i].add(msg.gameAnalyzers[i]);
@@ -142,14 +136,24 @@ class GameProcessor extends EventEmitter {
 						status.emit('finished');
 					}
 				});
-			}
+
+				// TODO: Find out, why data cannot be sent without waiting
+				setTimeout(() => {
+					w.send({
+						games,
+						customPath,
+						analyzerNames,
+						analyzerConfigs
+					});
+				}, 50);
+			};
 
 			const cfg = GameProcessor.checkConfig(config);
 
 			let games = [];
 			let game = {};
 
-			// init line-by-line reader
+			// init line reader
 			const lr = createInterface({
 				input: createReadStream(path),
 				crlfDelay: Infinity
@@ -180,6 +184,7 @@ class GameProcessor extends EventEmitter {
 						games.push(game);
 
 						// if enough games have been read in, start worker threads and let them analyze
+						// console.log(cntGames, batchSize * nThreads);
 						if (cntGames % (batchSize * nThreads) === 0) {
 							for (let i = 0; i < nThreads; i += 1) {
 								forkWorker(
@@ -203,7 +208,6 @@ class GameProcessor extends EventEmitter {
 			});
 
 			await EventEmitter.once(lr, 'close');
-
 			// if on end there are still unprocessed games, start a last worker batch
 			if (games.length > 0) {
 				if (games.length > batchSize) {
@@ -221,9 +225,7 @@ class GameProcessor extends EventEmitter {
 				}
 			}
 			readerFinished = true;
-
 			await EventEmitter.once(status, 'finished');
-
 			analyzer.forEach((a) => {
 				if (a.finish) {
 					a.finish();
@@ -392,9 +394,8 @@ class GameProcessor extends EventEmitter {
 				offset = this.currentMove.player === 'w' ? 1 : -1;
 			}
 
-			this.currentMove.takes.piece = this.board.tiles[to[0] + offset][
-				to[1]
-			].name;
+			this.currentMove.takes.piece =
+				this.board.tiles[to[0] + offset][to[1]].name;
 			this.currentMove.takes.pos = [to[0] + offset, to[1]];
 
 			// moves
@@ -487,13 +488,13 @@ class GameProcessor extends EventEmitter {
 		// set move data
 		this.currentMove.from = coords.from;
 		this.currentMove.to = coords.to;
-		this.currentMove.piece = this.board.tiles[coords.from[0]][
-			coords.from[1]
-		].name;
+		this.currentMove.piece =
+			this.board.tiles[coords.from[0]][coords.from[1]].name;
 		if (takes) {
-			this.currentMove.takes.piece = this.board.tiles[
-				this.currentMove.to[0]
-			][this.currentMove.to[1]].name;
+			this.currentMove.takes.piece =
+				this.board.tiles[this.currentMove.to[0]][
+					this.currentMove.to[1]
+				].name;
 			this.currentMove.takes.pos = this.currentMove.to;
 		}
 	}

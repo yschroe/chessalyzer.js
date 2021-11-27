@@ -1,11 +1,8 @@
-/* eslint-disable global-require */
-/* eslint-disable import/no-dynamic-require */
-/* eslint-disable no-undef */
-
-import GameProcessor from './GameProcessor';
-import Tracker from '../tracker/Tracker';
+import GameProcessor from './GameProcessor.js';
+import Tracker from '../tracker/Tracker.js';
 
 process.on('message', (msg) => {
+	console.log('WORKER GOT DATAS', msg.games.length);
 	const TrackerList = {};
 	const proc = new GameProcessor();
 
@@ -15,7 +12,7 @@ process.on('message', (msg) => {
 
 	// merge available Trackers
 	if (msg.customPath) {
-		const TrackerListCustom = __non_webpack_require__(msg.customPath);
+		const TrackerListCustom = msg.customPath;
 
 		Object.keys(TrackerListCustom).forEach((key) => {
 			TrackerList[TrackerListCustom[key].name] = TrackerListCustom[key];
