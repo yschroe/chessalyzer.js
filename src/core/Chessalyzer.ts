@@ -1,5 +1,4 @@
 import { performance } from 'perf_hooks';
-import { readFileSync, writeFile } from 'fs';
 import chalk from 'chalk';
 import GameProcessor from './GameProcessor.js';
 
@@ -25,7 +24,7 @@ export default class Chessalyzer {
 		path,
 		analyzer,
 		cfg = {},
-		callback = { fun: () => {}, rate: 250 }
+		callback = { fun: (gameCnt: number) => {}, rate: 250 }
 	) {
 		// check if single analyzer or array is passed
 		let analyzerArray = analyzer;
@@ -98,34 +97,7 @@ export default class Chessalyzer {
 		console.log(
 			`${header.cntGames} games (${header.cntMoves} moves) processed in ${tdiff}s (${mps} moves/s)`
 		);
-		header.mps = mps;
 		return header;
-	}
-
-	/**
-	 * Saves a completed batch run to a JSON file
-	 * @param {string} path - Path the data file shall be saved to
-	 * @param {Object} data - The data that shall be saved
-	 */
-	static saveData(path, data) {
-		writeFile(path, JSON.stringify(data), (err) => {
-			if (err) {
-				console.error(err);
-				return;
-			}
-			console.log('File has been created.');
-		});
-	}
-
-	/**
-	 * Loads the stats of a previous batch run (JSON) to a data bank
-	 * @param {string} path - Path the data file shall be loaded from
-	 * @returns {Object} Returns the loaded data
-	 */
-	static loadData(path) {
-		const data = JSON.parse(readFileSync(path, 'utf8'));
-		console.log(`File '${path}' has been loaded.`);
-		return data;
 	}
 
 	/**
@@ -251,9 +223,8 @@ export default class Chessalyzer {
 		for (let i = 0; i < map.length; i += 1) {
 			for (let cnt = 0; cnt < 2; cnt += 1) {
 				for (let j = 0; j < map[i].length; j += 1) {
-					const alpha =
-						max === 0 ? 0 : Math.sqrt(map[i][j] / max).toFixed(2);
-					// const value = map[i][j].toFixed(2);
+					const alpha: number =
+						max === 0 ? 0 : Math.sqrt(map[i][j] / max);
 					const colorOut = [
 						Math.round(color[0] * alpha + (1 - alpha) * bgColor[0]),
 						Math.round(color[1] * alpha + (1 - alpha) * bgColor[1]),

@@ -1,3 +1,4 @@
+import typescript from '@rollup/plugin-typescript';
 // defines modules as external dependencies (= will not be bundled into the lib)
 const external = [
 	'fs',
@@ -12,19 +13,21 @@ const external = [
 
 export default [
 	{
-		input: 'src/index.js',
+		input: 'src/index.ts',
 		output: {
 			file: 'lib/chessalyzer.js',
 			format: 'esm'
 		},
-		external
+		external,
+		plugins: [typescript()]
 	},
 	{
-		input: 'src/core/Processor.worker.js',
+		input: 'src/core/Processor.worker.ts',
 		output: {
 			file: 'lib/Processor.worker.js',
 			format: 'esm'
 		},
-		external
+		external,
+		plugins: [typescript()]
 	}
 ];

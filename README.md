@@ -313,16 +313,6 @@ Moves of whites e pawn
 Difference of whites tiles occupation between a higher (green) and a lower rated (red) player  
 <img src="https://i.imgur.com/tZVkPs3.png" width="30%">
 
-# Contribute
-
-1. Download the project
-
-2. `npm install`
-
-3. Make changes
-
-4. Build via `npm run build` or `npm run dev`
-
 # Changelog
 
 -   1.6.4:

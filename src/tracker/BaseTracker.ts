@@ -1,6 +1,17 @@
 import { performance } from 'perf_hooks';
 
+interface TrackerConfig {
+	profilingActive: boolean;
+}
+
 class BaseTracker {
+	type: string;
+	cfg: TrackerConfig;
+	time: number;
+	t0: number;
+	track: Function;
+	finish?: Function;
+
 	constructor(type) {
 		this.type = type;
 		this.cfg = {

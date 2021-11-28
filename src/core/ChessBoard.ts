@@ -2,6 +2,8 @@ const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
 class PiecePositionTable {
+	posMap: Object;
+
 	constructor() {
 		this.posMap = {
 			w: {
@@ -47,46 +49,50 @@ class PiecePositionTable {
 		};
 	}
 
-	takes(player, piece) {
+	takes(player: string, piece: string): void {
 		if (!piece.includes('P')) {
 			delete this.posMap[player][piece.substring(0, 1)][piece];
 		}
 	}
 
-	moves(player, piece, to) {
+	moves(player: string, piece: string, to: number[]): void {
 		if (!piece.includes('P')) {
 			this.posMap[player][piece.substring(0, 1)][piece] = to;
 		}
 	}
 
-	promotes(player, piece, on) {
+	promotes(player: string, piece: string, on: number[]): void {
 		if (!piece.includes('P')) {
 			this.posMap[player][piece.substring(0, 1)][piece] = on;
 		}
 	}
 }
 
-class ChessPiece {
-	constructor(name, color) {
-		this.name = name;
-		this.color = color;
-	}
+interface ChessPiece {
+	name: string;
+	color: string;
 }
 
 class ChessBoard {
+	tiles: ChessPiece[][];
+	defaultTiles: ChessPiece[][];
+	pieces: PiecePositionTable;
+	promoteCounter: number;
+
 	constructor() {
 		this.tiles = new Array(8);
+
 		for (let row = 0; row < 8; row += 1) {
-			const currRow = new Array(8);
+			const currRow: ChessPiece[] = new Array(8);
 			for (let col = 0; col < 8; col += 1) {
 				currRow[col] = null;
 				const color = row === 0 || row === 1 ? 'b' : 'w';
 
 				// init pieces
 				if (row === 0 || row === 7) {
-					currRow[col] = new ChessPiece(pieceTemplate[col], color);
+					currRow[col] = { name: pieceTemplate[col], color };
 				} else if (row === 1 || row === 6) {
-					currRow[col] = new ChessPiece(pawnTemplate[col], color);
+					currRow[col] = { name: pawnTemplate[col], color };
 				}
 			}
 			this.tiles[row] = currRow;
@@ -128,17 +134,17 @@ class ChessBoard {
 
 			if (moveData.promotesTo) {
 				const pieceName = `${moveData.promotesTo}${this.promoteCounter}`;
-				this.tiles[to[0]][to[1]] = new ChessPiece(
-					pieceName,
-					moveData.player
-				);
+				this.tiles[to[0]][to[1]] = {
+					name: pieceName,
+					color: moveData.player
+				};
 				this.pieces.promotes(moveData.player, pieceName, to);
 				this.promoteCounter += 1;
 			}
 		}
 	}
 
-	castle(move, player) {
+	castle(move: string, player: string): void {
 		const row = player === 'w' ? 7 : 0;
 		const scrKingCol = 4;
 		let tarKingCol = 6;
@@ -164,14 +170,14 @@ class ChessBoard {
 		this.tiles[row][srcRookCol] = null;
 	}
 
-	reset() {
+	reset(): void {
 		this.tiles = this.defaultTiles.map((arr) => arr.slice());
 		this.pieces = new PiecePositionTable();
 		this.promoteCounter = 0;
 	}
 
 	/** Prints the current board position to the console. */
-	printPosition() {
+	printPosition(): void {
 		for (let row = 0; row < 8; row += 1) {
 			for (let col = 0; col < 8; col += 1) {
 				const piece = this.tiles[row][col];

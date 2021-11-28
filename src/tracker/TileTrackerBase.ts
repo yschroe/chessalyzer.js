@@ -3,7 +3,18 @@ import BaseTracker from './BaseTracker.js';
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
+interface StatsField {
+	b: TileStats;
+	w: TileStats;
+	currentPiece: Piece;
+}
+
 class TileStats {
+	movedTo: number;
+	wasOn: number;
+	killedOn: number;
+	wasKilledOn: number;
+
 	constructor() {
 		this.movedTo = 0;
 		this.wasOn = 0;
@@ -13,6 +24,10 @@ class TileStats {
 }
 
 class Piece {
+	piece: string;
+	color: string;
+	lastMovedOn: number;
+
 	constructor(piece, color) {
 		this.piece = piece;
 		this.color = color;
@@ -21,18 +36,25 @@ class Piece {
 }
 
 class TileTrackerBase extends BaseTracker {
+	cntMovesGame: number;
+	cntMovesTotal: number;
+	tiles: StatsField[][];
+
 	constructor() {
 		super('move');
 		this.cntMovesGame = 0;
 		this.cntMovesTotal = 0;
 		this.tiles = new Array(8);
 		for (let row = 0; row < 8; row += 1) {
-			const currRow = new Array(8);
-			for (let col = 0; col < 8; col += 1) {
-				currRow[col] = { b: {}, w: {} };
+			const currRow: StatsField[] = new Array(8);
 
-				currRow[col].b = new TileStats();
-				currRow[col].w = new TileStats();
+			for (let col = 0; col < 8; col += 1) {
+				currRow[col] = {
+					b: new TileStats(),
+					w: new TileStats(),
+					currentPiece: null
+				};
+
 				pawnTemplate.forEach((val) => {
 					currRow[col].b[val] = new TileStats();
 					currRow[col].w[val] = new TileStats();

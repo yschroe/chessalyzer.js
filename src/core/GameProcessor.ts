@@ -1,16 +1,50 @@
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
-import EventEmitter from 'events';
+import { EventEmitter } from 'events';
 import cluster from 'cluster';
 import ChessBoard from './ChessBoard.js';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import BaseTracker from '../tracker/BaseTracker.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const files = 'abcdefgh';
 
+class MoveNotFoundException extends Error {
+	constructor(token, tarRow, tarCol, gameProcessor) {
+		super(`No piece for move ${token} to (${tarRow},${tarCol}) found!`);
+		this.name = 'MoveNotFoundError';
+		this['Game Number'] = gameProcessor.cntGames;
+		gameProcessor.board.printPosition();
+	}
+}
+
+interface GameProcessorConfig {
+	hasFilter: boolean;
+	filter: (game: object) => boolean;
+	cntGames: number;
+}
+
+interface Game {
+	moves: string[];
+}
+
+interface Coords {
+	from: number[];
+	to: number[];
+}
+
 class MoveData {
+	san: string;
+	player: string;
+	piece: string;
+	castles: string;
+	takes: object;
+	promotesTo: string;
+	from: number[];
+	to: number[];
+
 	constructor() {
 		this.san = '';
 		this.player = '';
@@ -27,10 +61,16 @@ class MoveData {
  * Class that processes games.
  */
 class GameProcessor extends EventEmitter {
+	board: ChessBoard;
+	activePlayer: number;
+	cntMoves: number;
+	cntGames: number;
+	gameAnalyzers: BaseTracker[];
+	moveAnalyzers: BaseTracker[];
+
 	constructor() {
 		super();
 		this.board = new ChessBoard();
-		this.currentMove = new MoveData();
 		this.activePlayer = 0;
 		this.cntMoves = 0;
 		this.cntGames = 0;
@@ -39,7 +79,7 @@ class GameProcessor extends EventEmitter {
 	}
 
 	static checkConfig(config) {
-		const cfg = {};
+		const cfg: GameProcessorConfig = {};
 		cfg.hasFilter = Object.prototype.hasOwnProperty.call(config, 'filter');
 		cfg.filter = cfg.hasFilter ? config.filter : () => true;
 
@@ -154,7 +194,7 @@ class GameProcessor extends EventEmitter {
 			const cfg = GameProcessor.checkConfig(config);
 
 			let games = [];
-			let game = {};
+			let game: Game = { moves: null };
 
 			// init line reader
 			const lr = createInterface({
@@ -177,9 +217,7 @@ class GameProcessor extends EventEmitter {
 					// moves
 				} else if (line.startsWith('1')) {
 					game.moves = line
-						.replace(/\{(.*?)\}\s/g, '')
-						.replace(/\d+\.+\s/g, '')
-						.replace(' *', '')
+						.replace(/(\d+\.{1,3}\s)|(\{(.*?)\}\s)/g, '')
 						.split(' ');
 
 					if (cfg.filter(game) || !cfg.hasFilter) {
@@ -201,7 +239,7 @@ class GameProcessor extends EventEmitter {
 						}
 					}
 
-					game = {};
+					game = { moves: null };
 				}
 				if (cntGames >= cfg.cntGames) {
 					lr.close();
@@ -256,7 +294,7 @@ class GameProcessor extends EventEmitter {
 				crlfDelay: Infinity
 			});
 
-			let game = {};
+			let game: Game = { moves: null };
 
 			lr.on('line', (line) => {
 				// data tag
@@ -272,9 +310,7 @@ class GameProcessor extends EventEmitter {
 					// moves
 				} else if (line.startsWith('1')) {
 					game.moves = line
-						.replace(/\{(.*?)\}\s/g, '')
-						.replace(/\d+\.+\s/g, '')
-						.replace(' *', '')
+						.replace(/(\d+\.{1,3}\s)|(\{(.*?)\}\s)/g, '')
 						.split(' ');
 
 					if (cfg.filter(game) || !cfg.hasFilter) {
@@ -286,7 +322,7 @@ class GameProcessor extends EventEmitter {
 						this.emit('status', this.cntGames);
 					}
 
-					game = {};
+					game = { moves: null };
 				}
 				if (this.cntGames >= cfg.cntGames) {
 					lr.close();
@@ -321,16 +357,23 @@ class GameProcessor extends EventEmitter {
 		for (let i = 0; i < moves.length; i += 1) {
 			this.activePlayer = i % 2;
 
-			// fetch move data into this.currentMove
-			this.parseMove(moves[i]);
+			let currentMove;
+			try {
+				// fetch move data into currentMove
+				currentMove = this.parseMove(moves[i]);
+			} catch (err) {
+				console.log(game, i);
+				throw err;
+			}
 
 			// move based analyzers
 			this.moveAnalyzers.forEach((a) => {
-				a.analyze(this.currentMove);
+				a.analyze(currentMove);
 			});
 
-			this.board.move(this.currentMove);
+			this.board.move(currentMove);
 		}
+
 		this.cntMoves += moves.length - 1; // don't count result (e.g. 1-0)
 		this.cntGames += 1;
 		this.board.reset();
@@ -351,35 +394,35 @@ class GameProcessor extends EventEmitter {
 	 * the different move algorithms.
 	 * @param {string} rawMove The move to be parsed, e.g. 'Ne5+'.
 	 */
-	parseMove(rawMove) {
+	parseMove(rawMove: string) {
 		const token = rawMove.substring(0, 1);
-		const move = GameProcessor.preProcess(rawMove);
 
-		this.currentMove = new MoveData();
-		this.currentMove.san = rawMove;
-		this.currentMove.player = this.activePlayer === 0 ? 'w' : 'b';
+		let currentMove = new MoveData();
+		currentMove.san = GameProcessor.preProcess(rawMove);
+		currentMove.player = this.activePlayer === 0 ? 'w' : 'b';
 
 		// game end on '1-0', '0-1' or '1/2-1/2' (check for digit as first char)
 		if (token.match(/\d/) === null) {
 			if (token.toLowerCase() === token) {
-				this.pawnMove(move);
+				this.pawnMove(currentMove);
 			} else if (token !== 'O') {
-				this.pieceMove(move);
+				this.pieceMove(currentMove);
 			} else {
-				this.currentMove.castles = move;
+				currentMove.castles = currentMove.san;
 			}
 		}
+		return currentMove;
 	}
 
 	/**
 	 * Returns the board coordinates for the move if it is a pawn move.
 	 * @param {string} moveSan The move to be parsed, e.g. 'e5'.
 	 */
-	pawnMove(moveSan) {
+	pawnMove(moveData) {
 		const direction = -2 * (this.activePlayer % 2) + 1;
 		const from = [];
 		const to = [];
-		let move = moveSan;
+		let move = moveData.san;
 		let offset = 0;
 
 		// takes
@@ -393,12 +436,11 @@ class GameProcessor extends EventEmitter {
 
 			// en passant
 			if (this.board.tiles[to[0]][to[1]] === null) {
-				offset = this.currentMove.player === 'w' ? 1 : -1;
+				offset = moveData.player === 'w' ? 1 : -1;
 			}
 
-			this.currentMove.takes.piece =
-				this.board.tiles[to[0] + offset][to[1]].name;
-			this.currentMove.takes.pos = [to[0] + offset, to[1]];
+			moveData.takes.piece = this.board.tiles[to[0] + offset][to[1]].name;
+			moveData.takes.pos = [to[0] + offset, to[1]];
 
 			// moves
 		} else {
@@ -418,16 +460,13 @@ class GameProcessor extends EventEmitter {
 			}
 		}
 
-		this.currentMove.to = to;
-		this.currentMove.from = from;
-		this.currentMove.piece = this.board.tiles[from[0]][from[1]].name;
+		moveData.to = to;
+		moveData.from = from;
+		moveData.piece = this.board.tiles[from[0]][from[1]].name;
 
 		// promotes
 		if (move.includes('=')) {
-			this.currentMove.promotesTo = move.substring(
-				move.length - 1,
-				move.length
-			);
+			moveData.promotesTo = move.substring(move.length - 1, move.length);
 		}
 	}
 
@@ -435,10 +474,10 @@ class GameProcessor extends EventEmitter {
 	 * Returns the board coordinates for a piece (!= pawn) move.
 	 * @param {string} moveSan The move to be parsed, e.g. 'Be3'.
 	 */
-	pieceMove(moveSan) {
-		let move = moveSan;
+	pieceMove(moveData) {
+		let move = moveData.san;
 		let takes = false;
-		let coords = { from: [], to: [] };
+		let coords: Coords = { from: [], to: [] };
 		const token = move.substring(0, 1);
 
 		// remove token
@@ -477,27 +516,32 @@ class GameProcessor extends EventEmitter {
 				tarCol,
 				mustBeInRow,
 				mustBeInCol,
-				token
+				token,
+				moveData.player
 			);
 
 			// e.g. Rf3
 		} else {
 			const tarRow = 8 - parseInt(move.substring(1, 2), 10);
 			const tarCol = files.indexOf(move.substring(0, 1));
-			coords = this.findPiece(tarRow, tarCol, -1, -1, token);
+			coords = this.findPiece(
+				tarRow,
+				tarCol,
+				-1,
+				-1,
+				token,
+				moveData.player
+			);
 		}
 
 		// set move data
-		this.currentMove.from = coords.from;
-		this.currentMove.to = coords.to;
-		this.currentMove.piece =
-			this.board.tiles[coords.from[0]][coords.from[1]].name;
+		moveData.from = coords.from;
+		moveData.to = coords.to;
+		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]].name;
 		if (takes) {
-			this.currentMove.takes.piece =
-				this.board.tiles[this.currentMove.to[0]][
-					this.currentMove.to[1]
-				].name;
-			this.currentMove.takes.pos = this.currentMove.to;
+			moveData.takes.piece =
+				this.board.tiles[moveData.to[0]][moveData.to[1]].name;
+			moveData.takes.pos = moveData.to;
 		}
 	}
 
@@ -510,10 +554,10 @@ class GameProcessor extends EventEmitter {
 	 * @param {string} token Moving piece must be of this type, e.g 'R'.
 	 * @returns {Object}
 	 */
-	findPiece(tarRow, tarCol, mustBeInRow, mustBeInCol, token) {
-		const color = this.currentMove.player;
-		const from = [];
-		const to = [];
+	findPiece(tarRow, tarCol, mustBeInRow, mustBeInCol, token, player): Coords {
+		const color = player;
+		const from: number[] = [];
+		const to: number[] = [];
 		const moveCfg = {
 			Q: {
 				line: true,
@@ -538,7 +582,9 @@ class GameProcessor extends EventEmitter {
 		to[1] = tarCol;
 
 		// get array of positions of pieces of type <token>
-		let validPieces = Object.values(this.board.pieces.posMap[color][token]);
+		let validPieces: number[][] = Object.values(
+			this.board.pieces.posMap[color][token]
+		);
 
 		// filter pieces that can reach target square
 		if (validPieces.length > 1) {
@@ -589,7 +635,7 @@ class GameProcessor extends EventEmitter {
 					}
 				}
 
-				if (!obstructed && !this.checkCheck(piece, to)) {
+				if (!obstructed && !this.checkCheck(piece, to, player)) {
 					return {
 						from: piece,
 						to
@@ -602,14 +648,7 @@ class GameProcessor extends EventEmitter {
 			};
 		}
 
-		console.log(
-			`Error: no piece for move ${token} to (${tarRow},${tarCol}) found!`
-		);
-		console.log(this.cntGames);
-		console.log(this.currentMove);
-		this.board.printPosition();
-
-		return { from, to };
+		throw new MoveNotFoundException(token, tarRow, tarCol, this);
 	}
 
 	/**
@@ -618,9 +657,9 @@ class GameProcessor extends EventEmitter {
 	 *  @param {Number[]} to Coordinates of the target tile of the move that shall be checked.
 	 * @returns {boolean} After the move, the king will be in check true/false.
 	 */
-	checkCheck(from, to) {
-		const color = this.currentMove.player;
-		const opColor = this.currentMove.player === 'w' ? 'b' : 'w';
+	checkCheck(from, to, player) {
+		const color = player;
+		const opColor = player === 'w' ? 'b' : 'w';
 		const king = this.board.pieces.posMap[color].K.Ke;
 		let isInCheck = false;
 
