@@ -1,16 +1,12 @@
 import { performance } from 'perf_hooks';
+import { IBaseTracker, ITrackerConfig } from '../interfaces/Interface.js';
 
-interface TrackerConfig {
-	profilingActive: boolean;
-}
-
-class BaseTracker {
+class BaseTracker implements IBaseTracker {
 	type: string;
-	cfg: TrackerConfig;
+	cfg: ITrackerConfig;
 	time: number;
 	t0: number;
-	// track: Function;
-	// finish?: Function;
+	path?: string;
 
 	constructor(type) {
 		this.type = type;
@@ -36,6 +32,7 @@ class BaseTracker {
 	}
 
 	finish() {}
+	add(tracker: BaseTracker) {}
 }
 
 export default BaseTracker;

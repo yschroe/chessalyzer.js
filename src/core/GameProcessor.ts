@@ -5,7 +5,7 @@ import cluster from 'cluster';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { IMoveData } from '../interfaces/Interface.js';
-import BaseTracker from '../tracker/BaseTracker.js';
+import { IBaseTracker } from '../interfaces/Interface.js';
 import ChessBoard from './ChessBoard.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -13,16 +13,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const files = 'abcdefgh';
 
 class MoveNotFoundException extends Error {
-	constructor(
-		token: any,
-		tarRow: any,
-		tarCol: any,
-		gameProcessor: GameProcessor
-	) {
+	constructor(token: any, tarRow: any, tarCol: any) {
 		super(`No piece for move ${token} to (${tarRow},${tarCol}) found!`);
 		this.name = 'MoveNotFoundError';
-		this['Game Number'] = gameProcessor.cntGames;
-		gameProcessor.board.printPosition();
 	}
 }
 
@@ -36,7 +29,7 @@ interface Game {
 	moves: string[];
 }
 
-interface Coords {
+interface Move {
 	from: number[];
 	to: number[];
 }
@@ -66,25 +59,28 @@ class MoveData implements IMoveData {
 /**
  * Class that processes games.
  */
-class GameProcessor extends EventEmitter {
+class GameProcessor {
 	board: ChessBoard;
 	activePlayer: number;
 	cntMoves: number;
 	cntGames: number;
-	gameAnalyzers: BaseTracker[];
-	moveAnalyzers: BaseTracker[];
+	gameAnalyzers: IBaseTracker[];
+	moveAnalyzers: IBaseTracker[];
+	analyzerNames: string[];
+	analyzerConfigs: object[];
 
 	constructor() {
-		super();
 		this.board = new ChessBoard();
 		this.activePlayer = 0;
 		this.cntMoves = 0;
 		this.cntGames = 0;
 		this.gameAnalyzers = [];
 		this.moveAnalyzers = [];
+		this.analyzerNames = [];
+		this.analyzerConfigs = [];
 	}
 
-	static checkConfig(config) {
+	static checkConfig(config: any) {
 		let hasFilter = Object.prototype.hasOwnProperty.call(config, 'filter');
 		const cfg: GameProcessorConfig = {
 			hasFilter,
@@ -96,41 +92,26 @@ class GameProcessor extends EventEmitter {
 		return cfg;
 	}
 
-	attachAnalyzers(analyzers) {
+	attachAnalyzers(analyzers: IBaseTracker[]) {
 		analyzers.forEach((a) => {
 			if (a.type === 'move') {
 				this.moveAnalyzers.push(a);
 			} else if (a.type === 'game') {
 				this.gameAnalyzers.push(a);
 			}
+			this.analyzerNames.push(a.constructor.name);
+			this.analyzerConfigs.push(a.cfg);
 		});
 	}
 
-	/**
-	 * Main analysis function for multithreading. Replays every game in the file and tracks statistics
-	 * @param {string} path Path to the PGN file.
-	 * @param {Function} config.filter - Filter function for selecting games
-	 * @param {Number} config.cntGames - Max amount of games to process
-	 * @param {Array<object>} analyzer An array of tracker objects. The data in the
-	 *  analyzers is processed by reference.
-	 * @param {number} batchSize Amount of games every worker shall process.
-	 * @param {number} nThreads Amount of parallel threads that are started, when
-	 * batchSize * nThreads games have been read in.
-	 * @returns {Promise}
-	 */
-	static async processPGNMultiCore(
-		path,
-		config,
-		analyzer,
-		batchSize,
-		nThreads
+	async processPGN(
+		path: string,
+		analyzer: IBaseTracker[],
+		config: any,
+		batchSize: number,
+		nThreads: number
 	) {
 		try {
-			let cntGameAnalyzer = 0;
-			const gameAnalyzerStore = [];
-			const moveAnalyzerStore = [];
-			const analyzerNames = [];
-			const analyzerConfigs = [];
 			let cntGames = 0;
 			let cntMoves = 0;
 			let readerFinished = false;
@@ -142,27 +123,16 @@ class GameProcessor extends EventEmitter {
 				exec: `${__dirname}/Processor.worker.js`
 			});
 
-			// split game type trackers and move type trackers
-			analyzer.forEach((a) => {
-				if (a.type === 'game') {
-					cntGameAnalyzer += 1;
-					gameAnalyzerStore.push(a);
-				} else if (a.type === 'move') {
-					moveAnalyzerStore.push(a);
-				}
-				analyzerNames.push(a.constructor.name);
-				analyzerConfigs.push(a.cfg);
-				if (Object.prototype.hasOwnProperty.call(a, 'path')) {
-					customPath = a.path;
-				}
-			});
+			const cfg = GameProcessor.checkConfig(config);
+
+			this.attachAnalyzers(analyzer);
 
 			// creates a new worker, that will process an array of games
-			const forkWorker = function (games) {
+			const forkWorker = (games: string[]) => {
 				const w = cluster.fork();
 
 				// on worker finish
-				w.on('message', function (msg) {
+				w.on('message', (msg) => {
 					// normally we could use w.send(...) outside of this listener
 					// there is a bug in node though, which sometimes sends the data too early
 					// --> wait until the worker sends a custom ready message
@@ -171,16 +141,16 @@ class GameProcessor extends EventEmitter {
 						w.send({
 							games,
 							customPath,
-							analyzerNames,
-							analyzerConfigs
+							analyzerNames: this.analyzerNames,
+							analyzerConfigs: this.analyzerConfigs
 						});
 					} else {
 						// add tracker data from this worker
-						for (let i = 0; i < gameAnalyzerStore.length; i += 1) {
-							gameAnalyzerStore[i].add(msg.gameAnalyzers[i]);
+						for (let i = 0; i < this.gameAnalyzers.length; i += 1) {
+							this.gameAnalyzers[i].add(msg.gameAnalyzers[i]);
 						}
-						for (let i = 0; i < moveAnalyzerStore.length; i += 1) {
-							moveAnalyzerStore[i].add(msg.moveAnalyzers[i]);
+						for (let i = 0; i < this.moveAnalyzers.length; i += 1) {
+							this.moveAnalyzers[i].add(msg.moveAnalyzers[i]);
 						}
 						cntMoves += msg.cntMoves;
 
@@ -197,8 +167,6 @@ class GameProcessor extends EventEmitter {
 				});
 			};
 
-			const cfg = GameProcessor.checkConfig(config);
-
 			let games = [];
 			let game: Game = { moves: null };
 
@@ -213,7 +181,7 @@ class GameProcessor extends EventEmitter {
 				// data tag
 				if (
 					line.startsWith('[') &&
-					(cfg.hasFilter || cntGameAnalyzer > 0)
+					(cfg.hasFilter || this.gameAnalyzers.length > 0)
 				) {
 					const key = line.match(/\[(.*?)\s/)[1];
 					const value = line.match(/"(.*?)"/)[1];
@@ -287,13 +255,15 @@ class GameProcessor extends EventEmitter {
 		}
 	}
 
-	async processPGN(path, config, analyzers, refreshRate) {
+	async processPGNSingleThreaded(
+		path: string,
+		config,
+		analyzers: IBaseTracker[]
+	) {
 		try {
 			const cfg = GameProcessor.checkConfig(config);
 
 			this.attachAnalyzers(analyzers);
-
-			const cntGameAnalyers = this.gameAnalyzers.length;
 
 			const lr = createInterface({
 				input: createReadStream(path),
@@ -306,7 +276,7 @@ class GameProcessor extends EventEmitter {
 				// data tag
 				if (
 					line.startsWith('[') &&
-					(cfg.hasFilter || cntGameAnalyers > 0)
+					(cfg.hasFilter || this.gameAnalyzers.length > 0)
 				) {
 					const key = line.match(/\[(.*?)\s/)[1];
 					const value = line.match(/"(.*?)"/)[1];
@@ -323,11 +293,6 @@ class GameProcessor extends EventEmitter {
 						this.processGame(game);
 					}
 
-					// emit event
-					if (this.cntGames % refreshRate === 0) {
-						this.emit('status', this.cntGames);
-					}
-
 					game = { moves: null };
 				}
 				if (this.cntGames >= cfg.cntGames) {
@@ -342,15 +307,12 @@ class GameProcessor extends EventEmitter {
 
 			// call finish routine for each analyzer
 			this.gameAnalyzers.forEach((a) => {
-				if (a.finish) {
-					a.finish();
-				}
+				a.finish();
 			});
 			this.moveAnalyzers.forEach((a) => {
-				if (a.finish) {
-					a.finish();
-				}
+				a.finish();
 			});
+
 			return { cntGames: this.cntGames, cntMoves: this.cntMoves };
 		} catch (err) {
 			console.error(err);
@@ -360,24 +322,22 @@ class GameProcessor extends EventEmitter {
 
 	processGame(game) {
 		const { moves } = game;
-		for (let i = 0; i < moves.length; i += 1) {
-			this.activePlayer = i % 2;
+		try {
+			for (let i = 0; i < moves.length; i += 1) {
+				this.activePlayer = i % 2;
 
-			let currentMove: MoveData;
-			try {
 				// fetch move data into currentMove
-				currentMove = this.parseMove(moves[i]);
-			} catch (err) {
-				console.log(game, i);
-				throw err;
+				const currentMove = this.parseMove(moves[i]);
+
+				// move based analyzers
+				this.moveAnalyzers.forEach((a) => {
+					a.analyze(currentMove);
+				});
+
+				this.board.move(currentMove);
 			}
-
-			// move based analyzers
-			this.moveAnalyzers.forEach((a) => {
-				a.analyze(currentMove);
-			});
-
-			this.board.move(currentMove);
+		} catch (err) {
+			console.log(err, game);
 		}
 
 		this.cntMoves += moves.length - 1; // don't count result (e.g. 1-0)
@@ -395,11 +355,6 @@ class GameProcessor extends EventEmitter {
 		this.activePlayer = 0;
 	}
 
-	/**
-	 * Parses a move in string format to board coordinates. Wrapper function for
-	 * the different move algorithms.
-	 * @param {string} rawMove The move to be parsed, e.g. 'Ne5+'.
-	 */
 	parseMove(rawMove: string) {
 		const token = rawMove.substring(0, 1);
 
@@ -474,14 +429,10 @@ class GameProcessor extends EventEmitter {
 		}
 	}
 
-	/**
-	 * Returns the board coordinates for a piece (!= pawn) move.
-	 * @param {string} moveSan The move to be parsed, e.g. 'Be3'.
-	 */
-	pieceMove(moveData) {
+	pieceMove(moveData: MoveData) {
 		let move = moveData.san;
 		let takes = false;
-		let coords: Coords = { from: [], to: [] };
+		let coords: Move = { from: [], to: [] };
 		const token = move.substring(0, 1);
 
 		// remove token
@@ -504,8 +455,8 @@ class GameProcessor extends EventEmitter {
 		} else if (move.length === 3) {
 			const tarRow = 8 - parseInt(move.substring(2, 3), 10);
 			const tarCol = files.indexOf(move.substring(1, 2));
-			let mustBeInRow = -1;
-			let mustBeInCol = -1;
+			let mustBeInRow: number = null;
+			let mustBeInCol: number = null;
 
 			// file is specified
 			if (files.indexOf(move.substring(0, 1)) >= 0) {
@@ -531,8 +482,8 @@ class GameProcessor extends EventEmitter {
 			coords = this.findPiece(
 				tarRow,
 				tarCol,
-				-1,
-				-1,
+				null,
+				null,
 				token,
 				moveData.player
 			);
@@ -550,19 +501,17 @@ class GameProcessor extends EventEmitter {
 		}
 	}
 
-	/**
-	 * Search algorithm to find a piece.
-	 * @param {number} tarRow Target row for piece move.
-	 * @param {number} tarCol Target column for piece move.
-	 * @param {number} mustBeInRow Moving piece must be in this row. '-1' if unknown.
-	 * @param {number} mustBeInCol Moving piece must be in this column. '-1' if unknown.
-	 * @param {string} token Moving piece must be of this type, e.g 'R'.
-	 * @returns {Object}
-	 */
-	findPiece(tarRow, tarCol, mustBeInRow, mustBeInCol, token, player): Coords {
+	findPiece(
+		tarRow: number,
+		tarCol: number,
+		mustBeInRow: number,
+		mustBeInCol: number,
+		token: string,
+		player: string
+	): Move {
 		const color = player;
-		const from: number[] = [];
-		const to: number[] = [];
+		const to = [tarRow, tarCol];
+
 		const moveCfg = {
 			Q: {
 				line: true,
@@ -581,10 +530,6 @@ class GameProcessor extends EventEmitter {
 				diag: false
 			}
 		};
-		from[0] = -1;
-		from[1] = -1;
-		to[0] = tarRow;
-		to[1] = tarCol;
 
 		// get array of positions of pieces of type <token>
 		let validPieces: number[][] = Object.values(
@@ -595,8 +540,8 @@ class GameProcessor extends EventEmitter {
 		if (validPieces.length > 1) {
 			validPieces = validPieces.filter((val) => {
 				const mustBeInFulfilled =
-					(mustBeInRow === -1 || val[0] === mustBeInRow) &&
-					(mustBeInCol === -1 || val[1] === mustBeInCol);
+					(mustBeInRow === null || val[0] === mustBeInRow) &&
+					(mustBeInCol === null || val[1] === mustBeInCol);
 				return (
 					((moveCfg[token].line &&
 						(val[0] === tarRow || val[1] === tarCol)) ||
@@ -640,7 +585,10 @@ class GameProcessor extends EventEmitter {
 					}
 				}
 
-				if (!obstructed && !this.checkCheck(piece, to, player)) {
+				if (
+					!obstructed &&
+					!this.checkCheck({ from: piece, to }, player)
+				) {
 					return {
 						from: piece,
 						to
@@ -653,16 +601,12 @@ class GameProcessor extends EventEmitter {
 			};
 		}
 
-		throw new MoveNotFoundException(token, tarRow, tarCol, this);
+		throw new MoveNotFoundException(token, tarRow, tarCol);
 	}
 
-	/**
-	 * Checks if the input move would be resulting with the king being in check.
-	 * @param {Number[]} from Coordinates of the source tile of the move that shall be checked.
-	 *  @param {Number[]} to Coordinates of the target tile of the move that shall be checked.
-	 * @returns {boolean} After the move, the king will be in check true/false.
-	 */
-	checkCheck(from, to, player) {
+	checkCheck(move: Move, player: string) {
+		const { from } = move;
+		const { to } = move;
 		const color = player;
 		const opColor = player === 'w' ? 'b' : 'w';
 		const king = this.board.pieces.posMap[color].K.Ke;
@@ -727,27 +671,22 @@ class GameProcessor extends EventEmitter {
 		return isInCheck;
 	}
 
-	static algebraicToCoords(square) {
+	static algebraicToCoords(square: string) {
 		const coords = [];
 		const temp = square.split('');
-		coords.push(8 - temp[1]);
+		coords.push(8 - Number(temp[1]));
 		coords.push(files.indexOf(temp[0]));
 
 		return coords;
 	}
 
-	static coordsToAlgebraic(coords) {
+	static coordsToAlgebraic(coords: number[]) {
 		let name = files[coords[1]];
 		name += 8 - coords[0];
 		return name;
 	}
 
-	/**
-	 * Removes special characters like '#', '+', '?' and '!'
-	 * @param {string} move The move to be cleaned up
-	 * @returns {string} The input string with removed special characters
-	 */
-	static preProcess(move) {
+	static preProcess(move: string) {
 		return move.replace(/#|\+|\?|!/g, '');
 	}
 }

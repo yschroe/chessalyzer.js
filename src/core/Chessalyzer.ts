@@ -1,95 +1,36 @@
 import { performance } from 'perf_hooks';
 import chalk from 'chalk';
 import GameProcessor from './GameProcessor.js';
+import { IBaseTracker } from '../interfaces/Interface.js';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
 /** Main class for batch processing and generating heat maps */
 export default class Chessalyzer {
-	/**
-	 * Starts the singlethreaded batch processing for the selected file
-	 * @param {string} path - Path to the PGN file that should be analyzed
-	 * @param {(Object|Object[])} analyzer - The analysis functions that shall be run
-	 *  during batch processing. Can be one single analyzer or an array of analyzers.
-	 * @param {Object} [cfg = {}]
-	 * @param {Function} [cfg.filter = ()=>true] - Filter function for selecting games
-	 * @param {number} [cfg.cntGames = Infinite ] - Max amount of games to process
-	 * @param {Object} callback - Callback object
-	 * @param {Function} [callback.fun] - Callback function that is called every callback.rate games
-	 * @param {number} [callback.rate] - Every 'rate' games the callback function is called.
-	 * @returns {Promise}
-	 */
 	static async startBatch(
-		path,
-		analyzer,
+		path: string,
+		analyzer: IBaseTracker | IBaseTracker[],
 		cfg = {},
-		callback = { fun: (gameCnt: number) => {}, rate: 250 }
+		batchSize = 8000,
+		nThreads = 1
 	) {
-		// check if single analyzer or array is passed
-		let analyzerArray = analyzer;
-		if (!Array.isArray(analyzerArray)) {
-			analyzerArray = [analyzer];
-		}
+		// handler for single analyzer or array of analyzers
+		let analyzerArray: IBaseTracker[] = [];
+		analyzerArray = analyzerArray.concat(analyzer);
 
 		const gameProcessor = new GameProcessor();
-
-		// callback handler
-		gameProcessor.on('status', (gameCnt) => {
-			callback.fun(gameCnt);
-		});
 
 		const t0 = performance.now();
 
 		const header = await gameProcessor.processPGN(
 			path,
-			cfg,
 			analyzerArray,
-			callback.rate
-		);
-
-		const t1 = performance.now();
-		const tdiff = Math.round(t1 - t0) / 1000;
-		const mps = Math.round(header.cntMoves / tdiff);
-
-		console.log(
-			`${header.cntGames} games (${header.cntMoves} moves) processed in ${tdiff}s (${mps} moves/s)`
-		);
-		return header;
-	}
-
-	/**
-	 * Starts the multithreaded batch processing for the selected file
-	 * @param {string} path - Path to the PGN file that should be analyzed
-	 * @param {(Object|Object[])} analyzer - The analysis functions that shall be run
-	 *  during batch processing. Can be one single analyzer or an array of analyzers.
-	 * @param {Function} [cfg.filter = ()=>true] - Filter function for selecting games
-	 * @param {number} [cfg.cntGames = Infinite ] - Max amount of games to process
-	 * @param {number} [batchSize = 8000] Amount of games per thread.
-	 * @param {number} [nThreads = 1] numbers of additional threads to use.
-	 * @returns {Promise}
-	 */
-	static async startBatchMultiCore(
-		path,
-		analyzer,
-		cfg = {},
-		batchSize = 8000,
-		nThreads = 1
-	) {
-		// check if single analyzer or array is passed
-		let analyzerArray = analyzer;
-		if (!Array.isArray(analyzerArray)) {
-			analyzerArray = [analyzer];
-		}
-		const t0 = performance.now();
-
-		const header = await GameProcessor.processPGNMultiCore(
-			path,
 			cfg,
-			analyzerArray,
 			batchSize,
 			nThreads
 		);
+
 		const t1 = performance.now();
 		const tdiff = Math.round(t1 - t0) / 1000;
 		const mps = Math.round(header.cntMoves / tdiff);
@@ -100,23 +41,28 @@ export default class Chessalyzer {
 		return header;
 	}
 
-	/**
-	 * Generates a heatmap out of the tracked data.
-	 * @param {Object} data - Where the data shall be taken from
-	 * @param {(string|number[])} square - The square the data shall be generated for.
-	 * For example, if you wanted to know how often a specific piece was on a specific tile,
-	 * you would pass the identifier of the tile to the function, e.g. "a2" or [7,1].
-	 * @param {Function} fun - The evaluation function that generates the heatmap out of the
-	 * data.
-	 * See ./src/exampleHeatmapConfig for examples of such a function.
-	 * @param {*} [optData = {}] - Optional data you may need in your eval function
-	 * @returns {Object} Array with 3 entries:
-	 * <ol>
-	 * <li>map: 8x8 Array containing the heat map values for each tile</li>
-	 * <li>min: The minimum value in the heatmap.</li>
-	 * <li>max: The maximum value in the heatmap.</li>
-	 * </ol>
-	 */
+	static async startBatchSingleThreaded(path, analyzer, cfg = {}) {
+		// handler for single analyzer or array of analyzers
+		let analyzerArray: IBaseTracker[] = [];
+		analyzerArray = analyzerArray.concat(analyzer);
+
+		const gameProcessor = new GameProcessor();
+		const t0 = performance.now();
+
+		const header = await gameProcessor.processPGNSingleThreaded(
+			path,
+			cfg,
+			analyzerArray
+		);
+		const t1 = performance.now();
+		const tdiff = Math.round(t1 - t0) / 1000;
+		const mps = Math.round(header.cntMoves / tdiff);
+
+		console.log(
+			`${header.cntGames} games (${header.cntMoves} moves) processed in ${tdiff}s (${mps} moves/s)`
+		);
+		return header;
+	}
 	static generateHeatmap(data, square, fun, optData = {}) {
 		let sqrCoords;
 		let sqrAlg;
@@ -165,26 +111,6 @@ export default class Chessalyzer {
 		return { map, min, max };
 	}
 
-	/**
-	 * Generates a comparison heatmap out of the tracked data. There needs to data in both
-	 * banks you pass as bank1 and bank2 params. The heatmap for both banks is calculated
-	 * and then the relative differences between both banks are calculated. For example,
-	 * if the heatmap value for "a1" of bank1 is 10 and the value of bank2 is 5, the returned
-	 * value for "a1" would be 100% ([[10/5] -1] *100).
-	 * @param {Object} data1 - Dataset 1
-	 * @param {Object} data2 - Dataset 2
-	 * @param {(string|number[])} square - The square the data shall be generated for. Notation
-	 * can be 'a1' or [7,0].
-	 * @param {Function} fun - The evaluation function that generates the heatmap out of the
-	 * saved data. See {@link generateHeatmap} for a more detailed description.
-	 * @param {*} [optData = {}] - Optional data you may need in your eval function
-	 * @returns {Object} Object with 3 entries:
-	 * <ol>
-	 * <li>map: 8x8 Array containing the heat map values for each tile</li>
-	 * <li>min: The minimum value in the heatmap.</li>
-	 * <li>max: The maximum value in the heatmap.</li>
-	 * </ol>
-	 */
 	static generateComparisonHeatmap(data1, data2, square, fun, optData = {}) {
 		const map = [];
 		let max = 0;
@@ -211,12 +137,6 @@ export default class Chessalyzer {
 		return { map, min, max };
 	}
 
-	/**
-	 * Prints a heatmap to the terminal
-	 * @param {number[][]} map - The heatmap data. An (8x8) Array containing values.
-	 * @param {number} min - The minimum value in map.
-	 * @param {number} max - The maximum value in map.
-	 */
 	static printHeatmap(map, min, max) {
 		const color = [255, 128, 0];
 		const bgColor = [255, 255, 255];

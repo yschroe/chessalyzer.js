@@ -12,7 +12,7 @@ class GameTrackerBase extends BaseTracker {
 		this.ECO = {};
 	}
 
-	add(tracker) {
+	add(tracker: GameTrackerBase) {
 		this.wins[0] += tracker.wins[0];
 		this.wins[1] += tracker.wins[1];
 		this.wins[2] += tracker.wins[2];
