@@ -1,6 +1,10 @@
 import BaseTracker from './BaseTracker.js';
 
 class GameTrackerBase extends BaseTracker {
+	wins: number[];
+	cntGames: number;
+	ECO: object;
+
 	constructor() {
 		super('game');
 		this.wins = [0, 0, 0];

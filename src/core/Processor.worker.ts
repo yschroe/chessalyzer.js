@@ -1,7 +1,7 @@
 import GameProcessor from './GameProcessor.js';
 import Tracker from '../tracker/Tracker.js';
 
-process.on('message', (msg) => {
+process.on('message', (msg: any) => {
 	const TrackerList = {};
 	const proc = new GameProcessor();
 

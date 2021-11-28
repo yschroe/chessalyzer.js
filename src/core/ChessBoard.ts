@@ -1,3 +1,4 @@
+import { IMoveData } from '../interfaces/Interface';
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
@@ -103,7 +104,7 @@ class ChessBoard {
 		this.promoteCounter = 0;
 	}
 
-	move(moveData) {
+	move(moveData: IMoveData) {
 		const { from } = moveData;
 		const { to } = moveData;
 
@@ -114,7 +115,7 @@ class ChessBoard {
 			// moves/takes
 		} else if (from[0] !== -1) {
 			// === takes ===
-			if (moveData.takes.pos) {
+			if (moveData.takes) {
 				// update piece map
 				this.pieces.takes(
 					moveData.player === 'w' ? 'b' : 'w',

@@ -4,6 +4,8 @@ const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
 class PieceTrackerBase extends BaseTracker {
+	b: object;
+	w: object;
 	constructor() {
 		super('move');
 		this.b = {};

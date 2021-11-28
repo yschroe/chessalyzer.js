@@ -2,17 +2,23 @@ import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
 import { EventEmitter } from 'events';
 import cluster from 'cluster';
-import ChessBoard from './ChessBoard.js';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { IMoveData } from '../interfaces/Interface.js';
 import BaseTracker from '../tracker/BaseTracker.js';
+import ChessBoard from './ChessBoard.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const files = 'abcdefgh';
 
 class MoveNotFoundException extends Error {
-	constructor(token, tarRow, tarCol, gameProcessor) {
+	constructor(
+		token: any,
+		tarRow: any,
+		tarCol: any,
+		gameProcessor: GameProcessor
+	) {
 		super(`No piece for move ${token} to (${tarRow},${tarCol}) found!`);
 		this.name = 'MoveNotFoundError';
 		this['Game Number'] = gameProcessor.cntGames;
@@ -35,12 +41,12 @@ interface Coords {
 	to: number[];
 }
 
-class MoveData {
+class MoveData implements IMoveData {
 	san: string;
 	player: string;
 	piece: string;
 	castles: string;
-	takes: object;
+	takes: { piece: string; pos: number[] };
 	promotesTo: string;
 	from: number[];
 	to: number[];
@@ -50,7 +56,7 @@ class MoveData {
 		this.player = '';
 		this.piece = '';
 		this.castles = '';
-		this.takes = {};
+		this.takes = null;
 		this.promotesTo = '';
 		this.from = [-1, -1];
 		this.to = [-1, -1];
@@ -79,14 +85,14 @@ class GameProcessor extends EventEmitter {
 	}
 
 	static checkConfig(config) {
-		const cfg: GameProcessorConfig = {};
-		cfg.hasFilter = Object.prototype.hasOwnProperty.call(config, 'filter');
-		cfg.filter = cfg.hasFilter ? config.filter : () => true;
-
-		cfg.cntGames = Object.prototype.hasOwnProperty.call(config, 'cntGames')
-			? config.cntGames
-			: Infinity;
-
+		let hasFilter = Object.prototype.hasOwnProperty.call(config, 'filter');
+		const cfg: GameProcessorConfig = {
+			hasFilter,
+			filter: hasFilter ? config.filter : () => true,
+			cntGames: Object.prototype.hasOwnProperty.call(config, 'cntGames')
+				? config.cntGames
+				: Infinity
+		};
 		return cfg;
 	}
 
@@ -357,7 +363,7 @@ class GameProcessor extends EventEmitter {
 		for (let i = 0; i < moves.length; i += 1) {
 			this.activePlayer = i % 2;
 
-			let currentMove;
+			let currentMove: MoveData;
 			try {
 				// fetch move data into currentMove
 				currentMove = this.parseMove(moves[i]);
@@ -414,11 +420,7 @@ class GameProcessor extends EventEmitter {
 		return currentMove;
 	}
 
-	/**
-	 * Returns the board coordinates for the move if it is a pawn move.
-	 * @param {string} moveSan The move to be parsed, e.g. 'e5'.
-	 */
-	pawnMove(moveData) {
+	pawnMove(moveData: MoveData) {
 		const direction = -2 * (this.activePlayer % 2) + 1;
 		const from = [];
 		const to = [];
@@ -439,8 +441,10 @@ class GameProcessor extends EventEmitter {
 				offset = moveData.player === 'w' ? 1 : -1;
 			}
 
-			moveData.takes.piece = this.board.tiles[to[0] + offset][to[1]].name;
-			moveData.takes.pos = [to[0] + offset, to[1]];
+			moveData.takes = {
+				piece: this.board.tiles[to[0] + offset][to[1]].name,
+				pos: [to[0] + offset, to[1]]
+			};
 
 			// moves
 		} else {
@@ -539,9 +543,10 @@ class GameProcessor extends EventEmitter {
 		moveData.to = coords.to;
 		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]].name;
 		if (takes) {
-			moveData.takes.piece =
-				this.board.tiles[moveData.to[0]][moveData.to[1]].name;
-			moveData.takes.pos = moveData.to;
+			moveData.takes = {
+				piece: this.board.tiles[moveData.to[0]][moveData.to[1]].name,
+				pos: moveData.to
+			};
 		}
 	}
 

@@ -17,12 +17,10 @@ c.cfg.profilingActive = true;
 		'./test/lichess_db_standard_rated_2013-12.pgn',
 		[],
 		{
-			cntGames: 50000
+			cntGames: 2000000
 		},
-		25001,
-		1
-		// undefined,
-		// undefined
+		undefined,
+		undefined
 	);
 	console.log(a);
 	console.log('Game: ' + Math.round(a.time) / 1000);

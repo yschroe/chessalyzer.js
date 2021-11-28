@@ -1,4 +1,5 @@
 import BaseTracker from './BaseTracker.js';
+import { IMoveData } from '../interfaces/Interface.js';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
@@ -176,7 +177,7 @@ class TileTrackerBase extends BaseTracker {
 		}
 	}
 
-	track(moveData) {
+	track(moveData: IMoveData) {
 		const { to } = moveData;
 		const { from } = moveData;
 		const { player } = moveData;
@@ -188,7 +189,7 @@ class TileTrackerBase extends BaseTracker {
 		if (to[0] !== -1) {
 			this.cntMovesGame += 1;
 
-			if (takes.piece !== undefined) {
+			if (takes) {
 				this.processTakes(takes.pos, player, piece, takes.piece);
 			}
 
