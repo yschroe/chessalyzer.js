@@ -168,7 +168,7 @@ const tileT2 = new Tracker.Tile();
 
 // create a evaluation function for the heat map
 // (sqrData isn't used by this analysis, but needs to be an argument nevertheless)
-let fun = (data, sqrData, loopSqrData) => {
+let fun = (data, _, loopSqrData) => {
     const { coords } = loopSqrData;
     let val = data.tiles[coords[0]][coords[1]].w.wasOn;
     val = (val * 100) / data.cntMovesTotal;
@@ -192,7 +192,7 @@ let fun = (data, sqrData, loopSqrData) => {
     let heatmapData = Chessalyzer.generateComparisonHeatmap(
         tileT1,
         tileT2,
-        'a1', // this analysis function doesn't depent on a specific square, so pass a random square
+        undefined, // this analysis function doesn't depend on a specific square
         fun
     );
 
