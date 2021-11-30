@@ -1,5 +1,5 @@
 import BaseTracker from './BaseTracker.js';
-import { IMoveData } from '../interfaces/Interface.js';
+import { MoveData } from '../interfaces/Interface.js';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
@@ -75,7 +75,7 @@ class TileTrackerBase extends BaseTracker {
 		}
 	}
 
-	add(tracker) {
+	add(tracker: TileTrackerBase) {
 		this.time += tracker.time;
 		this.cntMovesGame += tracker.cntMovesGame;
 		this.cntMovesTotal += tracker.cntMovesTotal;
@@ -147,7 +147,7 @@ class TileTrackerBase extends BaseTracker {
 		}
 	}
 
-	resetCurrentPiece(row, col) {
+	resetCurrentPiece(row: number, col: number) {
 		let color;
 		let piece;
 		let hasPiece = false;
@@ -177,16 +177,16 @@ class TileTrackerBase extends BaseTracker {
 		}
 	}
 
-	track(moveData: IMoveData) {
-		const { to } = moveData;
-		const { from } = moveData;
+	track(moveData: MoveData) {
+		const { to } = moveData.move;
+		const { from } = moveData.move;
 		const { player } = moveData;
 		const { piece } = moveData;
 		const { takes } = moveData;
 		const { castles } = moveData;
 
 		// move
-		if (to[0] !== -1) {
+		if (to[0] !== null) {
 			this.cntMovesGame += 1;
 
 			if (takes) {
@@ -196,7 +196,7 @@ class TileTrackerBase extends BaseTracker {
 			this.processMove(from, to, player, piece);
 
 			// castle
-		} else if (castles !== '') {
+		} else if (castles !== null) {
 			this.cntMovesGame += 1;
 
 			const row = player === 'w' ? 7 : 0;
@@ -250,7 +250,12 @@ class TileTrackerBase extends BaseTracker {
 		}
 	}
 
-	processTakes(pos, player, takingPiece, takenPiece) {
+	processTakes(
+		pos: number[],
+		player: string,
+		takingPiece: string,
+		takenPiece: string
+	): void {
 		if (takenPiece.length > 1 && !takenPiece.match(/\d/g)) {
 			const opPlayer = player === 'w' ? 'b' : 'w';
 			this.tiles[pos[0]][pos[1]][opPlayer].wasKilledOn += 1;
@@ -266,7 +271,7 @@ class TileTrackerBase extends BaseTracker {
 		}
 	}
 
-	addOccupation(pos) {
+	addOccupation(pos: number[]): void {
 		const { currentPiece } = this.tiles[pos[0]][pos[1]];
 		const toAdd = this.cntMovesGame - currentPiece.lastMovedOn;
 		this.tiles[pos[0]][pos[1]][currentPiece.color].wasOn += toAdd;

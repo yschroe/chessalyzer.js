@@ -1,21 +1,25 @@
-interface IMoveData {
+interface Move {
+	from: number[];
+	to: number[];
+}
+
+interface MoveData {
 	san: string;
 	player: string;
 	piece: string;
 	castles: string;
 	takes: { piece: string; pos: number[] };
 	promotesTo: string;
-	from: number[];
-	to: number[];
+	move: Move;
 }
 
-interface ITrackerConfig {
+interface TrackerConfig {
 	profilingActive: boolean;
 }
 
-interface IBaseTracker {
+interface Tracker {
 	type: string;
-	cfg: ITrackerConfig;
+	cfg: TrackerConfig;
 	time: number;
 	t0: number;
 	path?: string;
@@ -25,4 +29,4 @@ interface IBaseTracker {
 	add: (arg: this) => void;
 }
 
-export { IMoveData, IBaseTracker, ITrackerConfig };
+export { Move, MoveData, Tracker, TrackerConfig };

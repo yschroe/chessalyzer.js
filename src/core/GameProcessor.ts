@@ -4,8 +4,7 @@ import { EventEmitter } from 'events';
 import cluster from 'cluster';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { IMoveData } from '../interfaces/Interface.js';
-import { IBaseTracker } from '../interfaces/Interface.js';
+import { Move, MoveData, Tracker } from '../interfaces/Interface.js';
 import ChessBoard from './ChessBoard.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -25,34 +24,32 @@ interface GameProcessorConfig {
 	cntGames: number;
 }
 
+interface MultithreadConfig {
+	batchSize: number;
+	nThreads: number;
+}
+
 interface Game {
 	moves: string[];
 }
 
-interface Move {
-	from: number[];
-	to: number[];
-}
-
-class MoveData implements IMoveData {
+class ParsedMove implements MoveData {
 	san: string;
 	player: string;
 	piece: string;
 	castles: string;
 	takes: { piece: string; pos: number[] };
 	promotesTo: string;
-	from: number[];
-	to: number[];
+	move: Move;
 
 	constructor() {
-		this.san = '';
-		this.player = '';
-		this.piece = '';
-		this.castles = '';
+		this.san = null;
+		this.player = null;
+		this.piece = null;
+		this.castles = null;
 		this.takes = null;
-		this.promotesTo = '';
-		this.from = [-1, -1];
-		this.to = [-1, -1];
+		this.promotesTo = null;
+		this.move = null;
 	}
 }
 
@@ -64,8 +61,8 @@ class GameProcessor {
 	activePlayer: number;
 	cntMoves: number;
 	cntGames: number;
-	gameAnalyzers: IBaseTracker[];
-	moveAnalyzers: IBaseTracker[];
+	gameAnalyzers: Tracker[];
+	moveAnalyzers: Tracker[];
 	analyzerNames: string[];
 	analyzerConfigs: object[];
 
@@ -92,7 +89,7 @@ class GameProcessor {
 		return cfg;
 	}
 
-	attachAnalyzers(analyzers: IBaseTracker[]) {
+	attachAnalyzers(analyzers: Tracker[]) {
 		analyzers.forEach((a) => {
 			if (a.type === 'move') {
 				this.moveAnalyzers.push(a);
@@ -106,17 +103,15 @@ class GameProcessor {
 
 	async processPGN(
 		path: string,
-		analyzer: IBaseTracker[],
+		analyzer: Tracker[],
 		config: any,
-		batchSize: number,
-		nThreads: number
+		multiThreadCfg: MultithreadConfig
 	) {
 		try {
-			let cntGames = 0;
-			let cntMoves = 0;
 			let readerFinished = false;
 			let customPath = '';
 
+			const isMultithreaded = multiThreadCfg !== null;
 			const status = new EventEmitter();
 
 			cluster.setupPrimary({
@@ -152,7 +147,7 @@ class GameProcessor {
 						for (let i = 0; i < this.moveAnalyzers.length; i += 1) {
 							this.moveAnalyzers[i].add(msg.moveAnalyzers[i]);
 						}
-						cntMoves += msg.cntMoves;
+						this.cntMoves += msg.cntMoves;
 
 						w.kill();
 
@@ -195,102 +190,36 @@ class GameProcessor {
 						.split(' ');
 
 					if (cfg.filter(game) || !cfg.hasFilter) {
-						cntGames += 1;
-						games.push(game);
+						this.cntGames += 1;
+						if (isMultithreaded) {
+							games.push(game);
 
-						// if enough games have been read in, start worker threads and let them analyze
-						if (cntGames % (batchSize * nThreads) === 0) {
-							for (let i = 0; i < nThreads; i += 1) {
-								forkWorker(
-									games.slice(
-										i * batchSize,
-										i * batchSize + batchSize
-									)
-								);
+							// if enough games have been read in, start worker threads and let them analyze
+							if (
+								this.cntGames %
+									(multiThreadCfg.batchSize *
+										multiThreadCfg.nThreads) ===
+								0
+							) {
+								for (
+									let i = 0;
+									i < multiThreadCfg.nThreads;
+									i += 1
+								) {
+									forkWorker(
+										games.slice(
+											i * multiThreadCfg.batchSize,
+											i * multiThreadCfg.batchSize +
+												multiThreadCfg.batchSize
+										)
+									);
+								}
+
+								games = [];
 							}
-
-							games = [];
+						} else {
+							this.processGame(game);
 						}
-					}
-
-					game = { moves: null };
-				}
-				if (cntGames >= cfg.cntGames) {
-					lr.close();
-					lr.removeAllListeners();
-				}
-			});
-
-			await EventEmitter.once(lr, 'close');
-			// if on end there are still unprocessed games, start a last worker batch
-			if (games.length > 0) {
-				if (games.length > batchSize) {
-					const nEndForks = Math.ceil(games.length / batchSize);
-					for (let i = 0; i < nEndForks; i += 1) {
-						forkWorker(
-							games.slice(
-								i * batchSize,
-								i * batchSize + batchSize
-							)
-						);
-					}
-				} else {
-					forkWorker(games);
-				}
-			}
-			readerFinished = true;
-			await EventEmitter.once(status, 'finished');
-			analyzer.forEach((a) => {
-				if (a.finish) {
-					a.finish();
-				}
-			});
-			return {
-				cntGames,
-				cntMoves
-			};
-		} catch (err) {
-			console.log(err);
-			return { cntGames: -1, cntMoves: -1 };
-		}
-	}
-
-	async processPGNSingleThreaded(
-		path: string,
-		config,
-		analyzers: IBaseTracker[]
-	) {
-		try {
-			const cfg = GameProcessor.checkConfig(config);
-
-			this.attachAnalyzers(analyzers);
-
-			const lr = createInterface({
-				input: createReadStream(path),
-				crlfDelay: Infinity
-			});
-
-			let game: Game = { moves: null };
-
-			lr.on('line', (line) => {
-				// data tag
-				if (
-					line.startsWith('[') &&
-					(cfg.hasFilter || this.gameAnalyzers.length > 0)
-				) {
-					const key = line.match(/\[(.*?)\s/)[1];
-					const value = line.match(/"(.*?)"/)[1];
-
-					game[key] = value;
-
-					// moves
-				} else if (line.startsWith('1')) {
-					game.moves = line
-						.replace(/(\d+\.{1,3}\s)|(\{(.*?)\}\s)/g, '')
-						.split(' ');
-
-					if (cfg.filter(game) || !cfg.hasFilter) {
-						this.processGame(game);
 					}
 
 					game = { moves: null };
@@ -302,25 +231,46 @@ class GameProcessor {
 			});
 
 			await EventEmitter.once(lr, 'close');
+			// if on end there are still unprocessed games, start a last worker batch
+			if (games.length > 0) {
+				if (games.length > multiThreadCfg.batchSize) {
+					const nEndForks = Math.ceil(
+						games.length / multiThreadCfg.batchSize
+					);
+					for (let i = 0; i < nEndForks; i += 1) {
+						forkWorker(
+							games.slice(
+								i * multiThreadCfg.batchSize,
+								i * multiThreadCfg.batchSize +
+									multiThreadCfg.batchSize
+							)
+						);
+					}
+				} else {
+					forkWorker(games);
+				}
+			}
 
+			readerFinished = true;
+			if (isMultithreaded) await EventEmitter.once(status, 'finished');
 			console.log('Read entire file.');
 
-			// call finish routine for each analyzer
-			this.gameAnalyzers.forEach((a) => {
-				a.finish();
+			analyzer.forEach((a) => {
+				if (a.finish) {
+					a.finish();
+				}
 			});
-			this.moveAnalyzers.forEach((a) => {
-				a.finish();
-			});
-
-			return { cntGames: this.cntGames, cntMoves: this.cntMoves };
+			return {
+				cntGames: this.cntGames,
+				cntMoves: this.cntMoves
+			};
 		} catch (err) {
-			console.error(err);
+			console.log(err);
 			return { cntGames: -1, cntMoves: -1 };
 		}
 	}
 
-	processGame(game) {
+	processGame(game: Game) {
 		const { moves } = game;
 		try {
 			for (let i = 0; i < moves.length; i += 1) {
@@ -358,7 +308,7 @@ class GameProcessor {
 	parseMove(rawMove: string) {
 		const token = rawMove.substring(0, 1);
 
-		let currentMove = new MoveData();
+		let currentMove = new ParsedMove();
 		currentMove.san = GameProcessor.preProcess(rawMove);
 		currentMove.player = this.activePlayer === 0 ? 'w' : 'b';
 
@@ -375,7 +325,7 @@ class GameProcessor {
 		return currentMove;
 	}
 
-	pawnMove(moveData: MoveData) {
+	pawnMove(moveData: ParsedMove) {
 		const direction = -2 * (this.activePlayer % 2) + 1;
 		const from = [];
 		const to = [];
@@ -419,8 +369,7 @@ class GameProcessor {
 			}
 		}
 
-		moveData.to = to;
-		moveData.from = from;
+		moveData.move = { from, to };
 		moveData.piece = this.board.tiles[from[0]][from[1]].name;
 
 		// promotes
@@ -429,7 +378,7 @@ class GameProcessor {
 		}
 	}
 
-	pieceMove(moveData: MoveData) {
+	pieceMove(moveData: ParsedMove) {
 		let move = moveData.san;
 		let takes = false;
 		let coords: Move = { from: [], to: [] };
@@ -490,13 +439,14 @@ class GameProcessor {
 		}
 
 		// set move data
-		moveData.from = coords.from;
-		moveData.to = coords.to;
+		moveData.move = coords;
 		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]].name;
 		if (takes) {
 			moveData.takes = {
-				piece: this.board.tiles[moveData.to[0]][moveData.to[1]].name,
-				pos: moveData.to
+				piece: this.board.tiles[moveData.move.to[0]][
+					moveData.move.to[1]
+				].name,
+				pos: moveData.move.to
 			};
 		}
 	}
@@ -558,6 +508,7 @@ class GameProcessor {
 			});
 		}
 
+		// if only one piece is left, move is found
 		if (validPieces.length === 1) {
 			return {
 				from: validPieces[0],
@@ -604,7 +555,7 @@ class GameProcessor {
 		throw new MoveNotFoundException(token, tarRow, tarCol);
 	}
 
-	checkCheck(move: Move, player: string) {
+	checkCheck(move: Move, player: string): boolean {
 		const { from } = move;
 		const { to } = move;
 		const color = player;
@@ -671,7 +622,7 @@ class GameProcessor {
 		return isInCheck;
 	}
 
-	static algebraicToCoords(square: string) {
+	static algebraicToCoords(square: string): number[] {
 		const coords = [];
 		const temp = square.split('');
 		coords.push(8 - Number(temp[1]));
@@ -680,13 +631,13 @@ class GameProcessor {
 		return coords;
 	}
 
-	static coordsToAlgebraic(coords: number[]) {
+	static coordsToAlgebraic(coords: number[]): string {
 		let name = files[coords[1]];
 		name += 8 - coords[0];
 		return name;
 	}
 
-	static preProcess(move: string) {
+	static preProcess(move: string): string {
 		return move.replace(/#|\+|\?|!/g, '');
 	}
 }

@@ -1,7 +1,7 @@
 import { performance } from 'perf_hooks';
 import chalk from 'chalk';
 import GameProcessor from './GameProcessor.js';
-import { IBaseTracker } from '../interfaces/Interface.js';
+import { Tracker } from '../interfaces/Interface.js';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
@@ -10,13 +10,12 @@ const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 export default class Chessalyzer {
 	static async startBatch(
 		path: string,
-		analyzer: IBaseTracker | IBaseTracker[],
+		analyzer: Tracker | Tracker[],
 		cfg = {},
-		batchSize = 8000,
-		nThreads = 1
+		multiThreadCfg = { batchSize: 8000, nThreads: 1 }
 	) {
 		// handler for single analyzer or array of analyzers
-		let analyzerArray: IBaseTracker[] = [];
+		let analyzerArray: Tracker[] = [];
 		analyzerArray = analyzerArray.concat(analyzer);
 
 		const gameProcessor = new GameProcessor();
@@ -27,8 +26,7 @@ export default class Chessalyzer {
 			path,
 			analyzerArray,
 			cfg,
-			batchSize,
-			nThreads
+			multiThreadCfg
 		);
 
 		const t1 = performance.now();
@@ -41,28 +39,6 @@ export default class Chessalyzer {
 		return header;
 	}
 
-	static async startBatchSingleThreaded(path, analyzer, cfg = {}) {
-		// handler for single analyzer or array of analyzers
-		let analyzerArray: IBaseTracker[] = [];
-		analyzerArray = analyzerArray.concat(analyzer);
-
-		const gameProcessor = new GameProcessor();
-		const t0 = performance.now();
-
-		const header = await gameProcessor.processPGNSingleThreaded(
-			path,
-			cfg,
-			analyzerArray
-		);
-		const t1 = performance.now();
-		const tdiff = Math.round(t1 - t0) / 1000;
-		const mps = Math.round(header.cntMoves / tdiff);
-
-		console.log(
-			`${header.cntGames} games (${header.cntMoves} moves) processed in ${tdiff}s (${mps} moves/s)`
-		);
-		return header;
-	}
 	static generateHeatmap(data, square, fun, optData = {}) {
 		let sqrCoords;
 		let sqrAlg;

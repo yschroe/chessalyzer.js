@@ -1,9 +1,9 @@
 import { performance } from 'perf_hooks';
-import { IBaseTracker, ITrackerConfig } from '../interfaces/Interface.js';
+import { Tracker, TrackerConfig } from '../interfaces/Interface.js';
 
-class BaseTracker implements IBaseTracker {
+class BaseTracker implements Tracker {
 	type: string;
-	cfg: ITrackerConfig;
+	cfg: TrackerConfig;
 	time: number;
 	t0: number;
 	path?: string;

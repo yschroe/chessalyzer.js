@@ -1,4 +1,4 @@
-import { IMoveData } from '../interfaces/Interface';
+import { MoveData } from '../interfaces/Interface';
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
@@ -104,16 +104,16 @@ class ChessBoard {
 		this.promoteCounter = 0;
 	}
 
-	move(moveData: IMoveData) {
-		const { from } = moveData;
-		const { to } = moveData;
-
+	move(moveData: MoveData) {
 		// === castles ===
 		if (moveData.castles) {
 			this.castle(moveData.castles, moveData.player);
 
 			// moves/takes
-		} else if (from[0] !== -1) {
+		} else if (moveData.move !== null) {
+			const { from } = moveData.move;
+			const { to } = moveData.move;
+
 			// === takes ===
 			if (moveData.takes) {
 				// update piece map

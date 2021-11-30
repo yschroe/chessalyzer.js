@@ -19,9 +19,15 @@ c.cfg.profilingActive = true;
 		{
 			cntGames: 1000000
 		},
-		undefined,
-		undefined
+		null
 	);
+	// await Chessalyzer.startBatchSingleThreaded(
+	// 	'./test/lichess_db_standard_rated_2013-12.pgn',
+	// 	[],
+	// 	{
+	// 		cntGames: 100000
+	// 	}
+	// );
 	console.log(a);
 	console.log('Game: ' + Math.round(a.time) / 1000);
 	console.log('Piece: ' + Math.round(b.time) / 1000);

@@ -1,4 +1,5 @@
 import BaseTracker from './BaseTracker.js';
+import { MoveData } from '../interfaces/Interface.js';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
@@ -34,7 +35,7 @@ class PieceTrackerBase extends BaseTracker {
 		});
 	}
 
-	add(tracker) {
+	add(tracker: PieceTrackerBase) {
 		this.time += tracker.time;
 
 		pawnTemplate.forEach((pawn) => {
@@ -59,7 +60,7 @@ class PieceTrackerBase extends BaseTracker {
 		});
 	}
 
-	track(moveData) {
+	track(moveData: MoveData) {
 		const { player } = moveData;
 		const { piece } = moveData;
 		const { takes } = moveData;
@@ -76,7 +77,7 @@ class PieceTrackerBase extends BaseTracker {
 		}
 	}
 
-	processTakes(player, takingPiece, takenPiece) {
+	processTakes(player: string, takingPiece: string, takenPiece: string) {
 		this[player][takingPiece][takenPiece] += 1;
 	}
 }
