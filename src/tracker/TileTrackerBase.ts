@@ -205,10 +205,10 @@ class TileTrackerBase extends BaseTracker {
 			let tarRookCol = 5;
 			let srcRookCol = 7;
 			if (castles === 'O-O-O') {
+				rook = 'Ra';
 				tarKingCol = 2;
 				tarRookCol = 3;
 				srcRookCol = 0;
-				rook = 'Ra';
 			}
 			this.processMove([row, 4], [row, tarKingCol], player, 'Ke');
 			this.processMove(

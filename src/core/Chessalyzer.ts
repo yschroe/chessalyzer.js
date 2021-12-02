@@ -12,7 +12,7 @@ export default class Chessalyzer {
 		path: string,
 		analyzer: Tracker | Tracker[],
 		cfg = {},
-		multiThreadCfg = { batchSize: 8000, nThreads: 1 }
+		multithreadCfg = { batchSize: 8000, nThreads: 1 }
 	) {
 		// handler for single analyzer or array of analyzers
 		let analyzerArray: Tracker[] = [];
@@ -26,7 +26,7 @@ export default class Chessalyzer {
 			path,
 			analyzerArray,
 			cfg,
-			multiThreadCfg
+			multithreadCfg
 		);
 
 		const t1 = performance.now();
