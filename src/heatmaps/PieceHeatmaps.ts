@@ -1,4 +1,5 @@
 import PieceTrackerBase from '../tracker/PieceTrackerBase';
+import { SquareData } from '../interfaces/Interface';
 
 export default {
 	PIECE_KILLED_BY: {
@@ -7,7 +8,11 @@ export default {
 		scope: 'specific',
 		unit: '',
 		description: 'Selected piece was taken by piece X Y times.',
-		calc: (data: PieceTrackerBase, sqrData, loopSqrData) => {
+		calc: (
+			data: PieceTrackerBase,
+			sqrData: SquareData,
+			loopSqrData: SquareData
+		) => {
 			const sqrPiece = sqrData.piece;
 			const loopPiece = loopSqrData.piece;
 			let val = 0;
@@ -27,7 +32,11 @@ export default {
 		scope: 'specific',
 		unit: '',
 		description: 'Selected piece took piece X Y times.',
-		calc: (data: PieceTrackerBase, sqrData, loopSqrData) => {
+		calc: (
+			data: PieceTrackerBase,
+			sqrData: SquareData,
+			loopSqrData: SquareData
+		) => {
 			const sqrPiece = sqrData.piece;
 			const loopPiece = loopSqrData.piece;
 			let val = 0;

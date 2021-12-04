@@ -1,7 +1,7 @@
 import { performance } from 'perf_hooks';
 import chalk from 'chalk';
 import GameProcessor from './GameProcessor.js';
-import { Tracker } from '../interfaces/Interface.js';
+import { Tracker, SquareData } from '../interfaces/Interface.js';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
@@ -41,7 +41,12 @@ export default class Chessalyzer {
 	static generateHeatmap(
 		data: any,
 		square: string | number[],
-		fun: (data, sqrData, loopSqrData, optData) => number,
+		fun: (
+			data,
+			sqrData: SquareData,
+			loopSqrData: SquareData,
+			optData
+		) => number,
 		optData = {}
 	) {
 		let sqrCoords: number[];
@@ -59,7 +64,7 @@ export default class Chessalyzer {
 		}
 
 		const startingPiece = Chessalyzer.getStartingPiece(sqrCoords);
-		const sqrData = {
+		const sqrData: SquareData = {
 			alg: sqrAlg,
 			coords: sqrCoords,
 			piece: startingPiece
@@ -75,7 +80,7 @@ export default class Chessalyzer {
 				const loopSqrAlg =
 					GameProcessor.coordsToAlgebraic(loopSqrCoords);
 				const loopPiece = Chessalyzer.getStartingPiece(loopSqrCoords);
-				const loopSqrData = {
+				const loopSqrData: SquareData = {
 					alg: loopSqrAlg,
 					coords: loopSqrCoords,
 					piece: loopPiece

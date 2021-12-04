@@ -1,4 +1,4 @@
-import { MoveData } from '../interfaces/Interface';
+import { MoveData, ChessPiece } from '../interfaces/Interface';
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
@@ -67,11 +67,6 @@ class PiecePositionTable {
 			this.posMap[player][piece.substring(0, 1)][piece] = on;
 		}
 	}
-}
-
-interface ChessPiece {
-	name: string;
-	color: string;
 }
 
 class ChessBoard {

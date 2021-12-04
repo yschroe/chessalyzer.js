@@ -219,8 +219,6 @@ class TileTrackerBase extends BaseTracker {
 				player,
 				rook
 			);
-
-			// game end
 		}
 	}
 

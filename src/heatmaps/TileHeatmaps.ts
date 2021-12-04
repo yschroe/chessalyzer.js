@@ -1,4 +1,5 @@
 import TileTrackerBase from '../tracker/TileTrackerBase';
+import { SquareData } from '../interfaces/Interface';
 
 export default {
 	TILE_OCC_ALL: {
@@ -8,7 +9,11 @@ export default {
 		unit: '%',
 		description:
 			'Tile <loopSqrData> had a piece on it for X% of all moves.',
-		calc: (data: TileTrackerBase, _, loopSqrData) => {
+		calc: (
+			data: TileTrackerBase,
+			_: SquareData,
+			loopSqrData: SquareData
+		) => {
 			const { coords } = loopSqrData;
 			let val =
 				data.tiles[coords[0]][coords[1]].w.wasOn +
@@ -24,7 +29,11 @@ export default {
 		unit: '%',
 		description:
 			'Tile <loopSqrData> had a white piece on it for X% of all moves.',
-		calc: (data: TileTrackerBase, _, loopSqrData) => {
+		calc: (
+			data: TileTrackerBase,
+			_: SquareData,
+			loopSqrData: SquareData
+		) => {
 			const { coords } = loopSqrData;
 			let val = data.tiles[coords[0]][coords[1]].w.wasOn;
 			val = (val * 100) / data.cntMovesTotal;
@@ -37,7 +46,11 @@ export default {
 		scope: 'global',
 		unit: '%',
 		description: 'Tile X had a black piece on it for Y% of all moves.',
-		calc: (data: TileTrackerBase, _, loopSqrData) => {
+		calc: (
+			data: TileTrackerBase,
+			_: SquareData,
+			loopSqrData: SquareData
+		) => {
 			const { coords } = loopSqrData;
 			let val = data.tiles[coords[0]][coords[1]].b.wasOn;
 			val = (val * 100) / data.cntMovesTotal;
@@ -51,7 +64,11 @@ export default {
 		unit: '%',
 		description:
 			'Selected tile was occupated by piece X during Y% of all moves.',
-		calc: (data: TileTrackerBase, sqrData, loopSqrData) => {
+		calc: (
+			data: TileTrackerBase,
+			sqrData: SquareData,
+			loopSqrData: SquareData
+		) => {
 			const sqrCoords = sqrData.coords;
 			const { piece } = loopSqrData;
 
@@ -72,7 +89,11 @@ export default {
 		scope: 'global',
 		unit: '',
 		description: 'Count of Pieces that were taken on each tile.',
-		calc: (data: TileTrackerBase, _, loopSqrData) => {
+		calc: (
+			data: TileTrackerBase,
+			_: SquareData,
+			loopSqrData: SquareData
+		) => {
 			const { coords } = loopSqrData;
 			const val =
 				data.tiles[coords[0]][coords[1]].b.wasKilledOn +
@@ -86,7 +107,11 @@ export default {
 		scope: 'specific',
 		unit: '',
 		description: 'Selected piece had tile X as a move target Y times.',
-		calc: (data: TileTrackerBase, sqrData, loopSqrData) => {
+		calc: (
+			data: TileTrackerBase,
+			sqrData: SquareData,
+			loopSqrData: SquareData
+		) => {
 			const { piece } = sqrData;
 			const { coords } = loopSqrData;
 			let val = 0;
