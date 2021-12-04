@@ -1,5 +1,5 @@
 import BaseTracker from './BaseTracker.js';
-import { MoveData } from '../interfaces/Interface.js';
+import { Move, MoveData } from '../interfaces/Interface.js';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
@@ -148,8 +148,8 @@ class TileTrackerBase extends BaseTracker {
 	}
 
 	resetCurrentPiece(row: number, col: number) {
-		let color;
-		let piece;
+		let color: string;
+		let piece: string;
 		let hasPiece = false;
 
 		if (row === 0) {
@@ -178,22 +178,21 @@ class TileTrackerBase extends BaseTracker {
 	}
 
 	track(moveData: MoveData) {
-		const { to } = moveData.move;
-		const { from } = moveData.move;
+		const { move } = moveData;
 		const { player } = moveData;
 		const { piece } = moveData;
 		const { takes } = moveData;
 		const { castles } = moveData;
 
 		// move
-		if (to[0] !== null) {
+		if (move !== null) {
 			this.cntMovesGame += 1;
 
 			if (takes) {
 				this.processTakes(takes.pos, player, piece, takes.piece);
 			}
 
-			this.processMove(from, to, player, piece);
+			this.processMove(move, player, piece);
 
 			// castle
 		} else if (castles !== null) {
@@ -210,43 +209,48 @@ class TileTrackerBase extends BaseTracker {
 				tarRookCol = 3;
 				srcRookCol = 0;
 			}
-			this.processMove([row, 4], [row, tarKingCol], player, 'Ke');
 			this.processMove(
-				[row, srcRookCol],
-				[row, tarRookCol],
+				{ from: [row, 4], to: [row, tarKingCol] },
+				player,
+				'Ke'
+			);
+			this.processMove(
+				{ from: [row, srcRookCol], to: [row, tarRookCol] },
 				player,
 				rook
 			);
 
 			// game end
-		} else {
-			for (let row = 0; row < 8; row += 1) {
-				for (let col = 0; col < 8; col += 1) {
-					const { currentPiece } = this.tiles[row][col];
-					if (currentPiece !== null) {
-						this.addOccupation([row, col]);
-					}
-					this.resetCurrentPiece(row, col);
-				}
-			}
-			this.cntMovesTotal += this.cntMovesGame;
-			this.cntMovesGame = 0;
 		}
 	}
 
-	processMove(from, to, player, piece) {
-		if (piece.length > 1 && !piece.match(/\d/g)) {
-			this.addOccupation(from);
+	nextGame() {
+		for (let row = 0; row < 8; row += 1) {
+			for (let col = 0; col < 8; col += 1) {
+				const { currentPiece } = this.tiles[row][col];
+				if (currentPiece !== null) {
+					this.addOccupation([row, col]);
+				}
+				this.resetCurrentPiece(row, col);
+			}
+		}
+		this.cntMovesTotal += this.cntMovesGame;
+		this.cntMovesGame = 0;
+	}
 
-			this.tiles[to[0]][to[1]].currentPiece =
-				this.tiles[from[0]][from[1]].currentPiece;
-			this.tiles[to[0]][to[1]].currentPiece.lastMovedOn =
+	processMove(move: Move, player: string, piece: string) {
+		if (piece.length > 1 && !piece.match(/\d/g)) {
+			this.addOccupation(move.from);
+
+			this.tiles[move.to[0]][move.to[1]].currentPiece =
+				this.tiles[move.from[0]][move.from[1]].currentPiece;
+			this.tiles[move.to[0]][move.to[1]].currentPiece.lastMovedOn =
 				this.cntMovesGame;
 
-			this.tiles[from[0]][from[1]].currentPiece = null;
+			this.tiles[move.from[0]][move.from[1]].currentPiece = null;
 
-			this.tiles[to[0]][to[1]][player].movedTo += 1;
-			this.tiles[to[0]][to[1]][player][piece].movedTo += 1;
+			this.tiles[move.to[0]][move.to[1]][player].movedTo += 1;
+			this.tiles[move.to[0]][move.to[1]][player][piece].movedTo += 1;
 		}
 	}
 

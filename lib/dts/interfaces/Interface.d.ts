@@ -30,6 +30,7 @@ interface Tracker {
     path?: string;
     analyze: (arg: Game | MoveData) => void;
     track: (arg: Game | MoveData) => void;
+    nextGame?: () => void;
     finish?: () => void;
     add?: (arg: this) => void;
 }

@@ -27,7 +27,7 @@ declare class ParsedMove implements MoveData {
  */
 declare class GameProcessor {
     board: ChessBoard;
-    activePlayer: number;
+    activePlayer: string;
     cntMoves: number;
     cntGames: number;
     gameAnalyzers: Tracker[];
