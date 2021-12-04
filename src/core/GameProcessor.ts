@@ -54,7 +54,7 @@ class ParsedMove implements MoveData {
  */
 class GameProcessor {
 	board: ChessBoard;
-	activePlayer: number;
+	activePlayer: string;
 	cntMoves: number;
 	cntGames: number;
 	gameAnalyzers: Tracker[];
@@ -64,7 +64,7 @@ class GameProcessor {
 
 	constructor() {
 		this.board = new ChessBoard();
-		this.activePlayer = 0;
+		this.activePlayer = 'w';
 		this.cntMoves = 0;
 		this.cntGames = 0;
 		this.gameAnalyzers = [];
@@ -73,7 +73,7 @@ class GameProcessor {
 		this.analyzerConfigs = [];
 	}
 
-	static checkConfig(config: any) {
+	static checkConfig(config: any): GameProcessorConfig {
 		const hasFilter = Object.prototype.hasOwnProperty.call(
 			config,
 			'filter'
@@ -88,7 +88,7 @@ class GameProcessor {
 		return cfg;
 	}
 
-	attachAnalyzers(analyzers: Tracker[]) {
+	attachAnalyzers(analyzers: Tracker[]): void {
 		analyzers.forEach((a) => {
 			if (a.type === 'move') {
 				this.moveAnalyzers.push(a);
@@ -105,7 +105,7 @@ class GameProcessor {
 		analyzer: Tracker[],
 		config: any,
 		multiThreadCfg: MultithreadConfig
-	) {
+	): Promise<{ cntGames: number; cntMoves: number }> {
 		try {
 			let readerFinished = false;
 			// TODO: fix custom Tracker
@@ -260,9 +260,7 @@ class GameProcessor {
 			console.log('Read entire file.');
 
 			analyzer.forEach((a) => {
-				if (a.finish) {
-					a.finish();
-				}
+				a.finish?.();
 			});
 			return {
 				cntGames: this.cntGames,
@@ -274,11 +272,11 @@ class GameProcessor {
 		}
 	}
 
-	processGame(game: Game) {
+	processGame(game: Game): void {
 		const { moves } = game;
 		try {
 			for (let i = 0; i < moves.length; i += 1) {
-				this.activePlayer = i % 2;
+				this.activePlayer = i % 2 === 0 ? 'w' : 'b';
 
 				// fetch move data into currentMove
 				const currentMove = this.parseMove(moves[i]);
@@ -294,6 +292,11 @@ class GameProcessor {
 			console.log(err, game);
 		}
 
+		// notify move analyzers that the current game is done
+		this.moveAnalyzers.forEach((a) => {
+			a.nextGame?.();
+		});
+
 		this.cntMoves += moves.length;
 		this.cntGames += 1;
 		this.board.reset();
@@ -304,9 +307,9 @@ class GameProcessor {
 		});
 	}
 
-	reset() {
+	reset(): void {
 		this.board.reset();
-		this.activePlayer = 0;
+		this.activePlayer = 'w';
 	}
 
 	parseMove(rawMove: string): ParsedMove {
@@ -328,9 +331,9 @@ class GameProcessor {
 	pawnMove(san: string): ParsedMove {
 		const moveData = new ParsedMove();
 		moveData.san = san;
-		moveData.player = this.activePlayer === 0 ? 'w' : 'b';
+		moveData.player = this.activePlayer;
 
-		const direction = -2 * (this.activePlayer % 2) + 1;
+		const direction = this.activePlayer === 'w' ? 1 : -1;
 		let offset = 0;
 		const coords: Move = { from: [], to: [] };
 
@@ -389,7 +392,7 @@ class GameProcessor {
 	pieceMove(san: string): ParsedMove {
 		const moveData = new ParsedMove();
 		moveData.san = san;
-		moveData.player = this.activePlayer === 0 ? 'w' : 'b';
+		moveData.player = this.activePlayer;
 
 		let takes = false;
 		let coords: Move = { from: [], to: [] };
@@ -467,7 +470,7 @@ class GameProcessor {
 	castle(san: string): ParsedMove {
 		const currentMove = new ParsedMove();
 		currentMove.san = san;
-		currentMove.player = this.activePlayer === 0 ? 'w' : 'b';
+		currentMove.player = this.activePlayer;
 		currentMove.castles = currentMove.san;
 
 		return currentMove;

@@ -35,13 +35,6 @@ class BaseTracker implements Tracker {
 	track(data: Game | MoveData) {
 		throw new Error('Your analyzer must implement a track() method!');
 	}
-
-	finish() {
-		return;
-	}
-	add(tracker: BaseTracker) {
-		return;
-	}
 }
 
 export default BaseTracker;

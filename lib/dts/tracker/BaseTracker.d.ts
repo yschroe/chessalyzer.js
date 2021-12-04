@@ -8,7 +8,5 @@ declare class BaseTracker implements Tracker {
     constructor(type: string);
     analyze(data: Game | MoveData): void;
     track(data: Game | MoveData): void;
-    finish(): void;
-    add(tracker: BaseTracker): void;
 }
 export default BaseTracker;

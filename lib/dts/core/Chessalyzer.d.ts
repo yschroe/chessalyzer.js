@@ -1,5 +1,4 @@
 import { Tracker } from '../interfaces/Interface.js';
-/** Main class for batch processing and generating heat maps */
 export default class Chessalyzer {
     static startBatch(path: string, analyzer: Tracker | Tracker[], cfg?: {}, multithreadCfg?: {
         batchSize: number;
@@ -8,7 +7,7 @@ export default class Chessalyzer {
         cntGames: number;
         cntMoves: number;
     }>;
-    static generateHeatmap(data: any, square: any, fun: any, optData?: {}): {
+    static generateHeatmap(data: any, square: string | number[], fun: (data: any, sqrData: any, loopSqrData: any, optData: any) => number, optData?: {}): {
         map: any[];
         min: number;
         max: number;
@@ -18,8 +17,8 @@ export default class Chessalyzer {
         min: number;
         max: number;
     };
-    static printHeatmap(map: any, min: any, max: any): void;
-    static getStartingPiece(sqr: any): {
+    static printHeatmap(map: number[][], min: any, max: number): void;
+    static getStartingPiece(sqr: number[]): {
         color: string;
         name: string;
     };

@@ -6,7 +6,6 @@ import { Tracker } from '../interfaces/Interface.js';
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
-/** Main class for batch processing and generating heat maps */
 export default class Chessalyzer {
 	static async startBatch(
 		path: string,
@@ -39,9 +38,14 @@ export default class Chessalyzer {
 		return header;
 	}
 
-	static generateHeatmap(data, square, fun, optData = {}) {
-		let sqrCoords;
-		let sqrAlg;
+	static generateHeatmap(
+		data: any,
+		square: string | number[],
+		fun: (data, sqrData, loopSqrData, optData) => number,
+		optData = {}
+	) {
+		let sqrCoords: number[];
+		let sqrAlg: string;
 
 		// square input type 'a2'
 		if (typeof square === 'string') {
@@ -113,7 +117,7 @@ export default class Chessalyzer {
 		return { map, min, max };
 	}
 
-	static printHeatmap(map, min, max) {
+	static printHeatmap(map: number[][], min: any, max: number) {
 		const color = [255, 128, 0];
 		const bgColor = [255, 255, 255];
 		for (let i = 0; i < map.length; i += 1) {
@@ -140,7 +144,7 @@ export default class Chessalyzer {
 		}
 	}
 
-	static getStartingPiece(sqr) {
+	static getStartingPiece(sqr: number[]) {
 		let color = '';
 		let name = '';
 		if (sqr[0] === 0) {

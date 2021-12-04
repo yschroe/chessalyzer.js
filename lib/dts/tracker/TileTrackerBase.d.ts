@@ -1,5 +1,5 @@
 import BaseTracker from './BaseTracker.js';
-import { MoveData } from '../interfaces/Interface.js';
+import { Move, MoveData } from '../interfaces/Interface.js';
 interface StatsField {
     b: TileStats;
     w: TileStats;
@@ -26,7 +26,8 @@ declare class TileTrackerBase extends BaseTracker {
     add(tracker: TileTrackerBase): void;
     resetCurrentPiece(row: number, col: number): void;
     track(moveData: MoveData): void;
-    processMove(from: any, to: any, player: any, piece: any): void;
+    nextGame(): void;
+    processMove(move: Move, player: string, piece: string): void;
     processTakes(pos: number[], player: string, takingPiece: string, takenPiece: string): void;
     addOccupation(pos: number[]): void;
 }
