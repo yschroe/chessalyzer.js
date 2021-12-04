@@ -29,7 +29,7 @@ class Piece {
 	color: string;
 	lastMovedOn: number;
 
-	constructor(piece, color) {
+	constructor(piece: string, color: string) {
 		this.piece = piece;
 		this.color = color;
 		this.lastMovedOn = 0;

@@ -3,7 +3,7 @@ const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
 class PiecePositionTable {
-	posMap: Object;
+	posMap: unknown;
 
 	constructor() {
 		this.posMap = {

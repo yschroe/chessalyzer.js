@@ -1,5 +1,10 @@
 import { performance } from 'perf_hooks';
-import { Tracker, TrackerConfig } from '../interfaces/Interface.js';
+import {
+	Game,
+	MoveData,
+	Tracker,
+	TrackerConfig
+} from '../interfaces/Interface.js';
 
 class BaseTracker implements Tracker {
 	type: string;
@@ -8,7 +13,7 @@ class BaseTracker implements Tracker {
 	t0: number;
 	path?: string;
 
-	constructor(type) {
+	constructor(type: string) {
 		this.type = type;
 		this.cfg = {
 			profilingActive: false
@@ -21,18 +26,22 @@ class BaseTracker implements Tracker {
 		}
 	}
 
-	analyze(data) {
+	analyze(data: Game | MoveData) {
 		if (this.cfg.profilingActive) this.t0 = performance.now();
 		this.track(data);
 		if (this.cfg.profilingActive) this.time += performance.now() - this.t0;
 	}
 
-	track(_) {
+	track(data: Game | MoveData) {
 		throw new Error('Your analyzer must implement a track() method!');
 	}
 
-	finish() {}
-	add(tracker: BaseTracker) {}
+	finish() {
+		return;
+	}
+	add(tracker: BaseTracker) {
+		return;
+	}
 }
 
 export default BaseTracker;

@@ -4,7 +4,7 @@ import { EventEmitter } from 'events';
 import cluster from 'cluster';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { Move, MoveData, Tracker } from '../interfaces/Interface.js';
+import { Game, Move, MoveData, Tracker } from '../interfaces/Interface.js';
 import ChessBoard from './ChessBoard.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -12,7 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const files = 'abcdefgh';
 
 class MoveNotFoundException extends Error {
-	constructor(token: any, tarRow: any, tarCol: any) {
+	constructor(token: string, tarRow: number, tarCol: number) {
 		super(`No piece for move ${token} to (${tarRow},${tarCol}) found!`);
 		this.name = 'MoveNotFoundError';
 	}
@@ -27,10 +27,6 @@ interface GameProcessorConfig {
 interface MultithreadConfig {
 	batchSize: number;
 	nThreads: number;
-}
-
-interface Game {
-	moves: string[];
 }
 
 class ParsedMove implements MoveData {
@@ -78,7 +74,10 @@ class GameProcessor {
 	}
 
 	static checkConfig(config: any) {
-		let hasFilter = Object.prototype.hasOwnProperty.call(config, 'filter');
+		const hasFilter = Object.prototype.hasOwnProperty.call(
+			config,
+			'filter'
+		);
 		const cfg: GameProcessorConfig = {
 			hasFilter,
 			filter: hasFilter ? config.filter : () => true,
@@ -109,7 +108,8 @@ class GameProcessor {
 	) {
 		try {
 			let readerFinished = false;
-			let customPath = '';
+			// TODO: fix custom Tracker
+			const customPath = '';
 
 			const isMultithreaded = multiThreadCfg !== null;
 			const status = new EventEmitter();
@@ -332,7 +332,7 @@ class GameProcessor {
 
 		const direction = -2 * (this.activePlayer % 2) + 1;
 		let offset = 0;
-		let coords: Move = { from: [], to: [] };
+		const coords: Move = { from: [], to: [] };
 
 		// takes
 		if (moveData.san.includes('x')) {
@@ -387,7 +387,7 @@ class GameProcessor {
 	}
 
 	pieceMove(san: string): ParsedMove {
-		let moveData = new ParsedMove();
+		const moveData = new ParsedMove();
 		moveData.san = san;
 		moveData.player = this.activePlayer === 0 ? 'w' : 'b';
 

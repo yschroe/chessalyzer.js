@@ -1,3 +1,8 @@
+interface Game {
+	Result?: string;
+	ECO?: string;
+	moves: string[];
+}
 interface Move {
 	from: number[];
 	to: number[];
@@ -23,10 +28,10 @@ interface Tracker {
 	time: number;
 	t0: number;
 	path?: string;
-	analyze: (arg: any) => void;
-	track: (arg: any) => void;
-	finish: () => void;
-	add: (arg: this) => void;
+	analyze: (arg: Game | MoveData) => void;
+	track: (arg: Game | MoveData) => void;
+	finish?: () => void;
+	add?: (arg: this) => void;
 }
 
-export { Move, MoveData, Tracker, TrackerConfig };
+export { Game, Move, MoveData, Tracker, TrackerConfig };

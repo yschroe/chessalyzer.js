@@ -1,4 +1,5 @@
 import BaseTracker from './BaseTracker.js';
+import { Game } from '../interfaces/Interface.js';
 
 class GameTrackerBase extends BaseTracker {
 	wins: number[];
@@ -28,7 +29,7 @@ class GameTrackerBase extends BaseTracker {
 		});
 	}
 
-	track(game) {
+	track(game: Game) {
 		this.cntGames += 1;
 		switch (game.Result) {
 			case '1-0':
