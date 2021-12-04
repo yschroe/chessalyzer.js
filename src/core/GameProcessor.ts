@@ -189,6 +189,10 @@ class GameProcessor {
 						.replace(/(\d+\.{1,3}\s)|(\{(.*?)\}\s)/g, '')
 						.split(' ');
 
+					// remove the result from the moves array
+					if (game.moves[game.moves.length - 1].match(/\d/) !== null)
+						game.moves.pop();
+
 					if (cfg.filter(game) || !cfg.hasFilter) {
 						this.cntGames += 1;
 						if (isMultithreaded) {
@@ -290,7 +294,7 @@ class GameProcessor {
 			console.log(err, game);
 		}
 
-		this.cntMoves += moves.length - 1; // don't count result (e.g. 1-0)
+		this.cntMoves += moves.length;
 		this.cntGames += 1;
 		this.board.reset();
 
@@ -305,115 +309,122 @@ class GameProcessor {
 		this.activePlayer = 0;
 	}
 
-	parseMove(rawMove: string) {
+	parseMove(rawMove: string): ParsedMove {
 		const token = rawMove.substring(0, 1);
 
-		let currentMove = new ParsedMove();
-		currentMove.san = GameProcessor.preProcess(rawMove);
-		currentMove.player = this.activePlayer === 0 ? 'w' : 'b';
+		let currentMove: ParsedMove;
+		const san = GameProcessor.preProcess(rawMove);
 
-		// game end on '1-0', '0-1' or '1/2-1/2' (check for digit as first char)
-		if (token.match(/\d/) === null) {
-			if (token.toLowerCase() === token) {
-				this.pawnMove(currentMove);
-			} else if (token !== 'O') {
-				this.pieceMove(currentMove);
-			} else {
-				currentMove.castles = currentMove.san;
-			}
+		if (token.toLowerCase() === token) {
+			currentMove = this.pawnMove(san);
+		} else if (token !== 'O') {
+			currentMove = this.pieceMove(san);
+		} else {
+			currentMove = this.castle(san);
 		}
 		return currentMove;
 	}
 
-	pawnMove(moveData: ParsedMove) {
+	pawnMove(san: string): ParsedMove {
+		const moveData = new ParsedMove();
+		moveData.san = san;
+		moveData.player = this.activePlayer === 0 ? 'w' : 'b';
+
 		const direction = -2 * (this.activePlayer % 2) + 1;
-		const from = [];
-		const to = [];
-		let move = moveData.san;
 		let offset = 0;
+		let coords: Move = { from: [], to: [] };
 
 		// takes
-		if (move.includes('x')) {
-			move = move.replace('x', '');
+		if (moveData.san.includes('x')) {
+			moveData.san = moveData.san.replace('x', '');
 
-			to[0] = 8 - parseInt(move.substring(2, 3), 10);
-			to[1] = files.indexOf(move.substring(1, 2));
-			from[0] = to[0] + direction;
-			from[1] = files.indexOf(move.substring(0, 1));
+			coords.to[0] = 8 - parseInt(moveData.san.substring(2, 3), 10);
+			coords.to[1] = files.indexOf(moveData.san.substring(1, 2));
+			coords.from[0] = coords.to[0] + direction;
+			coords.from[1] = files.indexOf(moveData.san.substring(0, 1));
 
 			// en passant
-			if (this.board.tiles[to[0]][to[1]] === null) {
+			if (this.board.tiles[coords.to[0]][coords.to[1]] === null) {
 				offset = moveData.player === 'w' ? 1 : -1;
 			}
 
 			moveData.takes = {
-				piece: this.board.tiles[to[0] + offset][to[1]].name,
-				pos: [to[0] + offset, to[1]]
+				piece: this.board.tiles[coords.to[0] + offset][coords.to[1]]
+					.name,
+				pos: [coords.to[0] + offset, coords.to[1]]
 			};
 
 			// moves
 		} else {
-			const tarRow = 8 - parseInt(move.substring(1, 2), 10);
-			const tarCol = files.indexOf(move.substring(0, 1));
+			const tarRow = 8 - parseInt(moveData.san.substring(1, 2), 10);
+			const tarCol = files.indexOf(moveData.san.substring(0, 1));
 
-			from[1] = tarCol;
-			to[0] = tarRow;
-			to[1] = tarCol;
+			coords.from[1] = tarCol;
+			coords.to[0] = tarRow;
+			coords.to[1] = tarCol;
 			for (let i = tarRow + direction; i < 8 && i >= 0; i += direction) {
 				if (this.board.tiles[i][tarCol] !== null) {
 					if (this.board.tiles[i][tarCol].name.includes('P')) {
-						from[0] = i;
+						coords.from[0] = i;
 						break;
 					}
 				}
 			}
 		}
 
-		moveData.move = { from, to };
-		moveData.piece = this.board.tiles[from[0]][from[1]].name;
+		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]].name;
+		moveData.move = coords;
 
 		// promotes
-		if (move.includes('=')) {
-			moveData.promotesTo = move.substring(move.length - 1, move.length);
+		if (moveData.san.includes('=')) {
+			moveData.promotesTo = moveData.san.substring(
+				moveData.san.length - 1,
+				moveData.san.length
+			);
 		}
+
+		return moveData;
 	}
 
-	pieceMove(moveData: ParsedMove) {
-		let move = moveData.san;
+	pieceMove(san: string): ParsedMove {
+		let moveData = new ParsedMove();
+		moveData.san = san;
+		moveData.player = this.activePlayer === 0 ? 'w' : 'b';
+
 		let takes = false;
 		let coords: Move = { from: [], to: [] };
-		const token = move.substring(0, 1);
+		const token = moveData.san.substring(0, 1);
 
 		// remove token
-		move = move.substring(1, move.length);
+		moveData.san = moveData.san.substring(1, moveData.san.length);
 
 		// takes
-		if (move.includes('x')) {
+		if (moveData.san.includes('x')) {
 			takes = true;
-			move = move.replace('x', '');
+			moveData.san = moveData.san.replace('x', '');
 		}
 
 		// e.g. Re3f5
-		if (move.length === 4) {
-			coords.from[0] = 8 - parseInt(move.substring(1, 2), 10);
-			coords.from[1] = files.indexOf(move.substring(0, 1));
-			coords.to[0] = 8 - parseInt(move.substring(3, 4), 10);
-			coords.to[1] = files.indexOf(move.substring(2, 3));
+		if (moveData.san.length === 4) {
+			coords.from[0] = 8 - parseInt(moveData.san.substring(1, 2), 10);
+			coords.from[1] = files.indexOf(moveData.san.substring(0, 1));
+			coords.to[0] = 8 - parseInt(moveData.san.substring(3, 4), 10);
+			coords.to[1] = files.indexOf(moveData.san.substring(2, 3));
 
 			// e.g. Ref3
-		} else if (move.length === 3) {
-			const tarRow = 8 - parseInt(move.substring(2, 3), 10);
-			const tarCol = files.indexOf(move.substring(1, 2));
+		} else if (moveData.san.length === 3) {
+			const tarRow = 8 - parseInt(moveData.san.substring(2, 3), 10);
+			const tarCol = files.indexOf(moveData.san.substring(1, 2));
 			let mustBeInRow: number = null;
 			let mustBeInCol: number = null;
 
 			// file is specified
-			if (files.indexOf(move.substring(0, 1)) >= 0) {
-				mustBeInCol = files.indexOf(move.substring(0, 1));
+			if (files.indexOf(moveData.san.substring(0, 1)) >= 0) {
+				mustBeInCol = files.indexOf(moveData.san.substring(0, 1));
 
 				// rank is specified
 			} else {
-				mustBeInRow = 8 - parseInt(move.substring(0, 1), 10);
+				mustBeInRow = 8 - parseInt(moveData.san.substring(0, 1), 10);
 			}
 			coords = this.findPiece(
 				tarRow,
@@ -426,8 +437,8 @@ class GameProcessor {
 
 			// e.g. Rf3
 		} else {
-			const tarRow = 8 - parseInt(move.substring(1, 2), 10);
-			const tarCol = files.indexOf(move.substring(0, 1));
+			const tarRow = 8 - parseInt(moveData.san.substring(1, 2), 10);
+			const tarCol = files.indexOf(moveData.san.substring(0, 1));
 			coords = this.findPiece(
 				tarRow,
 				tarCol,
@@ -449,6 +460,17 @@ class GameProcessor {
 				pos: moveData.move.to
 			};
 		}
+
+		return moveData;
+	}
+
+	castle(san: string): ParsedMove {
+		const currentMove = new ParsedMove();
+		currentMove.san = san;
+		currentMove.player = this.activePlayer === 0 ? 'w' : 'b';
+		currentMove.castles = currentMove.san;
+
+		return currentMove;
 	}
 
 	findPiece(

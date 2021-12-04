@@ -316,7 +316,7 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 # Changelog
 
 -   2.0.0:
-    -   chessalyzer.js is now a ES module (ESM) and will no longer work in a browser. You need node.js to run the library.
+    -   chessalyzer.js is now a ES module (ESM) and will no longer work inside a browser. You need node.js to run the library.
     -   runBatch(...) and runBatchMulticore(...) were merged into the single function runBatch(...). Per default the function will run in multithreaded mode, but you can override the config to force singlethreaded mode if it is needed in your environment.
     -   Changed the data structure of the move data passed into the analyzers.
     -   Switched code base to TypeScript.
