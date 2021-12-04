@@ -5,7 +5,7 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"types": "./lib/chessalyzer.d.ts",
+			"types": "./lib/dts/index.d.ts",
 			"import": "./lib/chessalyzer.js"
 		}
 	},
@@ -21,7 +21,7 @@
 		"build": "rollup --config",
 		"typedefs": "npx tsc",
 		"dev": "rollup --config --watch",
-		"doc": "typedoc src/index.ts"
+		"docs": "typedoc src/index.ts"
 	},
 	"repository": {
 		"type": "git",

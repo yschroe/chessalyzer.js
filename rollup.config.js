@@ -19,7 +19,7 @@ export default [
 			format: 'esm'
 		},
 		external,
-		plugins: [typescript()]
+		plugins: [typescript({ tsconfig: './tsconfig.json' })]
 	},
 	{
 		input: 'src/core/Processor.worker.ts',
@@ -28,6 +28,6 @@ export default [
 			format: 'esm'
 		},
 		external,
-		plugins: [typescript()]
+		plugins: [typescript({ tsconfig: './tsconfig.json' })]
 	}
 ];

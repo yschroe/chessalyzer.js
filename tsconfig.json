@@ -4,6 +4,8 @@
 
 	"compilerOptions": {
 		"module": "ES2020",
-		"moduleResolution": "Node"
+		"moduleResolution": "Node",
+		"declaration": true,
+		"declarationDir": "./dts"
 	}
 }
