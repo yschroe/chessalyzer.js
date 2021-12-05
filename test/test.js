@@ -22,6 +22,46 @@ describe('Basic Parsing', function () {
 	});
 });
 
+describe('Basic Parsing: PGN with comments (moves: multiple lines)', function () {
+	this.timeout(20000);
+
+	let data;
+	before(async function () {
+		data = await Chessalyzer.startBatch(
+			'./test/PGN_with_comments_multiline.pgn',
+			[]
+		);
+	});
+
+	it('Processed the 1 game in file', function () {
+		assert.strictEqual(data.cntGames, 1);
+	});
+
+	it('Processed all 26 moves in file', function () {
+		assert.strictEqual(data.cntMoves, 26);
+	});
+});
+
+describe('Basic Parsing: PGN with comments (moves: single line)', function () {
+	this.timeout(20000);
+
+	let data;
+	before(async function () {
+		data = await Chessalyzer.startBatch(
+			'./test/PGN_with_comments_singleline.pgn',
+			[]
+		);
+	});
+
+	it('Processed the 1 game in file', function () {
+		assert.strictEqual(data.cntGames, 1);
+	});
+
+	it('Processed all 26 moves in file', function () {
+		assert.strictEqual(data.cntMoves, 26);
+	});
+});
+
 describe('Game Filter: Count', function () {
 	this.timeout(20000);
 

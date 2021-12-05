@@ -163,7 +163,7 @@ class GameProcessor {
 			};
 
 			let games = [];
-			let game: Game = { moves: null };
+			let game: Game = { moves: [] };
 
 			// init line reader
 			const lr = createInterface({
@@ -184,49 +184,54 @@ class GameProcessor {
 					game[key] = value;
 
 					// moves
-				} else if (line.startsWith('1')) {
-					game.moves = line
-						.replace(/(\d+\.{1,3}\s)|(\{(.*?)\}\s)/g, '')
-						.split(' ');
+				} else if (line.match(/^\d/)) {
+					// add current move line
+					game.moves = game.moves.concat(
+						line
+							.replace(/(\d+\.{1,3}\s)|(\s?\{(.*?)\})/g, '')
+							.split(' ')
+					);
 
-					// remove the result from the moves array
-					if (game.moves[game.moves.length - 1].match(/\d/) !== null)
+					// only if the result marker is in the line, all moves have been read -> start anaylyzing
+					if (line.match(/((1-0)|(0-1)|(1\/2-1\/2)|(\*))$/)) {
+						// remove the result from the moves array
 						game.moves.pop();
 
-					if (cfg.filter(game) || !cfg.hasFilter) {
-						this.cntGames += 1;
-						if (isMultithreaded) {
-							games.push(game);
+						if (!cfg.hasFilter || cfg.filter(game)) {
+							this.cntGames += 1;
+							if (isMultithreaded) {
+								games.push(game);
 
-							// if enough games have been read in, start worker threads and let them analyze
-							if (
-								this.cntGames %
-									(multiThreadCfg.batchSize *
-										multiThreadCfg.nThreads) ===
-								0
-							) {
-								for (
-									let i = 0;
-									i < multiThreadCfg.nThreads;
-									i += 1
+								// if enough games have been read in, start worker threads and let them analyze
+								if (
+									this.cntGames %
+										(multiThreadCfg.batchSize *
+											multiThreadCfg.nThreads) ===
+									0
 								) {
-									forkWorker(
-										games.slice(
-											i * multiThreadCfg.batchSize,
-											i * multiThreadCfg.batchSize +
-												multiThreadCfg.batchSize
-										)
-									);
+									for (
+										let i = 0;
+										i < multiThreadCfg.nThreads;
+										i += 1
+									) {
+										forkWorker(
+											games.slice(
+												i * multiThreadCfg.batchSize,
+												i * multiThreadCfg.batchSize +
+													multiThreadCfg.batchSize
+											)
+										);
+									}
+
+									games = [];
 								}
-
-								games = [];
+							} else {
+								this.processGame(game);
 							}
-						} else {
-							this.processGame(game);
 						}
-					}
 
-					game = { moves: null };
+						game = { moves: [] };
+					}
 				}
 				if (this.cntGames >= cfg.cntGames) {
 					lr.close();

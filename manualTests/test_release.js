@@ -13,12 +13,15 @@ b.cfg.profilingActive = true;
 c.cfg.profilingActive = true;
 
 (async () => {
-	await Chessalyzer.startBatch(
+	const header = await Chessalyzer.startBatch(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
-		[a, b, c],
+		[],
 		{
-			cntGames: 100000
+			cntGames: 500000
 		}
+	);
+	console.log(
+		`${header.cntGames} games (${header.cntMoves} moves) processed (${header.mps} moves/s)`
 	);
 	console.log('Game: ' + Math.round(a.time) / 1000);
 	console.log('Piece: ' + Math.round(b.time) / 1000);
