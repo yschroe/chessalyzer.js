@@ -10,9 +10,9 @@ export default class Chessalyzer {
 	static async startBatch(
 		path: string,
 		analyzer: Tracker | Tracker[],
-		cfg = {},
+		cfg: { cntGames?: number; filter?: (data: any) => boolean } = {},
 		multithreadCfg = { batchSize: 8000, nThreads: 1 }
-	) {
+	): Promise<{ cntGames: number; cntMoves: number; mps: number }> {
 		// handler for single analyzer or array of analyzers
 		let analyzerArray: Tracker[] = [];
 		analyzerArray = analyzerArray.concat(analyzer);
@@ -32,10 +32,10 @@ export default class Chessalyzer {
 		const tdiff = Math.round(t1 - t0) / 1000;
 		const mps = Math.round(header.cntMoves / tdiff);
 
-		console.log(
-			`${header.cntGames} games (${header.cntMoves} moves) processed in ${tdiff}s (${mps} moves/s)`
-		);
-		return header;
+		// console.log(
+		// 	`${header.cntGames} games (${header.cntMoves} moves) processed in ${tdiff}s (${mps} moves/s)`
+		// );
+		return { ...header, mps };
 	}
 
 	static generateHeatmap(

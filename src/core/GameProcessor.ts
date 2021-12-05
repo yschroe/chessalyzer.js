@@ -257,7 +257,7 @@ class GameProcessor {
 
 			readerFinished = true;
 			if (isMultithreaded) await EventEmitter.once(status, 'finished');
-			console.log('Read entire file.');
+			// console.log('Read entire file.');
 
 			analyzer.forEach((a) => {
 				a.finish?.();

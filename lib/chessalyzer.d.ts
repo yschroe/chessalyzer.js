@@ -44,12 +44,16 @@ interface Tracker {
 }
 
 declare class Chessalyzer {
-    static startBatch(path: string, analyzer: Tracker | Tracker[], cfg?: {}, multithreadCfg?: {
+    static startBatch(path: string, analyzer: Tracker | Tracker[], cfg?: {
+        cntGames?: number;
+        filter?: (data: any) => boolean;
+    }, multithreadCfg?: {
         batchSize: number;
         nThreads: number;
     }): Promise<{
         cntGames: number;
         cntMoves: number;
+        mps: number;
     }>;
     static generateHeatmap(data: unknown, square: string | number[], fun: (data: unknown, sqrData: SquareData, loopSqrData: SquareData, optData: unknown) => number, optData?: unknown): {
         map: number[][];
