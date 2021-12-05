@@ -3,6 +3,7 @@
 	"version": "1.6.4",
 	"description": "Batch analyze PGN and generate heat maps",
 	"type": "module",
+	"main": "./lib/chessalyzer.js",
 	"types": "./lib/chessalyzer.d.ts",
 	"exports": {
 		".": {
@@ -11,16 +12,15 @@
 		}
 	},
 	"files": [
-		"/lib/chessalyzer.js",
-		"/lib/chessalyzer.d.ts",
-		"/lib/Processor.worker.js"
+		"./lib/chessalyzer.js",
+		"./lib/chessalyzer.d.ts",
+		"./lib/Processor.worker.js"
 	],
 	"engines": {
 		"node": "^12.20.0 || ^14.13.1 || >=16.0.0"
 	},
 	"scripts": {
 		"build": "rollup --config",
-		"typedefs": "npx tsc",
 		"dev": "rollup --config --watch",
 		"docs": "typedoc src/index.ts",
 		"test": "mocha"
