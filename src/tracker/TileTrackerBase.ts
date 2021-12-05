@@ -185,7 +185,7 @@ class TileTrackerBase extends BaseTracker {
 		const { castles } = moveData;
 
 		// move
-		if (move !== null) {
+		if (move) {
 			this.cntMovesGame += 1;
 
 			if (takes) {
@@ -195,7 +195,7 @@ class TileTrackerBase extends BaseTracker {
 			this.processMove(move, player, piece);
 
 			// castle
-		} else if (castles !== null) {
+		} else if (castles) {
 			this.cntMovesGame += 1;
 
 			const row = player === 'w' ? 7 : 0;

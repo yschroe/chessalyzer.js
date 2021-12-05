@@ -3,8 +3,6 @@ import { SquareData } from '../interfaces/Interface';
 
 export default {
 	TILE_OCC_ALL: {
-		long_name: 'Occupated (Total)',
-		type: 'Tile',
 		scope: 'global',
 		unit: '%',
 		description:
@@ -23,8 +21,6 @@ export default {
 		}
 	},
 	TILE_OCC_WHITE: {
-		long_name: 'Occupated (White)',
-		type: 'Tile',
 		scope: 'global',
 		unit: '%',
 		description:
@@ -41,8 +37,6 @@ export default {
 		}
 	},
 	TILE_OCC_BLACK: {
-		long_name: 'Occupated (Black)',
-		type: 'Tile',
 		scope: 'global',
 		unit: '%',
 		description: 'Tile X had a black piece on it for Y% of all moves.',
@@ -58,8 +52,6 @@ export default {
 		}
 	},
 	TILE_OCC_BY_PIECE: {
-		long_name: 'Occupated (by Piece)',
-		type: 'Tile',
 		scope: 'specific',
 		unit: '%',
 		description:
@@ -73,7 +65,7 @@ export default {
 			const { piece } = loopSqrData;
 
 			let val = 0;
-			if (piece.color !== '') {
+			if (piece.color) {
 				val =
 					data.tiles[sqrCoords[0]][sqrCoords[1]][piece.color][
 						piece.name
@@ -84,8 +76,6 @@ export default {
 		}
 	},
 	TILE_KILLCOUNT: {
-		long_name: 'Pieces Taken on',
-		type: 'Tile',
 		scope: 'global',
 		unit: '',
 		description: 'Count of Pieces that were taken on each tile.',
@@ -102,8 +92,6 @@ export default {
 		}
 	},
 	PIECE_MOVED_TO_TILE: {
-		long_name: 'Moved to Tile',
-		type: 'Tile',
 		scope: 'specific',
 		unit: '',
 		description: 'Selected piece had tile X as a move target Y times.',
@@ -115,7 +103,7 @@ export default {
 			const { piece } = sqrData;
 			const { coords } = loopSqrData;
 			let val = 0;
-			if (piece.name !== '') {
+			if (piece.name) {
 				val =
 					data.tiles[coords[0]][coords[1]][piece.color][piece.name]
 						.movedTo;

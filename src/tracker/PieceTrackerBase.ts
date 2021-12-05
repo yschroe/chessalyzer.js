@@ -65,7 +65,7 @@ class PieceTrackerBase extends BaseTracker {
 		const { piece } = moveData;
 		const { takes } = moveData;
 
-		if (takes !== null) {
+		if (takes) {
 			if (
 				piece.length > 1 &&
 				takes.piece.length > 1 &&

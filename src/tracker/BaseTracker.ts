@@ -11,7 +11,6 @@ class BaseTracker implements Tracker {
 	cfg: TrackerConfig;
 	time: number;
 	t0: number;
-	path?: string;
 
 	constructor(type: string) {
 		this.type = type;

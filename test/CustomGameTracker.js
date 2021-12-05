@@ -1,6 +1,6 @@
-const { Tracker } = require('../lib/chessalyzer');
+import { Tracker } from '../lib/chessalyzer.js';
 
-class CustomGame extends Tracker.Base {
+export default class CustomGameTracker extends Tracker.Base {
 	constructor() {
 		super('game');
 		this.path = __filename;
@@ -36,9 +36,3 @@ class CustomGame extends Tracker.Base {
 		}
 	}
 }
-
-const CustomTracker = {
-	CustomGame
-};
-
-module.exports = CustomTracker;

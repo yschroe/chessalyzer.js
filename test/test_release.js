@@ -15,16 +15,12 @@ c.cfg.profilingActive = true;
 (async () => {
 	await Chessalyzer.startBatch(
 		'./test/lichess_db_standard_rated_2013-12.pgn',
-		[],
+		[a, b, c],
 		{
-			cntGames: 1000000
-		},
-		{ batchSize: 8000, nThreads: 1 }
+			cntGames: 100000
+		}
 	);
-	console.log(a);
 	console.log('Game: ' + Math.round(a.time) / 1000);
 	console.log('Piece: ' + Math.round(b.time) / 1000);
 	console.log('Tile: ' + Math.round(c.time) / 1000);
-
-	// console.log(a.ECO);
 })();

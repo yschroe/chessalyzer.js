@@ -51,17 +51,17 @@ declare class Chessalyzer {
         cntGames: number;
         cntMoves: number;
     }>;
-    static generateHeatmap(data: any, square: string | number[], fun: (data: any, sqrData: SquareData, loopSqrData: SquareData, optData: any) => number, optData?: {}): {
-        map: any[];
+    static generateHeatmap(data: unknown, square: string | number[], fun: (data: unknown, sqrData: SquareData, loopSqrData: SquareData, optData: unknown) => number, optData?: unknown): {
+        map: number[][];
         min: number;
         max: number;
     };
-    static generateComparisonHeatmap(data1: any, data2: any, square: any, fun: any, optData?: {}): {
-        map: any[];
+    static generateComparisonHeatmap(data1: unknown, data2: unknown, square: string | number[], fun: (data: unknown, sqrData: SquareData, loopSqrData: SquareData, optData: unknown) => number, optData?: unknown): {
+        map: number[][];
         min: number;
         max: number;
     };
-    static printHeatmap(map: number[][], min: any, max: number): void;
+    static printHeatmap(map: number[][], min: number, max: number): void;
     static getStartingPiece(sqr: number[]): {
         color: string;
         name: string;
@@ -73,7 +73,6 @@ declare class BaseTracker implements Tracker {
     cfg: TrackerConfig;
     time: number;
     t0: number;
-    path?: string;
     constructor(type: string);
     analyze(data: Game | MoveData): void;
     track(data: Game | MoveData): void;
@@ -140,48 +139,36 @@ declare const _default$1: {
 declare const _default: {
     Tile: {
         TILE_OCC_ALL: {
-            long_name: string;
-            type: string;
             scope: string;
             unit: string;
             description: string;
             calc: (data: TileTrackerBase, _: SquareData, loopSqrData: SquareData) => number;
         };
         TILE_OCC_WHITE: {
-            long_name: string;
-            type: string;
             scope: string;
             unit: string;
             description: string;
             calc: (data: TileTrackerBase, _: SquareData, loopSqrData: SquareData) => number;
         };
         TILE_OCC_BLACK: {
-            long_name: string;
-            type: string;
             scope: string;
             unit: string;
             description: string;
             calc: (data: TileTrackerBase, _: SquareData, loopSqrData: SquareData) => number;
         };
         TILE_OCC_BY_PIECE: {
-            long_name: string;
-            type: string;
             scope: string;
             unit: string;
             description: string;
             calc: (data: TileTrackerBase, sqrData: SquareData, loopSqrData: SquareData) => number;
         };
         TILE_KILLCOUNT: {
-            long_name: string;
-            type: string;
             scope: string;
             unit: string;
             description: string;
             calc: (data: TileTrackerBase, _: SquareData, loopSqrData: SquareData) => number;
         };
         PIECE_MOVED_TO_TILE: {
-            long_name: string;
-            type: string;
             scope: string;
             unit: string;
             description: string;
@@ -190,16 +177,12 @@ declare const _default: {
     };
     Piece: {
         PIECE_KILLED_BY: {
-            long_name: string;
-            type: string;
             scope: string;
             unit: string;
             description: string;
             calc: (data: PieceTrackerBase, sqrData: SquareData, loopSqrData: SquareData) => number;
         };
         PIECE_KILLED: {
-            long_name: string;
-            type: string;
             scope: string;
             unit: string;
             description: string;

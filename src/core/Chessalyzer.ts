@@ -39,16 +39,16 @@ export default class Chessalyzer {
 	}
 
 	static generateHeatmap(
-		data: any,
+		data: unknown,
 		square: string | number[],
 		fun: (
-			data,
+			data: unknown,
 			sqrData: SquareData,
 			loopSqrData: SquareData,
-			optData
+			optData: unknown
 		) => number,
-		optData = {}
-	) {
+		optData: unknown = {}
+	): { map: number[][]; min: number; max: number } {
 		let sqrCoords: number[];
 		let sqrAlg: string;
 
@@ -63,27 +63,25 @@ export default class Chessalyzer {
 			sqrAlg = GameProcessor.coordsToAlgebraic(square);
 		}
 
-		const startingPiece = Chessalyzer.getStartingPiece(sqrCoords);
 		const sqrData: SquareData = {
 			alg: sqrAlg,
 			coords: sqrCoords,
-			piece: startingPiece
+			piece: Chessalyzer.getStartingPiece(sqrCoords)
 		};
+
 		const map = [];
-		let max = 0;
-		let min = 1000000;
+		let max = -Infinity;
+		let min = Infinity;
 
 		for (let i = 0; i < 8; i += 1) {
 			const dataRow = new Array(8);
 			for (let j = 0; j < 8; j += 1) {
 				const loopSqrCoords = [i, j];
-				const loopSqrAlg =
-					GameProcessor.coordsToAlgebraic(loopSqrCoords);
-				const loopPiece = Chessalyzer.getStartingPiece(loopSqrCoords);
+
 				const loopSqrData: SquareData = {
-					alg: loopSqrAlg,
+					alg: GameProcessor.coordsToAlgebraic(loopSqrCoords),
 					coords: loopSqrCoords,
-					piece: loopPiece
+					piece: Chessalyzer.getStartingPiece(loopSqrCoords)
 				};
 
 				dataRow[j] = fun(data, sqrData, loopSqrData, optData);
@@ -96,10 +94,21 @@ export default class Chessalyzer {
 		return { map, min, max };
 	}
 
-	static generateComparisonHeatmap(data1, data2, square, fun, optData = {}) {
+	static generateComparisonHeatmap(
+		data1: unknown,
+		data2: unknown,
+		square: string | number[],
+		fun: (
+			data: unknown,
+			sqrData: SquareData,
+			loopSqrData: SquareData,
+			optData: unknown
+		) => number,
+		optData: unknown = {}
+	): { map: number[][]; min: number; max: number } {
 		const map = [];
-		let max = 0;
-		let min = 100000;
+		let max = -Infinity;
+		let min = Infinity;
 
 		// comparison heatmap
 		const map0 = Chessalyzer.generateHeatmap(data1, square, fun, optData);
@@ -122,7 +131,7 @@ export default class Chessalyzer {
 		return { map, min, max };
 	}
 
-	static printHeatmap(map: number[][], min: any, max: number) {
+	static printHeatmap(map: number[][], min: number, max: number) {
 		const color = [255, 128, 0];
 		const bgColor = [255, 255, 255];
 		for (let i = 0; i < map.length; i += 1) {
@@ -150,8 +159,8 @@ export default class Chessalyzer {
 	}
 
 	static getStartingPiece(sqr: number[]) {
-		let color = '';
-		let name = '';
+		let color: string = null;
+		let name: string = null;
 		if (sqr[0] === 0) {
 			color = 'b';
 			name = pieceTemplate[sqr[1]];
