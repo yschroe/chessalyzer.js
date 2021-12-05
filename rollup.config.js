@@ -1,4 +1,5 @@
 import typescript from '@rollup/plugin-typescript';
+import dts from 'rollup-plugin-dts';
 // defines modules as external dependencies (= will not be bundled into the lib)
 const external = [
 	'fs',
@@ -29,5 +30,10 @@ export default [
 		},
 		external,
 		plugins: [typescript({ tsconfig: './tsconfig.json' })]
+	},
+	{
+		input: 'lib/dts/index.d.ts',
+		output: [{ file: 'lib/chessalyzer.d.ts', format: 'esm' }],
+		plugins: [dts()]
 	}
 ];

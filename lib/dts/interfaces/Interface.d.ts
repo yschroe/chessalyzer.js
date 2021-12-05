@@ -19,6 +19,18 @@ interface MoveData {
     promotesTo: string;
     move: Move;
 }
+interface SquareData {
+    alg: string;
+    coords: number[];
+    piece: {
+        color: string;
+        name: string;
+    };
+}
+interface ChessPiece {
+    name: string;
+    color: string;
+}
 interface TrackerConfig {
     profilingActive: boolean;
 }
@@ -34,4 +46,4 @@ interface Tracker {
     finish?: () => void;
     add?: (arg: this) => void;
 }
-export { Game, Move, MoveData, Tracker, TrackerConfig };
+export { Game, Move, MoveData, ChessPiece, Tracker, SquareData, TrackerConfig };

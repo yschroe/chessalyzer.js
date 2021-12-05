@@ -3,9 +3,10 @@
 	"version": "1.6.4",
 	"description": "Batch analyze PGN and generate heat maps",
 	"type": "module",
+	"types": "./lib/chessalyzer.d.ts",
 	"exports": {
 		".": {
-			"types": "./lib/dts/index.d.ts",
+			"types": "./lib/chessalyzer.d.ts",
 			"import": "./lib/chessalyzer.js"
 		}
 	},
@@ -47,6 +48,7 @@
 		"@typescript-eslint/parser": "^5.5.0",
 		"eslint": "^8.4.0",
 		"rollup": "^2.60.2",
+		"rollup-plugin-dts": "^4.0.1",
 		"tslib": "^2.3.1",
 		"typedoc": "^0.22.10",
 		"typescript": "^4.5.2"

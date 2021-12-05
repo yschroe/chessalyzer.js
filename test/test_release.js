@@ -18,7 +18,8 @@ c.cfg.profilingActive = true;
 		[],
 		{
 			cntGames: 1000000
-		}
+		},
+		{ batchSize: 8000, nThreads: 1 }
 	);
 	console.log(a);
 	console.log('Game: ' + Math.round(a.time) / 1000);

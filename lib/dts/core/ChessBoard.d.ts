@@ -1,14 +1,10 @@
-import { MoveData } from '../interfaces/Interface';
+import { MoveData, ChessPiece } from '../interfaces/Interface';
 declare class PiecePositionTable {
     posMap: unknown;
     constructor();
     takes(player: string, piece: string): void;
     moves(player: string, piece: string, to: number[]): void;
     promotes(player: string, piece: string, on: number[]): void;
-}
-interface ChessPiece {
-    name: string;
-    color: string;
 }
 declare class ChessBoard {
     tiles: ChessPiece[][];

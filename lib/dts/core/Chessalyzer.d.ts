@@ -1,4 +1,4 @@
-import { Tracker } from '../interfaces/Interface.js';
+import { Tracker, SquareData } from '../interfaces/Interface.js';
 export default class Chessalyzer {
     static startBatch(path: string, analyzer: Tracker | Tracker[], cfg?: {}, multithreadCfg?: {
         batchSize: number;
@@ -7,7 +7,7 @@ export default class Chessalyzer {
         cntGames: number;
         cntMoves: number;
     }>;
-    static generateHeatmap(data: any, square: string | number[], fun: (data: any, sqrData: any, loopSqrData: any, optData: any) => number, optData?: {}): {
+    static generateHeatmap(data: any, square: string | number[], fun: (data: any, sqrData: SquareData, loopSqrData: SquareData, optData: any) => number, optData?: {}): {
         map: any[];
         min: number;
         max: number;
