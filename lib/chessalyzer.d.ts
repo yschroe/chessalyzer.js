@@ -124,7 +124,11 @@ declare class TileTrackerBase extends BaseTracker {
 }
 
 declare class GameTrackerBase extends BaseTracker {
-    wins: number[];
+    results: {
+        white: number;
+        black: number;
+        draw: number;
+    };
     cntGames: number;
     ECO: object;
     constructor();
