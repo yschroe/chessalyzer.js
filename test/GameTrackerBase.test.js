@@ -3,9 +3,9 @@ import assert from 'assert';
 import { Chessalyzer, Tracker } from '../lib/chessalyzer.js';
 
 context('GameTrackerBase', function () {
-	describe('Basic Tests', function () {
-		this.timeout(20000);
+	this.timeout(20000);
 
+	describe('Basic Tests: Multithreaded', function () {
 		let data;
 		let gameTracker = new Tracker.Game();
 		before(async function () {
@@ -15,7 +15,31 @@ context('GameTrackerBase', function () {
 			);
 		});
 
-		it('Game count inside Game Tracker matches game count of parser', function () {
+		it('Game count inside Game Tracker matches game count of Parser', function () {
+			assert.strictEqual(data.cntGames, gameTracker.cntGames);
+		});
+
+		it('Sum of result object matches count of games', function () {
+			assert.strictEqual(
+				Object.values(gameTracker.results).reduce((a, c) => a + c),
+				data.cntGames
+			);
+		});
+	});
+
+	describe('Basic Tests: Singlethreaded', function () {
+		let data;
+		let gameTracker = new Tracker.Game();
+		before(async function () {
+			data = await Chessalyzer.startBatch(
+				'./test/lichess_db_standard_rated_2013-01_min.pgn',
+				[gameTracker],
+				undefined,
+				null
+			);
+		});
+
+		it('Game count inside Game Tracker matches game count of Parser', function () {
 			assert.strictEqual(data.cntGames, gameTracker.cntGames);
 		});
 
@@ -28,8 +52,6 @@ context('GameTrackerBase', function () {
 	});
 
 	describe('Filtered Games: Result 1-0', function () {
-		this.timeout(20000);
-
 		let gameTracker = new Tracker.Game();
 		before(async function () {
 			await Chessalyzer.startBatch(

@@ -3,10 +3,10 @@ import assert from 'assert';
 import { Chessalyzer } from '../lib/chessalyzer.js';
 
 context('Core Features', function () {
+	this.timeout(20000);
+
 	context('Basic Parsing', function () {
 		describe('PGN File: Multiple Games, No Comments, Single Line for Moves', function () {
-			this.timeout(20000);
-
 			let data;
 			before(async function () {
 				data = await Chessalyzer.startBatch(
@@ -25,8 +25,6 @@ context('Core Features', function () {
 		});
 
 		describe('PGN File: One Game, With Comments, Multiple Lines for Moves', function () {
-			this.timeout(20000);
-
 			let data;
 			before(async function () {
 				data = await Chessalyzer.startBatch(
@@ -45,8 +43,6 @@ context('Core Features', function () {
 		});
 
 		describe('PGN File: One Game, With Comments, Single Lines for Moves', function () {
-			this.timeout(20000);
-
 			let data;
 			before(async function () {
 				data = await Chessalyzer.startBatch(
@@ -66,8 +62,6 @@ context('Core Features', function () {
 	});
 	context('Filtering', function () {
 		describe('Count', function () {
-			this.timeout(20000);
-
 			let data;
 			before(async function () {
 				data = await Chessalyzer.startBatch(
@@ -83,8 +77,6 @@ context('Core Features', function () {
 		});
 
 		describe('Function', function () {
-			this.timeout(20000);
-
 			let data;
 			before(async function () {
 				data = await Chessalyzer.startBatch(
@@ -100,8 +92,6 @@ context('Core Features', function () {
 		});
 
 		describe('Count + Function', function () {
-			this.timeout(20000);
-
 			let data;
 			before(async function () {
 				data = await Chessalyzer.startBatch(
@@ -119,8 +109,6 @@ context('Core Features', function () {
 
 	context('Other', function () {
 		describe('Singlethreaded Mode', function () {
-			this.timeout(20000);
-
 			let data;
 			before(async function () {
 				data = await Chessalyzer.startBatch(
