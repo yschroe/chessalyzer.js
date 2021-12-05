@@ -2,21 +2,21 @@ import BaseTracker from './BaseTracker.js';
 import { Game } from '../interfaces/Interface.js';
 
 class GameTrackerBase extends BaseTracker {
-	wins: number[];
+	results: { white: number; black: number; draw: number };
 	cntGames: number;
 	ECO: object;
 
 	constructor() {
 		super('game');
-		this.wins = [0, 0, 0];
+		this.results = { white: 0, black: 0, draw: 0 };
 		this.cntGames = 0;
 		this.ECO = {};
 	}
 
 	add(tracker: GameTrackerBase) {
-		this.wins[0] += tracker.wins[0];
-		this.wins[1] += tracker.wins[1];
-		this.wins[2] += tracker.wins[2];
+		this.results.white += tracker.results.white;
+		this.results.black += tracker.results.black;
+		this.results.draw += tracker.results.draw;
 		this.cntGames += tracker.cntGames;
 		this.time += tracker.time;
 
@@ -33,15 +33,15 @@ class GameTrackerBase extends BaseTracker {
 		this.cntGames += 1;
 		switch (game.Result) {
 			case '1-0':
-				this.wins[0] += 1;
+				this.results.white += 1;
 				break;
 
 			case '1/2-1/2':
-				this.wins[1] += 1;
+				this.results.draw += 1;
 				break;
 
 			case '0-1':
-				this.wins[2] += 1;
+				this.results.black += 1;
 				break;
 
 			default:
