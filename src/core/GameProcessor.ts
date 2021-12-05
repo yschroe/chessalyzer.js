@@ -196,7 +196,6 @@ class GameProcessor {
 					if (line.match(/((1-0)|(0-1)|(1\/2-1\/2)|(\*))$/)) {
 						// remove the result from the moves array
 						game.moves.pop();
-
 						if (!cfg.hasFilter || cfg.filter(game)) {
 							this.cntGames += 1;
 							if (isMultithreaded) {
@@ -303,7 +302,6 @@ class GameProcessor {
 		});
 
 		this.cntMoves += moves.length;
-		this.cntGames += 1;
 		this.board.reset();
 
 		// game based analyzers

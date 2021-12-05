@@ -77,7 +77,7 @@ context('Core Features', function () {
 				);
 			});
 
-			it('Processed exactly 100 games in file', function () {
+			it('Processed exactly 100 games of file', function () {
 				assert.strictEqual(data.cntGames, 100);
 			});
 		});
@@ -113,6 +113,30 @@ context('Core Features', function () {
 
 			it('Processed 500 games', function () {
 				assert.strictEqual(data.cntGames, 500);
+			});
+		});
+	});
+
+	context('Other', function () {
+		describe('Singlethreaded Mode', function () {
+			this.timeout(20000);
+
+			let data;
+			before(async function () {
+				data = await Chessalyzer.startBatch(
+					'./test/lichess_db_standard_rated_2013-01_min.pgn',
+					[],
+					undefined,
+					null
+				);
+			});
+
+			it('Processed exactly all 43,364 games in file', function () {
+				assert.strictEqual(data.cntGames, 43364);
+			});
+
+			it('Processed exactly all 2,888,359 moves in file', function () {
+				assert.strictEqual(data.cntMoves, 2888359);
 			});
 		});
 	});
