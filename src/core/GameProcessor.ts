@@ -123,7 +123,7 @@ class GameProcessor {
 			this.attachAnalyzers(analyzer);
 
 			// creates a new worker, that will process an array of games
-			const forkWorker = (games: string[]) => {
+			const forkWorker = (games: Game[]) => {
 				const w = cluster.fork();
 
 				// on worker finish
