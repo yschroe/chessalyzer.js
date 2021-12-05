@@ -1,5 +1,5 @@
-import PieceTrackerBase from '../tracker/PieceTrackerBase';
-import { SquareData } from '../interfaces/Interface';
+import PieceTrackerBase from '../PieceTrackerBase';
+import { SquareData } from '../../interfaces/Interface';
 
 export default {
 	PIECE_KILLED_BY: {
