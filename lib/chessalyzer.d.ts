@@ -55,12 +55,12 @@ declare class Chessalyzer {
         cntMoves: number;
         mps: number;
     }>;
-    static generateHeatmap(data: unknown, square: string | number[], fun: (data: unknown, sqrData: SquareData, loopSqrData: SquareData, optData: unknown) => number, optData?: unknown): {
+    static generateHeatmap(data: unknown, fun: (data: unknown, sqrData: SquareData, loopSqrData: SquareData, optData: unknown) => number, square?: string | number[], optData?: unknown): {
         map: number[][];
         min: number;
         max: number;
     };
-    static generateComparisonHeatmap(data1: unknown, data2: unknown, square: string | number[], fun: (data: unknown, sqrData: SquareData, loopSqrData: SquareData, optData: unknown) => number, optData?: unknown): {
+    static generateComparisonHeatmap(data1: unknown, data2: unknown, fun: (data: unknown, sqrData: SquareData, loopSqrData: SquareData, optData: unknown) => number, square?: string | number[], optData?: unknown): {
         map: number[][];
         min: number;
         max: number;

@@ -32,25 +32,22 @@ export default class Chessalyzer {
 		const tdiff = Math.round(t1 - t0) / 1000;
 		const mps = Math.round(header.cntMoves / tdiff);
 
-		// console.log(
-		// 	`${header.cntGames} games (${header.cntMoves} moves) processed in ${tdiff}s (${mps} moves/s)`
-		// );
 		return { ...header, mps };
 	}
 
 	static generateHeatmap(
 		data: unknown,
-		square: string | number[],
 		fun: (
 			data: unknown,
 			sqrData: SquareData,
 			loopSqrData: SquareData,
 			optData: unknown
 		) => number,
-		optData: unknown = {}
+		square?: string | number[],
+		optData?: unknown
 	): { map: number[][]; min: number; max: number } {
-		let sqrCoords: number[];
-		let sqrAlg: string;
+		let sqrCoords: number[] = null;
+		let sqrAlg: string = null;
 
 		// square input type 'a2'
 		if (typeof square === 'string') {
@@ -58,7 +55,7 @@ export default class Chessalyzer {
 			sqrAlg = square;
 
 			// input type [6,0]
-		} else {
+		} else if (Array.isArray(square)) {
 			sqrCoords = square;
 			sqrAlg = GameProcessor.coordsToAlgebraic(square);
 		}
@@ -97,22 +94,22 @@ export default class Chessalyzer {
 	static generateComparisonHeatmap(
 		data1: unknown,
 		data2: unknown,
-		square: string | number[],
 		fun: (
 			data: unknown,
 			sqrData: SquareData,
 			loopSqrData: SquareData,
 			optData: unknown
 		) => number,
-		optData: unknown = {}
+		square?: string | number[],
+		optData?: unknown
 	): { map: number[][]; min: number; max: number } {
 		const map = [];
 		let max = -Infinity;
 		let min = Infinity;
 
 		// comparison heatmap
-		const map0 = Chessalyzer.generateHeatmap(data1, square, fun, optData);
-		const map1 = Chessalyzer.generateHeatmap(data2, square, fun, optData);
+		const map0 = Chessalyzer.generateHeatmap(data1, fun, square, optData);
+		const map1 = Chessalyzer.generateHeatmap(data2, fun, square, optData);
 
 		for (let i = 0; i < 8; i += 1) {
 			const dataRow = new Array(8);
@@ -161,18 +158,20 @@ export default class Chessalyzer {
 	static getStartingPiece(sqr: number[]) {
 		let color: string = null;
 		let name: string = null;
-		if (sqr[0] === 0) {
-			color = 'b';
-			name = pieceTemplate[sqr[1]];
-		} else if (sqr[0] === 1) {
-			color = 'b';
-			name = pawnTemplate[sqr[1]];
-		} else if (sqr[0] === 6) {
-			color = 'w';
-			name = pawnTemplate[sqr[1]];
-		} else if (sqr[0] === 7) {
-			color = 'w';
-			name = pieceTemplate[sqr[1]];
+		if (sqr !== null) {
+			if (sqr[0] === 0) {
+				color = 'b';
+				name = pieceTemplate[sqr[1]];
+			} else if (sqr[0] === 1) {
+				color = 'b';
+				name = pawnTemplate[sqr[1]];
+			} else if (sqr[0] === 6) {
+				color = 'w';
+				name = pawnTemplate[sqr[1]];
+			} else if (sqr[0] === 7) {
+				color = 'w';
+				name = pieceTemplate[sqr[1]];
+			}
 		}
 
 		return { color, name };
