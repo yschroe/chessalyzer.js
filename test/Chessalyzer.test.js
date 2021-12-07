@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import assert from 'assert';
-import { Chessalyzer } from '../lib/chessalyzer.js';
+import { Chessalyzer, Tracker } from '../lib/chessalyzer.js';
 
 context('Core Features', function () {
 	this.timeout(20000);
@@ -103,6 +103,53 @@ context('Core Features', function () {
 
 			it('Processed 500 games', function () {
 				assert.strictEqual(data.cntGames, 500);
+			});
+		});
+	});
+
+	context('Attaching Trackers', function () {
+		let gameTracker = new Tracker.Game();
+		let pieceTracker = new Tracker.Piece();
+
+		describe('Single Tracker', function () {
+			let data;
+			before(async function () {
+				data = await Chessalyzer.startBatch(
+					'./test/lichess_db_standard_rated_2013-01_min.pgn',
+					gameTracker
+				);
+			});
+
+			it('Processed all games without error', function () {
+				assert.strictEqual(data.cntGames, 43364);
+			});
+		});
+
+		describe('Single Tracker (in Array)', function () {
+			let data;
+			before(async function () {
+				data = await Chessalyzer.startBatch(
+					'./test/lichess_db_standard_rated_2013-01_min.pgn',
+					[gameTracker]
+				);
+			});
+
+			it('Processed all games without error', function () {
+				assert.strictEqual(data.cntGames, 43364);
+			});
+		});
+
+		describe('Multiple Trackers', function () {
+			let data;
+			before(async function () {
+				data = await Chessalyzer.startBatch(
+					'./test/lichess_db_standard_rated_2013-01_min.pgn',
+					[gameTracker, pieceTracker]
+				);
+			});
+
+			it('Processed all games without error', function () {
+				assert.strictEqual(data.cntGames, 43364);
 			});
 		});
 	});
