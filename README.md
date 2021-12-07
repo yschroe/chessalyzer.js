@@ -25,9 +25,8 @@ A JavaScript library for batch analyzing chess games.
 
 # Features
 
--   Batch process PGN files
+-   Batch process PGN files and track statistics of your games
 -   Filter games (e.g. only analyze games where WhiteElo > 1800)
--   Track statistics
 -   Fully modular, track only the stats you need to preserve performance
 -   Generate heatmaps out of the generated data
 -   It's fast: >3.300.000 moves/s on a Apple M1, >2.900.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
@@ -41,7 +40,7 @@ A JavaScript library for batch analyzing chess games.
 npm install chessalyzer.js
 ```
 
-2. Import the Chessalyzer object (Note: since V2.0 chessalyzer is a ES module so you can't use the Node.js require(...) syntax).
+2. Import the Chessalyzer object (Note: since V2.0 chessalyzer is an ES module so you can't use the Node.js require(...) syntax).
 
 ```javascript
 import { Chessalyzer } from 'chessalyzer.js';
@@ -51,7 +50,7 @@ import { Chessalyzer } from 'chessalyzer.js';
 
 # How it works
 
-chessalyzer.js consists of two submodules which work hand-in-hand: The first module is the `Chessalyzer` class which handles the PGN parsing and provides you with functions for generating and displaying heatmaps. The class by itself is static (meaning it can not be instantiated and does not store data in itself) and does not track any statistics though. For this you need a `Tracker` object which you then can pass into the parsing function of the Chessalyzer class. The Chessalzyer class recongnizes the Tracker objects and passes data into it. Typically this will either be `MoveData` containing information about e.g. which piece moved from where to where or which piece took which other piece for each move of each game. Additionally you can also use the information from the header of the PGN file, where you can find e.g. the player names and which opening was played (ECO code). Inside the Tracker object you can do whatever you want with the data. If you want to track some obscure stat like how often the e pawn was promoted to a rook on the a8 square you could write a Tracker for that. Chessalyzer.js ships with three different preconfigured Tracker objects for keeping track of all pieces and tiles, so if you are happy with that you don't need to code your own Tracker.
+chessalyzer.js consists of two submodules which work hand-in-hand: The first module is the `Chessalyzer` class which handles the PGN parsing and provides you with functions for generating and displaying heatmaps. The class by itself is static (meaning it can not be instantiated and does not store data in itself) and does not track any statistics though. For this you need a `Tracker` object which you then can pass into the parsing function of the Chessalyzer class. The Chessalzyer class recongnizes the Tracker objects and passes data into it. Typically this will either be `MoveData` containing information about e.g. which piece moved from where to where or which piece took which other piece for each move of each game. Additionally you can also use the information from the header of the PGN file, where you can find e.g. the player names and which opening was played (ECO code). Inside the Tracker object you can do whatever you want with the data. If you want to track some obscure stat like how often the e pawn was promoted to a rook on the a8 square you could write a Tracker for that. Chessalyzer.js ships with three different preconfigured Trackers which should cover most usecases, so if you are happy with that you don't need to code your own Tracker.
 
 Lastly chessalyzer.js provides you with functions to convert your raw data from your Trackes into heatmaps which you then can use in your frontend of choice.
 
@@ -129,20 +128,24 @@ Per default chessalyzer.js uses the Node.js cluster module to read-in the pgn fi
 })();
 ```
 
-`startBatch(...)` in multithread mode reads in chunks of games of size `batchSize` times `nThreads` and starts the analysis of the curent chunk while the next chunk is read-in from the PGN file in parallel. With the `nThreads` argument you can define how many threads are started in parallel to analyze the chunk. For example: `batchSize = 1000` and `nThreads = 5` will result in a chunk size of 5000 which is split in 5 threads which analyse 1000 games each.
+`startBatch(...)` in multithreaded mode reads in chunks of games of size `batchSize` times `nThreads` and starts the analysis of the curent chunk while the next chunk is read-in from the PGN file in parallel. With the `nThreads` argument you can define how many threads are started in parallel to analyze the chunk. For example: `batchSize = 1000` and `nThreads = 5` will result in a chunk size of 5000 which is split in 5 threads which analyse 1000 games each.
+
+### Forcing single threaded mode
+
+To use singlethreaded mode in which the games are read in and analyzed sequentially on a single thread, simply pass `null` as the 4th argument into startBatch(...).
 
 ##### Important
 
--   A larger `nThreads` does not necessary result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak `batchSize` and `nThreads` to get the best results on your system. On my systems I achieved the best resuts with `nThreads = 1` and `batchSize = 8000` and that is also the default setting. Note that `nThreads = 1` doesn't mean that the analysis is single-threaded but that 1 _additional_ thread in addition to the thread that parses the PGN file is spawned.
+-   A larger `nThreads` does not necessary result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak `batchSize` and `nThreads` to get the best results on your system. On my systems I achieved the best results with `nThreads = 1` and `batchSize = 8000` and that is also the default setting. Note that `nThreads = 1` doesn't mean that the analysis is single-threaded but that 1 _additional_ thread in addition to the thread that parses the PGN file is spawned.
 -   To use a custom tracker with your multithreaded analysis your tracker needs to have two additional class members:
-    -   A `path` variable which contains the path of the file your custom tracker is defined in. You can use node.js global `__filename` for this. You can check out the `CustomTracker.js` file in the `/test` subfolder, which is basically a copy of the base GameTracker built as a custom tracker. You can only use one custom Tracker for multithreaded analyses at the moment.
+    -   A `path` variable which contains the path of the file your custom tracker is defined in. You can use `this.path = import.meta.url;` for this. You can check out the `CustomTracker.js` file in the `/test` subfolder, which is basically a copy of the base GameTracker built as a custom tracker. You can only use one custom Tracker for multithreaded analyses at the moment.
     -   An `add()` function. This function gets passed another Tracker object of the same type and is used to merge the data of the two tracker objects. For example, the add() function of the built-in GameTracker looks like this:
 
 ```javascript
 add(tracker) {
-    this.wins[0] += tracker.wins[0];
-    this.wins[1] += tracker.wins[1];
-    this.wins[2] += tracker.wins[2];
+    this.results.white += tracker.results.white;
+    this.results.black += tracker.results.black;
+    this.results.draw += tracker.results.draw;
     this.cntGames += tracker.cntGames;
     this.time += tracker.time;
 }
@@ -187,7 +190,7 @@ let fun = (data, _, loopSqrData) => {
     });
 
     // generate the comparison heatmap
-    let heatmapData = Chessalyzer.generateComparisonHeatmap(
+    const heatmapData = Chessalyzer.generateComparisonHeatmap(
         tileT1,
         tileT2,
         fun
@@ -313,9 +316,10 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 # Changelog
 
 -   2.0.0:
-    -   chessalyzer.js is now a ES module (ESM) and will no longer work inside a browser. You need node.js to run the library.
+    -   Chessalyzer.js is now a ES module (ESM) and will no longer work inside a browser. You need Node.js to run the library.
     -   runBatch(...) and runBatchMulticore(...) were merged into the single function runBatch(...). Per default the function will run in multithreaded mode, but you can override the config to force singlethreaded mode if it is needed in your environment.
     -   Added support for PGN files in which the game moves are listed in multiple lines instead of one single line
     -   Exports a new Heatmap object with heatmap presets for the built-in Tile and Piece tracker.
     -   Changed the data structure of the move data passed into the analyzers.
     -   Ported code base to TypeScript.
+    -   (Since I have no idea if someone actually uses the library, I won't write a migration guide. If you need help, just leave me an issue)
