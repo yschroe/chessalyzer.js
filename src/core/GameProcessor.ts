@@ -59,8 +59,7 @@ class GameProcessor {
 	cntGames: number;
 	gameAnalyzers: Tracker[];
 	moveAnalyzers: Tracker[];
-	analyzerNames: string[];
-	analyzerConfigs: object[];
+	analyzerData: object[];
 
 	constructor() {
 		this.board = new ChessBoard();
@@ -69,8 +68,7 @@ class GameProcessor {
 		this.cntGames = 0;
 		this.gameAnalyzers = [];
 		this.moveAnalyzers = [];
-		this.analyzerNames = [];
-		this.analyzerConfigs = [];
+		this.analyzerData = [];
 	}
 
 	static checkConfig(config: any): GameProcessorConfig {
@@ -88,16 +86,23 @@ class GameProcessor {
 		return cfg;
 	}
 
-	attachAnalyzers(analyzers: Tracker[]): void {
+	attachAnalyzers(analyzers: Tracker[]): string[] {
+		const customPaths: string[] = [];
 		analyzers.forEach((a) => {
 			if (a.type === 'move') {
 				this.moveAnalyzers.push(a);
 			} else if (a.type === 'game') {
 				this.gameAnalyzers.push(a);
 			}
-			this.analyzerNames.push(a.constructor.name);
-			this.analyzerConfigs.push(a.cfg);
+
+			this.analyzerData.push({
+				name: a.constructor.name,
+				cfg: a.cfg,
+				path: Object.prototype.hasOwnProperty.call(a, 'path') && a.path
+			});
 		});
+
+		return customPaths;
 	}
 
 	async processPGN(
@@ -108,8 +113,6 @@ class GameProcessor {
 	): Promise<{ cntGames: number; cntMoves: number }> {
 		try {
 			let readerFinished = false;
-			// TODO: fix custom Tracker
-			const customPath = '';
 
 			const isMultithreaded = multiThreadCfg !== null;
 			const status = new EventEmitter();
@@ -135,9 +138,7 @@ class GameProcessor {
 					if (msg === 'readyForData') {
 						w.send({
 							games,
-							customPath,
-							analyzerNames: this.analyzerNames,
-							analyzerConfigs: this.analyzerConfigs
+							analyzerData: this.analyzerData
 						});
 					} else {
 						// add tracker data from this worker

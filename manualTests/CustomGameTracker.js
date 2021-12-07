@@ -3,7 +3,7 @@ import { Tracker } from '../lib/chessalyzer.js';
 export default class CustomGameTracker extends Tracker.Base {
 	constructor() {
 		super('game');
-		this.path = __filename;
+		this.path = import.meta.url;
 		this.wins = [0, 0, 0];
 		this.cntGames = 0;
 	}

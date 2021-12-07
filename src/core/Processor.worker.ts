@@ -4,38 +4,33 @@ import { Game } from '../interfaces/Interface';
 
 process.on(
 	'message',
-	(msg: {
+	async (msg: {
 		games: Game[];
-		customPath: string;
-		analyzerNames: string[];
-		analyzerConfigs: object[];
+		analyzerData: { name: string; cfg: object; path?: string }[];
 	}) => {
 		const TrackerList = {};
 		const proc = new GameProcessor();
 
+		// prepare built-in trackers
 		Object.keys(Tracker).forEach((key) => {
 			TrackerList[Tracker[key].name] = Tracker[key];
 		});
 
-		// merge available Trackers
-		if (msg.customPath) {
-			const TrackerListCustom = msg.customPath;
-
-			Object.keys(TrackerListCustom).forEach((key) => {
-				TrackerList[TrackerListCustom[key].name] =
-					TrackerListCustom[key];
-			});
+		// import custom trackers
+		for (const a of msg.analyzerData.filter((val) => val.path)) {
+			const customTracker = await import(a.path);
+			TrackerList[a.name] = customTracker.default
+				? customTracker.default
+				: customTracker;
 		}
 
-		// select needed analyzers
+		// select needed trackers
 		const analyzer = [];
-		msg.analyzerNames.forEach((name) => {
-			analyzer.push(new TrackerList[name]());
+		msg.analyzerData.forEach((a) => {
+			const currentAnalyzer = new TrackerList[a.name]();
+			currentAnalyzer.cfg = a.cfg;
+			analyzer.push(currentAnalyzer);
 		});
-
-		for (let i = 0; i < analyzer.length; i += 1) {
-			analyzer[i].cfg = msg.analyzerConfigs[i];
-		}
 
 		proc.attachAnalyzers(analyzer);
 
