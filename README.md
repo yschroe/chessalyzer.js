@@ -139,9 +139,7 @@ To use singlethreaded mode in which the games are read in and analyzed sequentia
 ##### Important
 
 -   A larger `nThreads` does not necessarily result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak `batchSize` and `nThreads` to get the best results on your system. On my systems I achieved the best results with `nThreads = 1` and `batchSize = 8000` and that is also the default setting. Note that `nThreads = 1` doesn't mean that the analysis is single-threaded but that 1 _additional_ thread in addition to the thread that parses the PGN file is spawned.
--   To use a custom tracker with your multithreaded analysis your tracker needs to have two additional class members:
-    -   A `path` variable which contains the path of the file your custom tracker is defined in. You can use `this.path = import.meta.url;` for this. You can check out the `CustomTracker.js` file in the `/test` subfolder, which is basically a copy of the base GameTracker built as a custom tracker. You can only use one custom Tracker for multithreaded analyses at the moment.
-    -   An `add()` function. This function gets passed another Tracker object of the same type and is used to merge the data of the two tracker objects. For example, the add() function of the built-in GameTracker looks like this:
+-   To use a custom tracker with your multithreaded analysis please see the important notes at the (Custom Trackers)[#custom-trackers] section.
 
 ```javascript
 add(tracker) {
@@ -229,8 +227,8 @@ chessalyzer.js comes with three built-in trackers, available from the `Chessalyz
 
 `Tracker.Game`:
 
--   `wins`  
-    [white wins, draws, black wins]
+-   `result`
+    An object which counts the results of the tracked games. Contains the keys `white`, `draw` and `black`
 
 -   `ECO`
     Counts the ECO keys of the processed games. `ECO` is an object that contains the different keys, for example 'A00'.
@@ -262,41 +260,73 @@ chessalyzer.js comes with three built-in trackers, available from the `Chessalyz
 
 ## Custom Trackers
 
-If you want to have other stats tracked you can easily create a custom tracker. Ideally you derive your tracker from the `Tracker.Base` class, which comes with built-in performance tracking and warnings, if the structure of your tracker isn't correct.
+If you want to have other stats tracked you can easily create a custom tracker. You must derive your tracker from the `Tracker.Base` class.
 
-Your tracker must have the following two properties:
+Your tracker also must have the following properties:
 
 -   `type`:  
     The type of your tracker. Either move based (`this.type = 'move'`) or game based (`this.type = 'game'`).
 
+-   `path`:
+    Variable which contains the path of the file your custom tracker is defined in. You can use `this.path = import.meta.url;` for this. Your Tracker MUST be defined in a separate file and it must be the only object that is exported from that file. Background: Since the data passed to the worker thread is serialized first, you can't pass non-primitive types to the worker it. So the library dynamically imports the Custom Tracker provided in the path variable into the Worker Thread. In there the Tracker will be instantiated as normal. (If you happen to know a better way for passing classes into a worker thread, let me know. The current solution is a bit hacky but it works.)
+
 -   `track(data)`:  
-    The main analysis function that is called during the PGN processing. Depending on your `type` the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The `data` object contains the following properties:
+     The main analysis function that is called during the PGN processing. Depending on your `type` the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The `data` object contains the following properties:
 
-    -   For move-typed trackers:
+    -   For move-typed trackers: A `MoveData` object with the following properties:
 
-        -   `san`: The processed move in standard algebraic notation (e.g. `'Nxe3'`)
-        -   `player`: The moving player (`'b'` or `'w'`)
-        -   `piece`: The moving piece (e.g. `Pa` for the a-pawn)
-        -   `castles`: If the move is castling it's either `'O-O'` or `'O-O-O'`. Empty string else
-        -   `takes`: If the move contains taking another piece, takes is an object with following properties:
+        ```typescript
+        interface MoveData {
+            // The processed move in standard algebraic notation (e.g. 'Nxe3')
+            san: string;
 
-            -   `piece`: The piece that is taken (e.g. `Pa` for the a-pawn)
-            -   `pos`: Board coordinates of the taken piece. Is equal to the `to` property in all cases but 'en passant'
+            // The moving player ('b' or 'w')
+            player: string;
 
-            Is `{}` if no piece is taken
+            // The moving piece (e.g. 'Pa' for the a-pawn)
+            piece: string;
 
-        -   `promotesTo`: In case of pawn promotion contains the piece the pawn promotes to (e.g. 'Q'), empty string else
-        -   `from`: Start coordinates of the move (e.g. `[0,0]`). `[-1,-1]` in case the move is the result (e.g. `1-0`).
-        -   `to`: Target coordinates of the move (e.g. `[7,0]`). `[-1,-1]` in case the move is the result (e.g. `1-0`).
+            // If the move is castling it's either 'O-O' or 'O-O-O', null else
+            castles: string;
 
-    -   For game-typed trackers:  
-        `data` is an object that contains `{key: value}` entries, where `key` is the property in the PGN (e.g. `'WhiteElo'`, case sensitive) and `value` is the respective value of the property. The property `data.moves` is an array that contains the moves of the game in standard algebraic notation.
+            // Contains the coordinates of the move
+            move: {
+                // Start coordinates of the move (e.g. [0,0]).
+                from: number[];
+
+                // Target coordinates of the move (e.g. [7,0]).
+                to: number[];
+            };
+
+            // In case of pawn promotion contains the piece the pawn promotes to (e.g. 'Q'), null else
+            promotesTo: string;
+
+            // If the move contains taking another piece, takes is an object with following properties, null else
+            takes: {
+                // The piece that is taken (e.g. 'Pa' for the a-pawn)
+                piece: string;
+
+                // Board coordinates of the taken piece. Is equal to the move.to property in all cases but 'en passant'
+                pos: number[];
+            };
+        }
+        ```
+
+    -   For game-typed trackers:
+        `data` is an object that contains `{key: value}` entries, where `key` is the property in the header of the PGN (e.g. `'WhiteElo'`, case sensitive) and `value` is the respective value of the property. The property `data.moves` is an array that contains the moves of the game in standard algebraic notation.
 
 -   `add(tracker)`:
     Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. See [Multithreaded analyses section](#multithreaded-analysis) for an example.
 
--   `finish()`:
-    Optional method that is called when all games have been processed. Can be used for example to clean up or sort the data of the tracker.
+-   `nextGame()` (opt.):
+    Optional method that is called for move-type trackers after the last move of every game. You can use this to do end-of-game stuff inside your tracker, like storing and resetting statistics for the current game.
+
+-   `finish()` (opt.):
+    Optional method that is called when all games have been processed. Can be used for example to clean up or sort the data in the tracker.
+
+# Heatmap Presets
+
+TODO
 
 # Visualisation
 
@@ -304,7 +334,7 @@ For a quick preview you can put your heatmap data into `Chessalyzer.printHeatmap
 
 <img src="https://i.imgur.com/THV7gwY.png" width="40%">
 
-But generally chessalyzer.js only provides the raw data of the analyses (yet? :)). If you want to visualize the data you will need a separate library. The following examples were created with my fork of [chessboardjs](https://github.com/PeterPain/heatboard.js) with added heatmap functionality.
+But generally chessalyzer.js only provides the raw data of the analyses (yet? :)). If you want to visualize the data you will need a separate library. The following examples were created with my fork of [chessboard.js](https://github.com/PeterPain/heatboard.js) with added heatmap functionality.
 
 White tile occupation  
 <img src="https://i.imgur.com/2naX1mg.png" width="30%">
