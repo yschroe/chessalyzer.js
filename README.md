@@ -261,7 +261,7 @@ chessalyzer.js comes with three built-in trackers, available from the `Chessalyz
     -   `movedTo`: How often the piece moved to this tile
     -   `wasOn`: Amount of half-moves the piece was on this tile
     -   `killedOn`: How often the piece took another piece on this tile
-    -   `wasKilledOn`: How often the piece was taken on this tile.
+    -   `wasKilledOn`: How often the piece was taken on this tile
 
     These stats are also tracked for black and white as a whole. Simply omit the piece name to get the total stats of one side for a specific tile, e.g. `tiles[0][6].b.wasOn`.
 
