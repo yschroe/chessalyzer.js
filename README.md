@@ -18,10 +18,10 @@ A JavaScript library for batch analyzing chess games.
 -   [Tracked statistics](#tracked-statistics)
     -   [Built-in](#built-in)
     -   [Custom Tracker](#custom-trackers)
+-   [Heatmap presets](#heatmap-presets)
 -   [Visualisation](#visualisation)
 -   [Contribute](#contribute)
 -   [Changelog](#changelog)
--   [TODOs](#todos)
 
 # Features
 
@@ -139,7 +139,7 @@ To use singlethreaded mode in which the games are read in and analyzed sequentia
 ##### Important
 
 -   A larger `nThreads` does not necessarily result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak `batchSize` and `nThreads` to get the best results on your system. On my systems I achieved the best results with `nThreads = 1` and `batchSize = 8000` and that is also the default setting. Note that `nThreads = 1` doesn't mean that the analysis is single-threaded but that 1 _additional_ thread in addition to the thread that parses the PGN file is spawned.
--   To use a custom tracker with your multithreaded analysis please see the important notes at the (Custom Trackers)[#custom-trackers] section.
+-   To use a custom tracker with your multithreaded analysis please see the important notes at the [Custom Trackers](#custom-trackers) section.
 
 ```javascript
 add(tracker) {
@@ -204,20 +204,29 @@ let fun = (data, _, loopSqrData) => {
 
 The function you create for heatmap generation gets passed up to four parameters (inside `generateHeatMap()`):
 
--   `data`: The data that is the basis for the heatmap. Typically this object is an analyzer you passed into the `startBatch()` function.
--   `sqrData`: Contains informations about the square you passed into the `generateHeatMap()` function. `sqrData` is an object with the following entries:
+1. `data`: The data that is the basis for the heatmap. Typically this object is an analyzer you passed into the `startBatch()` function.
+2. `sqrData`: Contains informations about the square you passed into the `generateHeatMap()` function. `sqrData` is an object with the following entries:
 
-    -   `alg`: The square in algebraic notation (e.g. 'a2'),
-    -   `coords`: The square in board coordinates (e.g. [6,0]),
-    -   `piece`: The piece that starts at the passed square. `piece` is an object with the properties:
+    ```typescript
+    interface SquareData {
+        // The square in algebraic notation (e.g. 'a2')
+        alg: string;
 
-        -   `name`: Name of the piece (e.g. 'Pa' for the a-pawn)
-        -   `color`: Color of the piece ('b' or 'w').
+        // The square in board coordinates (e.g. [6,0])
+        coords: number[];
 
-        If no piece starts at the passed square, `name` and `color` are empty strings.
+        // The piece that starts at the passed square. If no piece starts at the passed square, `name` and `color` are null.
+        piece: {
+            // Name of the piece (e.g. 'Pa' for the a-pawn)
+            color: string;
+            // Color of the piece ('b' or 'w').
+            name: string;
+        };
+    }
+    ```
 
--   `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The structure of `loopSqrData` is the same as of `sqrData`. The `generateHeatMap()` function loops over every square of the board to calculate a heat map value for each tile.
--   `optData`: Optional data you may need in this function. For example, if you wanted to generate a heatmap to show the average position of a piece after X moves, you could pass that 'X' here.
+3. `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The structure of `loopSqrData` is the same as of `sqrData`. The `generateHeatMap()` function loops over every square of the board to calculate a heat map value for each tile.
+4. `optData`: Optional data you may need in this function. For example, if you wanted to generate a heatmap to show the average position of a piece after X moves, you could pass that 'X' here.
 
 # Tracked statistics
 
@@ -316,7 +325,7 @@ Your tracker also must have the following properties:
         `data` is an object that contains `{key: value}` entries, where `key` is the property in the header of the PGN (e.g. `'WhiteElo'`, case sensitive) and `value` is the respective value of the property. The property `data.moves` is an array that contains the moves of the game in standard algebraic notation.
 
 -   `add(tracker)`:
-    Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. See [Multithreaded analyses section](#multithreaded-analysis) for an example.
+    Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. See [Multithreaded analysis section](#multithreaded-analysis) for an example.
 
 -   `nextGame()` (opt.):
     Optional method that is called for move-type trackers after the last move of every game. You can use this to do end-of-game stuff inside your tracker, like storing and resetting statistics for the current game.

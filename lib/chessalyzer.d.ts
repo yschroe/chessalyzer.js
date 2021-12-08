@@ -74,7 +74,6 @@ declare class Chessalyzer {
 
 declare class BaseTracker implements Tracker {
     type: string;
-    path: string;
     cfg: TrackerConfig;
     time: number;
     t0: number;
