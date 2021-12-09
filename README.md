@@ -40,7 +40,7 @@ A JavaScript library for batch analyzing chess games.
 npm install chessalyzer.js
 ```
 
-2. Import the Chessalyzer object (Note: since V2.0 chessalyzer is an ES module so you can't use the Node.js require(...) syntax).
+2. Import the Chessalyzer object (Note: since V2.0 chessalyzer is an [ES module](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#file-esm-package-md) so you can't use the Node.js require(...) syntax).
 
 ```javascript
 import { Chessalyzer } from 'chessalyzer.js';
@@ -71,23 +71,23 @@ const tileTracker = new Tracker.Tile();
 
 // chessalyzer returns a Promise so we need to encapsulate everything into an async function
 // you should be able to use the Promise.then(...) syntax as well
-(async () => {
-    // start a batch analysis for the PGN file at <pathToPgnFile>
-    // the data is tracked directly inside the tileTracker instance
-    // see later chapters for how the data is structured inside the trackers
-    await Chessalyzer.startBatch('<pathToPgnFile>', tileTracker);
 
-    // generate a tile occupation heatmap
-    const heatmapData = Chessalyzer.generateHeatmap(
-        tileTracker, // data source for heatmap
-        Heatmap.Tile.TILE_OCC_ALL.calc // heatmap generation function
-    );
+// start a batch analysis for the PGN file at <pathToPgnFile>
+// the data is tracked directly inside the tileTracker instance
+// see later chapters for how the data is structured inside the trackers
+// (top level awaits are possible with ESM :))
+await Chessalyzer.startBatch('<pathToPgnFile>', tileTracker);
 
-    // print heatmap to console for preview
-    Chessalyzer.printHeatmap(heatmapData.map, heatmapData.min, heatmapData.max);
+// generate a tile occupation heatmap
+const heatmapData = Chessalyzer.generateHeatmap(
+    tileTracker, // data source for heatmap
+    Heatmap.Tile.TILE_OCC_ALL.calc // heatmap generation function
+);
 
-    // ...or use heatmapData with your favourite frontend
-})();
+// print heatmap to console for preview
+Chessalyzer.printHeatmap(heatmapData.map, heatmapData.min, heatmapData.max);
+
+// ...or use heatmapData with your favourite frontend
 ```
 
 ## Filtering
@@ -101,13 +101,11 @@ let fil = function (game) {
     return game.WhiteElo > 2000;
 };
 
-(async () => {
-    await Chessalyzer.startBatch('<pathToPgnFile>', tileTracker, {
-        filter: fil
-    });
+await Chessalyzer.startBatch('<pathToPgnFile>', tileTracker, {
+    filter: fil
+});
 
-    // ...do something with the tileTracker data
-})();
+// ...do something with the tileTracker data
 ```
 
 ## Multithreaded analysis
@@ -116,18 +114,17 @@ Per default chessalyzer.js uses the Node.js cluster module to read-in the pgn fi
 
 ```javascript
 // start a multithreaded batch analysis for the PGN file at <pathToPgnFile>
-(async () => {
-    await Chessalyzer.startBatch(
-        '<pathToPgnFile>',
-        tileTracker,
-        {
-            cntGames: 10000
-        },
-        { batchSize: 8000, nThreads: 1 }
-    );
 
-    // ...
-})();
+await Chessalyzer.startBatch(
+    '<pathToPgnFile>',
+    tileTracker,
+    {
+        cntGames: 10000
+    },
+    { batchSize: 8000, nThreads: 1 }
+);
+
+// ...
 ```
 
 `startBatch(...)` in multithreaded mode reads in chunks of games of size `batchSize` times `nThreads` and starts the analysis of the curent chunk while the next chunk is read-in from the PGN file in parallel. With the `nThreads` argument you can define how many threads are started in parallel to analyze the chunk. For example: `batchSize = 1000` and `nThreads = 5` will result in a chunk size of 5000 which is split in 5 threads which analyse 1000 games each.
@@ -176,28 +173,22 @@ let fun = (data, _, loopSqrData) => {
     return val;
 };
 
-(async () => {
-    // start the first analysis
-    await Chessalyzer.startBatch('<pathToPgnFile>', tileT1, {
-        filter: fil1,
-        cntGames: 1000
-    });
+// start the first analysis
+await Chessalyzer.startBatch('<pathToPgnFile>', tileT1, {
+    filter: fil1,
+    cntGames: 1000
+});
 
-    // start the second analysis
-    await Chessalyzer.startBatch('<pathToPgnFile>', tileT2, {
-        filter: fil2,
-        cntGames: 1000
-    });
+// start the second analysis
+await Chessalyzer.startBatch('<pathToPgnFile>', tileT2, {
+    filter: fil2,
+    cntGames: 1000
+});
 
-    // generate the comparison heatmap
-    const heatmapData = Chessalyzer.generateComparisonHeatmap(
-        tileT1,
-        tileT2,
-        fun
-    );
+// generate the comparison heatmap
+const heatmapData = Chessalyzer.generateComparisonHeatmap(tileT1, tileT2, fun);
 
-    // use heatmapData
-})();
+// use heatmapData
 ```
 
 # Heatmap analysis functions
@@ -357,7 +348,7 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 # Changelog
 
 -   2.0.0:
-    -   Chessalyzer.js is now a ES module (ESM) and will no longer work inside a browser. You need Node.js to run the library.
+    -   Chessalyzer.js is now an ES module (ESM). See [this guide](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#file-esm-package-md) for how to use this package.
     -   runBatch(...) and runBatchMulticore(...) were merged into the single function runBatch(...). Per default the function will run in multithreaded mode, but you can override the config to force singlethreaded mode if it is needed in your environment.
     -   Added support for PGN files in which the game moves are listed in multiple lines instead of one single line
     -   Exports a new Heatmap object with heatmap presets for the built-in Tile and Piece tracker.
