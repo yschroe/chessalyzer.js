@@ -36,4 +36,4 @@ node_modules
 
 *.csv
 
-lib/dts
+lib
