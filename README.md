@@ -138,16 +138,6 @@ To use singlethreaded mode in which the games are read in and analyzed sequentia
 -   A larger `nThreads` does not necessarily result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak `batchSize` and `nThreads` to get the best results on your system. On my systems I achieved the best results with `nThreads = 1` and `batchSize = 8000` and that is also the default setting. Note that `nThreads = 1` doesn't mean that the analysis is single-threaded but that 1 _additional_ thread in addition to the thread that parses the PGN file is spawned.
 -   To use a custom tracker with your multithreaded analysis please see the important notes at the [Custom Trackers](#custom-trackers) section.
 
-```javascript
-add(tracker) {
-    this.results.white += tracker.results.white;
-    this.results.black += tracker.results.black;
-    this.results.draw += tracker.results.draw;
-    this.cntGames += tracker.cntGames;
-    this.time += tracker.time;
-}
-```
-
 ## Compare Analyses
 
 You can also generate a comparison heat map where you can compare the data of two different analyses. Let's say you wanted to compare how the white player occupates the board between a lower rated player and a higher rated player. To get comparable results 1000 games of each shall be evaluated:
@@ -316,7 +306,17 @@ Your tracker also must have the following properties:
         `data` is an object that contains `{key: value}` entries, where `key` is the property in the header of the PGN (e.g. `'WhiteElo'`, case sensitive) and `value` is the respective value of the property. The property `data.moves` is an array that contains the moves of the game in standard algebraic notation.
 
 -   `add(tracker)`:
-    Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. See [Multithreaded analysis section](#multithreaded-analysis) for an example.
+    Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. For example the add(...) function for the built-in Game Tracker looks like this:
+
+    ```javascript
+    add(tracker) {
+        this.results.white += tracker.results.white;
+        this.results.black += tracker.results.black;
+        this.results.draw += tracker.results.draw;
+        this.cntGames += tracker.cntGames;
+        this.time += tracker.time;
+    }
+    ```
 
 -   `nextGame()` (opt.):
     Optional method that is called for move-type trackers after the last move of every game. You can use this to do end-of-game stuff inside your tracker, like storing and resetting statistics for the current game.
