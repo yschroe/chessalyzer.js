@@ -326,7 +326,25 @@ Your tracker also must have the following properties:
 
 # Heatmap Presets
 
-TODO
+Instead of defining your own heatmap function you can also use the heatmap presets Chessalyzer.js provides you via `import { Heatmap } from 'chessalyzer.js`. The Heatmap object has two properties Tile and Piece for the matching Tracker types. You can simply pass the `calc` property as a heatmap function for `Chessalyzer.generateHeatmap(...)`, e.g. `Heatmap.Tile.TILE_OCC_ALL.calc`
+
+### Tile Tracker
+
+| Short Name          | Long Name                         | Scope         | Description                                                                                                                                                                           |
+| ------------------- | --------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TILE_OCC_ALL        | Tile Occupation All               | global        | Calculates how often each tile of the board had any piece on it (as a percentage of all moves)                                                                                        |
+| TILE_OCC_WHITE      | Tile Occupation (White Pieces)    | global        | Calculates how often each tile of the board had a white piece on it (as a percentage of all moves)                                                                                    |
+| TILE_OCC_BLACK      | Tile Occupation (Black Pieces)    | global        | Calculates how often each tile of the board had a black piece on it (as a percentage of all moves)                                                                                    |
+| TILE_KILLCOUNT      | Tile Killcount                    | global        | Count of Pieces that were taken on each tile.                                                                                                                                         |
+| TILE_OCC_BY_PIECE   | Tile Occupation for selected Tile | Tile specific | Calculates how often the passed tile was occupated by each piece on the board. The values are shown at the starting position of each piece.                                           |
+| PIECE_MOVED_TO_TILE | Target squares for selected Piece | Tile specific | Shows how often the piece that starts at the selected tile moved to each tile of the board. Only makes sense for tiles with a piece on it at the start of the game (Rank 1,2,7 and 8) |
+
+### Piece Tracker
+
+| Short Name      | Long Name | Scope          | Description                                                                                                                                               |
+| --------------- | --------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PIECE_KILLED_BY |           | Piece specific | Shows how often the piece that starts at the passed tile was taken by other pieces. The values are shown at the starting position of each opposing piece. |
+| PIECE_KILLED    |           | Piece specific | Shows how often the piece that starts at the passed tile took other pieces. The values are shown at the starting position of each opposing piece.         |
 
 # Visualisation
 
