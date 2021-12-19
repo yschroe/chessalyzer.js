@@ -36,6 +36,7 @@ interface FindABetterNameConfig {
 	analyzerData: { name: string; cfg: unknown; path: string }[];
 	cntGames: number;
 	processedMoves: number;
+	isDone: boolean;
 }
 
 class ParsedMove implements MoveData {
@@ -84,7 +85,8 @@ class GameProcessor {
 				analyzerData: [],
 				config: this.checkConfig(cfg.config || {}),
 				cntGames: 0,
-				processedMoves: 0
+				processedMoves: 0,
+				isDone: false
 			};
 
 			if (cfg.trackers) {
@@ -220,7 +222,7 @@ class GameProcessor {
 							.split(' ')
 					);
 
-					// only if the result marker is in the line, all moves have been read -> start anaylyzing
+					// only if the result marker is in the line, all moves have been read -> start analyzing
 					if (line.match(/((1-0)|(0-1)|(1\/2-1\/2)|(\*))$/)) {
 						// remove the result from the moves array
 						game.moves.pop();
@@ -232,8 +234,9 @@ class GameProcessor {
 						) {
 							const cfg = this.configs[idxCfg];
 							if (
-								!cfg.config.hasFilter ||
-								cfg.config.filter(game)
+								!cfg.isDone &&
+								(!cfg.config.hasFilter ||
+									cfg.config.filter(game))
 							) {
 								cfg.cntGames += 1;
 								if (isMultithreaded) {
@@ -268,17 +271,18 @@ class GameProcessor {
 								} else {
 									this.processGame(game, cfg);
 								}
+								if (cfg.cntGames >= cfg.config.cntGames)
+									cfg.isDone = true;
 							}
 						}
 
 						game = { moves: [] };
 					}
 				}
-				const countReached = this.configs.reduce(
-					(a, c) => a && c.cntGames >= c.config.cntGames,
-					true
-				);
-				if (countReached) {
+				let allDone = true;
+				for (let i = 0; i < this.configs.length; i += 1)
+					allDone = allDone && this.configs[i].isDone;
+				if (allDone) {
 					lr.close();
 					lr.removeAllListeners();
 				}

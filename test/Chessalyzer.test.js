@@ -151,6 +151,38 @@ context('Core Features', function () {
 				assert.strictEqual(data.cntGames, 43364);
 			});
 		});
+
+		describe('Multiple Trackers with different configs', function () {
+			let data;
+			// let gameTracker2 = new Tracker.Game();
+			// let pieceTracker2 = new Tracker.Piece();
+			before(async function () {
+				data = await Chessalyzer.analyzePGN(
+					'./test/lichess_db_standard_rated_2013-01_min.pgn',
+					[
+						{
+							trackers: [gameTracker],
+							config: {
+								cntGames: 10000,
+								filter: (val) => val.WhiteElo > 1500
+							}
+						},
+						{
+							trackers: [pieceTracker],
+							config: {
+								cntGames: 5000,
+								filter: (val) => val.WhiteElo < 1500
+							}
+						}
+					]
+				);
+			});
+
+			it('Processed the right amount of games', function () {
+				assert.strictEqual(data[0].cntGames, 10000);
+				assert.strictEqual(data[1].cntGames, 5000);
+			});
+		});
 	});
 
 	context('Other', function () {
