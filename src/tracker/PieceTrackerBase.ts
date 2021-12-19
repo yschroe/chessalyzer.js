@@ -4,11 +4,14 @@ import { MoveData } from '../interfaces/Interface.js';
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
+import HeatmapPresets from './heatmaps/PieceHeatmaps';
+
 class PieceTrackerBase extends BaseTracker {
 	b: object;
 	w: object;
 	constructor() {
 		super('move');
+		this.heatmapPresets = HeatmapPresets;
 		this.b = {};
 		this.w = {};
 

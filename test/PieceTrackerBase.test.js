@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import assert from 'assert';
-import { Chessalyzer, Tracker, Heatmap } from '../lib/chessalyzer.js';
+import { Chessalyzer, Tracker } from '../lib/chessalyzer.js';
 
 context('PieceTrackerBase', function () {
 	this.timeout(20000);
@@ -8,7 +8,7 @@ context('PieceTrackerBase', function () {
 	describe('Basic Tests: Multithreaded', function () {
 		let pieceTracker = new Tracker.Piece();
 		before(async function () {
-			await Chessalyzer.startBatch(
+			await Chessalyzer.analyzePGN(
 				'./test/lichess_db_standard_rated_2013-01_min.pgn',
 				pieceTracker
 			);
@@ -22,7 +22,7 @@ context('PieceTrackerBase', function () {
 	describe('Basic Tests: Singlethreaded', function () {
 		let pieceTracker = new Tracker.Piece();
 		before(async function () {
-			await Chessalyzer.startBatch(
+			await Chessalyzer.analyzePGN(
 				'./test/lichess_db_standard_rated_2013-01_min.pgn',
 				pieceTracker,
 				undefined,
@@ -38,18 +38,14 @@ context('PieceTrackerBase', function () {
 	describe('Heatmaps', function () {
 		let pieceTracker = new Tracker.Piece();
 		before(async function () {
-			await Chessalyzer.startBatch(
+			await Chessalyzer.analyzePGN(
 				'./test/lichess_db_standard_rated_2013-01_min.pgn',
 				pieceTracker
 			);
 		});
 
 		it('Worked with PIECE_KILLED', function () {
-			const data = Chessalyzer.generateHeatmap(
-				pieceTracker,
-				Heatmap.Piece.PIECE_KILLED.calc,
-				'a8'
-			);
+			const data = pieceTracker.generateHeatmap('PIECE_KILLED', 'a8');
 			// didn't take itself
 			assert.strictEqual(data.map[0][0], 0);
 
@@ -60,11 +56,7 @@ context('PieceTrackerBase', function () {
 		});
 
 		it('Worked with PIECE_KILLED_BY', function () {
-			const data = Chessalyzer.generateHeatmap(
-				pieceTracker,
-				Heatmap.Piece.PIECE_KILLED_BY.calc,
-				'a8'
-			);
+			const data = pieceTracker.generateHeatmap('PIECE_KILLED_BY', 'a8');
 			// wasn't taken by itself
 			assert.strictEqual(data.map[0][0], 0);
 

@@ -7,11 +7,7 @@ export default {
 		unit: '%',
 		description:
 			'Tile <loopSqrData> had a piece on it for X% of all moves.',
-		calc: (
-			data: TileTrackerBase,
-			_: SquareData,
-			loopSqrData: SquareData
-		) => {
+		calc: (data: TileTrackerBase, loopSqrData: SquareData) => {
 			const { coords } = loopSqrData;
 			let val =
 				data.tiles[coords[0]][coords[1]].w.wasOn +
@@ -25,11 +21,7 @@ export default {
 		unit: '%',
 		description:
 			'Tile <loopSqrData> had a white piece on it for X% of all moves.',
-		calc: (
-			data: TileTrackerBase,
-			_: SquareData,
-			loopSqrData: SquareData
-		) => {
+		calc: (data: TileTrackerBase, loopSqrData: SquareData) => {
 			const { coords } = loopSqrData;
 			let val = data.tiles[coords[0]][coords[1]].w.wasOn;
 			val = (val * 100) / data.cntMovesTotal;
@@ -40,11 +32,7 @@ export default {
 		scope: 'global',
 		unit: '%',
 		description: 'Tile X had a black piece on it for Y% of all moves.',
-		calc: (
-			data: TileTrackerBase,
-			_: SquareData,
-			loopSqrData: SquareData
-		) => {
+		calc: (data: TileTrackerBase, loopSqrData: SquareData) => {
 			const { coords } = loopSqrData;
 			let val = data.tiles[coords[0]][coords[1]].b.wasOn;
 			val = (val * 100) / data.cntMovesTotal;
@@ -58,14 +46,14 @@ export default {
 			'Selected tile was occupated by piece X during Y% of all moves.',
 		calc: (
 			data: TileTrackerBase,
-			sqrData: SquareData,
-			loopSqrData: SquareData
+			loopSqrData: SquareData,
+			sqrData: SquareData
 		) => {
 			const sqrCoords = sqrData.coords;
 			const { piece } = loopSqrData;
 
 			let val = 0;
-			if (piece.color) {
+			if (piece) {
 				val =
 					data.tiles[sqrCoords[0]][sqrCoords[1]][piece.color][
 						piece.name
@@ -79,11 +67,7 @@ export default {
 		scope: 'global',
 		unit: '',
 		description: 'Count of Pieces that were taken on each tile.',
-		calc: (
-			data: TileTrackerBase,
-			_: SquareData,
-			loopSqrData: SquareData
-		) => {
+		calc: (data: TileTrackerBase, loopSqrData: SquareData) => {
 			const { coords } = loopSqrData;
 			const val =
 				data.tiles[coords[0]][coords[1]].b.wasKilledOn +
@@ -97,13 +81,13 @@ export default {
 		description: 'Selected piece had tile X as a move target Y times.',
 		calc: (
 			data: TileTrackerBase,
-			sqrData: SquareData,
-			loopSqrData: SquareData
+			loopSqrData: SquareData,
+			sqrData: SquareData
 		) => {
 			const { piece } = sqrData;
 			const { coords } = loopSqrData;
 			let val = 0;
-			if (piece.name) {
+			if (piece) {
 				val =
 					data.tiles[coords[0]][coords[1]][piece.color][piece.name]
 						.movedTo;

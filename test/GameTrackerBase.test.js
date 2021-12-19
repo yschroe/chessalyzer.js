@@ -9,7 +9,7 @@ context('GameTrackerBase', function () {
 		let data;
 		let gameTracker = new Tracker.Game();
 		before(async function () {
-			data = await Chessalyzer.startBatch(
+			data = await Chessalyzer.analyzePGN(
 				'./test/lichess_db_standard_rated_2013-01_min.pgn',
 				gameTracker
 			);
@@ -31,7 +31,7 @@ context('GameTrackerBase', function () {
 		let data;
 		let gameTracker = new Tracker.Game();
 		before(async function () {
-			data = await Chessalyzer.startBatch(
+			data = await Chessalyzer.analyzePGN(
 				'./test/lichess_db_standard_rated_2013-01_min.pgn',
 				gameTracker,
 				undefined,
@@ -54,7 +54,7 @@ context('GameTrackerBase', function () {
 	describe('Filtered Games: Result 1-0', function () {
 		let gameTracker = new Tracker.Game();
 		before(async function () {
-			await Chessalyzer.startBatch(
+			await Chessalyzer.analyzePGN(
 				'./test/lichess_db_standard_rated_2013-01_min.pgn',
 				gameTracker,
 				{ cntGames: 500, filter: (game) => game.Result === '1-0' }

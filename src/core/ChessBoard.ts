@@ -1,6 +1,5 @@
 import { MoveData, ChessPiece } from '../interfaces/Interface';
-const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
-const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
+import Utils from './Utils';
 
 class PiecePositionTable {
 	posMap: unknown;
@@ -81,15 +80,7 @@ class ChessBoard {
 		for (let row = 0; row < 8; row += 1) {
 			const currRow: ChessPiece[] = new Array(8);
 			for (let col = 0; col < 8; col += 1) {
-				currRow[col] = null;
-				const color = row === 0 || row === 1 ? 'b' : 'w';
-
-				// init pieces
-				if (row === 0 || row === 7) {
-					currRow[col] = { name: pieceTemplate[col], color };
-				} else if (row === 1 || row === 6) {
-					currRow[col] = { name: pawnTemplate[col], color };
-				}
+				currRow[col] = Utils.getStartingPiece([row, col]);
 			}
 			this.tiles[row] = currRow;
 		}

@@ -20,7 +20,6 @@ A JavaScript library for batch analyzing chess games.
     -   [Custom Tracker](#custom-trackers)
 -   [Heatmap presets](#heatmap-presets)
 -   [Visualisation](#visualisation)
--   [Contribute](#contribute)
 -   [Changelog](#changelog)
 
 # Features
@@ -76,7 +75,7 @@ const tileTracker = new Tracker.Tile();
 // the data is tracked directly inside the tileTracker instance
 // see later chapters for how the data is structured inside the trackers
 // (top level awaits are possible with ESM :))
-await Chessalyzer.startBatch('<pathToPgnFile>', tileTracker);
+await Chessalyzer.analyzePGN('<pathToPgnFile>', tileTracker);
 
 // generate a tile occupation heatmap
 const heatmapData = Chessalyzer.generateHeatmap(
@@ -101,7 +100,7 @@ let fil = function (game) {
     return game.WhiteElo > 2000;
 };
 
-await Chessalyzer.startBatch('<pathToPgnFile>', tileTracker, {
+await Chessalyzer.analyzePGN('<pathToPgnFile>', tileTracker, {
     filter: fil
 });
 
@@ -115,7 +114,7 @@ Per default chessalyzer.js uses the Node.js cluster module to read-in the pgn fi
 ```javascript
 // start a multithreaded batch analysis for the PGN file at <pathToPgnFile>
 
-await Chessalyzer.startBatch(
+await Chessalyzer.analyzePGN(
     '<pathToPgnFile>',
     tileTracker,
     {
@@ -127,11 +126,11 @@ await Chessalyzer.startBatch(
 // ...
 ```
 
-`startBatch(...)` in multithreaded mode reads in chunks of games of size `batchSize` times `nThreads` and starts the analysis of the curent chunk while the next chunk is read-in from the PGN file in parallel. With the `nThreads` argument you can define how many threads are started in parallel to analyze the chunk. For example: `batchSize = 1000` and `nThreads = 5` will result in a chunk size of 5000 which is split in 5 threads which analyse 1000 games each.
+`analyzePGN(...)` in multithreaded mode reads in chunks of games of size `batchSize` times `nThreads` and starts the analysis of the curent chunk while the next chunk is read-in from the PGN file in parallel. With the `nThreads` argument you can define how many threads are started in parallel to analyze the chunk. For example: `batchSize = 1000` and `nThreads = 5` will result in a chunk size of 5000 which is split in 5 threads which analyse 1000 games each.
 
 ### Forcing single threaded mode
 
-To use singlethreaded mode in which the games are read in and analyzed sequentially on a single thread, simply pass `null` as the 4th argument into startBatch(...).
+To use singlethreaded mode in which the games are read in and analyzed sequentially on a single thread, simply pass `null` as the 4th argument into analyzePGN(...).
 
 ##### Important
 
@@ -164,13 +163,13 @@ let fun = (data, _, loopSqrData) => {
 };
 
 // start the first analysis
-await Chessalyzer.startBatch('<pathToPgnFile>', tileT1, {
+await Chessalyzer.analyzePGN('<pathToPgnFile>', tileT1, {
     filter: fil1,
     cntGames: 1000
 });
 
 // start the second analysis
-await Chessalyzer.startBatch('<pathToPgnFile>', tileT2, {
+await Chessalyzer.analyzePGN('<pathToPgnFile>', tileT2, {
     filter: fil2,
     cntGames: 1000
 });
@@ -185,7 +184,7 @@ const heatmapData = Chessalyzer.generateComparisonHeatmap(tileT1, tileT2, fun);
 
 The function you create for heatmap generation gets passed up to four parameters (inside `generateHeatMap()`):
 
-1. `data`: The data that is the basis for the heatmap. Typically this object is an analyzer you passed into the `startBatch()` function.
+1. `data`: The data that is the basis for the heatmap. Typically this object is an analyzer you passed into the `analyzePGN()` function.
 2. `sqrData`: Contains informations about the square you passed into the `generateHeatMap()` function. `sqrData` is an object with the following entries:
 
     ```typescript
@@ -367,7 +366,8 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 -   2.0.0:
     -   Chessalyzer.js is now an ES module (ESM). See [this guide](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#file-esm-package-md) for how to use this package.
-    -   runBatch(...) and runBatchMulticore(...) were merged into the single function runBatch(...). Per default the function will run in multithreaded mode, but you can override the config to force singlethreaded mode if it is needed in your environment.
+    -   runBatch(...) and runBatchMulticore(...) were merged into the single function analyzePGN(...). Per default the function will run in multithreaded mode, but you can override the config to force singlethreaded mode if it is needed in your environment.
+    -   The heatmap generation functions have been moved into the Tracker objects. TODO: Update Docs
     -   Added support for PGN files in which the game moves are listed in multiple lines instead of one single line
     -   Exports a new Heatmap object with heatmap presets for the built-in Tile and Piece tracker.
     -   Changed the data structure of the move data passed into the analyzers.

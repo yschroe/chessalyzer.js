@@ -9,7 +9,7 @@ context('Core Features', function () {
 		describe('PGN File: Multiple Games, No Comments, Single Line for Moves', function () {
 			let data;
 			before(async function () {
-				data = await Chessalyzer.startBatch(
+				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
 					[]
 				);
@@ -27,7 +27,7 @@ context('Core Features', function () {
 		describe('PGN File: One Game, With Comments, Multiple Lines for Moves', function () {
 			let data;
 			before(async function () {
-				data = await Chessalyzer.startBatch(
+				data = await Chessalyzer.analyzePGN(
 					'./test/PGN_with_comments_multiline.pgn',
 					[]
 				);
@@ -45,7 +45,7 @@ context('Core Features', function () {
 		describe('PGN File: One Game, With Comments, Single Lines for Moves', function () {
 			let data;
 			before(async function () {
-				data = await Chessalyzer.startBatch(
+				data = await Chessalyzer.analyzePGN(
 					'./test/PGN_with_comments_singleline.pgn',
 					[]
 				);
@@ -64,7 +64,7 @@ context('Core Features', function () {
 		describe('Count', function () {
 			let data;
 			before(async function () {
-				data = await Chessalyzer.startBatch(
+				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
 					[],
 					{ cntGames: 100 }
@@ -79,7 +79,7 @@ context('Core Features', function () {
 		describe('Function', function () {
 			let data;
 			before(async function () {
-				data = await Chessalyzer.startBatch(
+				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
 					[],
 					{ filter: (game) => game.Result === '1-0' }
@@ -94,7 +94,7 @@ context('Core Features', function () {
 		describe('Count + Function', function () {
 			let data;
 			before(async function () {
-				data = await Chessalyzer.startBatch(
+				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
 					[],
 					{ cntGames: 500, filter: (game) => game.Result === '0-1' }
@@ -114,7 +114,7 @@ context('Core Features', function () {
 		describe('Single Tracker', function () {
 			let data;
 			before(async function () {
-				data = await Chessalyzer.startBatch(
+				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
 					gameTracker
 				);
@@ -128,7 +128,7 @@ context('Core Features', function () {
 		describe('Single Tracker (in Array)', function () {
 			let data;
 			before(async function () {
-				data = await Chessalyzer.startBatch(
+				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
 					[gameTracker]
 				);
@@ -142,7 +142,7 @@ context('Core Features', function () {
 		describe('Multiple Trackers', function () {
 			let data;
 			before(async function () {
-				data = await Chessalyzer.startBatch(
+				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
 					[gameTracker, pieceTracker]
 				);
@@ -158,7 +158,7 @@ context('Core Features', function () {
 		describe('Singlethreaded Mode', function () {
 			let data;
 			before(async function () {
-				data = await Chessalyzer.startBatch(
+				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
 					[],
 					undefined,

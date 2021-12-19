@@ -6,10 +6,9 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { Game, Move, MoveData, Tracker } from '../interfaces/Interface.js';
 import ChessBoard from './ChessBoard.js';
+import Utils from './Utils.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-const files = 'abcdefgh';
 
 class MoveNotFoundException extends Error {
 	constructor(token: string, tarRow: number, tarCol: number) {
@@ -346,9 +345,9 @@ class GameProcessor {
 			moveData.san = moveData.san.replace('x', '');
 
 			coords.to[0] = 8 - parseInt(moveData.san.substring(2, 3), 10);
-			coords.to[1] = files.indexOf(moveData.san.substring(1, 2));
+			coords.to[1] = Utils.getFileNumber(moveData.san.substring(1, 2));
 			coords.from[0] = coords.to[0] + direction;
-			coords.from[1] = files.indexOf(moveData.san.substring(0, 1));
+			coords.from[1] = Utils.getFileNumber(moveData.san.substring(0, 1));
 
 			// en passant
 			if (this.board.tiles[coords.to[0]][coords.to[1]] === null) {
@@ -364,7 +363,7 @@ class GameProcessor {
 			// moves
 		} else {
 			const tarRow = 8 - parseInt(moveData.san.substring(1, 2), 10);
-			const tarCol = files.indexOf(moveData.san.substring(0, 1));
+			const tarCol = Utils.getFileNumber(moveData.san.substring(0, 1));
 
 			coords.from[1] = tarCol;
 			coords.to[0] = tarRow;
@@ -414,20 +413,20 @@ class GameProcessor {
 		// e.g. Re3f5
 		if (moveData.san.length === 4) {
 			coords.from[0] = 8 - parseInt(moveData.san.substring(1, 2), 10);
-			coords.from[1] = files.indexOf(moveData.san.substring(0, 1));
+			coords.from[1] = Utils.getFileNumber(moveData.san.substring(0, 1));
 			coords.to[0] = 8 - parseInt(moveData.san.substring(3, 4), 10);
-			coords.to[1] = files.indexOf(moveData.san.substring(2, 3));
+			coords.to[1] = Utils.getFileNumber(moveData.san.substring(2, 3));
 
 			// e.g. Ref3
 		} else if (moveData.san.length === 3) {
 			const tarRow = 8 - parseInt(moveData.san.substring(2, 3), 10);
-			const tarCol = files.indexOf(moveData.san.substring(1, 2));
+			const tarCol = Utils.getFileNumber(moveData.san.substring(1, 2));
 			let mustBeInRow: number = null;
 			let mustBeInCol: number = null;
 
 			// file is specified
-			if (files.indexOf(moveData.san.substring(0, 1)) >= 0) {
-				mustBeInCol = files.indexOf(moveData.san.substring(0, 1));
+			if (Utils.getFileNumber(moveData.san.substring(0, 1)) >= 0) {
+				mustBeInCol = Utils.getFileNumber(moveData.san.substring(0, 1));
 
 				// rank is specified
 			} else {
@@ -445,7 +444,7 @@ class GameProcessor {
 			// e.g. Rf3
 		} else {
 			const tarRow = 8 - parseInt(moveData.san.substring(1, 2), 10);
-			const tarCol = files.indexOf(moveData.san.substring(0, 1));
+			const tarCol = Utils.getFileNumber(moveData.san.substring(0, 1));
 			coords = this.findPiece(
 				tarRow,
 				tarCol,
@@ -649,21 +648,6 @@ class GameProcessor {
 		this.board.tiles[to[0]][to[1]] = tarTilePiece;
 
 		return isInCheck;
-	}
-
-	static algebraicToCoords(square: string): number[] {
-		const coords = [];
-		const temp = square.split('');
-		coords.push(8 - Number(temp[1]));
-		coords.push(files.indexOf(temp[0]));
-
-		return coords;
-	}
-
-	static coordsToAlgebraic(coords: number[]): string {
-		let name = files[coords[1]];
-		name += 8 - coords[0];
-		return name;
 	}
 
 	static preProcess(move: string): string {

@@ -1,5 +1,6 @@
 import BaseTracker from './BaseTracker.js';
 import { Move, MoveData } from '../interfaces/Interface.js';
+import HeatmapPresets from './heatmaps/TileHeatmaps';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
@@ -43,6 +44,7 @@ class TileTrackerBase extends BaseTracker {
 
 	constructor() {
 		super('move');
+		this.heatmapPresets = HeatmapPresets;
 		this.cntMovesGame = 0;
 		this.cntMovesTotal = 0;
 		this.tiles = new Array(8);
