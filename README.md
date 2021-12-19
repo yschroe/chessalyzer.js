@@ -12,8 +12,8 @@ A JavaScript library for batch analyzing chess games.
 -   [Examples](#examples)
     -   [Basic Usage](#basic-usage)
     -   [Filtering](#filtering)
-    -   [Multithreading](#multithreaded-analysis)
     -   [Compare Analyses](#compare-analyses)
+    -   [Multithreading](#multithreaded-analysis)
 -   [Heatmap analysis functions](#heatmap-analysis-functions)
 -   [Tracked statistics](#tracked-statistics)
     -   [Built-in](#built-in)
@@ -45,7 +45,13 @@ npm install chessalyzer.js
 import { Chessalyzer } from 'chessalyzer.js';
 ```
 
-3. Check out the examples or the [docs](https://yschroe.github.io/chessalyzer.js/).
+3. Use the library. See next chapters for examples.
+
+```javascript
+Chessalyzer.analyzePGN('<pathToPgnFile', yourAnalysisConfig);
+```
+
+4. Check out the examples or the [docs](https://yschroe.github.io/chessalyzer.js/).
 
 # How it works
 
@@ -53,7 +59,7 @@ Chessalyzer.js consists of two submodules which work hand-in-hand: The first mod
 
 Inside the Tracker object you can do whatever you want with the data. If you want to track some obscure stat like how often the e pawn was promoted to a rook on the a8 square you could write a Tracker for that. Chessalyzer.js ships with three different preconfigured Trackers which should cover most usecases, so if you are happy with that you don't need to code your own Tracker.
 
-Lastly chessalyzer.js provides you with functions to convert your raw data from your Trackes into heatmaps which you then can use in your frontend of choice.
+Lastly Chessalyzer.js provides you with functions to convert your raw data from your Trackes into heatmaps which you then can use in your frontend of choice.
 
 # Examples
 
@@ -62,29 +68,23 @@ Lastly chessalyzer.js provides you with functions to convert your raw data from 
 Let's start with a basic example. Here we simply want to track the tile occupation (=how often did each tile have a piece on it) for the whole board. For this we can use the preconfigured TileTracker class from the library. Afterwards we want to create a heatmap out of the data to visualize the tile occupation. For this basic heatmap a preset is also provided:
 
 ```javascript
-// import the library and trackers and the preconfigured heatmap functions
-import { Chessalyzer, Tracker, Heatmap } from 'chessalyzer.js';
+// import the library and trackers
+import { Chessalyzer, Tracker } from 'chessalyzer.js';
 
 // create basic tile tracker
 const tileTracker = new Tracker.Tile();
-
-// chessalyzer returns a Promise so we need to encapsulate everything into an async function
-// you should be able to use the Promise.then(...) syntax as well
 
 // start a batch analysis for the PGN file at <pathToPgnFile>
 // the data is tracked directly inside the tileTracker instance
 // see later chapters for how the data is structured inside the trackers
 // (top level awaits are possible with ESM :))
-await Chessalyzer.analyzePGN('<pathToPgnFile>', tileTracker);
+await Chessalyzer.analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
 
 // generate a tile occupation heatmap
-const heatmapData = Chessalyzer.generateHeatmap(
-    tileTracker, // data source for heatmap
-    Heatmap.Tile.TILE_OCC_ALL.calc // heatmap generation function
-);
+const heatmapData = tileTracker.generateHeatmap('TILE_OCC_ALL');
 
 // print heatmap to console for preview
-Chessalyzer.printHeatmap(heatmapData.map, heatmapData.min, heatmapData.max);
+Chessalyzer.printHeatmap(heatmapData);
 
 // ...or use heatmapData with your favourite frontend
 ```
@@ -95,30 +95,78 @@ You can also filter the PGN file for specific criteria, e.g. only evaluate games
 
 ```javascript
 // create filter function that returns true for all games where WhiteElo > 2000
-// the 'game' object passed contains every key included in the pgn file (case sensitive)
+// the 'game' object passed contains every header key included in the pgn file (case sensitive)
 let fil = function (game) {
     return game.WhiteElo > 2000;
 };
 
-await Chessalyzer.analyzePGN('<pathToPgnFile>', tileTracker, {
-    filter: fil
+await Chessalyzer.analyzePGN('<pathToPgnFile>', {
+    trackers: [tileTracker],
+    config: {
+        filter: fil
+    }
 });
 
 // ...do something with the tileTracker data
 ```
 
+## Compare Analyses
+
+You can also generate a comparison heat map where you can compare the data of two different analyses. Let's say you wanted to compare how the white player occupates the board between a lower rated player and a higher rated player. To get comparable results 1000 games of each shall be evaluated:
+
+```javascript
+// create two Tile Trackers
+const tileT1 = new Tracker.Tile();
+const tileT2 = new Tracker.Tile();
+
+// start the analysis
+// instead of passing just one analysis config you can also pass an array of configs
+// tileT1 will only receive games with WhiteElo >2000, tileT2 only receives games with WhiteElo < 1200
+await Chessalyzer.analyzePGN('<pathToPgnFile>', [
+    {
+        trackers: [tileT1],
+        config: {
+            filter: (game) => game.WhiteElo > 2000,
+            cntGames: 1000
+        }
+    },
+    {
+        trackers: [tileT2],
+        config: {
+            filter: (game) => game.WhiteElo < 1200,
+            cntGames: 1000
+        }
+    }
+]);
+
+// create an evaluation function for the heat map
+let func = (data, loopSqrData) => {
+    const { coords } = loopSqrData;
+    let val = data.tiles[coords[0]][coords[1]].w.wasOn;
+    val = (val * 100) / data.cntMovesTotal;
+    return val;
+};
+
+// generate the comparison heatmap
+const heatmapData = tileT1.generateComparisonHeatmap(tileT2, func);
+
+// use heatmapData
+```
+
 ## Multithreaded analysis
 
-Per default chessalyzer.js uses the Node.js cluster module to read-in the pgn file and analyze the data in parallel.
+Per default chessalyzer.js uses the Node.js [Cluster module](https://nodejs.org/api/cluster.html) to read-in the pgn file and analyze the data in parallel.
 
 ```javascript
 // start a multithreaded batch analysis for the PGN file at <pathToPgnFile>
 
 await Chessalyzer.analyzePGN(
     '<pathToPgnFile>',
-    tileTracker,
     {
-        cntGames: 10000
+        trackers: [tileTracker],
+        config: {
+            cntGames: 10000
+        }
     },
     { batchSize: 8000, nThreads: 1 }
 );
@@ -130,62 +178,19 @@ await Chessalyzer.analyzePGN(
 
 ### Forcing single threaded mode
 
-To use singlethreaded mode in which the games are read in and analyzed sequentially on a single thread, simply pass `null` as the 4th argument into analyzePGN(...).
+To use singlethreaded mode in which the games are read in and analyzed sequentially on a single thread, simply pass `null` as the 3rd argument into analyzePGN(...).
 
 ##### Important
 
 -   A larger `nThreads` does not necessarily result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak `batchSize` and `nThreads` to get the best results on your system. On my systems I achieved the best results with `nThreads = 1` and `batchSize = 8000` and that is also the default setting. Note that `nThreads = 1` doesn't mean that the analysis is single-threaded but that 1 _additional_ thread in addition to the thread that parses the PGN file is spawned.
 -   To use a custom tracker with your multithreaded analysis please see the important notes at the [Custom Trackers](#custom-trackers) section.
 
-## Compare Analyses
-
-You can also generate a comparison heat map where you can compare the data of two different analyses. Let's say you wanted to compare how the white player occupates the board between a lower rated player and a higher rated player. To get comparable results 1000 games of each shall be evaluated:
-
-```javascript
-// create two filters
-let fil1 = function (game) {
-    return game.WhiteElo > 2000;
-};
-let fil2 = function (game) {
-    return game.WhiteElo < 1200;
-};
-
-// create two TileTrackers
-const tileT1 = new Tracker.Tile();
-const tileT2 = new Tracker.Tile();
-
-// create a evaluation function for the heat map
-let fun = (data, _, loopSqrData) => {
-    const { coords } = loopSqrData;
-    let val = data.tiles[coords[0]][coords[1]].w.wasOn;
-    val = (val * 100) / data.cntMovesTotal;
-    return val;
-};
-
-// start the first analysis
-await Chessalyzer.analyzePGN('<pathToPgnFile>', tileT1, {
-    filter: fil1,
-    cntGames: 1000
-});
-
-// start the second analysis
-await Chessalyzer.analyzePGN('<pathToPgnFile>', tileT2, {
-    filter: fil2,
-    cntGames: 1000
-});
-
-// generate the comparison heatmap
-const heatmapData = Chessalyzer.generateComparisonHeatmap(tileT1, tileT2, fun);
-
-// use heatmapData
-```
-
 # Heatmap analysis functions
 
 The function you create for heatmap generation gets passed up to four parameters (inside `generateHeatMap()`):
 
-1. `data`: The data that is the basis for the heatmap. Typically this object is an analyzer you passed into the `analyzePGN()` function.
-2. `sqrData`: Contains informations about the square you passed into the `generateHeatMap()` function. `sqrData` is an object with the following entries:
+1. `data`: The data that is the basis for the heatmap. Per default this data is the Tracker you called the `generateHeatMap()` function from itself.
+2. `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The `generateHeatMap()` function loops over every square of the board to calculate a heat map value for each tile. `sqrData` is an object with the following entries:
 
     ```typescript
     interface SquareData {
@@ -195,7 +200,7 @@ The function you create for heatmap generation gets passed up to four parameters
         // The square in board coordinates (e.g. [6,0])
         coords: number[];
 
-        // The piece that starts at the passed square. If no piece starts at the passed square, `name` and `color` are null.
+        // The piece that starts at the passed square. If no piece starts at the passed square, piece is null.
         piece: {
             // Name of the piece (e.g. 'Pa' for the a-pawn)
             color: string;
@@ -205,7 +210,8 @@ The function you create for heatmap generation gets passed up to four parameters
     }
     ```
 
-3. `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The structure of `loopSqrData` is the same as of `sqrData`. The `generateHeatMap()` function loops over every square of the board to calculate a heat map value for each tile.
+3. `sqrData`: Contains informations about the square you passed into the `generateHeatMap()` function. The structure of `sqrData` is the same as of `loopSqrData`. You'll need this for extracting the values for the square / piece you are interested in. For example if you want to generate a heatmap for white's a pawn, the square for `sqrData` would be 'a2' (= starting position of the white a pawn).
+
 4. `optData`: Optional data you may need in this function. For example, if you wanted to generate a heatmap to show the average position of a piece after X moves, you could pass that 'X' here.
 
 # Tracked statistics
@@ -323,9 +329,23 @@ Your tracker also must have the following properties:
 -   `finish()` (opt.):
     Optional method that is called when all games have been processed. Can be used for example to clean up or sort the data in the tracker.
 
+-   `heatmapPresets` (opt.): If you want to predefine heatmap analysis functions for your custom tracker you can call by name instead of passing a function, `this.heatmapPresets` can be overriden with an object, in which the keys are the names of the presets.
+    ```javascript
+        this.heatmapPresets = {
+            MY_FIRST_HEATMAP_FUNC: {
+                name: 'My first Heatmap func',
+                description: 'all keys beside the "calc" key are optional',
+                calc: (data, loopSqrData, sqrData) => return 123
+            },
+            ANOTHER_HEATMAP_FUNC: {
+                calc: (...)
+            }
+        }
+    ```
+
 # Heatmap Presets
 
-Instead of defining your own heatmap function you can also use the heatmap presets Chessalyzer.js provides you via `import { Heatmap } from 'chessalyzer.js`. The Heatmap object has two properties Tile and Piece for the matching Tracker types. You can simply pass the `calc` property as a heatmap function for `Chessalyzer.generateHeatmap(...)`, e.g. `Heatmap.Tile.TILE_OCC_ALL.calc`
+Instead of defining your own heatmap function you can also use the heatmap presets Chessalyzer.js provides you via the Tile and Piece Trackers. You can access those presets by passing the SHORT_NAMEs of the following table as your first argument in `generateHeatmap(...)`, e.g. `<yourTileTrackerInstance>.generateHeatmap('TILE_OCC_BY_PIECE', 'a2')`.
 
 ### Tile Tracker
 
@@ -367,9 +387,9 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 -   2.0.0:
     -   Chessalyzer.js is now an ES module (ESM). See [this guide](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#file-esm-package-md) for how to use this package.
     -   runBatch(...) and runBatchMulticore(...) were merged into the single function analyzePGN(...). Per default the function will run in multithreaded mode, but you can override the config to force singlethreaded mode if it is needed in your environment.
-    -   The heatmap generation functions have been moved into the Tracker objects. TODO: Update Docs
+    -   You can now run different filters in parallel. For example you could configure Chessalzyer.js in a way that Tracker1 tracks only PlayerA's games and Tracker2 tracks only PlayerB's games during the same run of analyzePGN(...). Before you needed to start two separate analyses with the different Trackers and filter settings.
+    -   The heatmap generation functions have been moved into the Tracker objects.
     -   Added support for PGN files in which the game moves are listed in multiple lines instead of one single line
-    -   Exports a new Heatmap object with heatmap presets for the built-in Tile and Piece tracker.
     -   Changed the data structure of the move data passed into the analyzers.
     -   Ported code base to TypeScript.
     -   (Since I have no idea if someone actually uses the library, I won't write a migration guide. If you need help, just leave me an issue.)
