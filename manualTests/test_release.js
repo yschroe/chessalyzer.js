@@ -10,7 +10,7 @@ a.cfg.profilingActive = true;
 b.cfg.profilingActive = true;
 c.cfg.profilingActive = true;
 
-const header = await Chessalyzer.startBatch(
+const header = await Chessalyzer.analyzePGN(
 	'./test/lichess_db_standard_rated_2013-12.pgn',
 	[c, d],
 	{
