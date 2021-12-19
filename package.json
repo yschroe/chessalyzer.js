@@ -2,6 +2,7 @@
 	"name": "chessalyzer.js",
 	"version": "2.0.0-beta.1",
 	"description": "Batch analyze PGN and generate heat maps",
+	"author": "Yannik Schröder",
 	"type": "module",
 	"main": "lib/chessalyzer.js",
 	"types": "lib/chessalyzer.d.ts",
@@ -36,7 +37,6 @@
 		"batch",
 		"analysis"
 	],
-	"author": "Yannik Schröder",
 	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/YSchroe/chessalyzer.js/issues"
@@ -44,7 +44,7 @@
 	"homepage": "https://github.com/YSchroe/chessalyzer.js",
 	"devDependencies": {
 		"@rollup/plugin-typescript": "^8.3.0",
-		"@types/node": "^17.0.0",
+		"@types/node": "^17.0.1",
 		"@typescript-eslint/eslint-plugin": "^5.7.0",
 		"@typescript-eslint/parser": "^5.7.0",
 		"eslint": "^8.5.0",
