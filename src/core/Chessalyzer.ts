@@ -45,15 +45,25 @@ export default class Chessalyzer {
 	}
 
 	static printHeatmap(data: HeatmapData) {
-		const color = [255, 128, 0];
+		const color1 = [255, 128, 0];
+		const color2 = [0, 128, 255];
 		const bgColor = [255, 255, 255];
+		const largestVal = Math.max(data.max, Math.abs(data.min));
+
 		for (let i = 0; i < data.map.length; i += 1) {
 			for (let cnt = 0; cnt < 2; cnt += 1) {
 				for (let j = 0; j < data.map[i].length; j += 1) {
-					const alpha: number =
-						data.max === 0
-							? 0
-							: Math.sqrt(data.map[i][j] / data.max);
+					let val = data.map[i][j];
+					let color = color1;
+
+					// if negative value, use different color
+					if (val < 0) {
+						val = Math.abs(val);
+						color = color2;
+					}
+
+					const alpha =
+						data.max === 0 ? 0 : Math.sqrt(val / largestVal);
 					const colorOut = [
 						Math.round(color[0] * alpha + (1 - alpha) * bgColor[0]),
 						Math.round(color[1] * alpha + (1 - alpha) * bgColor[1]),
@@ -61,11 +71,11 @@ export default class Chessalyzer {
 					];
 
 					process.stdout.write(
-						chalk.bgRgb(
+						chalk.black.bgRgb(
 							colorOut[0],
 							colorOut[1],
 							colorOut[2]
-						)('    ')
+						)(`    `)
 					);
 				}
 				process.stdout.write('\n');

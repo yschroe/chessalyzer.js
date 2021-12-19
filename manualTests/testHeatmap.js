@@ -11,10 +11,11 @@ const data = await Chessalyzer.analyzePGN(
 	[
 		{
 			trackers: [tileTracker],
-			config: { cntGames: 2000 }
+			config: { cntGames: 2000, filter: (val) => val.Result === '0-1' }
 		},
 		{
-			config: { cntGames: 2000 }
+			trackers: [tileTracker2],
+			config: { cntGames: 2000, filter: (val) => val.Result === '1-0' }
 		}
 	]
 	// null
@@ -23,8 +24,15 @@ console.log(data);
 
 // generate a heat map for the data of 'c1' based on your evaluation function
 Chessalyzer.printHeatmap(
-	tileTracker.generateHeatmap('PIECE_MOVED_TO_TILE', 'c1')
+	tileTracker.generateHeatmap('PIECE_MOVED_TO_TILE', 'd1')
 );
 Chessalyzer.printHeatmap(
-	tileTracker2.generateHeatmap('PIECE_MOVED_TO_TILE', 'c1')
+	tileTracker2.generateHeatmap('PIECE_MOVED_TO_TILE', 'd1')
+);
+Chessalyzer.printHeatmap(
+	tileTracker.generateComparisonHeatmap(
+		tileTracker2,
+		'PIECE_MOVED_TO_TILE',
+		'd1'
+	)
 );
