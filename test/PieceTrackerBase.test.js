@@ -44,7 +44,7 @@ context('PieceTrackerBase', function () {
 			);
 		});
 
-		it('Worked with PIECE_KILLED', function () {
+		it('Worked with PIECE_KILLED preset', function () {
 			const data = pieceTracker.generateHeatmap('PIECE_KILLED', 'a8');
 			// didn't take itself
 			assert.strictEqual(data.map[0][0], 0);
@@ -55,7 +55,7 @@ context('PieceTrackerBase', function () {
 			assert.strictEqual(data.map[7][0], 4510);
 		});
 
-		it('Worked with PIECE_KILLED_BY', function () {
+		it('Worked with PIECE_KILLED_BY preset', function () {
 			const data = pieceTracker.generateHeatmap('PIECE_KILLED_BY', 'a8');
 			// wasn't taken by itself
 			assert.strictEqual(data.map[0][0], 0);
@@ -64,6 +64,38 @@ context('PieceTrackerBase', function () {
 			assert.strictEqual(data.map[1][0], 0);
 
 			assert.strictEqual(data.map[7][0], 4603);
+		});
+
+		it('Works with Custom Function', function () {
+			let customFunc = (data, loopSqrData, sqrData) => {
+				const sqrPiece = sqrData.piece;
+				const loopPiece = loopSqrData.piece;
+				let val = 0;
+				if (
+					sqrPiece &&
+					loopPiece &&
+					loopPiece.color !== sqrPiece.color
+				) {
+					val = data[loopPiece.color][loopPiece.name][sqrPiece.name];
+				}
+				return val;
+			};
+			const data = pieceTracker.generateHeatmap(customFunc, 'a8');
+			// wasn't taken by itself
+			assert.strictEqual(data.map[0][0], 0);
+
+			// wasn't taken by own team
+			assert.strictEqual(data.map[1][0], 0);
+
+			assert.strictEqual(data.map[7][0], 4603);
+		});
+
+		it('Throws an error if preset is not found', function () {
+			assert.throws(
+				() => pieceTracker.generateHeatmap('I_DO_NOT_EXIST', 'a8'),
+				Error,
+				`Heatmap preset 'I_DO_NOT_EXIST' not found!`
+			);
 		});
 	});
 });
