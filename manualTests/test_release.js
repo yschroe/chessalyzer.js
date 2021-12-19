@@ -12,11 +12,10 @@ c.cfg.profilingActive = true;
 
 const header = await Chessalyzer.analyzePGN(
 	'./test/lichess_db_standard_rated_2013-12.pgn',
-	[c, d],
-	{
-		cntGames: 50000
-	}
+	undefined,
+	null
 );
+console.log(header);
 console.log(
 	`${header.cntGames} games (${header.cntMoves} moves) processed (${header.mps} moves/s)`
 );

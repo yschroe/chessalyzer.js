@@ -32,18 +32,19 @@ process.on(
 			analyzer.push(currentAnalyzer);
 		});
 
-		proc.attachAnalyzers(analyzer);
+		const cfg = { trackers: analyzer };
+		proc.attachConfigs([cfg]);
 
 		// analyze each game
 		msg.games.forEach((game) => {
-			proc.processGame(game);
+			proc.processGame(game, proc.configs[0]);
 		});
 
 		// send result of batch to master
 		process.send({
-			cntMoves: proc.cntMoves,
-			gameAnalyzers: proc.gameAnalyzers,
-			moveAnalyzers: proc.moveAnalyzers
+			cntMoves: proc.configs[0].processedMoves,
+			gameAnalyzers: proc.configs[0].analyzers.game,
+			moveAnalyzers: proc.configs[0].analyzers.move
 		});
 	}
 );

@@ -34,6 +34,19 @@ interface TrackerConfig {
 	profilingActive: boolean;
 }
 
+interface MultithreadConfig {
+	batchSize: number;
+	nThreads: number;
+}
+
+interface AnalysisConfig {
+	trackers?: Tracker[];
+	config?: {
+		cntGames?: number;
+		filter?: (data: unknown) => boolean;
+	};
+}
+
 interface HeatmapData {
 	map: number[][];
 	min: number;
@@ -82,5 +95,7 @@ export {
 	SquareData,
 	TrackerConfig,
 	HeatmapData,
-	HeatmapAnalysisFunc
+	HeatmapAnalysisFunc,
+	AnalysisConfig,
+	MultithreadConfig
 };

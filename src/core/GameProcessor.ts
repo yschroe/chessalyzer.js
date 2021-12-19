@@ -4,7 +4,14 @@ import { EventEmitter } from 'events';
 import cluster from 'cluster';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { Game, Move, MoveData, Tracker } from '../interfaces/Interface.js';
+import {
+	Game,
+	Move,
+	MoveData,
+	Tracker,
+	AnalysisConfig,
+	MultithreadConfig
+} from '../interfaces/Interface.js';
 import ChessBoard from './ChessBoard.js';
 import Utils from './Utils.js';
 
@@ -23,9 +30,12 @@ interface GameProcessorConfig {
 	cntGames: number;
 }
 
-interface MultithreadConfig {
-	batchSize: number;
-	nThreads: number;
+interface FindABetterNameConfig {
+	analyzers: { move: Tracker[]; game: Tracker[] };
+	config: GameProcessorConfig;
+	analyzerData: { name: string; cfg: unknown; path: string }[];
+	cntGames: number;
+	processedMoves: number;
 }
 
 class ParsedMove implements MoveData {
@@ -54,27 +64,63 @@ class ParsedMove implements MoveData {
 class GameProcessor {
 	board: ChessBoard;
 	activePlayer: string;
-	cntMoves: number;
-	cntGames: number;
-	gameAnalyzers: Tracker[];
-	moveAnalyzers: Tracker[];
-	analyzerData: object[];
+	configs: FindABetterNameConfig[];
+	readInHeader: boolean;
 
 	constructor() {
 		this.board = new ChessBoard();
 		this.activePlayer = 'w';
-		this.cntMoves = 0;
-		this.cntGames = 0;
-		this.gameAnalyzers = [];
-		this.moveAnalyzers = [];
-		this.analyzerData = [];
+		this.configs = [];
+		this.readInHeader = false;
 	}
 
-	static checkConfig(config: any): GameProcessorConfig {
+	attachConfigs(configs: AnalysisConfig[]): void {
+		configs.forEach((cfg) => {
+			const tempCfg = {
+				analyzers: {
+					move: [],
+					game: []
+				},
+				analyzerData: [],
+				config: this.checkConfig(cfg.config || {}),
+				cntGames: 0,
+				processedMoves: 0
+			};
+
+			if (cfg.trackers) {
+				cfg.trackers.forEach((t) => {
+					if (t.type === 'move') {
+						tempCfg.analyzers.move.push(t);
+					} else if (t.type === 'game') {
+						tempCfg.analyzers.game.push(t);
+
+						// we need to read in the header if at least one game tracker is attached
+						this.readInHeader = true;
+					}
+
+					tempCfg.analyzerData.push({
+						name: t.constructor.name,
+						cfg: t.cfg,
+						path:
+							Object.prototype.hasOwnProperty.call(t, 'path') &&
+							t.path
+					});
+				});
+			}
+
+			this.configs.push(tempCfg);
+		});
+	}
+
+	checkConfig(config: any): GameProcessorConfig {
 		const hasFilter = Object.prototype.hasOwnProperty.call(
 			config,
 			'filter'
 		);
+
+		// if we need to filter the games, we need the header informations
+		if (hasFilter) this.readInHeader = true;
+
 		const cfg: GameProcessorConfig = {
 			hasFilter,
 			filter: hasFilter ? config.filter : () => true,
@@ -85,31 +131,11 @@ class GameProcessor {
 		return cfg;
 	}
 
-	attachAnalyzers(analyzers: Tracker[]): string[] {
-		const customPaths: string[] = [];
-		analyzers.forEach((a) => {
-			if (a.type === 'move') {
-				this.moveAnalyzers.push(a);
-			} else if (a.type === 'game') {
-				this.gameAnalyzers.push(a);
-			}
-
-			this.analyzerData.push({
-				name: a.constructor.name,
-				cfg: a.cfg,
-				path: Object.prototype.hasOwnProperty.call(a, 'path') && a.path
-			});
-		});
-
-		return customPaths;
-	}
-
 	async processPGN(
 		path: string,
-		analyzer: Tracker[],
-		config: any,
+		configArray: AnalysisConfig[],
 		multiThreadCfg: MultithreadConfig
-	): Promise<{ cntGames: number; cntMoves: number }> {
+	): Promise<{ cntGames: number; cntMoves: number }[]> {
 		try {
 			let readerFinished = false;
 
@@ -120,12 +146,10 @@ class GameProcessor {
 				exec: `${__dirname}/Processor.worker.js`
 			});
 
-			const cfg = GameProcessor.checkConfig(config);
-
-			this.attachAnalyzers(analyzer);
+			this.attachConfigs(configArray);
 
 			// creates a new worker, that will process an array of games
-			const forkWorker = (games: Game[]) => {
+			const forkWorker = (games: Game[], idxConfig: number) => {
 				const w = cluster.fork();
 
 				// on worker finish
@@ -137,17 +161,21 @@ class GameProcessor {
 					if (msg === 'readyForData') {
 						w.send({
 							games,
-							analyzerData: this.analyzerData
+							analyzerData: this.configs[idxConfig].analyzerData
 						});
 					} else {
 						// add tracker data from this worker
-						for (let i = 0; i < this.gameAnalyzers.length; i += 1) {
-							this.gameAnalyzers[i].add(msg.gameAnalyzers[i]);
+						for (let i = 0; i < msg.gameAnalyzers.length; i += 1) {
+							this.configs[idxConfig].analyzers.game[i].add(
+								msg.gameAnalyzers[i]
+							);
 						}
-						for (let i = 0; i < this.moveAnalyzers.length; i += 1) {
-							this.moveAnalyzers[i].add(msg.moveAnalyzers[i]);
+						for (let i = 0; i < msg.moveAnalyzers.length; i += 1) {
+							this.configs[idxConfig].analyzers.move[i].add(
+								msg.moveAnalyzers[i]
+							);
 						}
-						this.cntMoves += msg.cntMoves;
+						this.configs[idxConfig].processedMoves += msg.cntMoves;
 
 						w.kill();
 
@@ -162,7 +190,10 @@ class GameProcessor {
 				});
 			};
 
-			let games = [];
+			const gameStore = [];
+			configArray.forEach(() => {
+				gameStore.push([]);
+			});
 			let game: Game = { moves: [] };
 
 			// init line reader
@@ -174,10 +205,7 @@ class GameProcessor {
 			// on new line
 			lr.on('line', (line) => {
 				// data tag
-				if (
-					line.startsWith('[') &&
-					(cfg.hasFilter || this.gameAnalyzers.length > 0)
-				) {
+				if (this.readInHeader && line.startsWith('[')) {
 					const key = line.match(/\[(.*?)\s/)[1];
 					const value = line.match(/"(.*?)"/)[1];
 
@@ -196,87 +224,124 @@ class GameProcessor {
 					if (line.match(/((1-0)|(0-1)|(1\/2-1\/2)|(\*))$/)) {
 						// remove the result from the moves array
 						game.moves.pop();
-						if (!cfg.hasFilter || cfg.filter(game)) {
-							this.cntGames += 1;
-							if (isMultithreaded) {
-								games.push(game);
 
-								// if enough games have been read in, start worker threads and let them analyze
-								if (
-									this.cntGames %
-										(multiThreadCfg.batchSize *
-											multiThreadCfg.nThreads) ===
-									0
-								) {
-									for (
-										let i = 0;
-										i < multiThreadCfg.nThreads;
-										i += 1
+						for (
+							let idxCfg = 0;
+							idxCfg < this.configs.length;
+							idxCfg += 1
+						) {
+							const cfg = this.configs[idxCfg];
+							if (
+								!cfg.config.hasFilter ||
+								cfg.config.filter(game)
+							) {
+								cfg.cntGames += 1;
+								if (isMultithreaded) {
+									gameStore[idxCfg].push(game);
+
+									// if enough games have been read in, start worker threads and let them analyze
+									if (
+										cfg.cntGames %
+											(multiThreadCfg.batchSize *
+												multiThreadCfg.nThreads) ===
+										0
 									) {
-										forkWorker(
-											games.slice(
-												i * multiThreadCfg.batchSize,
-												i * multiThreadCfg.batchSize +
-													multiThreadCfg.batchSize
-											)
-										);
-									}
+										for (
+											let i = 0;
+											i < multiThreadCfg.nThreads;
+											i += 1
+										) {
+											forkWorker(
+												gameStore[idxCfg].slice(
+													i *
+														multiThreadCfg.batchSize,
+													i *
+														multiThreadCfg.batchSize +
+														multiThreadCfg.batchSize
+												),
+												idxCfg
+											);
+										}
 
-									games = [];
+										gameStore[idxCfg] = [];
+									}
+								} else {
+									this.processGame(game, cfg);
 								}
-							} else {
-								this.processGame(game);
 							}
 						}
 
 						game = { moves: [] };
 					}
 				}
-				if (this.cntGames >= cfg.cntGames) {
+				const countReached = this.configs.reduce(
+					(a, c) => a && c.cntGames >= c.config.cntGames,
+					true
+				);
+				if (countReached) {
 					lr.close();
 					lr.removeAllListeners();
 				}
 			});
 
 			await EventEmitter.once(lr, 'close');
+
 			// if on end there are still unprocessed games, start a last worker batch
-			if (games.length > 0) {
-				if (games.length > multiThreadCfg.batchSize) {
-					const nEndForks = Math.ceil(
-						games.length / multiThreadCfg.batchSize
-					);
-					for (let i = 0; i < nEndForks; i += 1) {
-						forkWorker(
-							games.slice(
-								i * multiThreadCfg.batchSize,
-								i * multiThreadCfg.batchSize +
-									multiThreadCfg.batchSize
-							)
+			gameStore.forEach((games, idx) => {
+				if (games.length > 0) {
+					if (games.length > multiThreadCfg.batchSize) {
+						const nEndForks = Math.ceil(
+							games.length / multiThreadCfg.batchSize
 						);
+						for (let i = 0; i < nEndForks; i += 1) {
+							forkWorker(
+								games.slice(
+									i * multiThreadCfg.batchSize,
+									i * multiThreadCfg.batchSize +
+										multiThreadCfg.batchSize
+								),
+								idx
+							);
+						}
+					} else {
+						forkWorker(games, idx);
 					}
-				} else {
-					forkWorker(games);
 				}
-			}
+			});
 
 			readerFinished = true;
 			if (isMultithreaded) await EventEmitter.once(status, 'finished');
 			// console.log('Read entire file.');
 
-			analyzer.forEach((a) => {
-				a.finish?.();
+			configArray.forEach((cfg) => {
+				if (cfg.trackers) {
+					cfg.trackers.forEach((t) => {
+						t.finish?.();
+					});
+				}
 			});
-			return {
-				cntGames: this.cntGames,
-				cntMoves: this.cntMoves
-			};
+
+			const returnVals = [];
+			this.configs.forEach((cfg) => {
+				returnVals.push({
+					cntGames: cfg.cntGames,
+					cntMoves: cfg.processedMoves
+				});
+			});
+
+			return returnVals;
 		} catch (err) {
 			console.log(err);
-			return { cntGames: -1, cntMoves: -1 };
+			return [{ cntGames: -1, cntMoves: -1 }];
 		}
 	}
 
-	processGame(game: Game): void {
+	processGame(game: Game, analysisCfg: FindABetterNameConfig): void {
+		// game based analyzers
+		for (let i = 0; i < analysisCfg.analyzers.game.length; i += 1) {
+			analysisCfg.analyzers.game[i].analyze(game);
+		}
+
 		const { moves } = game;
 		try {
 			for (let i = 0; i < moves.length; i += 1) {
@@ -286,9 +351,9 @@ class GameProcessor {
 				const currentMove = this.parseMove(moves[i]);
 
 				// move based analyzers
-				this.moveAnalyzers.forEach((a) => {
-					a.analyze(currentMove);
-				});
+				for (let j = 0; j < analysisCfg.analyzers.move.length; j += 1) {
+					analysisCfg.analyzers.move[j].analyze(currentMove);
+				}
 
 				this.board.move(currentMove);
 			}
@@ -297,17 +362,12 @@ class GameProcessor {
 		}
 
 		// notify move analyzers that the current game is done
-		this.moveAnalyzers.forEach((a) => {
-			a.nextGame?.();
-		});
+		for (let i = 0; i < analysisCfg.analyzers.move.length; i += 1) {
+			analysisCfg.analyzers.move[i].nextGame?.();
+		}
 
-		this.cntMoves += moves.length;
+		analysisCfg.processedMoves += moves.length;
 		this.board.reset();
-
-		// game based analyzers
-		this.gameAnalyzers.forEach((a) => {
-			a.analyze(game);
-		});
 	}
 
 	reset(): void {

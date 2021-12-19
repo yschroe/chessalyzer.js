@@ -10,8 +10,7 @@ context('Core Features', function () {
 			let data;
 			before(async function () {
 				data = await Chessalyzer.analyzePGN(
-					'./test/lichess_db_standard_rated_2013-01_min.pgn',
-					[]
+					'./test/lichess_db_standard_rated_2013-01_min.pgn'
 				);
 			});
 
@@ -28,8 +27,7 @@ context('Core Features', function () {
 			let data;
 			before(async function () {
 				data = await Chessalyzer.analyzePGN(
-					'./test/PGN_with_comments_multiline.pgn',
-					[]
+					'./test/PGN_with_comments_multiline.pgn'
 				);
 			});
 
@@ -46,8 +44,7 @@ context('Core Features', function () {
 			let data;
 			before(async function () {
 				data = await Chessalyzer.analyzePGN(
-					'./test/PGN_with_comments_singleline.pgn',
-					[]
+					'./test/PGN_with_comments_singleline.pgn'
 				);
 			});
 
@@ -66,8 +63,7 @@ context('Core Features', function () {
 			before(async function () {
 				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
-					[],
-					{ cntGames: 100 }
+					{ config: { cntGames: 100 } }
 				);
 			});
 
@@ -81,8 +77,7 @@ context('Core Features', function () {
 			before(async function () {
 				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
-					[],
-					{ filter: (game) => game.Result === '1-0' }
+					{ config: { filter: (game) => game.Result === '1-0' } }
 				);
 			});
 
@@ -96,8 +91,12 @@ context('Core Features', function () {
 			before(async function () {
 				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
-					[],
-					{ cntGames: 500, filter: (game) => game.Result === '0-1' }
+					{
+						config: {
+							cntGames: 500,
+							filter: (game) => game.Result === '0-1'
+						}
+					}
 				);
 			});
 
@@ -116,7 +115,7 @@ context('Core Features', function () {
 			before(async function () {
 				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
-					gameTracker
+					{ trackers: [gameTracker] }
 				);
 			});
 
@@ -130,7 +129,7 @@ context('Core Features', function () {
 			before(async function () {
 				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
-					[gameTracker]
+					[{ trackers: [gameTracker] }]
 				);
 			});
 
@@ -144,7 +143,7 @@ context('Core Features', function () {
 			before(async function () {
 				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
-					[gameTracker, pieceTracker]
+					{ trackers: [gameTracker, pieceTracker] }
 				);
 			});
 
@@ -160,7 +159,6 @@ context('Core Features', function () {
 			before(async function () {
 				data = await Chessalyzer.analyzePGN(
 					'./test/lichess_db_standard_rated_2013-01_min.pgn',
-					[],
 					undefined,
 					null
 				);

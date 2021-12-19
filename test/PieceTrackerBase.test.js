@@ -10,7 +10,7 @@ context('PieceTrackerBase', function () {
 		before(async function () {
 			await Chessalyzer.analyzePGN(
 				'./test/lichess_db_standard_rated_2013-01_min.pgn',
-				pieceTracker
+				{ trackers: [pieceTracker] }
 			);
 		});
 
@@ -24,8 +24,7 @@ context('PieceTrackerBase', function () {
 		before(async function () {
 			await Chessalyzer.analyzePGN(
 				'./test/lichess_db_standard_rated_2013-01_min.pgn',
-				pieceTracker,
-				undefined,
+				{ trackers: [pieceTracker] },
 				null
 			);
 		});
@@ -40,7 +39,7 @@ context('PieceTrackerBase', function () {
 		before(async function () {
 			await Chessalyzer.analyzePGN(
 				'./test/lichess_db_standard_rated_2013-01_min.pgn',
-				pieceTracker
+				{ trackers: [pieceTracker] }
 			);
 		});
 

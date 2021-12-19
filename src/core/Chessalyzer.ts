@@ -2,18 +2,24 @@ import { performance } from 'perf_hooks';
 import chalk from 'chalk';
 import GameProcessor from './GameProcessor.js';
 
-import { Tracker, HeatmapData } from '../interfaces/Interface.js';
+import {
+	HeatmapData,
+	AnalysisConfig,
+	MultithreadConfig
+} from '../interfaces/Interface.js';
 
 export default class Chessalyzer {
 	static async analyzePGN(
 		pathToPgn: string,
-		analyzer: Tracker | Tracker[],
-		cfg: { cntGames?: number; filter?: (data: unknown) => boolean } = {},
-		multithreadCfg = { batchSize: 8000, nThreads: 1 }
-	): Promise<{ cntGames: number; cntMoves: number; mps: number }> {
+		configs: AnalysisConfig | AnalysisConfig[] = { trackers: [] },
+		multithreadCfg: MultithreadConfig = { batchSize: 8000, nThreads: 1 }
+	): Promise<
+		| { cntGames: number; cntMoves: number; mps: number }[]
+		| { cntGames: number; cntMoves: number; mps: number }
+	> {
 		// handler for single analyzer or array of analyzers
-		let analyzerArray: Tracker[] = [];
-		analyzerArray = analyzerArray.concat(analyzer);
+		let configArray: AnalysisConfig[] = [];
+		configArray = configArray.concat(configs);
 
 		const gameProcessor = new GameProcessor();
 
@@ -21,16 +27,21 @@ export default class Chessalyzer {
 
 		const header = await gameProcessor.processPGN(
 			pathToPgn,
-			analyzerArray,
-			cfg,
+			configArray,
 			multithreadCfg
 		);
 
 		const t1 = performance.now();
 		const tdiff = Math.round(t1 - t0) / 1000;
-		const mps = Math.round(header.cntMoves / tdiff);
 
-		return { ...header, mps };
+		const returnVals = [];
+		header.forEach((h) => {
+			returnVals.push({ ...h, mps: Math.round(h.cntMoves / tdiff) });
+		});
+
+		return Array.isArray(configs) && configs.length > 1
+			? returnVals
+			: returnVals[0];
 	}
 
 	static printHeatmap(data: HeatmapData) {

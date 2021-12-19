@@ -47,16 +47,16 @@ class BaseTracker implements Tracker {
 	}
 
 	generateHeatmap(
-		fun: string | HeatmapAnalysisFunc,
+		analysisFunc: string | HeatmapAnalysisFunc,
 		square?: string | number[],
 		optData?: unknown
 	): HeatmapData {
 		let heatmapFunction: HeatmapAnalysisFunc;
 
-		if (typeof fun === 'string') {
-			heatmapFunction = this.heatmapPresets[fun].calc;
+		if (typeof analysisFunc === 'string') {
+			heatmapFunction = this.heatmapPresets[analysisFunc].calc;
 		} else {
-			heatmapFunction = fun;
+			heatmapFunction = analysisFunc;
 		}
 
 		return Utils.generateHeatmap(this, heatmapFunction, square, optData);
@@ -64,23 +64,24 @@ class BaseTracker implements Tracker {
 
 	generateComparisonHeatmap(
 		compData: this,
-		fun: string | HeatmapAnalysisFunc,
+		analysisFunc: string | HeatmapAnalysisFunc,
 		square?: string | number[],
 		optData?: unknown
 	): HeatmapData {
 		let heatmapFunction: HeatmapAnalysisFunc;
 
-		if (typeof fun === 'string') {
+		if (typeof analysisFunc === 'string') {
 			if (Object.keys(this.heatmapPresets).length === 0)
 				throw new Error(
 					'Your analyzer does not define any heatmap presets!'
 				);
 			heatmapFunction =
-				this.heatmapPresets[fun] && this.heatmapPresets[fun].calc;
+				this.heatmapPresets[analysisFunc] &&
+				this.heatmapPresets[analysisFunc].calc;
 			if (!heatmapFunction)
-				throw new Error(`Heatmap preset '${fun}' not found!`);
+				throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
 		} else {
-			heatmapFunction = fun;
+			heatmapFunction = analysisFunc;
 		}
 
 		return Utils.generateComparisonHeatmap(
