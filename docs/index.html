@@ -1,4 +1,4 @@
-<!DOCTYPE html><html class="default"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>chessalyzer.js</title><meta name="description" content="Documentation for chessalyzer.js"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script async src="assets/search.js" id="search-script"></script></head><body><script>document.body.classList.add(localStorage.getItem("tsd-theme") || "os")</script><header><div class="tsd-page-toolbar"><div class="container"><div class="table-wrap"><div class="table-cell" id="tsd-search" data-base="."><div class="field"><label for="tsd-search-field" class="tsd-widget search no-caption">Search</label><input type="text" id="tsd-search-field"/></div><ul class="results"><li class="state loading">Preparing search index...</li><li class="state failure">The search index is not available</li></ul><a href="index.html" class="title">chessalyzer.js</a></div><div class="table-cell" id="tsd-widgets"><div id="tsd-filter"><a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a><div class="tsd-filter-group"><div class="tsd-select" id="tsd-filter-visibility"><span class="tsd-select-label">All</span><ul class="tsd-select-list"><li data-value="public">Public</li><li data-value="protected">Public/Protected</li><li data-value="private" class="selected">All</li></ul></div> <input type="checkbox" id="tsd-filter-inherited" checked/><label class="tsd-widget" for="tsd-filter-inherited">Inherited</label><input type="checkbox" id="tsd-filter-externals" checked/><label class="tsd-widget" for="tsd-filter-externals">Externals</label></div></div><a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a></div></div></div></div><div class="tsd-page-title"><div class="container"><h1> chessalyzer.js</h1></div></div></header><div class="container container-main"><div class="row"><div class="col-8 col-content"><div class="tsd-panel tsd-typography"><img src="https://i.imgur.com/X7Q2xIx.png" style="height: 150px">
+<!DOCTYPE html><html class="default"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>chessalyzer.js</title><meta name="description" content="Documentation for chessalyzer.js"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script async src="assets/search.js" id="search-script"></script></head><body><script>document.body.classList.add(localStorage.getItem("tsd-theme") || "os")</script><header><div class="tsd-page-toolbar"><div class="container"><div class="table-wrap"><div class="table-cell" id="tsd-search" data-base="."><div class="field"><label for="tsd-search-field" class="tsd-widget search no-caption">Search</label><input type="text" id="tsd-search-field"/></div><ul class="results"><li class="state loading">Preparing search index...</li><li class="state failure">The search index is not available</li></ul><a href="index.html" class="title">chessalyzer.js</a></div><div class="table-cell" id="tsd-widgets"><div id="tsd-filter"><a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a><div class="tsd-filter-group"><div class="tsd-select" id="tsd-filter-visibility"><span class="tsd-select-label">All</span><ul class="tsd-select-list"><li data-value="public">Public</li><li data-value="protected">Public/Protected</li><li data-value="private" class="selected">All</li></ul></div> <input type="checkbox" id="tsd-filter-inherited" checked/><label class="tsd-widget" for="tsd-filter-inherited">Inherited</label><input type="checkbox" id="tsd-filter-externals" checked/><label class="tsd-widget" for="tsd-filter-externals">Externals</label></div></div><a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a></div></div></div></div><div class="tsd-page-title"><div class="container"><h1>chessalyzer.js</h1></div></div></header><div class="container container-main"><div class="row"><div class="col-8 col-content"><div class="tsd-panel tsd-typography"><img src="https://i.imgur.com/X7Q2xIx.png" style="height: 150px">
 
 <p>A JavaScript library for batch analyzing chess games.</p>
 <p><a href="https://badge.fury.io/js/chessalyzer.js"><img src="https://badge.fury.io/js/chessalyzer.js.svg" alt="npm version"></a></p>
@@ -9,11 +9,12 @@
 <ul>
 <li><a href="#features">Features</a></li>
 <li><a href="#installation">Installation</a></li>
+<li><a href="#how-it-works">How it works</a></li>
 <li><a href="#examples">Examples</a><ul>
 <li><a href="#basic-usage">Basic Usage</a></li>
 <li><a href="#filtering">Filtering</a></li>
-<li><a href="#multithreaded-analysis">Multithreading</a></li>
 <li><a href="#compare-analyses">Compare Analyses</a></li>
+<li><a href="#multithreaded-analysis">Multithreading</a></li>
 </ul>
 </li>
 <li><a href="#heatmap-analysis-functions">Heatmap analysis functions</a></li>
@@ -22,22 +23,20 @@
 <li><a href="#custom-trackers">Custom Tracker</a></li>
 </ul>
 </li>
+<li><a href="#heatmap-presets">Heatmap presets</a></li>
 <li><a href="#visualisation">Visualisation</a></li>
-<li><a href="#contribute">Contribute</a></li>
 <li><a href="#changelog">Changelog</a></li>
-<li><a href="#todos">TODOs</a></li>
 </ul>
 
 <a href="#features" id="features" style="color: inherit; text-decoration: none;">
   <h1>Features</h1>
 </a>
 <ul>
-<li>Batch process PGN files</li>
+<li>Batch process PGN files and track statistics of your games</li>
 <li>Filter games (e.g. only analyze games where WhiteElo &gt; 1800)</li>
-<li>Track statistics</li>
 <li>Fully modular, track only the stats you need to preserve performance</li>
 <li>Generate heatmaps out of the generated data</li>
-<li>It&#39;s fast: &gt;3.300.000 moves/s on a Apple M1, &gt;2.900.000 moves/s on a Ryzen 5 2600X (PGN parsing only)</li>
+<li>It&#39;s fast: &gt;4.400.000 moves/s on a Apple M1, &gt;2.900.000 moves/s on a Ryzen 5 2600X (PGN parsing only)</li>
 <li>Handles big files easily</li>
 </ul>
 
@@ -47,16 +46,28 @@
 <ol>
 <li>Install package</li>
 </ol>
-<pre><code class="language-sh"><span class="hl-0">npm install --save chessalyzer.js</span>
+<pre><code class="language-sh"><span class="hl-0">npm install chessalyzer.js</span>
 </code></pre>
 <ol start="2">
-<li>Import the Chessalyzer object</li>
+<li>Import the Chessalyzer object (Note: since V2.0 chessalyzer is an <a href="https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#file-esm-package-md">ES module</a> so you can&#39;t use the Node.js require(...) syntax).</li>
 </ol>
-<pre><code class="language-javascript"><span class="hl-1">const</span><span class="hl-0"> { </span><span class="hl-2">Chessalyzer</span><span class="hl-0"> } = </span><span class="hl-3">require</span><span class="hl-0">(</span><span class="hl-4">&#39;chessalyzer.js&#39;</span><span class="hl-0">);</span>
+<pre><code class="language-javascript"><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">Chessalyzer</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;chessalyzer.js&#39;</span><span class="hl-0">;</span>
 </code></pre>
 <ol start="3">
-<li>Check out the examples or the <a href="https://peterpain.github.io/chessalyzer.js/Chessalyzer.html">docs</a>.</li>
+<li>Use the library. See next chapters for examples.</li>
 </ol>
+<pre><code class="language-javascript"><span class="hl-2">Chessalyzer</span><span class="hl-0">.</span><span class="hl-4">analyzePGN</span><span class="hl-0">(</span><span class="hl-3">&#39;&lt;pathToPgnFile&#39;</span><span class="hl-0">, </span><span class="hl-2">yourAnalysisConfig</span><span class="hl-0">);</span>
+</code></pre>
+<ol start="4">
+<li>Check out the examples or the <a href="https://yschroe.github.io/chessalyzer.js/">docs</a>.</li>
+</ol>
+
+<a href="#how-it-works" id="how-it-works" style="color: inherit; text-decoration: none;">
+  <h1>How it works</h1>
+</a>
+<p>Chessalyzer.js consists of two submodules which work hand-in-hand: The first module is the <code>Chessalyzer</code> class which handles the PGN parsing and provides you with a function for previewing heatmaps. The class by itself is static (meaning it can not be instantiated and does not store data in itself) and does not track any statistics though. For this you need a <code>Tracker</code> object which you then can pass into the parsing function of the Chessalyzer class. The Chessalzyer class recognizes the Tracker objects and passes data into it. Typically this will either be <code>MoveData</code> containing information about e.g. which piece moved from where to where or which piece took which other piece for each move of each game. Additionally you can also use the information from the header of the PGN file, where you can find e.g. the player names and which opening was played (ECO code).</p>
+<p>Inside the Tracker object you can do whatever you want with the data. If you want to track some obscure stat like how often the e pawn was promoted to a rook on the a8 square you could write a Tracker for that. Chessalyzer.js ships with three different preconfigured Trackers which should cover most usecases, so if you are happy with that you don&#39;t need to code your own Tracker.</p>
+<p>Lastly Chessalyzer.js provides you with functions to convert your raw data from your Trackers into heatmaps which you then can use in your frontend of choice.</p>
 
 <a href="#examples" id="examples" style="color: inherit; text-decoration: none;">
   <h1>Examples</h1>
@@ -65,73 +76,61 @@
 <a href="#basic-usage" id="basic-usage" style="color: inherit; text-decoration: none;">
   <h2>Basic Usage</h2>
 </a>
-<p>Let&#39;s start with a basic example:</p>
-<pre><code class="language-javascript"><span class="hl-5">// import the library and trackers</span><br/><span class="hl-1">const</span><span class="hl-0"> { </span><span class="hl-2">Chessalyzer</span><span class="hl-0">, </span><span class="hl-2">Tracker</span><span class="hl-0"> } = </span><span class="hl-3">require</span><span class="hl-0">(</span><span class="hl-4">&#39;chessalyzer.js&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-5">// create basic tile tracker</span><br/><span class="hl-1">const</span><span class="hl-0"> </span><span class="hl-2">tileTracker</span><span class="hl-0"> = </span><span class="hl-1">new</span><span class="hl-0"> </span><span class="hl-6">Tracker</span><span class="hl-0">.</span><span class="hl-3">Tile</span><span class="hl-0">();</span><br/><br/><span class="hl-5">// create a analysis function that evaluates a specific stat</span><br/><span class="hl-5">// in this example we want to know how often each piece moved to the tile at sqrData.coords</span><br/><span class="hl-1">let</span><span class="hl-0"> </span><span class="hl-3">fun</span><span class="hl-0"> = (</span><span class="hl-6">data</span><span class="hl-0">, </span><span class="hl-6">sqrData</span><span class="hl-0">, </span><span class="hl-6">loopSqrData</span><span class="hl-0">) </span><span class="hl-1">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-1">let</span><span class="hl-0"> </span><span class="hl-6">val</span><span class="hl-0"> = </span><span class="hl-7">0</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-1">const</span><span class="hl-0"> { </span><span class="hl-2">coords</span><span class="hl-0"> } = </span><span class="hl-6">sqrData</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-1">const</span><span class="hl-0"> { </span><span class="hl-2">piece</span><span class="hl-0"> } = </span><span class="hl-6">loopSqrData</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-8">if</span><span class="hl-0"> (</span><span class="hl-6">piece</span><span class="hl-0">.</span><span class="hl-6">color</span><span class="hl-0"> !== </span><span class="hl-4">&#39;&#39;</span><span class="hl-0">) {</span><br/><span class="hl-0">        </span><span class="hl-1">let</span><span class="hl-0"> </span><span class="hl-6">val</span><span class="hl-0"> =</span><br/><span class="hl-0">            </span><span class="hl-6">data</span><span class="hl-0">.</span><span class="hl-6">tiles</span><span class="hl-0">[</span><span class="hl-6">coords</span><span class="hl-0">[</span><span class="hl-7">0</span><span class="hl-0">]][</span><span class="hl-6">coords</span><span class="hl-0">[</span><span class="hl-7">1</span><span class="hl-0">]][</span><span class="hl-6">piece</span><span class="hl-0">.</span><span class="hl-6">color</span><span class="hl-0">][</span><span class="hl-6">piece</span><span class="hl-0">.</span><span class="hl-6">name</span><span class="hl-0">].</span><span class="hl-6">movedTo</span><span class="hl-0">;</span><br/><span class="hl-0">    }</span><br/><span class="hl-0">    </span><span class="hl-8">return</span><span class="hl-0"> </span><span class="hl-6">val</span><span class="hl-0">;</span><br/><span class="hl-0">};</span><br/><br/><span class="hl-0">(</span><span class="hl-1">async</span><span class="hl-0"> () </span><span class="hl-1">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-5">// start a batch analysis for the PGN file at &lt;pathToPgnFile&gt;</span><br/><span class="hl-0">    </span><span class="hl-5">// the analysis is saved directly in the &#39;tileTracker&#39; object</span><br/><span class="hl-0">    </span><span class="hl-8">await</span><span class="hl-0"> </span><span class="hl-6">Chessalyzer</span><span class="hl-0">.</span><span class="hl-3">startBatch</span><span class="hl-0">(</span><span class="hl-4">&#39;&lt;pathToPgnFile&gt;&#39;</span><span class="hl-0">, </span><span class="hl-6">tileTracker</span><span class="hl-0">);</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// generate a heat map for the data of &#39;a1&#39; based on your evaluation function</span><br/><span class="hl-0">    </span><span class="hl-1">let</span><span class="hl-0"> </span><span class="hl-6">heatmapData</span><span class="hl-0"> = </span><span class="hl-6">Chessalyzer</span><span class="hl-0">.</span><span class="hl-3">generateHeatmap</span><span class="hl-0">(</span><span class="hl-6">tileTracker</span><span class="hl-0">, </span><span class="hl-4">&#39;a1&#39;</span><span class="hl-0">, </span><span class="hl-6">fun</span><span class="hl-0">);</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// print heatmap to console for preview</span><br/><span class="hl-0">    </span><span class="hl-6">Chessalyzer</span><span class="hl-0">.</span><span class="hl-3">printHeatmap</span><span class="hl-0">(</span><span class="hl-6">heatmapData</span><span class="hl-0">.</span><span class="hl-6">map</span><span class="hl-0">, </span><span class="hl-6">heatmapData</span><span class="hl-0">.</span><span class="hl-6">min</span><span class="hl-0">, </span><span class="hl-6">heatmapData</span><span class="hl-0">.</span><span class="hl-6">max</span><span class="hl-0">);</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// ...or use heatmapData with your favourite frontend</span><br/><span class="hl-0">})();</span>
+<p>Let&#39;s start with a basic example. Here we simply want to track the tile occupation (=how often did each tile have a piece on it) for the whole board. For this we can use the preconfigured TileTracker class from the library. Afterwards we want to create a heatmap out of the data to visualize the tile occupation. For this basic heatmap a preset is also provided:</p>
+<pre><code class="language-javascript"><span class="hl-5">// import the library and trackers</span><br/><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">Chessalyzer</span><span class="hl-0">, </span><span class="hl-2">Tracker</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;chessalyzer.js&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-5">// create basic tile tracker</span><br/><span class="hl-6">const</span><span class="hl-0"> </span><span class="hl-7">tileTracker</span><span class="hl-0"> = </span><span class="hl-6">new</span><span class="hl-0"> </span><span class="hl-2">Tracker</span><span class="hl-0">.</span><span class="hl-4">Tile</span><span class="hl-0">();</span><br/><br/><span class="hl-5">// start a batch analysis for the PGN file at &lt;pathToPgnFile&gt;</span><br/><span class="hl-5">// the data is tracked directly inside the tileTracker instance</span><br/><span class="hl-5">// see later chapters for how the data is structured inside the trackers</span><br/><span class="hl-5">// (top level awaits are possible with ESM :))</span><br/><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">Chessalyzer</span><span class="hl-0">.</span><span class="hl-4">analyzePGN</span><span class="hl-0">(</span><span class="hl-3">&#39;&lt;pathToPgnFile&gt;&#39;</span><span class="hl-0">, { </span><span class="hl-2">trackers:</span><span class="hl-0"> [</span><span class="hl-2">tileTracker</span><span class="hl-0">] });</span><br/><br/><span class="hl-5">// generate a tile occupation heatmap</span><br/><span class="hl-6">const</span><span class="hl-0"> </span><span class="hl-7">heatmapData</span><span class="hl-0"> = </span><span class="hl-2">tileTracker</span><span class="hl-0">.</span><span class="hl-4">generateHeatmap</span><span class="hl-0">(</span><span class="hl-3">&#39;TILE_OCC_ALL&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-5">// print heatmap to console for preview</span><br/><span class="hl-2">Chessalyzer</span><span class="hl-0">.</span><span class="hl-4">printHeatmap</span><span class="hl-0">(</span><span class="hl-2">heatmapData</span><span class="hl-0">);</span><br/><br/><span class="hl-5">// ...or use heatmapData with your favourite frontend</span>
 </code></pre>
 
 <a href="#filtering" id="filtering" style="color: inherit; text-decoration: none;">
   <h2>Filtering</h2>
 </a>
 <p>You can also filter the PGN file for specific criteria, e.g. only evaluate games where <code>WhiteElo &gt; 2000</code>:</p>
-<pre><code class="language-javascript"><span class="hl-5">// create filter function that returns true for all games where WhiteElo &gt; 2000</span><br/><span class="hl-5">// the &#39;game&#39; object passed contains every key included in the pgn file (case sensitive)</span><br/><span class="hl-1">let</span><span class="hl-0"> </span><span class="hl-3">fil</span><span class="hl-0"> = </span><span class="hl-1">function</span><span class="hl-0"> (</span><span class="hl-6">game</span><span class="hl-0">) {</span><br/><span class="hl-0">    </span><span class="hl-8">return</span><span class="hl-0"> </span><span class="hl-6">game</span><span class="hl-0">.</span><span class="hl-6">WhiteElo</span><span class="hl-0"> &gt; </span><span class="hl-7">2000</span><span class="hl-0">;</span><br/><span class="hl-0">};</span><br/><br/><span class="hl-0">(</span><span class="hl-1">async</span><span class="hl-0"> () </span><span class="hl-1">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-8">await</span><span class="hl-0"> </span><span class="hl-6">Chessalyzer</span><span class="hl-0">.</span><span class="hl-3">startBatch</span><span class="hl-0">(</span><span class="hl-4">&#39;&lt;pathToPgnFile&gt;&#39;</span><span class="hl-0">, </span><span class="hl-6">tileTracker</span><span class="hl-0">, {</span><br/><span class="hl-0">        </span><span class="hl-6">filter:</span><span class="hl-0"> </span><span class="hl-6">fil</span><br/><span class="hl-0">    });</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// ...do something with the tileTracker data</span><br/><span class="hl-0">})();</span>
-</code></pre>
-
-<a href="#multithreaded-analysis" id="multithreaded-analysis" style="color: inherit; text-decoration: none;">
-  <h2>Multithreaded analysis</h2>
-</a>
-<p>Version 1.1.0 added multithreading / parallel processing with much better processing speeds (up to 3x). To use multithreading use the function <code>Chessalyzer.startBatchMultiCore</code> instead of <code>Chessalyzer.startBatch</code>:</p>
-<pre><code class="language-javascript"><span class="hl-5">// start a multithreaded batch analysis for the PGN file at &lt;pathToPgnFile&gt;</span><br/><span class="hl-0">(</span><span class="hl-1">async</span><span class="hl-0"> () </span><span class="hl-1">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-8">await</span><span class="hl-0"> </span><span class="hl-6">Chessalyzer</span><span class="hl-0">.</span><span class="hl-3">startBatchMultiCore</span><span class="hl-0">(</span><br/><span class="hl-0">        </span><span class="hl-4">&#39;&lt;pathToPgnFile&gt;&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">        </span><span class="hl-6">tileTracker</span><span class="hl-0">,</span><br/><span class="hl-0">        {</span><br/><span class="hl-0">            </span><span class="hl-6">cntGames:</span><span class="hl-0"> </span><span class="hl-7">10000</span><br/><span class="hl-0">        },</span><br/><span class="hl-0">        </span><span class="hl-7">6000</span><span class="hl-0">,</span><br/><span class="hl-0">        </span><span class="hl-7">2</span><br/><span class="hl-0">    );</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// ...</span><br/><span class="hl-0">})();</span>
-</code></pre>
-<p><code>startBatchMultiCore(...)</code> reads in chunks of games of size <code>batchSize</code> (4th argument) times <code>nThreads</code> (5th argument) and starts the analysis of the curent chunk while the next chunk is read-in from the .pgn file in parallel. With the 5th argument <code>nThreads</code> you can define how many threads are started in parallel to analyze the chunk. For example: <code>batchSize = 1000</code> and <code>nThreads = 5</code> will result in a chunk size of 5000 which is split in 5 threads which analyse 1000 games each.</p>
-
-<a href="#important" id="important" style="color: inherit; text-decoration: none;">
-  <h5>Important</h5>
-</a>
-<ul>
-<li>A larger <code>nThreads</code> does not necessary result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak <code>batchSize</code> and <code>nThreads</code> to get the best results on your system. On my system I achieved the best resuts with <code>nThreads = 1</code> and <code>batchSize = 8000</code>. Note that <code>nThreads = 1</code> doesn&#39;t mean that the analysis is single-threaded but that 1 <em>additional</em> thread in addition to the thread that parses the PGN file is used.</li>
-<li>To use a custom tracker with your multithreaded analysis the tracker needs to have two additional class members:<ul>
-<li>A <code>path</code> variable which contains the path of the file your custom tracker is defined in. You can use node.js global <code>__filename</code> for this. You can check out the <code>CustomTracker.js</code> file in the <code>/test</code> subfolder, which is basically a copy of the base GameTracker built as a custom tracker. You can only use one custom Tracker for multithreaded analyses at the moment.</li>
-<li>An <code>add()</code> function. This function gets passed another Tracker object of the same type and is used to merge the data of the two tracker objects. For example, the add() function of the built-in GameTracker looks like this:</li>
-</ul>
-</li>
-</ul>
-<pre><code class="language-javascript"><span class="hl-3">add</span><span class="hl-0">(</span><span class="hl-6">tracker</span><span class="hl-0">) {</span><br/><span class="hl-0">    </span><span class="hl-1">this</span><span class="hl-0">.</span><span class="hl-6">wins</span><span class="hl-0">[</span><span class="hl-7">0</span><span class="hl-0">] += </span><span class="hl-6">tracker</span><span class="hl-0">.</span><span class="hl-6">wins</span><span class="hl-0">[</span><span class="hl-7">0</span><span class="hl-0">];</span><br/><span class="hl-0">    </span><span class="hl-1">this</span><span class="hl-0">.</span><span class="hl-6">wins</span><span class="hl-0">[</span><span class="hl-7">1</span><span class="hl-0">] += </span><span class="hl-6">tracker</span><span class="hl-0">.</span><span class="hl-6">wins</span><span class="hl-0">[</span><span class="hl-7">1</span><span class="hl-0">];</span><br/><span class="hl-0">    </span><span class="hl-1">this</span><span class="hl-0">.</span><span class="hl-6">wins</span><span class="hl-0">[</span><span class="hl-7">2</span><span class="hl-0">] += </span><span class="hl-6">tracker</span><span class="hl-0">.</span><span class="hl-6">wins</span><span class="hl-0">[</span><span class="hl-7">2</span><span class="hl-0">];</span><br/><span class="hl-0">    </span><span class="hl-1">this</span><span class="hl-0">.</span><span class="hl-6">cntGames</span><span class="hl-0"> += </span><span class="hl-6">tracker</span><span class="hl-0">.</span><span class="hl-6">cntGames</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-1">this</span><span class="hl-0">.</span><span class="hl-6">time</span><span class="hl-0"> += </span><span class="hl-6">tracker</span><span class="hl-0">.</span><span class="hl-6">time</span><span class="hl-0">;</span><br/><span class="hl-0">}</span>
+<pre><code class="language-javascript"><span class="hl-5">// create filter function that returns true for all games where WhiteElo &gt; 2000</span><br/><span class="hl-5">// the &#39;game&#39; object passed contains every header key included in the pgn file (case sensitive)</span><br/><span class="hl-6">let</span><span class="hl-0"> </span><span class="hl-4">fil</span><span class="hl-0"> = </span><span class="hl-6">function</span><span class="hl-0"> (</span><span class="hl-2">game</span><span class="hl-0">) {</span><br/><span class="hl-0">    </span><span class="hl-1">return</span><span class="hl-0"> </span><span class="hl-2">game</span><span class="hl-0">.</span><span class="hl-2">WhiteElo</span><span class="hl-0"> &gt; </span><span class="hl-8">2000</span><span class="hl-0">;</span><br/><span class="hl-0">};</span><br/><br/><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">Chessalyzer</span><span class="hl-0">.</span><span class="hl-4">analyzePGN</span><span class="hl-0">(</span><span class="hl-3">&#39;&lt;pathToPgnFile&gt;&#39;</span><span class="hl-0">, {</span><br/><span class="hl-0">    </span><span class="hl-2">trackers:</span><span class="hl-0"> [</span><span class="hl-2">tileTracker</span><span class="hl-0">],</span><br/><span class="hl-0">    </span><span class="hl-2">config:</span><span class="hl-0"> {</span><br/><span class="hl-0">        </span><span class="hl-2">filter:</span><span class="hl-0"> </span><span class="hl-2">fil</span><br/><span class="hl-0">    }</span><br/><span class="hl-0">});</span><br/><br/><span class="hl-5">// ...do something with the tileTracker data</span>
 </code></pre>
 
 <a href="#compare-analyses" id="compare-analyses" style="color: inherit; text-decoration: none;">
   <h2>Compare Analyses</h2>
 </a>
 <p>You can also generate a comparison heat map where you can compare the data of two different analyses. Let&#39;s say you wanted to compare how the white player occupates the board between a lower rated player and a higher rated player. To get comparable results 1000 games of each shall be evaluated:</p>
-<pre><code class="language-javascript"><span class="hl-5">// create two filters</span><br/><span class="hl-1">let</span><span class="hl-0"> </span><span class="hl-3">fil1</span><span class="hl-0"> = </span><span class="hl-1">function</span><span class="hl-0"> (</span><span class="hl-6">game</span><span class="hl-0">) {</span><br/><span class="hl-0">    </span><span class="hl-8">return</span><span class="hl-0"> </span><span class="hl-6">game</span><span class="hl-0">.</span><span class="hl-6">WhiteElo</span><span class="hl-0"> &gt; </span><span class="hl-7">2000</span><span class="hl-0">;</span><br/><span class="hl-0">};</span><br/><span class="hl-1">let</span><span class="hl-0"> </span><span class="hl-3">fil2</span><span class="hl-0"> = </span><span class="hl-1">function</span><span class="hl-0"> (</span><span class="hl-6">game</span><span class="hl-0">) {</span><br/><span class="hl-0">    </span><span class="hl-8">return</span><span class="hl-0"> </span><span class="hl-6">game</span><span class="hl-0">.</span><span class="hl-6">WhiteElo</span><span class="hl-0"> &lt; </span><span class="hl-7">1200</span><span class="hl-0">;</span><br/><span class="hl-0">};</span><br/><br/><span class="hl-5">// create two TileTrackers</span><br/><span class="hl-1">const</span><span class="hl-0"> </span><span class="hl-2">tileT1</span><span class="hl-0"> = </span><span class="hl-1">new</span><span class="hl-0"> </span><span class="hl-6">Tracker</span><span class="hl-0">.</span><span class="hl-3">Tile</span><span class="hl-0">();</span><br/><span class="hl-1">const</span><span class="hl-0"> </span><span class="hl-2">tileT2</span><span class="hl-0"> = </span><span class="hl-1">new</span><span class="hl-0"> </span><span class="hl-6">Tracker</span><span class="hl-0">.</span><span class="hl-3">Tile</span><span class="hl-0">();</span><br/><br/><span class="hl-5">// create a evaluation function for the heat map</span><br/><span class="hl-5">// (sqrData isn&#39;t used by this analysis, but needs to be an argument nevertheless)</span><br/><span class="hl-1">let</span><span class="hl-0"> </span><span class="hl-3">fun</span><span class="hl-0"> = (</span><span class="hl-6">data</span><span class="hl-0">, </span><span class="hl-6">_</span><span class="hl-0">, </span><span class="hl-6">loopSqrData</span><span class="hl-0">) </span><span class="hl-1">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-1">const</span><span class="hl-0"> { </span><span class="hl-2">coords</span><span class="hl-0"> } = </span><span class="hl-6">loopSqrData</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-1">let</span><span class="hl-0"> </span><span class="hl-6">val</span><span class="hl-0"> = </span><span class="hl-6">data</span><span class="hl-0">.</span><span class="hl-6">tiles</span><span class="hl-0">[</span><span class="hl-6">coords</span><span class="hl-0">[</span><span class="hl-7">0</span><span class="hl-0">]][</span><span class="hl-6">coords</span><span class="hl-0">[</span><span class="hl-7">1</span><span class="hl-0">]].</span><span class="hl-6">w</span><span class="hl-0">.</span><span class="hl-6">wasOn</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-6">val</span><span class="hl-0"> = (</span><span class="hl-6">val</span><span class="hl-0"> * </span><span class="hl-7">100</span><span class="hl-0">) / </span><span class="hl-6">data</span><span class="hl-0">.</span><span class="hl-6">cntMovesTotal</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-8">return</span><span class="hl-0"> </span><span class="hl-6">val</span><span class="hl-0">;</span><br/><span class="hl-0">};</span><br/><br/><span class="hl-0">(</span><span class="hl-1">async</span><span class="hl-0"> () </span><span class="hl-1">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-5">// start the first analysis</span><br/><span class="hl-0">    </span><span class="hl-8">await</span><span class="hl-0"> </span><span class="hl-6">Chessalyzer</span><span class="hl-0">.</span><span class="hl-3">startBatch</span><span class="hl-0">(</span><span class="hl-4">&#39;&lt;pathToPgnFile&gt;&#39;</span><span class="hl-0">, </span><span class="hl-6">tileT1</span><span class="hl-0">, {</span><br/><span class="hl-0">        </span><span class="hl-6">filter:</span><span class="hl-0"> </span><span class="hl-6">fil1</span><span class="hl-0">,</span><br/><span class="hl-0">        </span><span class="hl-6">cntGames:</span><span class="hl-0"> </span><span class="hl-7">1000</span><br/><span class="hl-0">    });</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// start the second analysis</span><br/><span class="hl-0">    </span><span class="hl-8">await</span><span class="hl-0"> </span><span class="hl-6">Chessalyzer</span><span class="hl-0">.</span><span class="hl-3">startBatch</span><span class="hl-0">(</span><span class="hl-4">&#39;&lt;pathToPgnFile&gt;&#39;</span><span class="hl-0">, </span><span class="hl-6">tileT2</span><span class="hl-0">, {</span><br/><span class="hl-0">        </span><span class="hl-6">filter:</span><span class="hl-0"> </span><span class="hl-6">fil2</span><span class="hl-0">,</span><br/><span class="hl-0">        </span><span class="hl-6">cntGames:</span><span class="hl-0"> </span><span class="hl-7">1000</span><br/><span class="hl-0">    });</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// generate the comparison heatmap</span><br/><span class="hl-0">    </span><span class="hl-1">let</span><span class="hl-0"> </span><span class="hl-6">heatmapData</span><span class="hl-0"> = </span><span class="hl-6">Chessalyzer</span><span class="hl-0">.</span><span class="hl-3">generateComparisonHeatmap</span><span class="hl-0">(</span><br/><span class="hl-0">        </span><span class="hl-6">tileT1</span><span class="hl-0">,</span><br/><span class="hl-0">        </span><span class="hl-6">tileT2</span><span class="hl-0">,</span><br/><span class="hl-0">        </span><span class="hl-1">undefined</span><span class="hl-0">, </span><span class="hl-5">// this analysis function doesn&#39;t depend on a specific square</span><br/><span class="hl-0">        </span><span class="hl-6">fun</span><br/><span class="hl-0">    );</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// use heatmapData</span><br/><span class="hl-0">})();</span>
+<pre><code class="language-javascript"><span class="hl-5">// create two Tile Trackers</span><br/><span class="hl-6">const</span><span class="hl-0"> </span><span class="hl-7">tileT1</span><span class="hl-0"> = </span><span class="hl-6">new</span><span class="hl-0"> </span><span class="hl-2">Tracker</span><span class="hl-0">.</span><span class="hl-4">Tile</span><span class="hl-0">();</span><br/><span class="hl-6">const</span><span class="hl-0"> </span><span class="hl-7">tileT2</span><span class="hl-0"> = </span><span class="hl-6">new</span><span class="hl-0"> </span><span class="hl-2">Tracker</span><span class="hl-0">.</span><span class="hl-4">Tile</span><span class="hl-0">();</span><br/><br/><span class="hl-5">// start the analysis</span><br/><span class="hl-5">// instead of passing just one analysis config you can also pass an array of configs</span><br/><span class="hl-5">// tileT1 will only receive games with WhiteElo &gt;2000, tileT2 only receives games with WhiteElo &lt; 1200</span><br/><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">Chessalyzer</span><span class="hl-0">.</span><span class="hl-4">analyzePGN</span><span class="hl-0">(</span><span class="hl-3">&#39;&lt;pathToPgnFile&gt;&#39;</span><span class="hl-0">, [</span><br/><span class="hl-0">    {</span><br/><span class="hl-0">        </span><span class="hl-2">trackers:</span><span class="hl-0"> [</span><span class="hl-2">tileT1</span><span class="hl-0">],</span><br/><span class="hl-0">        </span><span class="hl-2">config:</span><span class="hl-0"> {</span><br/><span class="hl-0">            </span><span class="hl-4">filter</span><span class="hl-2">:</span><span class="hl-0"> (</span><span class="hl-2">game</span><span class="hl-0">) </span><span class="hl-6">=&gt;</span><span class="hl-0"> </span><span class="hl-2">game</span><span class="hl-0">.</span><span class="hl-2">WhiteElo</span><span class="hl-0"> &gt; </span><span class="hl-8">2000</span><span class="hl-0">,</span><br/><span class="hl-0">            </span><span class="hl-2">cntGames:</span><span class="hl-0"> </span><span class="hl-8">1000</span><br/><span class="hl-0">        }</span><br/><span class="hl-0">    },</span><br/><span class="hl-0">    {</span><br/><span class="hl-0">        </span><span class="hl-2">trackers:</span><span class="hl-0"> [</span><span class="hl-2">tileT2</span><span class="hl-0">],</span><br/><span class="hl-0">        </span><span class="hl-2">config:</span><span class="hl-0"> {</span><br/><span class="hl-0">            </span><span class="hl-4">filter</span><span class="hl-2">:</span><span class="hl-0"> (</span><span class="hl-2">game</span><span class="hl-0">) </span><span class="hl-6">=&gt;</span><span class="hl-0"> </span><span class="hl-2">game</span><span class="hl-0">.</span><span class="hl-2">WhiteElo</span><span class="hl-0"> &lt; </span><span class="hl-8">1200</span><span class="hl-0">,</span><br/><span class="hl-0">            </span><span class="hl-2">cntGames:</span><span class="hl-0"> </span><span class="hl-8">1000</span><br/><span class="hl-0">        }</span><br/><span class="hl-0">    }</span><br/><span class="hl-0">]);</span><br/><br/><span class="hl-5">// create an evaluation function for the heat map</span><br/><span class="hl-6">let</span><span class="hl-0"> </span><span class="hl-4">func</span><span class="hl-0"> = (</span><span class="hl-2">data</span><span class="hl-0">, </span><span class="hl-2">loopSqrData</span><span class="hl-0">) </span><span class="hl-6">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-6">const</span><span class="hl-0"> { </span><span class="hl-7">coords</span><span class="hl-0"> } = </span><span class="hl-2">loopSqrData</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-6">let</span><span class="hl-0"> </span><span class="hl-2">val</span><span class="hl-0"> = </span><span class="hl-2">data</span><span class="hl-0">.</span><span class="hl-2">tiles</span><span class="hl-0">[</span><span class="hl-2">coords</span><span class="hl-0">[</span><span class="hl-8">0</span><span class="hl-0">]][</span><span class="hl-2">coords</span><span class="hl-0">[</span><span class="hl-8">1</span><span class="hl-0">]].</span><span class="hl-2">w</span><span class="hl-0">.</span><span class="hl-2">wasOn</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-2">val</span><span class="hl-0"> = (</span><span class="hl-2">val</span><span class="hl-0"> * </span><span class="hl-8">100</span><span class="hl-0">) / </span><span class="hl-2">data</span><span class="hl-0">.</span><span class="hl-2">cntMovesTotal</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-1">return</span><span class="hl-0"> </span><span class="hl-2">val</span><span class="hl-0">;</span><br/><span class="hl-0">};</span><br/><br/><span class="hl-5">// generate the comparison heatmap</span><br/><span class="hl-6">const</span><span class="hl-0"> </span><span class="hl-7">heatmapData</span><span class="hl-0"> = </span><span class="hl-2">tileT1</span><span class="hl-0">.</span><span class="hl-4">generateComparisonHeatmap</span><span class="hl-0">(</span><span class="hl-2">tileT2</span><span class="hl-0">, </span><span class="hl-2">func</span><span class="hl-0">);</span><br/><br/><span class="hl-5">// use heatmapData</span>
 </code></pre>
+
+<a href="#multithreaded-analysis" id="multithreaded-analysis" style="color: inherit; text-decoration: none;">
+  <h2>Multithreaded analysis</h2>
+</a>
+<p>Per default chessalyzer.js uses the Node.js <a href="https://nodejs.org/api/cluster.html">Cluster module</a> to read-in the pgn file and analyze the data in parallel.</p>
+<pre><code class="language-javascript"><span class="hl-5">// start a multithreaded batch analysis for the PGN file at &lt;pathToPgnFile&gt;</span><br/><br/><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">Chessalyzer</span><span class="hl-0">.</span><span class="hl-4">analyzePGN</span><span class="hl-0">(</span><br/><span class="hl-0">    </span><span class="hl-3">&#39;&lt;pathToPgnFile&gt;&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">    {</span><br/><span class="hl-0">        </span><span class="hl-2">trackers:</span><span class="hl-0"> [</span><span class="hl-2">tileTracker</span><span class="hl-0">],</span><br/><span class="hl-0">        </span><span class="hl-2">config:</span><span class="hl-0"> {</span><br/><span class="hl-0">            </span><span class="hl-2">cntGames:</span><span class="hl-0"> </span><span class="hl-8">10000</span><br/><span class="hl-0">        }</span><br/><span class="hl-0">    },</span><br/><span class="hl-0">    { </span><span class="hl-2">batchSize:</span><span class="hl-0"> </span><span class="hl-8">8000</span><span class="hl-0">, </span><span class="hl-2">nThreads:</span><span class="hl-0"> </span><span class="hl-8">1</span><span class="hl-0"> }</span><br/><span class="hl-0">);</span><br/><br/><span class="hl-5">// ...</span>
+</code></pre>
+<p><code>analyzePGN(...)</code> in multithreaded mode reads in chunks of games of size <code>batchSize</code> times <code>nThreads</code> and starts the analysis of the curent chunk while the next chunk is read-in from the PGN file in parallel. With the <code>nThreads</code> argument you can define how many threads are started in parallel to analyze the chunk. For example: <code>batchSize = 1000</code> and <code>nThreads = 5</code> will result in a chunk size of 5000 which is split in 5 threads which analyse 1000 games each.</p>
+
+<a href="#forcing-single-threaded-mode" id="forcing-single-threaded-mode" style="color: inherit; text-decoration: none;">
+  <h3>Forcing single threaded mode</h3>
+</a>
+<p>To use singlethreaded mode in which the games are read in and analyzed sequentially on a single thread, simply pass <code>null</code> as the 3rd argument into analyzePGN(...).</p>
+
+<a href="#important" id="important" style="color: inherit; text-decoration: none;">
+  <h5>Important</h5>
+</a>
+<ul>
+<li>A larger <code>nThreads</code> does not necessarily result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak <code>batchSize</code> and <code>nThreads</code> to get the best results on your system. On my systems I achieved the best results with <code>nThreads = 1</code> and <code>batchSize = 8000</code> and that is also the default setting. Note that <code>nThreads = 1</code> doesn&#39;t mean that the analysis is single-threaded but that 1 <em>additional</em> thread in addition to the thread that parses the PGN file is spawned.</li>
+<li>To use a custom tracker with your multithreaded analysis please see the important notes at the <a href="#custom-trackers">Custom Trackers</a> section.</li>
+</ul>
 
 <a href="#heatmap-analysis-functions" id="heatmap-analysis-functions" style="color: inherit; text-decoration: none;">
   <h1>Heatmap analysis functions</h1>
 </a>
 <p>The function you create for heatmap generation gets passed up to four parameters (inside <code>generateHeatMap()</code>):</p>
-<ul>
-<li><p><code>data</code>: The data that is the basis for the heatmap. Typically this object is an analyzer you passed into the <code>startBatch()</code> function.</p>
+<ol>
+<li><p><code>data</code>: The data that is the basis for the heatmap. Per default this data is the Tracker you called the <code>generateHeatMap()</code> function from itself.</p>
 </li>
-<li><p><code>sqrData</code>: Contains informations about the square you passed into the <code>generateHeatMap()</code> function. <code>sqrData</code> is an object with the following entries:</p>
-<ul>
-<li><p><code>alg</code>: The square in algebraic notation (e.g. &#39;a2&#39;),</p>
+<li><p><code>loopSqrData</code>: Contains informations about the square the current heatmap value shall be calculated for. The <code>generateHeatMap()</code> function loops over every square of the board to calculate a heat map value for each tile. <code>sqrData</code> is an object with the following entries:</p>
+<pre><code class="language-typescript"><span class="hl-6">interface</span><span class="hl-0"> </span><span class="hl-9">SquareData</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-5">// The square in algebraic notation (e.g. &#39;a2&#39;)</span><br/><span class="hl-0">    </span><span class="hl-2">alg</span><span class="hl-0">: </span><span class="hl-9">string</span><span class="hl-0">;</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// The square in board coordinates (e.g. [6,0])</span><br/><span class="hl-0">    </span><span class="hl-2">coords</span><span class="hl-0">: </span><span class="hl-9">number</span><span class="hl-0">[];</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// The piece that starts at the passed square. If no piece starts at the passed square, piece is null.</span><br/><span class="hl-0">    </span><span class="hl-2">piece</span><span class="hl-0">: {</span><br/><span class="hl-0">        </span><span class="hl-5">// Name of the piece (e.g. &#39;Pa&#39; for the a-pawn)</span><br/><span class="hl-0">        </span><span class="hl-2">color</span><span class="hl-0">: </span><span class="hl-9">string</span><span class="hl-0">;</span><br/><span class="hl-0">        </span><span class="hl-5">// Color of the piece (&#39;b&#39; or &#39;w&#39;).</span><br/><span class="hl-0">        </span><span class="hl-2">name</span><span class="hl-0">: </span><span class="hl-9">string</span><span class="hl-0">;</span><br/><span class="hl-0">    };</span><br/><span class="hl-0">}</span>
+</code></pre>
 </li>
-<li><p><code>coords</code>: The square in board coordinates (e.g. [6,0]),</p>
-</li>
-<li><p><code>piece</code>: The piece that starts at the passed square. <code>piece</code> is an object with the properties:</p>
-<ul>
-<li><code>name</code>: Name of the piece (e.g. &#39;Pa&#39; for the a-pawn)</li>
-<li><code>color</code>: Color of the piece (&#39;b&#39; or &#39;w&#39;).</li>
-</ul>
-<p>If no piece starts at the passed square, <code>name</code> and <code>color</code> are empty strings.</p>
-</li>
-</ul>
-</li>
-<li><p><code>loopSqrData</code>: Contains informations about the square the current heatmap value shall be calculated for. The structure of <code>loopSqrData</code> is the same as of <code>sqrData</code>. The <code>generateHeatMap()</code> function loops over every square of the board to calculate a heat map value for each tile.</p>
+<li><p><code>sqrData</code>: Contains informations about the square you passed into the <code>generateHeatMap()</code> function. The structure of <code>sqrData</code> is the same as of <code>loopSqrData</code>. You&#39;ll need this for extracting the values for the square / piece you are interested in. For example if you want to generate a heatmap for white&#39;s a pawn, the square for <code>sqrData</code> would be &#39;a2&#39; (= starting position of the white a pawn).</p>
 </li>
 <li><p><code>optData</code>: Optional data you may need in this function. For example, if you wanted to generate a heatmap to show the average position of a piece after X moves, you could pass that &#39;X&#39; here.</p>
 </li>
-</ul>
+</ol>
 
 <a href="#tracked-statistics" id="tracked-statistics" style="color: inherit; text-decoration: none;">
   <h1>Tracked statistics</h1>
@@ -143,7 +142,8 @@
 <p>chessalyzer.js comes with three built-in trackers, available from the <code>Chessalyzer.Tracker</code> object:</p>
 <p><code>Tracker.Game</code>:</p>
 <ul>
-<li><p><code>wins</code><br>[white wins, draws, black wins]</p>
+<li><p><code>result</code>
+An object which counts the results of the tracked games. Contains the keys <code>white</code>, <code>draw</code> and <code>black</code></p>
 </li>
 <li><p><code>ECO</code>
 Counts the ECO keys of the processed games. <code>ECO</code> is an object that contains the different keys, for example &#39;A00&#39;.</p>
@@ -165,7 +165,7 @@ Counts the ECO keys of the processed games. <code>ECO</code> is an object that c
 <li><code>movedTo</code>: How often the piece moved to this tile</li>
 <li><code>wasOn</code>: Amount of half-moves the piece was on this tile</li>
 <li><code>killedOn</code>: How often the piece took another piece on this tile</li>
-<li><code>wasKilledOn</code>: How often the piece was taken on this tile.</li>
+<li><code>wasKilledOn</code>: How often the piece was taken on this tile</li>
 </ul>
 <p>These stats are also tracked for black and white as a whole. Simply omit the piece name to get the total stats of one side for a specific tile, e.g. <code>tiles[0][6].b.wasOn</code>.</p>
 </li>
@@ -176,49 +176,122 @@ Counts the ECO keys of the processed games. <code>ECO</code> is an object that c
 <a href="#custom-trackers" id="custom-trackers" style="color: inherit; text-decoration: none;">
   <h2>Custom Trackers</h2>
 </a>
-<p>If you want to have other stats tracked you can easily create a custom tracker. Ideally you derive your tracker from the <code>Tracker.Base</code> class, which comes with built-in performance tracking and warnings, if the structure of your tracker isn&#39;t correct.</p>
-<p>Your tracker must have the following two properties:</p>
+<p>If you want to have other stats tracked you can easily create a custom tracker. You must derive your tracker from the <code>Tracker.Base</code> class.</p>
+<p>Your tracker also must have the following properties:</p>
 <ul>
 <li><p><code>type</code>:<br>The type of your tracker. Either move based (<code>this.type = &#39;move&#39;</code>) or game based (<code>this.type = &#39;game&#39;</code>).</p>
 </li>
-<li><p><code>track(data)</code>:<br>The main analysis function that is called during the PGN processing. Depending on your <code>type</code> the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The <code>data</code> object contains the following properties:</p>
+<li><p><code>path</code>:
+Variable which contains the path of the file your custom tracker is defined in. You can use <code>this.path = import.meta.url;</code> for this. Your Tracker MUST be defined in a separate file and it must be the only object that is exported from that file. Background: Since the data passed to the worker thread is serialized first, you can&#39;t pass non-primitive types to the worker it. So the library dynamically imports the Custom Tracker provided in the path variable into the Worker Thread. In there the Tracker will be instantiated as normal. (If you happen to know a better way for passing classes into a worker thread, let me know. The current solution is a bit hacky but it works.)</p>
+</li>
+<li><p><code>track(data)</code>:<br> The main analysis function that is called during the PGN processing. Depending on your <code>type</code> the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The <code>data</code> object contains the following properties:</p>
 <ul>
-<li><p>For move-typed trackers:</p>
-<ul>
-<li><p><code>san</code>: The processed move in standard algebraic notation (e.g. <code>&#39;Nxe3&#39;</code>)</p>
+<li><p>For move-typed trackers: A <code>MoveData</code> object with the following properties:</p>
+<pre><code class="language-typescript"><span class="hl-6">interface</span><span class="hl-0"> </span><span class="hl-9">MoveData</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-5">// The processed move in standard algebraic notation (e.g. &#39;Nxe3&#39;)</span><br/><span class="hl-0">    </span><span class="hl-2">san</span><span class="hl-0">: </span><span class="hl-9">string</span><span class="hl-0">;</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// The moving player (&#39;b&#39; or &#39;w&#39;)</span><br/><span class="hl-0">    </span><span class="hl-2">player</span><span class="hl-0">: </span><span class="hl-9">string</span><span class="hl-0">;</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// The moving piece (e.g. &#39;Pa&#39; for the a-pawn)</span><br/><span class="hl-0">    </span><span class="hl-2">piece</span><span class="hl-0">: </span><span class="hl-9">string</span><span class="hl-0">;</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// If the move is castling it&#39;s either &#39;O-O&#39; or &#39;O-O-O&#39;, null else</span><br/><span class="hl-0">    </span><span class="hl-2">castles</span><span class="hl-0">: </span><span class="hl-9">string</span><span class="hl-0">;</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// Contains the coordinates of the move</span><br/><span class="hl-0">    </span><span class="hl-2">move</span><span class="hl-0">: {</span><br/><span class="hl-0">        </span><span class="hl-5">// Start coordinates of the move (e.g. [0,0]).</span><br/><span class="hl-0">        </span><span class="hl-2">from</span><span class="hl-0">: </span><span class="hl-9">number</span><span class="hl-0">[];</span><br/><br/><span class="hl-0">        </span><span class="hl-5">// Target coordinates of the move (e.g. [7,0]).</span><br/><span class="hl-0">        </span><span class="hl-2">to</span><span class="hl-0">: </span><span class="hl-9">number</span><span class="hl-0">[];</span><br/><span class="hl-0">    };</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// In case of pawn promotion contains the piece the pawn promotes to (e.g. &#39;Q&#39;), null else</span><br/><span class="hl-0">    </span><span class="hl-2">promotesTo</span><span class="hl-0">: </span><span class="hl-9">string</span><span class="hl-0">;</span><br/><br/><span class="hl-0">    </span><span class="hl-5">// If the move contains taking another piece, takes is an object with following properties, null else</span><br/><span class="hl-0">    </span><span class="hl-2">takes</span><span class="hl-0">: {</span><br/><span class="hl-0">        </span><span class="hl-5">// The piece that is taken (e.g. &#39;Pa&#39; for the a-pawn)</span><br/><span class="hl-0">        </span><span class="hl-2">piece</span><span class="hl-0">: </span><span class="hl-9">string</span><span class="hl-0">;</span><br/><br/><span class="hl-0">        </span><span class="hl-5">// Board coordinates of the taken piece. Is equal to the move.to property in all cases but &#39;en passant&#39;</span><br/><span class="hl-0">        </span><span class="hl-2">pos</span><span class="hl-0">: </span><span class="hl-9">number</span><span class="hl-0">[];</span><br/><span class="hl-0">    };</span><br/><span class="hl-0">}</span>
+</code></pre>
 </li>
-<li><p><code>player</code>: The moving player (<code>&#39;b&#39;</code> or <code>&#39;w&#39;</code>)</p>
-</li>
-<li><p><code>piece</code>: The moving piece (e.g. <code>Pa</code> for the a-pawn)</p>
-</li>
-<li><p><code>castles</code>: If the move is castling it&#39;s either <code>&#39;O-O&#39;</code> or <code>&#39;O-O-O&#39;</code>. Empty string else</p>
-</li>
-<li><p><code>takes</code>: If the move contains taking another piece, takes is an object with following properties:</p>
-<ul>
-<li><code>piece</code>: The piece that is taken (e.g. <code>Pa</code> for the a-pawn)</li>
-<li><code>pos</code>: Board coordinates of the taken piece. Is equal to the <code>to</code> property in all cases but &#39;en passant&#39;</li>
-</ul>
-<p>Is <code>{}</code> if no piece is taken</p>
-</li>
-<li><p><code>promotesTo</code>: In case of pawn promotion contains the piece the pawn promotes to (e.g. &#39;Q&#39;), empty string else</p>
-</li>
-<li><p><code>from</code>: Start coordinates of the move (e.g. <code>[0,0]</code>). <code>[-1,-1]</code> in case the move is the result (e.g. <code>1-0</code>).</p>
-</li>
-<li><p><code>to</code>: Target coordinates of the move (e.g. <code>[7,0]</code>). <code>[-1,-1]</code> in case the move is the result (e.g. <code>1-0</code>).</p>
-</li>
-</ul>
-</li>
-<li><p>For game-typed trackers:<br><code>data</code> is an object that contains <code>{key: value}</code> entries, where <code>key</code> is the property in the PGN (e.g. <code>&#39;WhiteElo&#39;</code>, case sensitive) and <code>value</code> is the respective value of the property. The property <code>data.moves</code> is an array that contains the moves of the game in standard algebraic notation.</p>
+<li><p>For game-typed trackers:
+<code>data</code> is an object that contains <code>{key: value}</code> entries, where <code>key</code> is the property in the header of the PGN (e.g. <code>&#39;WhiteElo&#39;</code>, case sensitive) and <code>value</code> is the respective value of the property. The property <code>data.moves</code> is an array that contains the moves of the game in standard algebraic notation.</p>
 </li>
 </ul>
 </li>
 <li><p><code>add(tracker)</code>:
-Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. See <a href="#multithreaded-analysis">Multithreaded analyses section</a> for an example.</p>
+Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. For example the add(...) function for the built-in Game Tracker looks like this:</p>
+<pre><code class="language-javascript"><span class="hl-4">add</span><span class="hl-0">(</span><span class="hl-2">tracker</span><span class="hl-0">) {</span><br/><span class="hl-0">    </span><span class="hl-6">this</span><span class="hl-0">.</span><span class="hl-2">results</span><span class="hl-0">.</span><span class="hl-2">white</span><span class="hl-0"> += </span><span class="hl-2">tracker</span><span class="hl-0">.</span><span class="hl-2">results</span><span class="hl-0">.</span><span class="hl-2">white</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-6">this</span><span class="hl-0">.</span><span class="hl-2">results</span><span class="hl-0">.</span><span class="hl-2">black</span><span class="hl-0"> += </span><span class="hl-2">tracker</span><span class="hl-0">.</span><span class="hl-2">results</span><span class="hl-0">.</span><span class="hl-2">black</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-6">this</span><span class="hl-0">.</span><span class="hl-2">results</span><span class="hl-0">.</span><span class="hl-2">draw</span><span class="hl-0"> += </span><span class="hl-2">tracker</span><span class="hl-0">.</span><span class="hl-2">results</span><span class="hl-0">.</span><span class="hl-2">draw</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-6">this</span><span class="hl-0">.</span><span class="hl-2">cntGames</span><span class="hl-0"> += </span><span class="hl-2">tracker</span><span class="hl-0">.</span><span class="hl-2">cntGames</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-6">this</span><span class="hl-0">.</span><span class="hl-2">time</span><span class="hl-0"> += </span><span class="hl-2">tracker</span><span class="hl-0">.</span><span class="hl-2">time</span><span class="hl-0">;</span><br/><span class="hl-0">}</span>
+</code></pre>
 </li>
-<li><p><code>finish()</code>:
-Optional method that is called when all games have been processed. Can be used for example to clean up or sort the data of the tracker.</p>
+<li><p><code>nextGame()</code> (opt.):
+Optional method that is called for move-type trackers after the last move of every game. You can use this to do end-of-game stuff inside your tracker, like storing and resetting statistics for the current game.</p>
+</li>
+<li><p><code>finish()</code> (opt.):
+Optional method that is called when all games have been processed. Can be used for example to clean up or sort the data in the tracker.</p>
+</li>
+<li><p><code>heatmapPresets</code> (opt.): If you want to predefine heatmap analysis functions for your custom tracker you can call by name instead of passing a function, <code>this.heatmapPresets</code> can be overriden with an object, in which the keys are the names of the presets.</p>
+<pre><code class="language-javascript"><span class="hl-0">    </span><span class="hl-6">this</span><span class="hl-0">.</span><span class="hl-2">heatmapPresets</span><span class="hl-0"> = {</span><br/><span class="hl-0">        </span><span class="hl-2">MY_FIRST_HEATMAP_FUNC:</span><span class="hl-0"> {</span><br/><span class="hl-0">            </span><span class="hl-2">name:</span><span class="hl-0"> </span><span class="hl-3">&#39;My first Heatmap func&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">            </span><span class="hl-2">description:</span><span class="hl-0"> </span><span class="hl-3">&#39;all keys beside the &quot;calc&quot; key are optional&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">            </span><span class="hl-4">calc</span><span class="hl-2">:</span><span class="hl-0"> (</span><span class="hl-2">data</span><span class="hl-0">, </span><span class="hl-2">loopSqrData</span><span class="hl-0">, </span><span class="hl-2">sqrData</span><span class="hl-0">) </span><span class="hl-6">=&gt;</span><span class="hl-0"> </span><span class="hl-2">return</span><span class="hl-0"> </span><span class="hl-8">123</span><br/><span class="hl-0">        },</span><br/><span class="hl-0">        </span><span class="hl-2">ANOTHER_HEATMAP_FUNC:</span><span class="hl-0"> {</span><br/><span class="hl-0">            </span><span class="hl-2">calc:</span><span class="hl-0"> (...)</span><br/><span class="hl-0">        }</span><br/><span class="hl-0">    }</span>
+</code></pre>
 </li>
 </ul>
+
+<a href="#heatmap-presets" id="heatmap-presets" style="color: inherit; text-decoration: none;">
+  <h1>Heatmap Presets</h1>
+</a>
+<p>Instead of defining your own heatmap function you can also use the heatmap presets Chessalyzer.js provides you via the Tile and Piece Trackers. You can access those presets by passing the SHORT_NAMEs of the following table as your first argument in <code>generateHeatmap(...)</code>, e.g. <code>&lt;yourTileTrackerInstance&gt;.generateHeatmap(&#39;TILE_OCC_BY_PIECE&#39;, &#39;a2&#39;)</code>.</p>
+
+<a href="#tile-tracker" id="tile-tracker" style="color: inherit; text-decoration: none;">
+  <h3>Tile Tracker</h3>
+</a>
+<table>
+<thead>
+<tr>
+<th>Short Name</th>
+<th>Long Name</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TILE_OCC_ALL</td>
+<td>Tile Occupation All</td>
+<td>global</td>
+<td>Calculates how often each tile of the board had any piece on it (as a percentage of all moves)</td>
+</tr>
+<tr>
+<td>TILE_OCC_WHITE</td>
+<td>Tile Occupation (White Pieces)</td>
+<td>global</td>
+<td>Calculates how often each tile of the board had a white piece on it (as a percentage of all moves)</td>
+</tr>
+<tr>
+<td>TILE_OCC_BLACK</td>
+<td>Tile Occupation (Black Pieces)</td>
+<td>global</td>
+<td>Calculates how often each tile of the board had a black piece on it (as a percentage of all moves)</td>
+</tr>
+<tr>
+<td>TILE_KILLCOUNT</td>
+<td>Tile Killcount</td>
+<td>global</td>
+<td>Count of Pieces that were taken on each tile.</td>
+</tr>
+<tr>
+<td>TILE_OCC_BY_PIECE</td>
+<td>Tile Occupation for selected Tile</td>
+<td>Tile specific</td>
+<td>Calculates how often the passed tile was occupated by each piece on the board. The values are shown at the starting position of each piece.</td>
+</tr>
+<tr>
+<td>PIECE_MOVED_TO_TILE</td>
+<td>Target squares for selected Piece</td>
+<td>Tile specific</td>
+<td>Shows how often the piece that starts at the selected tile moved to each tile of the board. Only makes sense for tiles with a piece on it at the start of the game (Rank 1,2,7 and 8)</td>
+</tr>
+</tbody></table>
+
+<a href="#piece-tracker" id="piece-tracker" style="color: inherit; text-decoration: none;">
+  <h3>Piece Tracker</h3>
+</a>
+<table>
+<thead>
+<tr>
+<th>Short Name</th>
+<th>Long Name</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PIECE_KILLED_BY</td>
+<td></td>
+<td>Piece specific</td>
+<td>Shows how often the piece that starts at the passed tile was taken by other pieces. The values are shown at the starting position of each opposing piece.</td>
+</tr>
+<tr>
+<td>PIECE_KILLED</td>
+<td></td>
+<td>Piece specific</td>
+<td>Shows how often the piece that starts at the passed tile took other pieces. The values are shown at the starting position of each opposing piece.</td>
+</tr>
+</tbody></table>
 
 <a href="#visualisation" id="visualisation" style="color: inherit; text-decoration: none;">
   <h1>Visualisation</h1>
@@ -226,7 +299,7 @@ Optional method that is called when all games have been processed. Can be used f
 <p>For a quick preview you can put your heatmap data into <code>Chessalyzer.printHeatmap(...)</code> to see your heatmap in the terminal if it supports color:</p>
 <img src="https://i.imgur.com/THV7gwY.png" width="40%">
 
-<p>But generally chessalyzer.js only provides the raw data of the analyses (yet? :)). If you want to visualize the data you will need a separate library. The following examples were created with my fork of <a href="https://github.com/PeterPain/heatboard.js">chessboardjs</a> with added heatmap functionality.</p>
+<p>But generally chessalyzer.js only provides the raw data of the analyses (yet? :)). If you want to visualize the data you will need a separate library. The following examples were created with my fork of <a href="https://github.com/PeterPain/heatboard.js">chessboard.js</a> with added heatmap functionality.</p>
 <p>White tile occupation<br><img src="https://i.imgur.com/2naX1mg.png" width="30%"></p>
 <p>Moves of whites e pawn<br><img src="https://i.imgur.com/ATivf7i.png" width="30%"></p>
 <p>Difference of whites tiles occupation between a higher (green) and a lower rated (red) player<br><img src="https://i.imgur.com/tZVkPs3.png" width="30%"></p>
@@ -236,94 +309,15 @@ Optional method that is called when all games have been processed. Can be used f
 </a>
 <ul>
 <li>2.0.0:<ul>
-<li>chessalyzer.js is now a ES module (ESM) and will no longer work inside a browser. You need node.js to run the library.</li>
-<li>runBatch(...) and runBatchMulticore(...) were merged into the single function runBatch(...). Per default the function will run in multithreaded mode, but you can override the config to force singlethreaded mode if it is needed in your environment.</li>
+<li>Chessalyzer.js is now an ES module (ESM). See <a href="https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#file-esm-package-md">this guide</a> for how to use this package.</li>
+<li>runBatch(...) and runBatchMulticore(...) were merged into the single function analyzePGN(...). Per default the function will run in multithreaded mode, but you can override the config to force singlethreaded mode if it is needed in your environment.</li>
+<li>You can now run different filters in parallel. For example you could configure Chessalzyer.js in a way that Tracker1 tracks only PlayerA&#39;s games and Tracker2 tracks only PlayerB&#39;s games during the same run of analyzePGN(...). Before you needed to start two separate analyses with the different Trackers and filter settings.</li>
+<li>The heatmap generation functions have been moved into the Tracker objects.</li>
+<li>Added support for PGN files in which the game moves are listed in multiple lines instead of one single line</li>
 <li>Changed the data structure of the move data passed into the analyzers.</li>
-<li>Switched code base to TypeScript.</li>
+<li>Ported code base to TypeScript.</li>
+<li>(Since I have no idea if someone actually uses the library, I won&#39;t write a migration guide. If you need help, just leave me an issue.)</li>
 </ul>
 </li>
-<li>1.6.4:<ul>
-<li>Fix d.ts for Tracker constructors.</li>
 </ul>
-</li>
-<li>1.6.3:<ul>
-<li>Added d.ts files for importing the module in a Typescript environment.</li>
-</ul>
-</li>
-<li>1.6.2:<ul>
-<li>Shipping the minified versions in the bundle.</li>
-</ul>
-</li>
-<li>1.6.1:<ul>
-<li>Fixed <code>generateComparisonHeatmap(...)</code>.</li>
-</ul>
-</li>
-<li>1.6.0:<ul>
-<li>Switched from line-by-line package to node.js native readline module. Makes read-in even faster now.</li>
-<li>Changed import scheme from <code>const Chessalyzer = require(&#39;chessalyzer.js&#39;);</code> to <code>const { Chessalyzer, Tracker} = require(&#39;chessalyzer.js&#39;);</code>.</li>
-</ul>
-</li>
-<li>1.5.1:<ul>
-<li>Fixed bug in PGN Parser.</li>
-</ul>
-</li>
-<li>1.5.0:<ul>
-<li>Added <code>printHeatmap(...)</code> function to print a heatmap to the console.</li>
-<li><code>generateHeatmap(...)</code> and <code>generateComparisonHeatmap(...)</code> now return an object instead of an array.</li>
-<li>Simplified the internal SAN parsing logic by tracking the piece positions at all times. Results in a slight speed increase.</li>
-<li>Fixed Trackers not tracking time in multicore mode.</li>
-<li>Trackers can now have a cfg attribute which is passed to the workers in multicore mode. <code>profilingActive</code> is now <code>cfg.profilingActive</code> for the trackers.</li>
-<li>Interaction with promoted pawns is now tracked.</li>
-</ul>
-</li>
-<li>1.4.1:<ul>
-<li>Updated dependencies</li>
-</ul>
-</li>
-<li>1.4.0:<ul>
-<li>Added ECO key tracking to the <code>GameTrackerBase</code> class.</li>
-<li>Added optional <code>finish()</code> method that is called on the trackers after all games have been processed.</li>
-</ul>
-</li>
-<li>1.3.2:<ul>
-<li>Fixed bug in the Tracker.Tile class. The <code>cntMovesTotal</code> property wasn&#39;t incremented correctly when using multithreading.</li>
-</ul>
-</li>
-<li>1.3.1:<ul>
-<li>Removed unnecessary files from the npm package (like docs, test, etc.)</li>
-</ul>
-</li>
-<li>1.3.0:<ul>
-<li>Moved the worker-thread logic into a separate file instead of cloning the entire process for multi threading. This should make it easier to include chessalyzer.js in other projects, for example a REST server. Prior this change with active multithreading every time a new worker thread was created the whole server was cloned.</li>
-<li>Fixed the minified (chessalyzer.min.js) version to not throw unjustified errors, that the Trackers need to include a track() function.</li>
-</ul>
-</li>
-<li>1.2.1:<ul>
-<li>Fixed bug with multithreading and fully read files. The last chunk wasn&#39;t processed before</li>
-</ul>
-</li>
-<li>1.2.0:<ul>
-<li>Significantly increased performance for multithreading</li>
-</ul>
-</li>
-<li>1.1.0:<ul>
-<li>Added Multithreading</li>
-</ul>
-</li>
-<li>1.0.1:<ul>
-<li>Moved the performance tracking for the Trackers into the Tracker.Base class.</li>
-<li>The Promise returned by the startBatch function now contains the number of processed games and moves.</li>
-</ul>
-</li>
-<li>1.0.0:<br>Significantly changed the API to allow for more modularity. If you are already using an older version (&lt;=0.4.0) consider changing your code to adapt to the new API.</li>
-</ul>
-
-<a href="#todos" id="todos" style="color: inherit; text-decoration: none;">
-  <h1>TODOs</h1>
-</a>
-<ul>
-<li><input disabled="" type="checkbox"> Check functionality for non-lichess PGN files</li>
-<li><input disabled="" type="checkbox"> Write Mocha tests</li>
-<li><input disabled="" type="checkbox"> Update jsdoc</li>
-</ul>
-</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Modules</a></li><li class=" tsd-kind-module"><a href="modules/core_Chessalyzer.html">core/<wbr/>Chessalyzer</a></li><li class=" tsd-kind-module"><a href="modules/tracker_Tracker.html">tracker/<wbr/>Tracker</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>
+</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Exports</a></li><li class=" tsd-kind-namespace"><a href="modules/_internal_.html">&lt;internal&gt;</a></li></ul></nav><nav class="tsd-navigation secondary menu-sticky"><ul><li class="tsd-kind-class"><a href="classes/Chessalyzer.html" class="tsd-kind-icon">Chessalyzer</a></li><li class="tsd-kind-property"><a href="modules.html#Tracker" class="tsd-kind-icon">Tracker</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>

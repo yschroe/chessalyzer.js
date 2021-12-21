@@ -30,7 +30,7 @@ interface GameProcessorConfig {
 	cntGames: number;
 }
 
-interface FindABetterNameConfig {
+interface GameProcessorAnalysisConfig {
 	analyzers: { move: Tracker[]; game: Tracker[] };
 	config: GameProcessorConfig;
 	analyzerData: { name: string; cfg: unknown; path: string }[];
@@ -65,7 +65,7 @@ class ParsedMove implements MoveData {
 class GameProcessor {
 	board: ChessBoard;
 	activePlayer: string;
-	configs: FindABetterNameConfig[];
+	configs: GameProcessorAnalysisConfig[];
 	readInHeader: boolean;
 
 	constructor() {
@@ -114,7 +114,7 @@ class GameProcessor {
 		});
 	}
 
-	checkConfig(config: any): GameProcessorConfig {
+	checkConfig(config: AnalysisConfig['config']): GameProcessorConfig {
 		const hasFilter = Object.prototype.hasOwnProperty.call(
 			config,
 			'filter'
@@ -340,7 +340,7 @@ class GameProcessor {
 		}
 	}
 
-	processGame(game: Game, analysisCfg: FindABetterNameConfig): void {
+	processGame(game: Game, analysisCfg: GameProcessorAnalysisConfig): void {
 		// game based analyzers
 		for (let i = 0; i < analysisCfg.analyzers.game.length; i += 1) {
 			analysisCfg.analyzers.game[i].analyze(game);
