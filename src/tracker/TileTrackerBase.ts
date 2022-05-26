@@ -1,5 +1,5 @@
 import BaseTracker from './BaseTracker.js';
-import { Move, MoveData } from '../interfaces/Interface.js';
+import { Move, MoveData } from '../interfaces';
 import HeatmapPresets from './heatmaps/TileHeatmaps';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];

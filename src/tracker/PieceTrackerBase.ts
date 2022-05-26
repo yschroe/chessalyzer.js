@@ -1,5 +1,5 @@
 import BaseTracker from './BaseTracker.js';
-import { MoveData } from '../interfaces/Interface.js';
+import { MoveData } from '../interfaces';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];

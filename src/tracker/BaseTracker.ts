@@ -7,7 +7,7 @@ import {
 	TrackerConfig,
 	HeatmapAnalysisFunc,
 	HeatmapData
-} from '../interfaces/Interface.js';
+} from '../interfaces';
 
 class BaseTracker implements Tracker {
 	type: string;

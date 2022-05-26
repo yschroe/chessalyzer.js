@@ -1,6 +1,6 @@
 import GameProcessor from './GameProcessor.js';
 import Tracker from '../tracker/Tracker.js';
-import { Game } from '../interfaces/Interface';
+import { Game } from '../interfaces';
 
 process.on(
 	'message',

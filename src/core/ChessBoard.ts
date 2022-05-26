@@ -1,4 +1,4 @@
-import { MoveData, ChessPiece } from '../interfaces/Interface';
+import { MoveData, ChessPiece } from '../interfaces';
 import Utils from './Utils';
 
 class PiecePositionTable {

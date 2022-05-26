@@ -11,7 +11,7 @@ import {
 	Tracker,
 	AnalysisConfig,
 	MultithreadConfig
-} from '../interfaces/Interface.js';
+} from '../interfaces';
 import ChessBoard from './ChessBoard.js';
 import Utils from './Utils.js';
 

@@ -3,7 +3,7 @@ import {
 	HeatmapAnalysisFunc,
 	HeatmapData,
 	SquareData
-} from '../interfaces/Interface';
+} from '../interfaces';
 
 const files = 'abcdefgh';
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];

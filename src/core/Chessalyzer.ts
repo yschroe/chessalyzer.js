@@ -2,11 +2,7 @@ import { performance } from 'perf_hooks';
 import chalk from 'chalk';
 import GameProcessor from './GameProcessor.js';
 
-import {
-	HeatmapData,
-	AnalysisConfig,
-	MultithreadConfig
-} from '../interfaces/Interface.js';
+import { HeatmapData, AnalysisConfig, MultithreadConfig } from '../interfaces';
 
 export default class Chessalyzer {
 	static async analyzePGN(
