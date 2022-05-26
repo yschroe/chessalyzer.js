@@ -53,20 +53,21 @@ class TileTrackerBase extends BaseTracker {
 			const currRow: StatsField[] = [];
 
 			for (let col = 0; col < 8; col += 1) {
-				currRow.push({
+				const tempData = {
 					b: new TileStats(),
 					w: new TileStats(),
 					currentPiece: null
-				});
+				};
 
 				pawnTemplate.forEach((val) => {
-					currRow[col].b[val] = new TileStats();
-					currRow[col].w[val] = new TileStats();
+					tempData.b[val] = new TileStats();
+					tempData.w[val] = new TileStats();
 				});
 				pieceTemplate.forEach((val) => {
-					currRow[col].b[val] = new TileStats();
-					currRow[col].w[val] = new TileStats();
+					tempData.b[val] = new TileStats();
+					tempData.w[val] = new TileStats();
 				});
+				currRow.push(tempData);
 			}
 			this.tiles.push(currRow);
 		}
@@ -151,7 +152,7 @@ class TileTrackerBase extends BaseTracker {
 	}
 
 	resetCurrentPiece(row: number, col: number) {
-		let color: string;
+		let color: 'b' | 'w';
 		let piece: string;
 		let hasPiece = false;
 

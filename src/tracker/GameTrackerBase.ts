@@ -4,7 +4,7 @@ import { Game } from '../interfaces';
 class GameTrackerBase extends BaseTracker {
 	results: { white: number; black: number; draw: number };
 	cntGames: number;
-	ECO: object;
+	ECO: { [eco: string]: number };
 
 	constructor() {
 		super('game');
@@ -21,7 +21,7 @@ class GameTrackerBase extends BaseTracker {
 		this.time += tracker.time;
 
 		Object.keys(tracker.ECO).forEach((key) => {
-			if (Object.prototype.hasOwnProperty.call(this.ECO, key)) {
+			if (this.ECO[key] !== undefined) {
 				this.ECO[key] += tracker.ECO[key];
 			} else {
 				this.ECO[key] = tracker.ECO[key];
@@ -47,7 +47,7 @@ class GameTrackerBase extends BaseTracker {
 			default:
 				break;
 		}
-		if (Object.prototype.hasOwnProperty.call(this.ECO, game.ECO)) {
+		if (this.ECO[game.ECO] !== undefined) {
 			this.ECO[game.ECO] += 1;
 		} else {
 			this.ECO[game.ECO] = 1;

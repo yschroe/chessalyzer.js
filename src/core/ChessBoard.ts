@@ -1,8 +1,16 @@
 import { MoveData, ChessPiece } from '../interfaces';
 import Utils from './Utils';
 
+interface PosMap {
+	R: { Ra?: number[]; Rh?: number[] };
+	N: { Nb?: number[]; Ng?: number[] };
+	B: { Bc?: number[]; Bf?: number[] };
+	Q: { Qd?: number[] };
+	K: { Ke?: number[] };
+}
+
 class PiecePositionTable {
-	posMap: unknown;
+	posMap: { w: PosMap; b: PosMap };
 
 	constructor() {
 		this.posMap = {
@@ -49,19 +57,19 @@ class PiecePositionTable {
 		};
 	}
 
-	takes(player: string, piece: string): void {
+	takes(player: 'b' | 'w', piece: string): void {
 		if (!piece.startsWith('P')) {
 			delete this.posMap[player][piece.substring(0, 1)][piece];
 		}
 	}
 
-	moves(player: string, piece: string, to: number[]): void {
+	moves(player: 'b' | 'w', piece: string, to: number[]): void {
 		if (!piece.startsWith('P')) {
 			this.posMap[player][piece.substring(0, 1)][piece] = to;
 		}
 	}
 
-	promotes(player: string, piece: string, on: number[]): void {
+	promotes(player: 'b' | 'w', piece: string, on: number[]): void {
 		if (!piece.startsWith('P')) {
 			this.posMap[player][piece.substring(0, 1)][piece] = on;
 		}
@@ -75,14 +83,14 @@ class ChessBoard {
 	promoteCounter: number;
 
 	constructor() {
-		this.tiles = new Array(8);
+		this.tiles = [];
 
 		for (let row = 0; row < 8; row += 1) {
-			const currRow: ChessPiece[] = new Array(8);
+			const currRow: ChessPiece[] = [];
 			for (let col = 0; col < 8; col += 1) {
-				currRow[col] = Utils.getStartingPiece([row, col]);
+				currRow.push(Utils.getStartingPiece([row, col]));
 			}
-			this.tiles[row] = currRow;
+			this.tiles.push(currRow);
 		}
 
 		this.defaultTiles = this.tiles.map((arr) => arr.slice());
@@ -131,7 +139,7 @@ class ChessBoard {
 		}
 	}
 
-	castle(move: string, player: string): void {
+	castle(move: string, player: 'w' | 'b'): void {
 		const row = player === 'w' ? 7 : 0;
 		const scrKingCol = 4;
 		let tarKingCol = 6;
