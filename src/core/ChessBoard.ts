@@ -50,19 +50,19 @@ class PiecePositionTable {
 	}
 
 	takes(player: string, piece: string): void {
-		if (!piece.includes('P')) {
+		if (!piece.startsWith('P')) {
 			delete this.posMap[player][piece.substring(0, 1)][piece];
 		}
 	}
 
 	moves(player: string, piece: string, to: number[]): void {
-		if (!piece.includes('P')) {
+		if (!piece.startsWith('P')) {
 			this.posMap[player][piece.substring(0, 1)][piece] = to;
 		}
 	}
 
 	promotes(player: string, piece: string, on: number[]): void {
-		if (!piece.includes('P')) {
+		if (!piece.startsWith('P')) {
 			this.posMap[player][piece.substring(0, 1)][piece] = on;
 		}
 	}

@@ -11,7 +11,7 @@ const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
 export default class Utils {
 	static algebraicToCoords(square: string): number[] {
-		const coords = [];
+		const coords: number[] = [];
 		const temp = square.split('');
 		coords.push(8 - Number(temp[1]));
 		coords.push(Utils.getFileNumber(temp[0]));
@@ -84,12 +84,12 @@ export default class Utils {
 			piece: Utils.getStartingPiece(sqrCoords)
 		};
 
-		const map = [];
+		const map: number[][] = [];
 		let max = -Infinity;
 		let min = Infinity;
 
 		for (let i = 0; i < 8; i += 1) {
-			const dataRow = new Array(8);
+			const dataRow: number[] = [];
 			for (let j = 0; j < 8; j += 1) {
 				const loopSqrCoords = [i, j];
 
@@ -98,10 +98,10 @@ export default class Utils {
 					coords: loopSqrCoords,
 					piece: Utils.getStartingPiece(loopSqrCoords)
 				};
-
-				dataRow[j] = fun(data, loopSqrData, sqrData, optData);
-				if (dataRow[j] > max) max = dataRow[j];
-				if (dataRow[j] < min) min = dataRow[j];
+				const heatVal = fun(data, loopSqrData, sqrData, optData);
+				dataRow.push(heatVal);
+				max = Math.max(max, heatVal);
+				min = Math.min(min, heatVal);
 			}
 			map.push(dataRow);
 		}
@@ -116,7 +116,7 @@ export default class Utils {
 		square?: string | number[],
 		optData?: unknown
 	): HeatmapData {
-		const map = [];
+		const map: number[][] = [];
 		let max = -Infinity;
 		let min = Infinity;
 
@@ -125,15 +125,18 @@ export default class Utils {
 		const map1 = Utils.generateHeatmap(data2, fun, square, optData);
 
 		for (let i = 0; i < 8; i += 1) {
-			const dataRow = new Array(8);
+			const dataRow: number[] = [];
 			for (let j = 0; j < 8; j += 1) {
 				const a = map0.map[i][j];
 				const b = map1.map[i][j];
-				if (a === 0 || b === 0) dataRow[j] = 0;
-				else dataRow[j] = (a >= b ? a / b - 1 : -b / a + 1) * 100;
 
-				if (dataRow[j] > max) max = dataRow[j];
-				if (dataRow[j] < min) min = dataRow[j];
+				let heatVal = (a >= b ? a / b - 1 : -b / a + 1) * 100;
+				if (a === 0 || b === 0) heatVal = 0;
+
+				max = Math.max(max, heatVal);
+				min = Math.min(min, heatVal);
+
+				dataRow.push(heatVal);
 			}
 			map.push(dataRow);
 		}

@@ -2,17 +2,19 @@ import { performance } from 'perf_hooks';
 import chalk from 'chalk';
 import GameProcessor from './GameProcessor.js';
 
-import { HeatmapData, AnalysisConfig, MultithreadConfig } from '../interfaces';
+import {
+	HeatmapData,
+	AnalysisConfig,
+	MultithreadConfig,
+	GameAndMoveCountFull
+} from '../interfaces';
 
 export default class Chessalyzer {
 	static async analyzePGN(
 		pathToPgn: string,
 		configs: AnalysisConfig | AnalysisConfig[] = { trackers: [] },
 		multithreadCfg: MultithreadConfig = { batchSize: 8000, nThreads: 1 }
-	): Promise<
-		| { cntGames: number; cntMoves: number; mps: number }[]
-		| { cntGames: number; cntMoves: number; mps: number }
-	> {
+	): Promise<GameAndMoveCountFull[] | GameAndMoveCountFull> {
 		// handler for single analyzer or array of analyzers
 		let configArray: AnalysisConfig[] = [];
 		configArray = configArray.concat(configs);
@@ -30,7 +32,7 @@ export default class Chessalyzer {
 		const t1 = performance.now();
 		const tdiff = Math.round(t1 - t0) / 1000;
 
-		const returnVals = [];
+		const returnVals: GameAndMoveCountFull[] = [];
 		header.forEach((h) => {
 			returnVals.push({ ...h, mps: Math.round(h.cntMoves / tdiff) });
 		});

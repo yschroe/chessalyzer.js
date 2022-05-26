@@ -54,7 +54,13 @@ class BaseTracker implements Tracker {
 		let heatmapFunction: HeatmapAnalysisFunc;
 
 		if (typeof analysisFunc === 'string') {
-			heatmapFunction = this.heatmapPresets[analysisFunc].calc;
+			if (Object.keys(this.heatmapPresets).length === 0)
+				throw new Error(
+					'Your analyzer does not define any heatmap presets!'
+				);
+			heatmapFunction = this.heatmapPresets[analysisFunc]?.calc;
+			if (!heatmapFunction)
+				throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
 		} else {
 			heatmapFunction = analysisFunc;
 		}
@@ -75,9 +81,7 @@ class BaseTracker implements Tracker {
 				throw new Error(
 					'Your analyzer does not define any heatmap presets!'
 				);
-			heatmapFunction =
-				this.heatmapPresets[analysisFunc] &&
-				this.heatmapPresets[analysisFunc].calc;
+			heatmapFunction = this.heatmapPresets[analysisFunc]?.calc;
 			if (!heatmapFunction)
 				throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
 		} else {

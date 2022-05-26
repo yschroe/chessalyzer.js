@@ -1,17 +1,17 @@
-interface Game {
+export interface Game {
 	Result?: string;
 	ECO?: string;
 	moves: string[];
 }
 
-interface Move {
+export interface Move {
 	from: number[];
 	to: number[];
 }
 
-interface MoveData {
+export interface MoveData {
 	san: string;
-	player: string;
+	player: 'b' | 'w';
 	piece: string;
 	castles: string;
 	takes: { piece: string; pos: number[] };
@@ -19,27 +19,27 @@ interface MoveData {
 	move: Move;
 }
 
-interface SquareData {
+export interface SquareData {
 	alg: string;
 	coords: number[];
-	piece: { color: string; name: string };
+	piece: { color: 'b' | 'w'; name: string };
 }
 
-interface ChessPiece {
+export interface ChessPiece {
 	name: string;
-	color: string;
+	color: 'b' | 'w';
 }
 
-interface TrackerConfig {
+export interface TrackerConfig {
 	profilingActive: boolean;
 }
 
-interface MultithreadConfig {
+export interface MultithreadConfig {
 	batchSize: number;
 	nThreads: number;
 }
 
-interface AnalysisConfig {
+export interface AnalysisConfig {
 	trackers?: Tracker[];
 	config?: {
 		cntGames?: number;
@@ -47,13 +47,13 @@ interface AnalysisConfig {
 	};
 }
 
-interface HeatmapData {
+export interface HeatmapData {
 	map: number[][];
 	min: number;
 	max: number;
 }
 
-interface HeatmapAnalysisFunc {
+export interface HeatmapAnalysisFunc {
 	(
 		data: unknown,
 		loopSqrData: SquareData,
@@ -62,7 +62,7 @@ interface HeatmapAnalysisFunc {
 	): number;
 }
 
-interface Tracker {
+export interface Tracker {
 	type: string;
 	cfg: TrackerConfig;
 	time: number;
@@ -86,16 +86,17 @@ interface Tracker {
 	add?: (arg: this) => void;
 }
 
-export {
-	Game,
-	Move,
-	MoveData,
-	ChessPiece,
-	Tracker,
-	SquareData,
-	TrackerConfig,
-	HeatmapData,
-	HeatmapAnalysisFunc,
-	AnalysisConfig,
-	MultithreadConfig
-};
+export interface GameAndMoveCount {
+	cntGames: number;
+	cntMoves: number;
+}
+
+export interface GameAndMoveCountFull extends GameAndMoveCount {
+	mps: number;
+}
+
+export interface WorkerMessage {
+	cntMoves: number;
+	gameAnalyzers: Tracker[];
+	moveAnalyzers: Tracker[];
+}

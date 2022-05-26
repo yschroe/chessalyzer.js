@@ -10,7 +10,9 @@ import {
 	MoveData,
 	Tracker,
 	AnalysisConfig,
-	MultithreadConfig
+	MultithreadConfig,
+	GameAndMoveCount,
+	WorkerMessage
 } from '../interfaces';
 import ChessBoard from './ChessBoard.js';
 import Utils from './Utils.js';
@@ -41,7 +43,7 @@ interface GameProcessorAnalysisConfig {
 
 class ParsedMove implements MoveData {
 	san: string;
-	player: string;
+	player: 'b' | 'w';
 	piece: string;
 	castles: string;
 	takes: { piece: string; pos: number[] };
@@ -64,7 +66,7 @@ class ParsedMove implements MoveData {
  */
 class GameProcessor {
 	board: ChessBoard;
-	activePlayer: string;
+	activePlayer: 'b' | 'w';
 	configs: GameProcessorAnalysisConfig[];
 	readInHeader: boolean;
 
@@ -115,10 +117,7 @@ class GameProcessor {
 	}
 
 	checkConfig(config: AnalysisConfig['config']): GameProcessorConfig {
-		const hasFilter = Object.prototype.hasOwnProperty.call(
-			config,
-			'filter'
-		);
+		const hasFilter = config.filter !== undefined;
 
 		// if we need to filter the games, we need the header informations
 		if (hasFilter) this.readInHeader = true;
@@ -137,7 +136,7 @@ class GameProcessor {
 		path: string,
 		configArray: AnalysisConfig[],
 		multiThreadCfg: MultithreadConfig
-	): Promise<{ cntGames: number; cntMoves: number }[]> {
+	): Promise<GameAndMoveCount[]> {
 		try {
 			let readerFinished = false;
 
@@ -155,7 +154,7 @@ class GameProcessor {
 				const w = cluster.fork();
 
 				// on worker finish
-				w.on('message', (msg) => {
+				w.on('message', (msg: 'readyForData' | WorkerMessage) => {
 					// normally we could use w.send(...) outside of this listener
 					// there is a bug in node though, which sometimes sends the data too early
 					// --> wait until the worker sends a custom ready message
@@ -192,7 +191,7 @@ class GameProcessor {
 				});
 			};
 
-			const gameStore = [];
+			const gameStore: Game[][] = [];
 			configArray.forEach(() => {
 				gameStore.push([]);
 			});
@@ -325,7 +324,7 @@ class GameProcessor {
 				}
 			});
 
-			const returnVals = [];
+			const returnVals: GameAndMoveCount[] = [];
 			this.configs.forEach((cfg) => {
 				returnVals.push({
 					cntGames: cfg.cntGames,
@@ -434,7 +433,7 @@ class GameProcessor {
 			coords.to[1] = tarCol;
 			for (let i = tarRow + direction; i < 8 && i >= 0; i += direction) {
 				if (this.board.tiles[i][tarCol] !== null) {
-					if (this.board.tiles[i][tarCol].name.includes('P')) {
+					if (this.board.tiles[i][tarCol].name.startsWith('P')) {
 						coords.from[0] = i;
 						break;
 					}
@@ -549,7 +548,7 @@ class GameProcessor {
 		mustBeInRow: number,
 		mustBeInCol: number,
 		token: string,
-		player: string
+		player: 'b' | 'w'
 	): Move {
 		const color = player;
 		const to = [tarRow, tarCol];
@@ -647,7 +646,7 @@ class GameProcessor {
 		throw new MoveNotFoundException(token, tarRow, tarCol);
 	}
 
-	checkCheck(move: Move, player: string): boolean {
+	checkCheck(move: Move, player: 'w' | 'b'): boolean {
 		const { from } = move;
 		const { to } = move;
 		const color = player;
@@ -662,7 +661,7 @@ class GameProcessor {
 		const diff = [];
 		diff[0] = from[0] - king[0];
 		diff[1] = from[1] - king[1];
-		const checkFor = [];
+		const checkFor: string[] = [];
 		if (diff[0] === 0 || diff[1] === 0) {
 			checkFor[0] = 'Q';
 			checkFor[1] = 'R';
@@ -697,8 +696,8 @@ class GameProcessor {
 			) {
 				const piece = this.board.tiles[row][col];
 				if (
-					(piece.name.includes(checkFor[0]) ||
-						piece.name.includes(checkFor[1])) &&
+					(piece.name.startsWith(checkFor[0]) ||
+						piece.name.startsWith(checkFor[1])) &&
 					piece.color === opColor
 				) {
 					isInCheck = true;

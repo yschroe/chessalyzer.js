@@ -27,10 +27,10 @@ class TileStats {
 
 class Piece {
 	piece: string;
-	color: string;
+	color: 'b' | 'w';
 	lastMovedOn: number;
 
-	constructor(piece: string, color: string) {
+	constructor(piece: string, color: 'b' | 'w') {
 		this.piece = piece;
 		this.color = color;
 		this.lastMovedOn = 0;
@@ -47,16 +47,17 @@ class TileTrackerBase extends BaseTracker {
 		this.heatmapPresets = HeatmapPresets;
 		this.cntMovesGame = 0;
 		this.cntMovesTotal = 0;
-		this.tiles = new Array(8);
+		this.tiles = [];
+
 		for (let row = 0; row < 8; row += 1) {
-			const currRow: StatsField[] = new Array(8);
+			const currRow: StatsField[] = [];
 
 			for (let col = 0; col < 8; col += 1) {
-				currRow[col] = {
+				currRow.push({
 					b: new TileStats(),
 					w: new TileStats(),
 					currentPiece: null
-				};
+				});
 
 				pawnTemplate.forEach((val) => {
 					currRow[col].b[val] = new TileStats();
@@ -67,7 +68,7 @@ class TileTrackerBase extends BaseTracker {
 					currRow[col].w[val] = new TileStats();
 				});
 			}
-			this.tiles[row] = currRow;
+			this.tiles.push(currRow);
 		}
 
 		for (let row = 0; row < 8; row += 1) {
