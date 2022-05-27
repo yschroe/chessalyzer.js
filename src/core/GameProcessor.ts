@@ -16,8 +16,33 @@ import {
 } from '../interfaces';
 import ChessBoard from './ChessBoard.js';
 import Utils from './Utils.js';
+import {
+	PieceToken,
+	PieceTokenWithoutKing,
+	PlayerColor,
+	Token
+} from '../types';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const moveCfg = {
+	Q: {
+		line: true,
+		diag: true
+	},
+	R: {
+		line: true,
+		diag: false
+	},
+	B: {
+		line: false,
+		diag: true
+	},
+	N: {
+		line: false,
+		diag: false
+	}
+};
 
 class MoveNotFoundException extends Error {
 	constructor(token: string, tarRow: number, tarCol: number) {
@@ -43,7 +68,7 @@ interface GameProcessorAnalysisConfig {
 
 class ParsedMove implements MoveData {
 	san: string;
-	player: 'b' | 'w';
+	player: PlayerColor;
 	piece: string;
 	castles: string;
 	takes: { piece: string; pos: number[] };
@@ -66,7 +91,7 @@ class ParsedMove implements MoveData {
  */
 class GameProcessor {
 	board: ChessBoard;
-	activePlayer: 'b' | 'w';
+	activePlayer: PlayerColor;
 	configs: GameProcessorAnalysisConfig[];
 	readInHeader: boolean;
 
@@ -105,9 +130,7 @@ class GameProcessor {
 					tempCfg.analyzerData.push({
 						name: t.constructor.name,
 						cfg: t.cfg,
-						path:
-							Object.prototype.hasOwnProperty.call(t, 'path') &&
-							t.path
+						path: t.path
 					});
 				});
 			}
@@ -379,7 +402,7 @@ class GameProcessor {
 	}
 
 	parseMove(rawMove: string): ParsedMove {
-		const token = rawMove.substring(0, 1);
+		const token = rawMove.substring(0, 1) as Token;
 
 		let currentMove: ParsedMove;
 		const san = GameProcessor.preProcess(rawMove);
@@ -446,10 +469,7 @@ class GameProcessor {
 
 		// promotes
 		if (moveData.san.includes('=')) {
-			moveData.promotesTo = moveData.san.substring(
-				moveData.san.length - 1,
-				moveData.san.length
-			);
+			moveData.promotesTo = moveData.san.slice(-1);
 		}
 
 		return moveData;
@@ -462,38 +482,39 @@ class GameProcessor {
 
 		let takes = false;
 		let coords: Move = { from: [], to: [] };
-		const token = moveData.san.substring(0, 1);
+		const token = moveData.san.substring(0, 1) as PieceToken;
 
+		// create copy of san to be able to remove characters without altering the original san
 		// remove token
-		moveData.san = moveData.san.substring(1, moveData.san.length);
+		let tempSan = san.substring(1);
 
 		// takes
-		if (moveData.san.includes('x')) {
+		if (tempSan.includes('x')) {
 			takes = true;
-			moveData.san = moveData.san.replace('x', '');
+			tempSan = tempSan.replace('x', '');
 		}
 
 		// e.g. Re3f5
-		if (moveData.san.length === 4) {
-			coords.from[0] = 8 - parseInt(moveData.san.substring(1, 2), 10);
-			coords.from[1] = Utils.getFileNumber(moveData.san.substring(0, 1));
-			coords.to[0] = 8 - parseInt(moveData.san.substring(3, 4), 10);
-			coords.to[1] = Utils.getFileNumber(moveData.san.substring(2, 3));
+		if (tempSan.length === 4) {
+			coords.from[0] = 8 - parseInt(tempSan.substring(1, 2), 10);
+			coords.from[1] = Utils.getFileNumber(tempSan.substring(0, 1));
+			coords.to[0] = 8 - parseInt(tempSan.substring(3, 4), 10);
+			coords.to[1] = Utils.getFileNumber(tempSan.substring(2, 3));
 
 			// e.g. Ref3
-		} else if (moveData.san.length === 3) {
-			const tarRow = 8 - parseInt(moveData.san.substring(2, 3), 10);
-			const tarCol = Utils.getFileNumber(moveData.san.substring(1, 2));
+		} else if (tempSan.length === 3) {
+			const tarRow = 8 - parseInt(tempSan.substring(2, 3), 10);
+			const tarCol = Utils.getFileNumber(tempSan.substring(1, 2));
 			let mustBeInRow: number = null;
 			let mustBeInCol: number = null;
 
 			// file is specified
-			if (Utils.getFileNumber(moveData.san.substring(0, 1)) >= 0) {
-				mustBeInCol = Utils.getFileNumber(moveData.san.substring(0, 1));
+			if (Utils.getFileNumber(tempSan.substring(0, 1)) >= 0) {
+				mustBeInCol = Utils.getFileNumber(tempSan.substring(0, 1));
 
 				// rank is specified
 			} else {
-				mustBeInRow = 8 - parseInt(moveData.san.substring(0, 1), 10);
+				mustBeInRow = 8 - parseInt(tempSan.substring(0, 1), 10);
 			}
 			coords = this.findPiece(
 				tarRow,
@@ -506,8 +527,8 @@ class GameProcessor {
 
 			// e.g. Rf3
 		} else {
-			const tarRow = 8 - parseInt(moveData.san.substring(1, 2), 10);
-			const tarCol = Utils.getFileNumber(moveData.san.substring(0, 1));
+			const tarRow = 8 - parseInt(tempSan.substring(1, 2), 10);
+			const tarCol = Utils.getFileNumber(tempSan.substring(0, 1));
 			coords = this.findPiece(
 				tarRow,
 				tarCol,
@@ -547,34 +568,14 @@ class GameProcessor {
 		tarCol: number,
 		mustBeInRow: number,
 		mustBeInCol: number,
-		token: string,
-		player: 'b' | 'w'
+		token: PieceToken,
+		player: PlayerColor
 	): Move {
-		const color = player;
 		const to = [tarRow, tarCol];
-
-		const moveCfg = {
-			Q: {
-				line: true,
-				diag: true
-			},
-			R: {
-				line: true,
-				diag: false
-			},
-			B: {
-				line: false,
-				diag: true
-			},
-			N: {
-				line: false,
-				diag: false
-			}
-		};
 
 		// get array of positions of pieces of type <token>
 		let validPieces: number[][] = Object.values(
-			this.board.pieces.posMap[color][token]
+			this.board.pieces.posMap[player][token]
 		);
 
 		// filter pieces that can reach target square
@@ -584,9 +585,9 @@ class GameProcessor {
 					(mustBeInRow === null || val[0] === mustBeInRow) &&
 					(mustBeInCol === null || val[1] === mustBeInCol);
 				return (
-					((moveCfg[token].line &&
+					((moveCfg[token as PieceTokenWithoutKing].line &&
 						(val[0] === tarRow || val[1] === tarCol)) ||
-						(moveCfg[token].diag &&
+						(moveCfg[token as PieceTokenWithoutKing].diag &&
 							Math.abs(val[0] - tarRow) ===
 								Math.abs(val[1] - tarCol)) ||
 						(token === 'N' &&
@@ -614,7 +615,7 @@ class GameProcessor {
 
 				if (token !== 'N') {
 					const diff = [tarRow - piece[0], tarCol - piece[1]];
-					const steps = Math.max.apply(null, diff.map(Math.abs));
+					const steps = Math.max(...diff.map((val) => Math.abs(val)));
 					const dir = [Math.sign(diff[0]), Math.sign(diff[1])];
 					for (let i = 1; i < steps && !obstructed; i += 1) {
 						if (
@@ -646,7 +647,7 @@ class GameProcessor {
 		throw new MoveNotFoundException(token, tarRow, tarCol);
 	}
 
-	checkCheck(move: Move, player: 'w' | 'b'): boolean {
+	checkCheck(move: Move, player: PlayerColor): boolean {
 		const { from } = move;
 		const { to } = move;
 		const color = player;
@@ -658,7 +659,7 @@ class GameProcessor {
 		if (king[0] === from[0] && king[1] === from[1]) return false;
 
 		// check if moving piece is on same line/diag as king, else exit
-		const diff = [];
+		const diff: number[] = [];
 		diff[0] = from[0] - king[0];
 		diff[1] = from[1] - king[1];
 		const checkFor: string[] = [];

@@ -1,12 +1,13 @@
 import { MoveData, ChessPiece } from '../interfaces';
+import { PieceToken, PlayerColor } from '../types';
 import Utils from './Utils';
 
 interface PosMap {
-	R: { Ra?: number[]; Rh?: number[] };
-	N: { Nb?: number[]; Ng?: number[] };
-	B: { Bc?: number[]; Bf?: number[] };
-	Q: { Qd?: number[] };
-	K: { Ke?: number[] };
+	R: { [piece: string]: number[] };
+	N: { [piece: string]: number[] };
+	B: { [piece: string]: number[] };
+	Q: { [piece: string]: number[] };
+	K: { [piece: string]: number[] };
 }
 
 class PiecePositionTable {
@@ -57,22 +58,27 @@ class PiecePositionTable {
 		};
 	}
 
-	takes(player: 'b' | 'w', piece: string): void {
-		if (!piece.startsWith('P')) {
-			delete this.posMap[player][piece.substring(0, 1)][piece];
-		}
+	takes(player: PlayerColor, piece: string): void {
+		if (!piece.startsWith('P'))
+			delete this.posMap[player][piece.substring(0, 1) as PieceToken][
+				piece
+			];
 	}
 
-	moves(player: 'b' | 'w', piece: string, to: number[]): void {
-		if (!piece.startsWith('P')) {
-			this.posMap[player][piece.substring(0, 1)][piece] = to;
-		}
+	moves(
+		player: PlayerColor,
+		piece: string,
+		destinationSquare: number[]
+	): void {
+		if (!piece.startsWith('P'))
+			this.posMap[player][piece.substring(0, 1) as PieceToken][piece] =
+				destinationSquare;
 	}
 
-	promotes(player: 'b' | 'w', piece: string, on: number[]): void {
-		if (!piece.startsWith('P')) {
-			this.posMap[player][piece.substring(0, 1)][piece] = on;
-		}
+	promotes(player: PlayerColor, piece: string, onSquare: number[]): void {
+		if (!piece.startsWith('P'))
+			this.posMap[player][piece.substring(0, 1) as PieceToken][piece] =
+				onSquare;
 	}
 }
 
@@ -139,7 +145,7 @@ class ChessBoard {
 		}
 	}
 
-	castle(move: string, player: 'w' | 'b'): void {
+	castle(move: string, player: PlayerColor): void {
 		const row = player === 'w' ? 7 : 0;
 		const scrKingCol = 4;
 		let tarKingCol = 6;

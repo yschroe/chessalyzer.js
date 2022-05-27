@@ -1,3 +1,5 @@
+import { PlayerColor } from '../types';
+
 export interface Game {
 	Result?: string;
 	ECO?: string;
@@ -11,7 +13,7 @@ export interface Move {
 
 export interface MoveData {
 	san: string;
-	player: 'b' | 'w';
+	player: PlayerColor;
 	piece: string;
 	castles: string;
 	takes: { piece: string; pos: number[] };
@@ -22,12 +24,12 @@ export interface MoveData {
 export interface SquareData {
 	alg: string;
 	coords: number[];
-	piece: { color: 'b' | 'w'; name: string };
+	piece: { color: PlayerColor; name: string };
 }
 
 export interface ChessPiece {
 	name: string;
-	color: 'b' | 'w';
+	color: PlayerColor;
 }
 
 export interface TrackerConfig {

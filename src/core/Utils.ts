@@ -4,6 +4,7 @@ import {
 	HeatmapData,
 	SquareData
 } from '../interfaces';
+import { PlayerColor } from '../types';
 
 const files = 'abcdefgh';
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
@@ -34,7 +35,7 @@ export default class Utils {
 			const row = sqr[0];
 			const col = sqr[1];
 
-			let color: string = null;
+			let color: PlayerColor;
 			let name: string = null;
 			if (row === 0) {
 				color = 'b';
