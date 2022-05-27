@@ -48,10 +48,10 @@ export default class Chessalyzer {
 		const bgColor = [255, 255, 255];
 		const largestVal = Math.max(data.max, Math.abs(data.min));
 
-		for (let i = 0; i < data.map.length; i += 1) {
+		for (const row of data.map) {
 			for (let cnt = 0; cnt < 2; cnt += 1) {
-				for (let j = 0; j < data.map[i].length; j += 1) {
-					let val = data.map[i][j];
+				for (const cellVal of row) {
+					let val = cellVal;
 					let color = color1;
 
 					// if negative value, use different color
@@ -76,6 +76,7 @@ export default class Chessalyzer {
 						)(`    `)
 					);
 				}
+
 				process.stdout.write('\n');
 			}
 		}

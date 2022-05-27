@@ -58,9 +58,9 @@ class GameTrackerBase extends BaseTracker {
 		// sort keys
 		this.ECO = Object.keys(this.ECO)
 			.sort()
-			.reduce((accumulator, currentValue) => {
-				accumulator[currentValue] = this.ECO[currentValue];
-				return accumulator;
+			.reduce((a, c) => {
+				a[c] = this.ECO[c];
+				return a;
 			}, {});
 	}
 }

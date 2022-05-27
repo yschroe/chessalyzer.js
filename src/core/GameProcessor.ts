@@ -103,7 +103,7 @@ class GameProcessor {
 	}
 
 	attachConfigs(configs: AnalysisConfig[]): void {
-		configs.forEach((cfg) => {
+		for (const cfg of configs) {
 			const tempCfg = {
 				analyzers: {
 					move: [],
@@ -117,26 +117,26 @@ class GameProcessor {
 			};
 
 			if (cfg.trackers) {
-				cfg.trackers.forEach((t) => {
-					if (t.type === 'move') {
-						tempCfg.analyzers.move.push(t);
-					} else if (t.type === 'game') {
-						tempCfg.analyzers.game.push(t);
+				for (const tracker of cfg.trackers) {
+					if (tracker.type === 'move') {
+						tempCfg.analyzers.move.push(tracker);
+					} else if (tracker.type === 'game') {
+						tempCfg.analyzers.game.push(tracker);
 
 						// we need to read in the header if at least one game tracker is attached
 						this.readInHeader = true;
 					}
 
 					tempCfg.analyzerData.push({
-						name: t.constructor.name,
-						cfg: t.cfg,
-						path: t.path
+						name: tracker.constructor.name,
+						cfg: tracker.cfg,
+						path: tracker.path
 					});
-				});
+				}
 			}
 
 			this.configs.push(tempCfg);
-		});
+		}
 	}
 
 	checkConfig(config: AnalysisConfig['config']): GameProcessorConfig {
@@ -148,9 +148,7 @@ class GameProcessor {
 		const cfg: GameProcessorConfig = {
 			hasFilter,
 			filter: hasFilter ? config.filter : () => true,
-			cntGames: Object.prototype.hasOwnProperty.call(config, 'cntGames')
-				? config.cntGames
-				: Infinity
+			cntGames: config.cntGames || Infinity
 		};
 		return cfg;
 	}
@@ -301,9 +299,11 @@ class GameProcessor {
 						game = { moves: [] };
 					}
 				}
-				let allDone = true;
-				for (let i = 0; i < this.configs.length; i += 1)
-					allDone = allDone && this.configs[i].isDone;
+				const allDone = this.configs.reduce(
+					(a, c) => a && c.isDone,
+					true
+				);
+
 				if (allDone) {
 					lr.close();
 					lr.removeAllListeners();
@@ -337,23 +337,18 @@ class GameProcessor {
 
 			readerFinished = true;
 			if (isMultithreaded) await EventEmitter.once(status, 'finished');
-			// console.log('Read entire file.');
 
-			configArray.forEach((cfg) => {
-				if (cfg.trackers) {
-					cfg.trackers.forEach((t) => {
-						t.finish?.();
-					});
+			// trigger finish events on trackers
+			for (const cfg of configArray) {
+				for (const tracker of cfg.trackers) {
+					tracker.finish?.();
 				}
-			});
+			}
 
-			const returnVals: GameAndMoveCount[] = [];
-			this.configs.forEach((cfg) => {
-				returnVals.push({
-					cntGames: cfg.cntGames,
-					cntMoves: cfg.processedMoves
-				});
-			});
+			const returnVals: GameAndMoveCount[] = this.configs.map((cfg) => ({
+				cntGames: cfg.cntGames,
+				cntMoves: cfg.processedMoves
+			}));
 
 			return returnVals;
 		} catch (err) {
@@ -364,32 +359,33 @@ class GameProcessor {
 
 	processGame(game: Game, analysisCfg: GameProcessorAnalysisConfig): void {
 		// game based analyzers
-		for (let i = 0; i < analysisCfg.analyzers.game.length; i += 1) {
-			analysisCfg.analyzers.game[i].analyze(game);
+		for (const analyzer of analysisCfg.analyzers.game) {
+			analyzer.analyze(game);
 		}
 
 		const { moves } = game;
 		try {
-			for (let i = 0; i < moves.length; i += 1) {
-				this.activePlayer = i % 2 === 0 ? 'w' : 'b';
-
-				// fetch move data into currentMove
-				const currentMove = this.parseMove(moves[i]);
+			this.activePlayer = 'w';
+			for (const move of moves) {
+				// parse move from san to coordinates (and meta info)
+				const currentMove = this.parseMove(move);
 
 				// move based analyzers
-				for (let j = 0; j < analysisCfg.analyzers.move.length; j += 1) {
-					analysisCfg.analyzers.move[j].analyze(currentMove);
+				for (const analyzer of analysisCfg.analyzers.move) {
+					analyzer.analyze(currentMove);
 				}
 
 				this.board.move(currentMove);
+				this.activePlayer = this.activePlayer === 'w' ? 'b' : 'w';
 			}
 		} catch (err) {
 			console.log(err, game);
+			throw new Error();
 		}
 
 		// notify move analyzers that the current game is done
-		for (let i = 0; i < analysisCfg.analyzers.move.length; i += 1) {
-			analysisCfg.analyzers.move[i].nextGame?.();
+		for (const analyzer of analysisCfg.analyzers.move) {
+			analyzer.nextGame?.();
 		}
 
 		analysisCfg.processedMoves += moves.length;
@@ -542,6 +538,7 @@ class GameProcessor {
 		// set move data
 		moveData.move = coords;
 		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]].name;
+
 		if (takes) {
 			moveData.takes = {
 				piece: this.board.tiles[moveData.move.to[0]][
@@ -585,6 +582,7 @@ class GameProcessor {
 					(mustBeInRow === null || val[0] === mustBeInRow) &&
 					(mustBeInCol === null || val[1] === mustBeInCol);
 				return (
+					mustBeInFulfilled &&
 					((moveCfg[token as PieceTokenWithoutKing].line &&
 						(val[0] === tarRow || val[1] === tarCol)) ||
 						(moveCfg[token as PieceTokenWithoutKing].diag &&
@@ -594,8 +592,7 @@ class GameProcessor {
 							((Math.abs(val[0] - tarRow) === 2 &&
 								Math.abs(val[1] - tarCol) === 1) ||
 								(Math.abs(val[0] - tarRow) === 1 &&
-									Math.abs(val[1] - tarCol) === 2)))) &&
-					mustBeInFulfilled
+									Math.abs(val[1] - tarCol) === 2))))
 				);
 			});
 		}
@@ -609,8 +606,7 @@ class GameProcessor {
 		}
 
 		if (validPieces.length > 1) {
-			for (let idx = 0; idx < validPieces.length - 1; idx += 1) {
-				const piece = validPieces[idx];
+			for (const piece of validPieces) {
 				let obstructed = false;
 
 				if (token !== 'N') {
@@ -638,6 +634,7 @@ class GameProcessor {
 					};
 				}
 			}
+
 			return {
 				from: validPieces[validPieces.length - 1],
 				to
@@ -663,6 +660,7 @@ class GameProcessor {
 		diff[0] = from[0] - king[0];
 		diff[1] = from[1] - king[1];
 		const checkFor: string[] = [];
+
 		if (diff[0] === 0 || diff[1] === 0) {
 			checkFor[0] = 'Q';
 			checkFor[1] = 'R';
