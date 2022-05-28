@@ -28,7 +28,7 @@ A JavaScript library for batch analyzing chess games.
 -   Filter games (e.g. only analyze games where WhiteElo > 1800)
 -   Fully modular, track only the stats you need to preserve performance
 -   Generate heatmaps out of the generated data
--   It's fast and highly parallelized: Processes >5.400.000 moves/s on an Apple M1, >3.300.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
+-   It's fast and highly parallelized: Processes >5.500.000 moves/s on an Apple M1, >3.300.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
 -   Handles big files easily
 
 # Installation
@@ -168,13 +168,13 @@ await Chessalyzer.analyzePGN(
             cntGames: 10000
         }
     },
-    { batchSize: 8000, nThreads: 1 }
+    { batchSize: 8000 }
 );
 
 // ...
 ```
 
-`analyzePGN(...)` in multithreaded mode reads in chunks of games of size `batchSize` times `nThreads` and starts the analysis of the curent chunk while the next chunk is read-in from the PGN file in parallel. With the `nThreads` argument you can define how many threads are started in parallel to analyze the chunk. For example: `batchSize = 1000` and `nThreads = 5` will result in a chunk size of 5000 which is split in 5 threads which analyse 1000 games each.
+`analyzePGN(...)` in multithreaded mode reads in chunks of games of size `batchSize` and starts the analysis of this chunk in a different thread. While the other tread parses and analyzes the games, the next chunk is read-in from the PGN file in the main thread in parallel. Every time the defined count of games has been read in, chessalyzer.js checks if any of the previously started threads is ready to analyze new data. If no free thread is found a new thread is started.
 
 ### Forcing single threaded mode
 
@@ -182,8 +182,7 @@ To use singlethreaded mode in which the games are read in and analyzed sequentia
 
 ##### Important
 
--   A larger `nThreads` does not necessarily result in a higher speed, since there is a bit of overhead from creating the new thread. You will need to tweak `batchSize` and `nThreads` to get the best results on your system. On my systems I achieved the best results with `nThreads = 1` and `batchSize = 8000` and that is also the default setting. Note that `nThreads = 1` doesn't mean that the analysis is single-threaded but that 1 _additional_ thread in addition to the thread that parses the PGN file is spawned.
--   To use a custom tracker with your multithreaded analysis please see the important notes at the [Custom Trackers](#custom-trackers) section.
+To use a custom tracker with your multithreaded analysis please see the important notes at the [Custom Trackers](#custom-trackers) section.
 
 # Heatmap analysis functions
 
@@ -383,6 +382,11 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 <img src="https://i.imgur.com/tZVkPs3.png" width="30%">
 
 # Changelog
+
+-   2.1.0:
+
+    -   The count of additional needed threads in multithreaded mode is now determined dynamically. Instead of starting a new thread every time new games have been read in, chessalyzer.js now tries to reuse already started threads. This removes the overhead of needing to create a new worker thread every time, which results in a huge performance boost (around +25%).
+    -   As a result `nThreads` in the multithread config argument of `Chessalyzer.analyzePGN(...)` is now deprecated and is no longer used.
 
 -   2.0.0:
     -   Chessalyzer.js is now an ES module (ESM). See [this guide](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#file-esm-package-md) for how to use this package.
