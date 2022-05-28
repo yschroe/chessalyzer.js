@@ -355,7 +355,6 @@ class GameProcessor {
 			readerFinished = true;
 			if (isMultithreaded) await EventEmitter.once(status, 'finished');
 			for (const w of workers) w.worker.kill();
-			console.log(workers.length);
 
 			// trigger finish events on trackers
 			for (const cfg of configArray) {
