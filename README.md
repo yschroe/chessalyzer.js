@@ -55,11 +55,11 @@ Chessalyzer.analyzePGN('<pathToPgnFile', yourAnalysisConfig);
 
 # How it works
 
-Chessalyzer.js consists of two submodules which work hand-in-hand: The first module is the `Chessalyzer` class which handles the PGN parsing and provides you with a function for previewing heatmaps. The class by itself is static (meaning it can not be instantiated and does not store data in itself) and does not track any statistics though. For this you need a `Tracker` object which you then can pass into the parsing function of the Chessalyzer class. The Chessalzyer class recognizes the Tracker objects and passes data into it. Typically this will either be `MoveData` containing information about e.g. which piece moved from where to where or which piece took which other piece for each move of each game. Additionally you can also use the information from the header of the PGN file, where you can find e.g. the player names and which opening was played (ECO code).
+Chessalyzer.js consists of two submodules which work hand-in-hand: The first module is the `Chessalyzer` class which handles the PGN parsing and provides you with a function for previewing heatmaps. The class by itself is static (meaning it can not be instantiated and does not store data in itself) and does not track any statistics though. For this you need a `Tracker` object which you then can pass into the parsing function of the Chessalyzer class. The Chessalyzer class recognizes the Tracker objects and passes data into it. Typically this will either be `MoveData` containing information about e.g. which piece moved from where to where or which piece took which other piece for each move of each game. Additionally you can also use the information from the header of the PGN file, where you can find e.g. the player names and which opening was played (ECO code).
 
 Inside the Tracker object you can do whatever you want with the data. If you want to track some obscure stat like how often the e pawn was promoted to a rook on the a8 square you could write a Tracker for that. Chessalyzer.js ships with three different preconfigured Trackers which should cover most usecases, so if you are happy with that you don't need to code your own Tracker.
 
-Lastly Chessalyzer.js provides you with functions to convert your raw data from your Trackers into heatmaps which you then can use in your frontend of choice.
+Lastly chessalyzer.js provides you with functions to convert your raw data from your Trackers into heatmaps which you then can use in your frontend of choice.
 
 # Examples
 
@@ -344,7 +344,7 @@ Your tracker also must have the following properties:
 
 # Heatmap Presets
 
-Instead of defining your own heatmap function you can also use the heatmap presets Chessalyzer.js provides you via the Tile and Piece Trackers. You can access those presets by passing the SHORT_NAMEs of the following table as your first argument in `generateHeatmap(...)`, e.g. `<yourTileTrackerInstance>.generateHeatmap('TILE_OCC_BY_PIECE', 'a2')`.
+Instead of defining your own heatmap function you can also use the heatmap presets chessalyzer.js provides you via the Tile and Piece Trackers. You can access those presets by passing the SHORT_NAMEs of the following table as your first argument in `generateHeatmap(...)`, e.g. `<yourTileTrackerInstance>.generateHeatmap('TILE_OCC_BY_PIECE', 'a2')`.
 
 ### Tile Tracker
 
@@ -391,7 +391,7 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 -   2.0.0:
     -   Chessalyzer.js is now an ES module (ESM). See [this guide](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#file-esm-package-md) for how to use this package.
     -   runBatch(...) and runBatchMulticore(...) were merged into the single function analyzePGN(...). Per default the function will run in multithreaded mode, but you can override the config to force singlethreaded mode if it is needed in your environment.
-    -   You can now run different filters in parallel. For example you could configure Chessalzyer.js in a way that Tracker1 tracks only PlayerA's games and Tracker2 tracks only PlayerB's games during the same run of analyzePGN(...). Before you needed to start two separate analyses with the different Trackers and filter settings.
+    -   You can now run different filters in parallel. For example you could configure chessalyzer.js in a way that Tracker1 tracks only PlayerA's games and Tracker2 tracks only PlayerB's games during the same run of analyzePGN(...). Before you needed to start two separate analyses with the different Trackers and filter settings.
     -   The heatmap generation functions have been moved into the Tracker objects.
     -   Added support for PGN files in which the game moves are listed in multiple lines instead of one single line
     -   Changed the data structure of the move data passed into the analyzers.
