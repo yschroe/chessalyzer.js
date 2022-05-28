@@ -2,14 +2,14 @@ import typescript from '@rollup/plugin-typescript';
 import dts from 'rollup-plugin-dts';
 // defines modules as external dependencies (= will not be bundled into the lib)
 const external = [
-	'fs',
-	'perf_hooks',
 	'chalk',
-	'readline',
-	'events',
-	'cluster',
-	'path',
-	'url'
+	'node:fs',
+	'node:perf_hooks',
+	'node:readline',
+	'node:events',
+	'node:cluster',
+	'node:path',
+	'node:url'
 ];
 
 export default [

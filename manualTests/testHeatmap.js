@@ -18,7 +18,6 @@ const data = await Chessalyzer.analyzePGN(
 			config: { cntGames: 2000, filter: (val) => val.Result === '1-0' }
 		}
 	]
-	// null
 );
 console.log(data);
 

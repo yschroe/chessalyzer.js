@@ -1,9 +1,9 @@
-import { createReadStream } from 'fs';
-import { createInterface } from 'readline';
-import { EventEmitter } from 'events';
-import cluster from 'cluster';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { createReadStream } from 'node:fs';
+import { createInterface } from 'node:readline';
+import { EventEmitter } from 'node:events';
+import cluster from 'node:cluster';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
 	Game,
 	Move,
@@ -163,6 +163,7 @@ class GameProcessor {
 
 			const isMultithreaded = multiThreadCfg !== null;
 			const status = new EventEmitter();
+			let workerCount = 0;
 
 			cluster.setupPrimary({
 				exec: `${__dirname}/Processor.worker.js`
@@ -173,6 +174,7 @@ class GameProcessor {
 			// creates a new worker, that will process an array of games
 			const forkWorker = (games: Game[], idxConfig: number) => {
 				const w = cluster.fork();
+				workerCount += 1;
 
 				// on worker finish
 				w.on('message', (msg: 'readyForData' | WorkerMessage) => {
@@ -200,12 +202,10 @@ class GameProcessor {
 						this.configs[idxConfig].processedMoves += msg.cntMoves;
 
 						w.kill();
+						workerCount -= 1;
 
 						// if this worker was the last one, emit 'finished' event
-						if (
-							Object.keys(cluster.workers).length === 0 &&
-							readerFinished
-						) {
+						if (workerCount === 0 && readerFinished) {
 							status.emit('finished');
 						}
 					}
@@ -340,8 +340,10 @@ class GameProcessor {
 
 			// trigger finish events on trackers
 			for (const cfg of configArray) {
-				for (const tracker of cfg.trackers) {
-					tracker.finish?.();
+				if (cfg.trackers) {
+					for (const tracker of cfg.trackers) {
+						tracker.finish?.();
+					}
 				}
 			}
 
