@@ -13,7 +13,7 @@ export default class Chessalyzer {
 	static async analyzePGN(
 		pathToPgn: string,
 		configs: AnalysisConfig | AnalysisConfig[] = { trackers: [] },
-		multithreadCfg: MultithreadConfig = { batchSize: 8000, nThreads: 1 }
+		multithreadCfg: MultithreadConfig = { batchSize: 500 }
 	): Promise<GameAndMoveCountFull[] | GameAndMoveCountFull> {
 		// handler for single analyzer or array of analyzers
 		let configArray: AnalysisConfig[] = [];

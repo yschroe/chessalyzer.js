@@ -38,7 +38,7 @@ export interface TrackerConfig {
 
 export interface MultithreadConfig {
 	batchSize: number;
-	nThreads: number;
+	nThreads?: number;
 }
 
 export interface AnalysisConfig {
@@ -101,4 +101,5 @@ export interface WorkerMessage {
 	cntMoves: number;
 	gameAnalyzers: Tracker[];
 	moveAnalyzers: Tracker[];
+	idxConfig: number;
 }

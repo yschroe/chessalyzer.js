@@ -163,7 +163,6 @@ class GameProcessor {
 
 			const isMultithreaded = multiThreadCfg !== null;
 			const status = new EventEmitter();
-			let workerCount = 0;
 
 			cluster.setupPrimary({
 				exec: `${__dirname}/Processor.worker.js`
@@ -171,10 +170,37 @@ class GameProcessor {
 
 			this.attachConfigs(configArray);
 
+			const workers: {
+				worker: typeof cluster.worker;
+				isReady: boolean;
+			}[] = [];
+
+			const sendDataToWorker = async (
+				games: Game[],
+				idxConfig: number
+			) => {
+				let freeWorker = workers.find((w) => w.isReady);
+				if (!freeWorker) {
+					const freeIndex = workers.length;
+					freeWorker = {
+						worker: forkWorker(freeIndex),
+						isReady: false
+					};
+					workers.push(freeWorker);
+					await EventEmitter.once(freeWorker.worker, 'message');
+				}
+
+				freeWorker.isReady = false;
+				freeWorker.worker.send({
+					games,
+					analyzerData: this.configs[idxConfig].analyzerData,
+					idxConfig
+				});
+			};
+
 			// creates a new worker, that will process an array of games
-			const forkWorker = (games: Game[], idxConfig: number) => {
+			const forkWorker = (idx: number) => {
 				const w = cluster.fork();
-				workerCount += 1;
 
 				// on worker finish
 				w.on('message', (msg: 'readyForData' | WorkerMessage) => {
@@ -182,34 +208,38 @@ class GameProcessor {
 					// there is a bug in node though, which sometimes sends the data too early
 					// --> wait until the worker sends a custom ready message
 					// see: https://github.com/nodejs/node/issues/39854
-					if (msg === 'readyForData') {
-						w.send({
-							games,
-							analyzerData: this.configs[idxConfig].analyzerData
-						});
-					} else {
+					if (msg !== 'readyForData') {
+						const {
+							idxConfig,
+							gameAnalyzers,
+							moveAnalyzers,
+							cntMoves
+						} = msg;
 						// add tracker data from this worker
-						for (let i = 0; i < msg.gameAnalyzers.length; i += 1) {
+						for (let i = 0; i < gameAnalyzers.length; i += 1) {
 							this.configs[idxConfig].analyzers.game[i].add(
-								msg.gameAnalyzers[i]
+								gameAnalyzers[i]
 							);
 						}
-						for (let i = 0; i < msg.moveAnalyzers.length; i += 1) {
+						for (let i = 0; i < moveAnalyzers.length; i += 1) {
 							this.configs[idxConfig].analyzers.move[i].add(
-								msg.moveAnalyzers[i]
+								moveAnalyzers[i]
 							);
 						}
-						this.configs[idxConfig].processedMoves += msg.cntMoves;
+						this.configs[idxConfig].processedMoves += cntMoves;
 
-						w.kill();
-						workerCount -= 1;
+						workers[idx].isReady = true;
 
 						// if this worker was the last one, emit 'finished' event
-						if (workerCount === 0 && readerFinished) {
+						if (
+							workers.filter((w) => !w.isReady).length === 0 &&
+							readerFinished
+						) {
 							status.emit('finished');
 						}
 					}
 				});
+				return w;
 			};
 
 			const gameStore: Game[][] = [];
@@ -265,26 +295,13 @@ class GameProcessor {
 									// if enough games have been read in, start worker threads and let them analyze
 									if (
 										cfg.cntGames %
-											(multiThreadCfg.batchSize *
-												multiThreadCfg.nThreads) ===
+											multiThreadCfg.batchSize ===
 										0
 									) {
-										for (
-											let i = 0;
-											i < multiThreadCfg.nThreads;
-											i += 1
-										) {
-											forkWorker(
-												gameStore[idxCfg].slice(
-													i *
-														multiThreadCfg.batchSize,
-													i *
-														multiThreadCfg.batchSize +
-														multiThreadCfg.batchSize
-												),
-												idxCfg
-											);
-										}
+										void sendDataToWorker(
+											gameStore[idxCfg],
+											idxCfg
+										);
 
 										gameStore[idxCfg] = [];
 									}
@@ -320,7 +337,7 @@ class GameProcessor {
 							games.length / multiThreadCfg.batchSize
 						);
 						for (let i = 0; i < nEndForks; i += 1) {
-							forkWorker(
+							void sendDataToWorker(
 								games.slice(
 									i * multiThreadCfg.batchSize,
 									i * multiThreadCfg.batchSize +
@@ -330,13 +347,15 @@ class GameProcessor {
 							);
 						}
 					} else {
-						forkWorker(games, idx);
+						void sendDataToWorker(games, idx);
 					}
 				}
 			});
 
 			readerFinished = true;
 			if (isMultithreaded) await EventEmitter.once(status, 'finished');
+			for (const w of workers) w.worker.kill();
+			console.log(workers.length);
 
 			// trigger finish events on trackers
 			for (const cfg of configArray) {

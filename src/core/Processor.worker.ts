@@ -4,48 +4,52 @@ import { Game } from '../interfaces';
 
 process.on(
 	'message',
-	async (msg: {
+	(msg: {
 		games: Game[];
 		analyzerData: { name: string; cfg: object; path?: string }[];
+		idxConfig: number;
 	}) => {
-		const TrackerList = {};
-		const proc = new GameProcessor();
+		void (async () => {
+			const TrackerList = {};
+			const proc = new GameProcessor();
 
-		// prepare built-in trackers
-		Object.keys(Tracker).forEach((key) => {
-			TrackerList[Tracker[key].name] = Tracker[key];
-		});
+			// prepare built-in trackers
+			Object.keys(Tracker).forEach((key) => {
+				TrackerList[Tracker[key].name] = Tracker[key];
+			});
 
-		// import custom trackers
-		for (const a of msg.analyzerData.filter((val) => val.path)) {
-			const customTracker = await import(a.path);
-			TrackerList[a.name] = customTracker.default
-				? customTracker.default
-				: customTracker;
-		}
+			// import custom trackers
+			for (const a of msg.analyzerData.filter((val) => val.path)) {
+				const customTracker = await import(a.path);
+				TrackerList[a.name] = customTracker.default
+					? customTracker.default
+					: customTracker;
+			}
 
-		// select needed trackers
-		const analyzer = [];
-		msg.analyzerData.forEach((a) => {
-			const currentAnalyzer = new TrackerList[a.name]();
-			currentAnalyzer.cfg = a.cfg;
-			analyzer.push(currentAnalyzer);
-		});
+			// select needed trackers
+			const analyzer = [];
+			msg.analyzerData.forEach((a) => {
+				const currentAnalyzer = new TrackerList[a.name]();
+				currentAnalyzer.cfg = a.cfg;
+				analyzer.push(currentAnalyzer);
+			});
 
-		const cfg = { trackers: analyzer };
-		proc.attachConfigs([cfg]);
+			const cfg = { trackers: analyzer };
+			proc.attachConfigs([cfg]);
 
-		// analyze each game
-		msg.games.forEach((game) => {
-			proc.processGame(game, proc.configs[0]);
-		});
+			// analyze each game
+			msg.games.forEach((game) => {
+				proc.processGame(game, proc.configs[0]);
+			});
 
-		// send result of batch to master
-		process.send({
-			cntMoves: proc.configs[0].processedMoves,
-			gameAnalyzers: proc.configs[0].analyzers.game,
-			moveAnalyzers: proc.configs[0].analyzers.move
-		});
+			// send result of batch to master
+			process.send({
+				cntMoves: proc.configs[0].processedMoves,
+				gameAnalyzers: proc.configs[0].analyzers.game,
+				moveAnalyzers: proc.configs[0].analyzers.move,
+				idxConfig: msg.idxConfig
+			});
+		})();
 	}
 );
 
