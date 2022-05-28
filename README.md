@@ -30,6 +30,7 @@ A JavaScript library for batch analyzing chess games.
 -   Generate heatmaps out of the generated data
 -   It's fast and highly parallelized: Processes >5.500.000 moves/s on an Apple M1, >3.300.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
 -   Handles big files easily
+-   Just one dependency (chalk)
 
 # Installation
 
