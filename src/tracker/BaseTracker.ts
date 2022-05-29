@@ -14,7 +14,7 @@ class BaseTracker implements Tracker {
 	cfg: TrackerConfig;
 	time: number;
 	t0: number;
-	heatmapPresets: unknown;
+	heatmapPresets: { [name: string]: { calc: HeatmapAnalysisFunc } };
 
 	constructor(type: string) {
 		this.type = type;

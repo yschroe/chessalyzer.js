@@ -23,8 +23,6 @@
 	},
 	"scripts": {
 		"build": "tsc && rollup --config",
-		"compile": "tsc",
-		"dev": "rollup --config --watch",
 		"docs": "typedoc --entryPointStrategy expand src/index.ts",
 		"test": "mocha"
 	},
