@@ -1,10 +1,10 @@
-import {
+import type {
 	ChessPiece,
 	HeatmapAnalysisFunc,
 	HeatmapData,
 	SquareData
-} from '../interfaces';
-import { PlayerColor } from '../types';
+} from '../interfaces/index.js';
+import type { PlayerColor } from '../types/index.js';
 
 const files = 'abcdefgh';
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];

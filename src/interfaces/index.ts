@@ -1,4 +1,4 @@
-import { PlayerColor } from '../types';
+import type { PlayerColor } from '../types/index.js';
 
 export interface Game {
 	Result?: string;

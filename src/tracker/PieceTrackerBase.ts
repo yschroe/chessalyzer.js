@@ -1,10 +1,9 @@
 import BaseTracker from './BaseTracker.js';
-import { MoveData } from '../interfaces';
+import type { MoveData } from '../interfaces/index.js';
+import HeatmapPresets from './heatmaps/PieceHeatmaps.js';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
-
-import HeatmapPresets from './heatmaps/PieceHeatmaps';
 
 class PieceTrackerBase extends BaseTracker {
 	b: object;

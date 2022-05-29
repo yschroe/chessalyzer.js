@@ -1,9 +1,10 @@
 {
 	"include": ["src/**/*"],
 	"compilerOptions": {
-		"module": "ES2020",
-		"moduleResolution": "Node",
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
 		"declaration": true,
-		"declarationDir": "./dts"
+		"declarationDir": "./lib/dts",
+		"outDir": "./lib"
 	}
 }

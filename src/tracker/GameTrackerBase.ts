@@ -1,5 +1,5 @@
 import BaseTracker from './BaseTracker.js';
-import { Game } from '../interfaces';
+import type { Game } from '../interfaces/index.js';
 
 class GameTrackerBase extends BaseTracker {
 	results: { white: number; black: number; draw: number };

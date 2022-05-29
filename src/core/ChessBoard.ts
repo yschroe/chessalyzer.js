@@ -1,6 +1,6 @@
-import { MoveData, ChessPiece } from '../interfaces';
-import { PieceToken, PlayerColor } from '../types';
-import Utils from './Utils';
+import type { MoveData, ChessPiece } from '../interfaces/index.js';
+import type { PieceToken, PlayerColor } from '../types/index.js';
+import Utils from './Utils.js';
 
 interface PosMap {
 	R: { [piece: string]: number[] };

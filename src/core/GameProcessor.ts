@@ -4,7 +4,7 @@ import { EventEmitter } from 'node:events';
 import cluster from 'node:cluster';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
+import type {
 	Game,
 	Move,
 	MoveData,
@@ -13,15 +13,15 @@ import {
 	MultithreadConfig,
 	GameAndMoveCount,
 	WorkerMessage
-} from '../interfaces';
+} from '../interfaces/index.js';
 import ChessBoard from './ChessBoard.js';
 import Utils from './Utils.js';
-import {
+import type {
 	PieceToken,
 	PieceTokenWithoutKing,
 	PlayerColor,
 	Token
-} from '../types';
+} from '../types/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

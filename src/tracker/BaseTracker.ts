@@ -1,13 +1,13 @@
 import { performance } from 'node:perf_hooks';
 import Utils from '../core/Utils.js';
-import {
+import type {
 	Game,
 	MoveData,
 	Tracker,
 	TrackerConfig,
 	HeatmapAnalysisFunc,
 	HeatmapData
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 class BaseTracker implements Tracker {
 	type: string;
