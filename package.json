@@ -48,7 +48,7 @@
 		"@typescript-eslint/parser": "^5.26.0",
 		"eslint": "^8.16.0",
 		"mocha": "^10.0.0",
-		"rollup": "^2.75.1",
+		"rollup": "^2.75.2",
 		"rollup-plugin-dts": "^4.2.2",
 		"typedoc": "^0.22.15",
 		"typedoc-plugin-missing-exports": "^0.22.6",
