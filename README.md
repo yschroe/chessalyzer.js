@@ -384,6 +384,10 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 # Changelog
 
+-   2.2.0:
+
+    -   (Build-process only: Removed rollup as a bundler. Code is split up into multiple files and uses import/export statements. Results in a smaller bundle size since the Processor.worker.js does not need to include the whole library anymore.)
+
 -   2.1.0:
 
     -   The count of additional needed threads in multithreaded mode is now determined dynamically. Instead of starting a new thread every time new games have been read in, chessalyzer.js now tries to reuse already started threads. This removes the overhead of needing to create a new worker thread every time, which results in a huge performance boost (around +25%).
