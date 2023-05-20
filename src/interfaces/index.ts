@@ -1,4 +1,4 @@
-import type { PlayerColor } from '../types/index.js';
+import type { AllPiece, PlayerColor } from '../types/index.js';
 
 export interface Game {
 	Result?: string;
@@ -14,9 +14,9 @@ export interface Move {
 export interface MoveData {
 	san: string;
 	player: PlayerColor;
-	piece: string;
+	piece: AllPiece;
 	castles: string;
-	takes: { piece: string; pos: number[] };
+	takes: { piece: AllPiece; pos: number[] };
 	promotesTo: string;
 	move: Move;
 }
@@ -28,7 +28,7 @@ export interface SquareData {
 }
 
 export interface ChessPiece {
-	name: string;
+	name: AllPiece;
 	color: PlayerColor;
 }
 

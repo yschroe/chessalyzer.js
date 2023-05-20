@@ -1,71 +1,62 @@
 import BaseTracker from './BaseTracker.js';
 import type { MoveData } from '../interfaces/index.js';
 import HeatmapPresets from './heatmaps/PieceHeatmaps.js';
+import { AllPiece, PlayerColor } from '../types/index.js';
 
-const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
-const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
+type PieceStats = { [piece in AllPiece]: number };
+type PieceStatsMap = { [piece in AllPiece]: PieceStats };
+
+const pieceList: AllPiece[] = [
+	'Pa',
+	'Pb',
+	'Pc',
+	'Pd',
+	'Pe',
+	'Pf',
+	'Pg',
+	'Ph',
+	'Ra',
+	'Nb',
+	'Bc',
+	'Qd',
+	'Ke',
+	'Bf',
+	'Ng',
+	'Rh'
+];
 
 class PieceTrackerBase extends BaseTracker {
-	b: object;
-	w: object;
+	b: PieceStatsMap;
+	w: PieceStatsMap;
 	constructor() {
 		super('move');
 		this.heatmapPresets = HeatmapPresets;
-		this.b = {};
-		this.w = {};
 
-		// first layer
-		pawnTemplate.forEach((val) => {
-			this.w[val] = {};
-			this.b[val] = {};
-		});
-		pieceTemplate.forEach((val) => {
-			this.w[val] = {};
-			this.b[val] = {};
-		});
+		const emptyPieceStats = Object.fromEntries(
+			pieceList.map((val) => [val, 0])
+		) as PieceStats;
 
-		// second layer
-		Object.keys(this.w).forEach((key) => {
-			pawnTemplate.forEach((val) => {
-				this.w[key][val] = 0;
-				this.b[key][val] = 0;
-			});
-			pieceTemplate.forEach((val) => {
-				this.w[key][val] = 0;
-				this.b[key][val] = 0;
-			});
-		});
+		this.b = Object.fromEntries(
+			pieceList.map((val) => [val, { ...emptyPieceStats }])
+		) as PieceStatsMap;
+		this.w = Object.fromEntries(
+			pieceList.map((val) => [val, { ...emptyPieceStats }])
+		) as PieceStatsMap;
 	}
 
 	add(tracker: PieceTrackerBase) {
 		this.time += tracker.time;
 
-		pawnTemplate.forEach((pawn) => {
-			pieceTemplate.forEach((piece) => {
-				this.w[pawn][piece] += tracker.w[pawn][piece];
-				this.b[pawn][piece] += tracker.b[pawn][piece];
-			});
-			pawnTemplate.forEach((pawn2) => {
-				this.w[pawn][pawn2] += tracker.w[pawn][pawn2];
-				this.b[pawn][pawn2] += tracker.b[pawn][pawn2];
-			});
-		});
-		pieceTemplate.forEach((piece) => {
-			pieceTemplate.forEach((piece2) => {
+		for (const piece of pieceList) {
+			for (const piece2 of pieceList) {
 				this.w[piece][piece2] += tracker.w[piece][piece2];
 				this.b[piece][piece2] += tracker.b[piece][piece2];
-			});
-			pawnTemplate.forEach((pawn) => {
-				this.w[piece][pawn] += tracker.w[piece][pawn];
-				this.b[piece][pawn] += tracker.b[piece][pawn];
-			});
-		});
+			}
+		}
 	}
 
 	track(moveData: MoveData) {
-		const { player } = moveData;
-		const { piece } = moveData;
-		const { takes } = moveData;
+		const { player, piece, takes } = moveData;
 
 		if (takes) {
 			if (
@@ -79,7 +70,11 @@ class PieceTrackerBase extends BaseTracker {
 		}
 	}
 
-	processTakes(player: string, takingPiece: string, takenPiece: string) {
+	processTakes(
+		player: PlayerColor,
+		takingPiece: AllPiece,
+		takenPiece: AllPiece
+	) {
 		this[player][takingPiece][takenPiece] += 1;
 	}
 }

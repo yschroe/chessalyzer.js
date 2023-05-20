@@ -17,6 +17,7 @@ import type {
 import ChessBoard from './ChessBoard.js';
 import Utils from './Utils.js';
 import type {
+	AllPiece,
 	PieceToken,
 	PieceTokenWithoutKing,
 	PlayerColor,
@@ -69,9 +70,9 @@ interface GameProcessorAnalysisConfig {
 class ParsedMove implements MoveData {
 	san: string;
 	player: PlayerColor;
-	piece: string;
+	piece: AllPiece;
 	castles: string;
-	takes: { piece: string; pos: number[] };
+	takes: { piece: AllPiece; pos: number[] };
 	promotesTo: string;
 	move: Move;
 
@@ -458,7 +459,7 @@ class GameProcessor {
 
 			moveData.takes = {
 				piece: this.board.tiles[coords.to[0] + offset][coords.to[1]]
-					.name,
+					.name as AllPiece,
 				pos: [coords.to[0] + offset, coords.to[1]]
 			};
 
@@ -480,7 +481,8 @@ class GameProcessor {
 			}
 		}
 
-		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]].name;
+		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]]
+			.name as AllPiece;
 		moveData.move = coords;
 
 		// promotes
@@ -557,13 +559,14 @@ class GameProcessor {
 
 		// set move data
 		moveData.move = coords;
-		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]].name;
+		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]]
+			.name as AllPiece;
 
 		if (takes) {
 			moveData.takes = {
 				piece: this.board.tiles[moveData.move.to[0]][
 					moveData.move.to[1]
-				].name,
+				].name as AllPiece,
 				pos: moveData.move.to
 			};
 		}

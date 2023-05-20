@@ -1,13 +1,22 @@
 import type { MoveData, ChessPiece } from '../interfaces/index.js';
-import type { PieceToken, PlayerColor } from '../types/index.js';
+import type {
+	AllPiece,
+	Bishop,
+	King,
+	Knight,
+	PieceToken,
+	PlayerColor,
+	Queen,
+	Rook
+} from '../types/index.js';
 import Utils from './Utils.js';
 
 interface PosMap {
-	R: { [piece: string]: number[] };
-	N: { [piece: string]: number[] };
-	B: { [piece: string]: number[] };
-	Q: { [piece: string]: number[] };
-	K: { [piece: string]: number[] };
+	R: { [piece in Rook]: number[] };
+	N: { [piece in Knight]: number[] };
+	B: { [piece in Bishop]: number[] };
+	Q: { [piece in Queen]: number[] };
+	K: { [piece in King]: number[] };
 }
 
 class PiecePositionTable {
@@ -58,7 +67,7 @@ class PiecePositionTable {
 		};
 	}
 
-	takes(player: PlayerColor, piece: string): void {
+	takes(player: PlayerColor, piece: AllPiece): void {
 		if (!piece.startsWith('P'))
 			delete this.posMap[player][piece.substring(0, 1) as PieceToken][
 				piece
@@ -67,7 +76,7 @@ class PiecePositionTable {
 
 	moves(
 		player: PlayerColor,
-		piece: string,
+		piece: AllPiece,
 		destinationSquare: number[]
 	): void {
 		if (!piece.startsWith('P'))
@@ -75,7 +84,7 @@ class PiecePositionTable {
 				destinationSquare;
 	}
 
-	promotes(player: PlayerColor, piece: string, onSquare: number[]): void {
+	promotes(player: PlayerColor, piece: AllPiece, onSquare: number[]): void {
 		if (!piece.startsWith('P'))
 			this.posMap[player][piece.substring(0, 1) as PieceToken][piece] =
 				onSquare;
