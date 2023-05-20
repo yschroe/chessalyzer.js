@@ -20,13 +20,13 @@ class GameTrackerBase extends BaseTracker {
 		this.cntGames += tracker.cntGames;
 		this.time += tracker.time;
 
-		Object.keys(tracker.ECO).forEach((key) => {
+		for (const key of Object.keys(tracker.ECO)) {
 			if (this.ECO[key] !== undefined) {
 				this.ECO[key] += tracker.ECO[key];
 			} else {
 				this.ECO[key] = tracker.ECO[key];
 			}
-		});
+		}
 	}
 
 	track(game: Game) {

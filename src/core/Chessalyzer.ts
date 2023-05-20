@@ -32,9 +32,8 @@ export default class Chessalyzer {
 		const tdiff = Math.round(t1 - t0) / 1000;
 
 		const returnVals: GameAndMoveCountFull[] = [];
-		header.forEach((h) => {
+		for (const h of header)
 			returnVals.push({ ...h, mps: Math.round(h.cntMoves / tdiff) });
-		});
 
 		return Array.isArray(configs) && configs.length > 1
 			? returnVals

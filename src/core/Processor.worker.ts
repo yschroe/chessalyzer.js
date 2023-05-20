@@ -14,9 +14,8 @@ process.on(
 			const proc = new GameProcessor();
 
 			// prepare built-in trackers
-			Object.keys(Tracker).forEach((key) => {
+			for (const key of Object.keys(Tracker))
 				TrackerList[Tracker[key].name] = Tracker[key];
-			});
 
 			// import custom trackers
 			for (const a of msg.analyzerData.filter((val) => val.path)) {
@@ -28,19 +27,18 @@ process.on(
 
 			// select needed trackers
 			const analyzer = [];
-			msg.analyzerData.forEach((a) => {
+			for (const a of msg.analyzerData) {
 				const currentAnalyzer = new TrackerList[a.name]();
 				currentAnalyzer.cfg = a.cfg;
 				analyzer.push(currentAnalyzer);
-			});
+			}
 
 			const cfg = { trackers: analyzer };
 			proc.attachConfigs([cfg]);
 
 			// analyze each game
-			msg.games.forEach((game) => {
+			for (const game of msg.games)
 				proc.processGame(game, proc.configs[0]);
-			});
 
 			// send result of batch to master
 			process.send({

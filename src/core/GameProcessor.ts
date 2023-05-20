@@ -330,7 +330,7 @@ class GameProcessor {
 			await EventEmitter.once(lr, 'close');
 
 			// if on end there are still unprocessed games, start a last worker batch
-			gameStore.forEach((games, idx) => {
+			for (const [idx, games] of gameStore.entries()) {
 				if (games.length > 0) {
 					if (games.length > multiThreadCfg.batchSize) {
 						const nEndForks = Math.ceil(
@@ -350,7 +350,7 @@ class GameProcessor {
 						void sendDataToWorker(games, idx);
 					}
 				}
-			});
+			}
 
 			readerFinished = true;
 			if (isMultithreaded) await EventEmitter.once(status, 'finished');
