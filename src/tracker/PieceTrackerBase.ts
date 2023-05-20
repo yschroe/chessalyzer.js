@@ -1,12 +1,30 @@
 import BaseTracker from './BaseTracker.js';
 import type { MoveData } from '../interfaces/index.js';
 import HeatmapPresets from './heatmaps/PieceHeatmaps.js';
-import { AllPiece, PlayerColor } from '../types/index.js';
+import { PlayerColor } from '../types/index.js';
 
-type PieceStats = { [piece in AllPiece]: number };
-type PieceStatsMap = { [piece in AllPiece]: PieceStats };
+type Piece =
+	| 'Pa'
+	| 'Pb'
+	| 'Pc'
+	| 'Pd'
+	| 'Pe'
+	| 'Pf'
+	| 'Pg'
+	| 'Ph'
+	| 'Ra'
+	| 'Nb'
+	| 'Bc'
+	| 'Qd'
+	| 'Ke'
+	| 'Bf'
+	| 'Ng'
+	| 'Rh';
 
-const pieceList: AllPiece[] = [
+type PieceStats = { [piece in Piece]: number };
+type PieceStatsMap = { [piece in Piece]: PieceStats };
+
+const pieceList: Piece[] = [
 	'Pa',
 	'Pb',
 	'Pc',
@@ -59,22 +77,19 @@ class PieceTrackerBase extends BaseTracker {
 		const { player, piece, takes } = moveData;
 
 		if (takes) {
+			// exlude promoted pawns from tracking
 			if (
 				piece.length > 1 &&
 				takes.piece.length > 1 &&
 				!piece.match(/\d/g) &&
 				!takes.piece.match(/\d/g)
 			) {
-				this.processTakes(player, piece, takes.piece);
+				this.processTakes(player, piece as Piece, takes.piece as Piece);
 			}
 		}
 	}
 
-	processTakes(
-		player: PlayerColor,
-		takingPiece: AllPiece,
-		takenPiece: AllPiece
-	) {
+	processTakes(player: PlayerColor, takingPiece: Piece, takenPiece: Piece) {
 		this[player][takingPiece][takenPiece] += 1;
 	}
 }

@@ -4,9 +4,19 @@ import type {
 	HeatmapData,
 	SquareData
 } from '../interfaces/index.js';
-import type { PlayerColor } from '../types/index.js';
+import type { FileLetter, PlayerColor } from '../types/index.js';
 
 const files = 'abcdefgh';
+const fileMap: { [letter in FileLetter]: number } = {
+	a: 0,
+	b: 1,
+	c: 2,
+	d: 3,
+	e: 4,
+	f: 5,
+	g: 6,
+	h: 7
+};
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
@@ -15,7 +25,7 @@ export default class Utils {
 		const coords: number[] = [];
 		const temp = square.split('');
 		coords.push(8 - Number(temp[1]));
-		coords.push(Utils.getFileNumber(temp[0]));
+		coords.push(Utils.getFileNumber(temp[0] as FileLetter));
 
 		return coords;
 	}
@@ -26,8 +36,8 @@ export default class Utils {
 		return name;
 	}
 
-	static getFileNumber(file: string): number {
-		return files.indexOf(file);
+	static getFileNumber(file: FileLetter): number {
+		return fileMap[file];
 	}
 
 	static getStartingPiece(sqr: number[]): ChessPiece {

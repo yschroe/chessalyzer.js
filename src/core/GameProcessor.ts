@@ -17,9 +17,8 @@ import type {
 import ChessBoard from './ChessBoard.js';
 import Utils from './Utils.js';
 import type {
-	AllPiece,
+	FileLetter,
 	PieceToken,
-	PieceTokenWithoutKing,
 	PlayerColor,
 	Token
 } from '../types/index.js';
@@ -70,9 +69,9 @@ interface GameProcessorAnalysisConfig {
 class ParsedMove implements MoveData {
 	san: string;
 	player: PlayerColor;
-	piece: AllPiece;
+	piece: string;
 	castles: string;
-	takes: { piece: AllPiece; pos: number[] };
+	takes: { piece: string; pos: number[] };
 	promotesTo: string;
 	move: Move;
 
@@ -448,9 +447,13 @@ class GameProcessor {
 			moveData.san = moveData.san.replace('x', '');
 
 			coords.to[0] = 8 - parseInt(moveData.san.substring(2, 3), 10);
-			coords.to[1] = Utils.getFileNumber(moveData.san.substring(1, 2));
+			coords.to[1] = Utils.getFileNumber(
+				moveData.san.substring(1, 2) as FileLetter
+			);
 			coords.from[0] = coords.to[0] + direction;
-			coords.from[1] = Utils.getFileNumber(moveData.san.substring(0, 1));
+			coords.from[1] = Utils.getFileNumber(
+				moveData.san.substring(0, 1) as FileLetter
+			);
 
 			// en passant
 			if (this.board.tiles[coords.to[0]][coords.to[1]] === null) {
@@ -459,14 +462,16 @@ class GameProcessor {
 
 			moveData.takes = {
 				piece: this.board.tiles[coords.to[0] + offset][coords.to[1]]
-					.name as AllPiece,
+					.name,
 				pos: [coords.to[0] + offset, coords.to[1]]
 			};
 
 			// moves
 		} else {
 			const tarRow = 8 - parseInt(moveData.san.substring(1, 2), 10);
-			const tarCol = Utils.getFileNumber(moveData.san.substring(0, 1));
+			const tarCol = Utils.getFileNumber(
+				moveData.san.substring(0, 1) as FileLetter
+			);
 
 			coords.from[1] = tarCol;
 			coords.to[0] = tarRow;
@@ -481,8 +486,7 @@ class GameProcessor {
 			}
 		}
 
-		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]]
-			.name as AllPiece;
+		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]].name;
 		moveData.move = coords;
 
 		// promotes
@@ -515,20 +519,30 @@ class GameProcessor {
 		// e.g. Re3f5
 		if (tempSan.length === 4) {
 			coords.from[0] = 8 - parseInt(tempSan.substring(1, 2), 10);
-			coords.from[1] = Utils.getFileNumber(tempSan.substring(0, 1));
+			coords.from[1] = Utils.getFileNumber(
+				tempSan.substring(0, 1) as FileLetter
+			);
 			coords.to[0] = 8 - parseInt(tempSan.substring(3, 4), 10);
-			coords.to[1] = Utils.getFileNumber(tempSan.substring(2, 3));
+			coords.to[1] = Utils.getFileNumber(
+				tempSan.substring(2, 3) as FileLetter
+			);
 
 			// e.g. Ref3
 		} else if (tempSan.length === 3) {
 			const tarRow = 8 - parseInt(tempSan.substring(2, 3), 10);
-			const tarCol = Utils.getFileNumber(tempSan.substring(1, 2));
+			const tarCol = Utils.getFileNumber(
+				tempSan.substring(1, 2) as FileLetter
+			);
 			let mustBeInRow: number = null;
 			let mustBeInCol: number = null;
 
 			// file is specified
-			if (Utils.getFileNumber(tempSan.substring(0, 1)) >= 0) {
-				mustBeInCol = Utils.getFileNumber(tempSan.substring(0, 1));
+			if (
+				Utils.getFileNumber(tempSan.substring(0, 1) as FileLetter) >= 0
+			) {
+				mustBeInCol = Utils.getFileNumber(
+					tempSan.substring(0, 1) as FileLetter
+				);
 
 				// rank is specified
 			} else {
@@ -546,7 +560,9 @@ class GameProcessor {
 			// e.g. Rf3
 		} else {
 			const tarRow = 8 - parseInt(tempSan.substring(1, 2), 10);
-			const tarCol = Utils.getFileNumber(tempSan.substring(0, 1));
+			const tarCol = Utils.getFileNumber(
+				tempSan.substring(0, 1) as FileLetter
+			);
 			coords = this.findPiece(
 				tarRow,
 				tarCol,
@@ -559,14 +575,13 @@ class GameProcessor {
 
 		// set move data
 		moveData.move = coords;
-		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]]
-			.name as AllPiece;
+		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]].name;
 
 		if (takes) {
 			moveData.takes = {
 				piece: this.board.tiles[moveData.move.to[0]][
 					moveData.move.to[1]
-				].name as AllPiece,
+				].name,
 				pos: moveData.move.to
 			};
 		}
@@ -606,9 +621,9 @@ class GameProcessor {
 					(mustBeInCol === null || val[1] === mustBeInCol);
 				return (
 					mustBeInFulfilled &&
-					((moveCfg[token as PieceTokenWithoutKing].line &&
+					((moveCfg[token as Exclude<PieceToken, 'K'>].line &&
 						(val[0] === tarRow || val[1] === tarCol)) ||
-						(moveCfg[token as PieceTokenWithoutKing].diag &&
+						(moveCfg[token as Exclude<PieceToken, 'K'>].diag &&
 							Math.abs(val[0] - tarRow) ===
 								Math.abs(val[1] - tarCol)) ||
 						(token === 'N' &&

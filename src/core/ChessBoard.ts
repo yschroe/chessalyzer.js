@@ -1,6 +1,5 @@
 import type { MoveData, ChessPiece } from '../interfaces/index.js';
 import type {
-	AllPiece,
 	Bishop,
 	King,
 	Knight,
@@ -67,7 +66,7 @@ class PiecePositionTable {
 		};
 	}
 
-	takes(player: PlayerColor, piece: AllPiece): void {
+	takes(player: PlayerColor, piece: string): void {
 		if (!piece.startsWith('P'))
 			delete this.posMap[player][piece.substring(0, 1) as PieceToken][
 				piece
@@ -76,7 +75,7 @@ class PiecePositionTable {
 
 	moves(
 		player: PlayerColor,
-		piece: AllPiece,
+		piece: string,
 		destinationSquare: number[]
 	): void {
 		if (!piece.startsWith('P'))
@@ -84,7 +83,7 @@ class PiecePositionTable {
 				destinationSquare;
 	}
 
-	promotes(player: PlayerColor, piece: AllPiece, onSquare: number[]): void {
+	promotes(player: PlayerColor, piece: string, onSquare: number[]): void {
 		if (!piece.startsWith('P'))
 			this.posMap[player][piece.substring(0, 1) as PieceToken][piece] =
 				onSquare;
@@ -98,17 +97,16 @@ class ChessBoard {
 	promoteCounter: number;
 
 	constructor() {
-		this.tiles = [];
-
+		this.defaultTiles = [];
 		for (let row = 0; row < 8; row += 1) {
 			const currRow: ChessPiece[] = [];
 			for (let col = 0; col < 8; col += 1) {
 				currRow.push(Utils.getStartingPiece([row, col]));
 			}
-			this.tiles.push(currRow);
+			this.defaultTiles.push(currRow);
 		}
 
-		this.defaultTiles = this.tiles.map((arr) => arr.slice());
+		this.tiles = this.defaultTiles.map((arr) => arr.slice());
 		this.pieces = new PiecePositionTable();
 		this.promoteCounter = 0;
 	}
