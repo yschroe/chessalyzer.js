@@ -56,7 +56,6 @@ export interface TrackerConfig {
 
 export interface MultithreadConfig {
 	batchSize: number;
-	nThreads?: number;
 }
 
 export interface AnalysisConfig {

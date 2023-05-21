@@ -144,7 +144,7 @@ class GameProcessor {
 	async processPGN(
 		path: string,
 		configArray: AnalysisConfig[],
-		multiThreadCfg: MultithreadConfig
+		multiThreadCfg: MultithreadConfig | null
 	): Promise<GameAndMoveCount[]> {
 		try {
 			let readerFinished = false;

@@ -8,15 +8,7 @@ import type {
 import type { PieceToken, PlayerColor } from '../types/index.js';
 import Utils from './Utils.js';
 
-interface PosMap {
-	R: Map<string, number[]>;
-	N: Map<string, number[]>;
-	B: Map<string, number[]>;
-	Q: Map<string, number[]>;
-	K: Map<string, number[]>;
-}
-
-class PiecePositions implements PosMap {
+class PiecePositions {
 	R: Map<string, number[]>;
 	N: Map<string, number[]>;
 	B: Map<string, number[]>;
