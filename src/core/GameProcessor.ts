@@ -7,12 +7,12 @@ import { fileURLToPath } from 'node:url';
 import type {
 	Game,
 	Move,
-	MoveData,
 	Tracker,
 	AnalysisConfig,
 	MultithreadConfig,
 	GameAndMoveCount,
-	WorkerMessage
+	WorkerMessage,
+	Action
 } from '../interfaces/index.js';
 import ChessBoard from './ChessBoard.js';
 import Utils from './Utils.js';
@@ -45,8 +45,15 @@ const moveCfg = {
 };
 
 class MoveNotFoundException extends Error {
-	constructor(token: string, tarRow: number, tarCol: number) {
-		super(`No piece for move ${token} to (${tarRow},${tarCol}) found!`);
+	constructor(
+		token: string,
+		player: PlayerColor,
+		tarRow: number,
+		tarCol: number
+	) {
+		super(
+			`${player}: No piece for move ${token} to (${tarRow},${tarCol}) found!`
+		);
 		this.name = 'MoveNotFoundError';
 	}
 }
@@ -64,26 +71,6 @@ interface GameProcessorAnalysisConfig {
 	cntGames: number;
 	processedMoves: number;
 	isDone: boolean;
-}
-
-class ParsedMove implements MoveData {
-	san: string;
-	player: PlayerColor;
-	piece: string;
-	castles: string;
-	takes: { piece: string; pos: number[] };
-	promotesTo: string;
-	move: Move;
-
-	constructor() {
-		this.san = null;
-		this.player = null;
-		this.piece = null;
-		this.castles = null;
-		this.takes = null;
-		this.promotesTo = null;
-		this.move = null;
-	}
 }
 
 /**
@@ -388,19 +375,21 @@ class GameProcessor {
 			this.activePlayer = 'w';
 			for (const move of moves) {
 				// parse move from san to coordinates (and meta info)
-				const currentMove = this.parseMove(move);
+				const currentMoveActions = this.parseMove(move);
 
 				// move based analyzers
-				for (const analyzer of analysisCfg.analyzers.move) {
-					analyzer.analyze(currentMove);
-				}
+				// for (const analyzer of analysisCfg.analyzers.move) {
+				// 	analyzer.analyze(currentMove);
+				// }
 
-				this.board.move(currentMove);
+				this.board.applyActions(currentMoveActions);
 				this.activePlayer = this.activePlayer === 'w' ? 'b' : 'w';
 			}
 		} catch (err) {
 			console.log(err, game);
-			throw new Error();
+			this.board.printPosition();
+			console.log(this.board.pieces.posMap.b.R);
+			// throw new Error();
 		}
 
 		// notify move analyzers that the current game is done
@@ -417,94 +406,117 @@ class GameProcessor {
 		this.activePlayer = 'w';
 	}
 
-	parseMove(rawMove: string): ParsedMove {
+	parseMove(rawMove: string): Action[] {
 		const token = rawMove.substring(0, 1) as Token;
-
-		let currentMove: ParsedMove;
-		const san = GameProcessor.preProcess(rawMove);
+		const san = GameProcessor.preprocess(rawMove);
 
 		if (token.toLowerCase() === token) {
-			currentMove = this.pawnMove(san);
+			return this.pawnMove(san);
 		} else if (token !== 'O') {
-			currentMove = this.pieceMove(san);
-		} else {
-			currentMove = this.castle(san);
+			return this.pieceMove(san);
 		}
-		return currentMove;
+
+		return this.castle(san);
 	}
 
-	pawnMove(san: string): ParsedMove {
-		const moveData = new ParsedMove();
-		moveData.san = san;
-		moveData.player = this.activePlayer;
+	pawnMove(san: string): Action[] {
+		const actions: Action[] = [];
 
-		const direction = this.activePlayer === 'w' ? 1 : -1;
+		const player = this.activePlayer;
+
+		const direction = player === 'w' ? 1 : -1;
 		let offset = 0;
 		const coords: Move = { from: [], to: [] };
 
 		// takes
-		if (moveData.san.includes('x')) {
-			moveData.san = moveData.san.replace('x', '');
+		if (san.includes('x')) {
+			const sanAdapted = san.replace('x', '');
 
-			coords.to[0] = 8 - parseInt(moveData.san.substring(2, 3), 10);
+			coords.to[0] = 8 - parseInt(sanAdapted.substring(2, 3), 10);
 			coords.to[1] = Utils.getFileNumber(
-				moveData.san.substring(1, 2) as FileLetter
+				sanAdapted.substring(1, 2) as FileLetter
 			);
 			coords.from[0] = coords.to[0] + direction;
 			coords.from[1] = Utils.getFileNumber(
-				moveData.san.substring(0, 1) as FileLetter
+				sanAdapted.substring(0, 1) as FileLetter
 			);
 
 			// en passant
-			if (this.board.tiles[coords.to[0]][coords.to[1]] === null) {
-				offset = moveData.player === 'w' ? 1 : -1;
+			if (this.board.getPieceOnCoords(coords.to) === null) {
+				offset = player === 'w' ? 1 : -1;
 			}
 
-			moveData.takes = {
-				piece: this.board.tiles[coords.to[0] + offset][coords.to[1]]
-					.name,
-				pos: [coords.to[0] + offset, coords.to[1]]
-			};
+			const takenOn = [coords.to[0] + offset, coords.to[1]];
+			const takingPiece = this.board.getPieceOnCoords(coords.from)?.name;
+			const takenPiece = this.board.getPieceOnCoords(takenOn)?.name;
+			// if (!takingPiece || !takenPiece) throw new Error();
+
+			actions.push({
+				type: 'capture',
+				san,
+				player,
+				on: takenOn,
+				takingPiece,
+				takenPiece
+			});
 
 			// moves
 		} else {
-			const tarRow = 8 - parseInt(moveData.san.substring(1, 2), 10);
+			const tarRow = 8 - parseInt(san.substring(1, 2), 10);
 			const tarCol = Utils.getFileNumber(
-				moveData.san.substring(0, 1) as FileLetter
+				san.substring(0, 1) as FileLetter
 			);
-
+			coords.from[0] = -1; // to be found in for loop
 			coords.from[1] = tarCol;
 			coords.to[0] = tarRow;
 			coords.to[1] = tarCol;
 			for (let i = tarRow + direction; i < 8 && i >= 0; i += direction) {
-				if (this.board.tiles[i][tarCol] !== null) {
-					if (this.board.tiles[i][tarCol].name.startsWith('P')) {
-						coords.from[0] = i;
-						break;
-					}
+				if (
+					this.board
+						.getPieceOnCoords([i, tarCol])
+						?.name.startsWith('P')
+				) {
+					coords.from[0] = i;
+					break;
 				}
 			}
 		}
 
-		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]].name;
-		moveData.move = coords;
+		const piece = this.board.getPieceOnCoords(coords.from)?.name;
+		// if (!piece) throw new Error();
+
+		// move action must always come after capture action
+		actions.push({
+			type: 'move',
+			san,
+			player,
+			piece,
+			from: coords.from,
+			to: coords.to
+		});
 
 		// promotes
-		if (moveData.san.includes('=')) {
-			moveData.promotesTo = moveData.san.slice(-1);
+		if (san.includes('=')) {
+			actions.push({
+				type: 'promote',
+				san,
+				player,
+				on: coords.to,
+				to: san.slice(-1)
+			});
 		}
 
-		return moveData;
+		return actions;
 	}
 
-	pieceMove(san: string): ParsedMove {
-		const moveData = new ParsedMove();
-		moveData.san = san;
-		moveData.player = this.activePlayer;
+	pieceMove(san: string): Action[] {
+		const actions: Action[] = [];
+		// const moveData = new ParsedMove();
+		const player = this.activePlayer;
 
 		let takes = false;
 		let coords: Move = { from: [], to: [] };
-		const token = moveData.san.substring(0, 1) as PieceToken;
+		const token = san.substring(0, 1) as PieceToken;
 
 		// create copy of san to be able to remove characters without altering the original san
 		// remove token
@@ -533,8 +545,8 @@ class GameProcessor {
 			const tarCol = Utils.getFileNumber(
 				tempSan.substring(1, 2) as FileLetter
 			);
-			let mustBeInRow: number = null;
-			let mustBeInCol: number = null;
+			let mustBeInRow: number | null = null; // to be found
+			let mustBeInCol: number | null = null; // to be found
 
 			// file is specified
 			if (
@@ -554,7 +566,7 @@ class GameProcessor {
 				mustBeInRow,
 				mustBeInCol,
 				token,
-				moveData.player
+				player
 			);
 
 			// e.g. Rf3
@@ -563,46 +575,51 @@ class GameProcessor {
 			const tarCol = Utils.getFileNumber(
 				tempSan.substring(0, 1) as FileLetter
 			);
-			coords = this.findPiece(
-				tarRow,
-				tarCol,
-				null,
-				null,
-				token,
-				moveData.player
-			);
+			coords = this.findPiece(tarRow, tarCol, null, null, token, player);
 		}
 
-		// set move data
-		moveData.move = coords;
-		moveData.piece = this.board.tiles[coords.from[0]][coords.from[1]].name;
+		const piece = this.board.getPieceOnCoords(coords.from)?.name;
+		// if (!piece) throw new Error();
 
 		if (takes) {
-			moveData.takes = {
-				piece: this.board.tiles[moveData.move.to[0]][
-					moveData.move.to[1]
-				].name,
-				pos: moveData.move.to
-			};
+			const takenPiece = this.board.getPieceOnCoords(coords.to)?.name;
+			// if (!takenPiece) throw new Error();
+			actions.push({
+				type: 'capture',
+				san,
+				player,
+				on: coords.to,
+				takingPiece: piece,
+				takenPiece
+			});
 		}
 
-		return moveData;
+		// move action must always come after capture action
+		actions.push({
+			type: 'move',
+			san,
+			player,
+			piece,
+			from: coords.from,
+			to: coords.to
+		});
+
+		return actions;
 	}
 
-	castle(san: string): ParsedMove {
-		const currentMove = new ParsedMove();
-		currentMove.san = san;
-		currentMove.player = this.activePlayer;
-		currentMove.castles = currentMove.san;
+	// todo: just make two move actions out of it?
+	castle(san: string): Action[] {
+		const actions: Action[] = [];
+		actions.push({ type: 'castle', san, player: this.activePlayer });
 
-		return currentMove;
+		return actions;
 	}
 
 	findPiece(
 		tarRow: number,
 		tarCol: number,
-		mustBeInRow: number,
-		mustBeInCol: number,
+		mustBeInRow: number | null,
+		mustBeInCol: number | null,
 		token: PieceToken,
 		player: PlayerColor
 	): Move {
@@ -643,52 +660,43 @@ class GameProcessor {
 			};
 		}
 
-		if (validPieces.length > 1) {
-			for (const piece of validPieces) {
-				let obstructed = false;
+		// else: one of the remaining pieces cannot move because of obstruction or it
+		// would result in the king being in check. Find the allowed piece.
+		for (const piece of validPieces) {
+			let obstructed = false;
 
-				if (token !== 'N') {
-					const diff = [tarRow - piece[0], tarCol - piece[1]];
-					const steps = Math.max(...diff.map((val) => Math.abs(val)));
-					const dir = [Math.sign(diff[0]), Math.sign(diff[1])];
-					for (let i = 1; i < steps && !obstructed; i += 1) {
-						if (
-							this.board.tiles[piece[0] + i * dir[0]][
-								piece[1] + i * dir[1]
-							]
-						) {
-							obstructed = true;
-						}
+			if (token !== 'N') {
+				const diff = [tarRow - piece[0], tarCol - piece[1]];
+				const steps = Math.max(...diff.map((val) => Math.abs(val)));
+				const dir = [Math.sign(diff[0]), Math.sign(diff[1])];
+				for (let i = 1; i < steps && !obstructed; i += 1) {
+					if (
+						this.board.getPieceOnCoords([
+							piece[0] + i * dir[0],
+							piece[1] + i * dir[1]
+						])
+					) {
+						obstructed = true;
 					}
-				}
-
-				if (
-					!obstructed &&
-					!this.checkCheck({ from: piece, to }, player)
-				) {
-					return {
-						from: piece,
-						to
-					};
 				}
 			}
 
-			return {
-				from: validPieces[validPieces.length - 1],
-				to
-			};
+			if (!obstructed && !this.checkCheck({ from: piece, to }, player)) {
+				return {
+					from: piece,
+					to
+				};
+			}
 		}
 
-		throw new MoveNotFoundException(token, tarRow, tarCol);
+		throw new MoveNotFoundException(token, player, tarRow, tarCol);
 	}
 
 	checkCheck(move: Move, player: PlayerColor): boolean {
 		const { from } = move;
-		const { to } = move;
 		const color = player;
 		const opColor = player === 'w' ? 'b' : 'w';
 		const king = this.board.pieces.posMap[color].K.Ke;
-		let isInCheck = false;
 
 		// if king move, no check is possible, exit function
 		if (king[0] === from[0] && king[1] === from[1]) return false;
@@ -699,58 +707,45 @@ class GameProcessor {
 		diff[1] = from[1] - king[1];
 		const checkFor: string[] = [];
 
+		const absDiff = [Math.abs(diff[0]), Math.abs(diff[1])];
+
 		if (diff[0] === 0 || diff[1] === 0) {
 			checkFor[0] = 'Q';
 			checkFor[1] = 'R';
-		} else if (Math.abs(diff[0]) === Math.abs(diff[1])) {
+		} else if (absDiff[0] === absDiff[1]) {
 			checkFor[0] = 'Q';
 			checkFor[1] = 'B';
 		} else {
 			return false;
 		}
-		if (diff[0] !== 0) diff[0] = Math.sign(diff[0]);
-		if (diff[1] !== 0) diff[1] = Math.sign(diff[1]);
-
-		const srcTilePiece = this.board.tiles[from[0]][from[1]];
-		const tarTilePiece = this.board.tiles[to[0]][to[1]];
-
-		// premove and check if check
-		this.board.tiles[from[0]][from[1]] = null;
-		this.board.tiles[to[0]][to[1]] = srcTilePiece;
+		const rowDir = Math.sign(diff[0]);
+		const colDir = Math.sign(diff[1]);
 
 		// check for check
-		let obstructed = false;
-		for (let j = 1; j < 8 && !isInCheck && !obstructed; j += 1) {
-			const row = king[0] + j * diff[0];
-			const col = king[1] + j * diff[1];
+		const startDist = Math.max(...absDiff) + 1;
+		for (let j = startDist; j < 8; j += 1) {
+			const row = king[0] + j * rowDir;
+			const col = king[1] + j * colDir;
+			if (row < 0 || row > 7 || col < 0 || col > 7) return false;
 
-			if (
-				row >= 0 &&
-				row < 8 &&
-				col >= 0 &&
-				col < 8 &&
-				this.board.tiles[row][col] !== null
-			) {
-				const piece = this.board.tiles[row][col];
+			const piece = this.board.getPieceOnCoords([row, col]);
+			if (piece) {
 				if (
 					(piece.name.startsWith(checkFor[0]) ||
 						piece.name.startsWith(checkFor[1])) &&
 					piece.color === opColor
 				) {
-					isInCheck = true;
+					return true;
 				} else {
-					obstructed = true;
+					return false;
 				}
 			}
 		}
 
-		this.board.tiles[from[0]][from[1]] = srcTilePiece;
-		this.board.tiles[to[0]][to[1]] = tarTilePiece;
-
-		return isInCheck;
+		return false;
 	}
 
-	static preProcess(move: string): string {
+	static preprocess(move: string): string {
 		return move.replace(/#|\+|\?|!/g, '');
 	}
 }

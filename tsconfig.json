@@ -6,5 +6,6 @@
 		"declaration": true,
 		"declarationDir": "./lib/dts",
 		"outDir": "./lib"
+		// "strictNullChecks": true
 	}
 }

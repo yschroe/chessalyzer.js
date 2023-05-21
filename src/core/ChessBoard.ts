@@ -1,4 +1,11 @@
-import type { MoveData, ChessPiece } from '../interfaces/index.js';
+import type {
+	ChessPiece,
+	Action,
+	MoveAction,
+	CastleAction,
+	CaptureAction,
+	PromoteAction
+} from '../interfaces/index.js';
 import type {
 	Bishop,
 	King,
@@ -91,15 +98,15 @@ class PiecePositionTable {
 }
 
 class ChessBoard {
-	tiles: ChessPiece[][];
-	defaultTiles: ChessPiece[][];
+	tiles: (ChessPiece | null)[][];
+	defaultTiles: (ChessPiece | null)[][];
 	pieces: PiecePositionTable;
 	promoteCounter: number;
 
 	constructor() {
 		this.defaultTiles = [];
 		for (let row = 0; row < 8; row += 1) {
-			const currRow: ChessPiece[] = [];
+			const currRow: (ChessPiece | null)[] = [];
 			for (let col = 0; col < 8; col += 1) {
 				currRow.push(Utils.getStartingPiece([row, col]));
 			}
@@ -111,55 +118,63 @@ class ChessBoard {
 		this.promoteCounter = 0;
 	}
 
-	move(moveData: MoveData) {
-		// === castles ===
-		if (moveData.castles) {
-			this.castle(moveData.castles, moveData.player);
-
-			// moves/takes
-		} else if (moveData.move !== null) {
-			const { from } = moveData.move;
-			const { to } = moveData.move;
-
-			// === takes ===
-			if (moveData.takes) {
-				// update piece map
-				this.pieces.takes(
-					moveData.player === 'w' ? 'b' : 'w',
-					moveData.takes.piece
-				);
-
-				// update board
-				this.tiles[moveData.takes.pos[0]][moveData.takes.pos[1]] = null;
-			}
-			// === moves ===
-			// update piece map
-			this.pieces.moves(moveData.player, moveData.piece, to);
-
-			// update board
-			this.tiles[to[0]][to[1]] = this.tiles[from[0]][from[1]];
-			this.tiles[from[0]][from[1]] = null;
-
-			if (moveData.promotesTo) {
-				const pieceName = `${moveData.promotesTo}${this.promoteCounter}`;
-				this.tiles[to[0]][to[1]] = {
-					name: pieceName,
-					color: moveData.player
-				};
-				this.pieces.promotes(moveData.player, pieceName, to);
-				this.promoteCounter += 1;
+	applyActions(actions: Action[]) {
+		for (const action of actions) {
+			switch (action.type) {
+				case 'move':
+					this.move(action);
+					break;
+				case 'capture':
+					this.capture(action);
+					break;
+				case 'castle':
+					this.castle(action);
+					break;
+				case 'promote':
+					this.promote(action);
+					break;
 			}
 		}
 	}
 
-	castle(move: string, player: PlayerColor): void {
+	private move(action: MoveAction) {
+		const { from, to } = action;
+
+		// update piece map
+		this.pieces.moves(action.player, action.piece, to);
+
+		// update board
+		this.tiles[to[0]][to[1]] = this.tiles[from[0]][from[1]];
+		this.tiles[from[0]][from[1]] = null;
+	}
+
+	private capture(action: CaptureAction) {
+		// update piece map
+		this.pieces.takes(action.player === 'w' ? 'b' : 'w', action.takenPiece);
+
+		// update board
+		this.tiles[action.on[0]][action.on[1]] = null;
+	}
+
+	private promote(action: PromoteAction) {
+		const newPieceName = `${action.to}${this.promoteCounter}`;
+		this.tiles[action.on[0]][action.on[1]] = {
+			name: newPieceName,
+			color: action.player
+		};
+		this.pieces.promotes(action.player, newPieceName, action.on);
+		this.promoteCounter += 1;
+	}
+
+	private castle(action: CastleAction): void {
+		const { san, player } = action;
 		const row = player === 'w' ? 7 : 0;
 		const scrKingCol = 4;
 		let tarKingCol = 6;
 		let srcRookCol = 7;
 		let tarRookCol = 5;
 
-		if (move === 'O-O-O') {
+		if (san === 'O-O-O') {
 			tarKingCol = 2;
 			tarRookCol = 3;
 			srcRookCol = 0;
@@ -182,6 +197,10 @@ class ChessBoard {
 		this.tiles = this.defaultTiles.map((arr) => arr.slice());
 		this.pieces = new PiecePositionTable();
 		this.promoteCounter = 0;
+	}
+
+	getPieceOnCoords(coords: number[]): ChessPiece | null {
+		return this.tiles[coords[0]][coords[1]];
 	}
 
 	/** Prints the current board position to the console. */

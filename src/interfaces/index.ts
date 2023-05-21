@@ -21,6 +21,38 @@ export interface MoveData {
 	move: Move;
 }
 
+interface BaseAction {
+	type: 'move' | 'capture' | 'castle' | 'promote';
+	san: string;
+	player: PlayerColor;
+}
+
+export interface MoveAction extends BaseAction {
+	type: 'move';
+	piece: string;
+	from: number[];
+	to: number[];
+}
+
+export interface CaptureAction extends BaseAction {
+	type: 'capture';
+	takingPiece: string;
+	takenPiece: string;
+	on: number[];
+}
+
+export interface CastleAction extends BaseAction {
+	type: 'castle';
+}
+
+export interface PromoteAction extends BaseAction {
+	type: 'promote';
+	to: string;
+	on: number[];
+}
+
+export type Action = MoveAction | CaptureAction | CastleAction | PromoteAction;
+
 export interface SquareData {
 	alg: string;
 	coords: number[];

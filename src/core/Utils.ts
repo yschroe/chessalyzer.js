@@ -4,7 +4,7 @@ import type {
 	HeatmapData,
 	SquareData
 } from '../interfaces/index.js';
-import type { FileLetter, PlayerColor } from '../types/index.js';
+import type { FileLetter } from '../types/index.js';
 
 const files = 'abcdefgh';
 const fileMap: { [letter in FileLetter]: number } = {
@@ -40,29 +40,19 @@ export default class Utils {
 		return fileMap[file];
 	}
 
-	static getStartingPiece(sqr: number[]): ChessPiece {
+	static getStartingPiece(sqr: number[]): ChessPiece | null {
 		if (sqr !== null) {
 			const row = sqr[0];
 			const col = sqr[1];
 
-			let color: PlayerColor;
-			let name: string = null;
 			if (row === 0) {
-				color = 'b';
-				name = pieceTemplate[col];
-				return { color, name };
+				return { color: 'b', name: pieceTemplate[col] };
 			} else if (row === 1) {
-				color = 'b';
-				name = pawnTemplate[col];
-				return { color, name };
+				return { color: 'b', name: pawnTemplate[col] };
 			} else if (row === 6) {
-				color = 'w';
-				name = pawnTemplate[col];
-				return { color, name };
+				return { color: 'w', name: pawnTemplate[col] };
 			} else if (row === 7) {
-				color = 'w';
-				name = pieceTemplate[col];
-				return { color, name };
+				return { color: 'w', name: pieceTemplate[col] };
 			}
 		}
 
@@ -75,8 +65,8 @@ export default class Utils {
 		square?: string | number[],
 		optData?: unknown
 	): HeatmapData {
-		let sqrCoords: number[] = null;
-		let sqrAlg: string = null;
+		let sqrCoords: number[] = [];
+		let sqrAlg = '';
 
 		// square input type 'a2'
 		if (typeof square === 'string') {
