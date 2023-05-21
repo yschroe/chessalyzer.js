@@ -30,13 +30,13 @@ class BaseTracker implements Tracker {
 		}
 	}
 
-	analyze(data: Game | Action) {
+	analyze(data: Game | Action[]) {
 		if (this.cfg.profilingActive) this.t0 = performance.now();
 		this.track(data);
 		if (this.cfg.profilingActive) this.time += performance.now() - this.t0;
 	}
 
-	track(_data: Game | Action) {
+	track(_data: Game | Action[]) {
 		throw new Error('Your analyzer must implement a track(...) method!');
 	}
 

@@ -181,44 +181,30 @@ class TileTrackerBase extends BaseTracker {
 		}
 	}
 
-	track(moveData: Action) {
-		// const { move } = moveData;
-		// const { player } = moveData;
-		// const { piece } = moveData;
-		// const { takes } = moveData;
-		// const { castles } = moveData;
-		// // move
-		// if (move) {
-		// 	this.cntMovesGame += 1;
-		// 	if (takes) {
-		// 		this.processTakes(takes.pos, player, piece, takes.piece);
-		// 	}
-		// 	this.processMove(move, player, piece);
-		// 	// castle
-		// } else if (castles) {
-		// 	this.cntMovesGame += 1;
-		// 	const row = player === 'w' ? 7 : 0;
-		// 	let rook = 'Rh';
-		// 	let tarKingCol = 6;
-		// 	let tarRookCol = 5;
-		// 	let srcRookCol = 7;
-		// 	if (castles === 'O-O-O') {
-		// 		rook = 'Ra';
-		// 		tarKingCol = 2;
-		// 		tarRookCol = 3;
-		// 		srcRookCol = 0;
-		// 	}
-		// 	this.processMove(
-		// 		{ from: [row, 4], to: [row, tarKingCol] },
-		// 		player,
-		// 		'Ke'
-		// 	);
-		// 	this.processMove(
-		// 		{ from: [row, srcRookCol], to: [row, tarRookCol] },
-		// 		player,
-		// 		rook
-		// 	);
-		// }
+	track(actions: Action[]) {
+		for (const action of actions) {
+			switch (action.type) {
+				case 'move':
+					// TODO: castle is counted as two moves. fix
+					this.cntMovesGame += 1;
+					this.processMove(
+						{ from: action.from, to: action.to },
+						action.player,
+						action.piece
+					);
+					break;
+				case 'capture':
+					this.processCapture(
+						action.on,
+						action.player,
+						action.takingPiece,
+						action.takenPiece
+					);
+					break;
+				default:
+					break;
+			}
+		}
 	}
 
 	nextGame() {
@@ -251,7 +237,7 @@ class TileTrackerBase extends BaseTracker {
 		}
 	}
 
-	processTakes(
+	processCapture(
 		pos: number[],
 		player: string,
 		takingPiece: string,

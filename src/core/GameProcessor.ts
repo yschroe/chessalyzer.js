@@ -379,9 +379,9 @@ class GameProcessor {
 				const currentMoveActions = this.parseMove(move);
 
 				// move based analyzers
-				// for (const analyzer of analysisCfg.analyzers.move) {
-				// 	analyzer.analyze(currentMove);
-				// }
+				for (const analyzer of analysisCfg.analyzers.move) {
+					analyzer.analyze(currentMoveActions);
+				}
 
 				this.board.applyActions(currentMoveActions);
 				this.activePlayer = this.activePlayer === 'w' ? 'b' : 'w';

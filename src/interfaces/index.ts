@@ -88,7 +88,7 @@ export interface Tracker {
 	time: number;
 	t0: number;
 	path?: string;
-	analyze: (arg: Game | Action) => void;
+	analyze: (arg: Game | Action[]) => void;
 	generateHeatmap: (
 		fun: string | HeatmapAnalysisFunc,
 		square?: string | number[],
@@ -100,7 +100,7 @@ export interface Tracker {
 		square?: string | number[],
 		optData?: unknown
 	) => HeatmapData;
-	track: (arg: Game | Action) => void;
+	track: (arg: Game | Action[]) => void;
 	nextGame?: () => void;
 	finish?: () => void;
 	add?: (arg: this) => void;

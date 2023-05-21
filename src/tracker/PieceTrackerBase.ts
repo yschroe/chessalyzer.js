@@ -73,19 +73,25 @@ class PieceTrackerBase extends BaseTracker {
 		}
 	}
 
-	track(moveData: Action) {
-		// const { player, piece, takes } = moveData;
-		// if (takes) {
-		// 	// exlude promoted pawns from tracking
-		// 	if (
-		// 		piece.length > 1 &&
-		// 		takes.piece.length > 1 &&
-		// 		!piece.match(/\d/g) &&
-		// 		!takes.piece.match(/\d/g)
-		// 	) {
-		// 		this.processTakes(player, piece as Piece, takes.piece as Piece);
-		// 	}
-		// }
+	track(actions: Action[]) {
+		for (const action of actions) {
+			if (action.type === 'capture') {
+				const { takingPiece, takenPiece, player } = action;
+				// exlude promoted pawns from tracking
+				if (
+					takingPiece.length > 1 &&
+					takenPiece.length > 1 &&
+					!takingPiece.match(/\d/g) &&
+					!takingPiece.match(/\d/g)
+				) {
+					this.processTakes(
+						player,
+						takingPiece as Piece,
+						takenPiece as Piece
+					);
+				}
+			}
+		}
 	}
 
 	processTakes(player: PlayerColor, takingPiece: Piece, takenPiece: Piece) {
