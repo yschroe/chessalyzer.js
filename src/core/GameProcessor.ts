@@ -389,7 +389,6 @@ class GameProcessor {
 		} catch (err) {
 			console.log(err, game);
 			this.board.printPosition();
-			console.log(this.board.pieces.posMap.b.R);
 			// throw new Error();
 		}
 
@@ -675,9 +674,7 @@ class GameProcessor {
 		const to = [tarRow, tarCol];
 
 		// get array of positions of pieces of type <token>
-		let validPieces: number[][] = Object.values(
-			this.board.pieces.posMap[player][token]
-		);
+		let validPieces = this.board.getPositionsForToken(player, token);
 
 		// filter pieces that can reach target square
 		if (validPieces.length > 1) {
@@ -743,9 +740,8 @@ class GameProcessor {
 
 	checkCheck(move: Move, player: PlayerColor): boolean {
 		const { from } = move;
-		const color = player;
 		const opColor = player === 'w' ? 'b' : 'w';
-		const king = this.board.pieces.posMap[color].K.Ke;
+		const king = this.board.getPiecePosition(player, 'Ke');
 
 		// if king move, no check is possible, exit function
 		if (king[0] === from[0] && king[1] === from[1]) return false;

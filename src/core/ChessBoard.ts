@@ -5,102 +5,67 @@ import type {
 	CaptureAction,
 	PromoteAction
 } from '../interfaces/index.js';
-import type {
-	Bishop,
-	King,
-	Knight,
-	PieceToken,
-	PlayerColor,
-	Queen,
-	Rook
-} from '../types/index.js';
+import type { PieceToken, PlayerColor } from '../types/index.js';
 import Utils from './Utils.js';
 
 interface PosMap {
-	R: { [piece in Rook]: number[] };
-	N: { [piece in Knight]: number[] };
-	B: { [piece in Bishop]: number[] };
-	Q: { [piece in Queen]: number[] };
-	K: { [piece in King]: number[] };
+	R: Map<string, number[]>;
+	N: Map<string, number[]>;
+	B: Map<string, number[]>;
+	Q: Map<string, number[]>;
+	K: Map<string, number[]>;
 }
 
-class PiecePositionTable {
-	posMap: { w: PosMap; b: PosMap };
+class PiecePositions implements PosMap {
+	R: Map<string, number[]>;
+	N: Map<string, number[]>;
+	B: Map<string, number[]>;
+	Q: Map<string, number[]>;
+	K: Map<string, number[]>;
 
-	constructor() {
-		this.posMap = {
-			w: {
-				R: {
-					Ra: [7, 0],
-					Rh: [7, 7]
-				},
-				N: {
-					Nb: [7, 1],
-					Ng: [7, 6]
-				},
-				B: {
-					Bc: [7, 2],
-					Bf: [7, 5]
-				},
-				Q: {
-					Qd: [7, 3]
-				},
-				K: {
-					Ke: [7, 4]
-				}
-			},
-			b: {
-				R: {
-					Ra: [0, 0],
-					Rh: [0, 7]
-				},
-				N: {
-					Nb: [0, 1],
-					Ng: [0, 6]
-				},
-				B: {
-					Bc: [0, 2],
-					Bf: [0, 5]
-				},
-				Q: {
-					Qd: [0, 3]
-				},
-				K: {
-					Ke: [0, 4]
-				}
-			}
-		};
+	constructor(player: PlayerColor) {
+		const row = player === 'w' ? 7 : 0;
+
+		this.R = new Map([
+			['Ra', [row, 0]],
+			['Rh', [row, 7]]
+		]);
+
+		this.N = new Map([
+			['Nb', [row, 1]],
+			['Ng', [row, 6]]
+		]);
+
+		this.B = new Map([
+			['Bc', [row, 2]],
+			['Bf', [row, 5]]
+		]);
+
+		this.Q = new Map([['Qd', [row, 3]]]);
+		this.K = new Map([['Ke', [row, 4]]]);
 	}
 
-	takes(player: PlayerColor, piece: string): void {
-		if (!piece.startsWith('P'))
-			delete this.posMap[player][piece.substring(0, 1) as PieceToken][
-				piece
-			];
+	takes(piece: string): void {
+		const token = piece.substring(0, 1) as PieceToken;
+		this[token]?.delete(piece);
 	}
 
-	moves(
-		player: PlayerColor,
-		piece: string,
-		destinationSquare: number[]
-	): void {
-		if (!piece.startsWith('P'))
-			this.posMap[player][piece.substring(0, 1) as PieceToken][piece] =
-				destinationSquare;
+	moves(piece: string, destinationSquare: number[]): void {
+		const token = piece.substring(0, 1) as PieceToken;
+		this[token]?.set(piece, destinationSquare);
 	}
 
-	promotes(player: PlayerColor, piece: string, onSquare: number[]): void {
-		if (!piece.startsWith('P'))
-			this.posMap[player][piece.substring(0, 1) as PieceToken][piece] =
-				onSquare;
+	promotes(piece: string, onSquare: number[]): void {
+		const token = piece.substring(0, 1) as PieceToken;
+		this[token]?.set(piece, onSquare);
 	}
 }
 
 class ChessBoard {
-	tiles: (ChessPiece | null)[][];
-	defaultTiles: (ChessPiece | null)[][];
-	pieces: PiecePositionTable;
-	promoteCounter: number;
+	private tiles: (ChessPiece | null)[][];
+	private defaultTiles: (ChessPiece | null)[][];
+	private pieces: { w: PiecePositions; b: PiecePositions };
+	private promoteCounter: number;
 
 	constructor() {
 		this.defaultTiles = [];
@@ -113,11 +78,27 @@ class ChessBoard {
 		}
 
 		this.tiles = this.defaultTiles.map((arr) => arr.slice());
-		this.pieces = new PiecePositionTable();
+		this.pieces = {
+			w: new PiecePositions('w'),
+			b: new PiecePositions('b')
+		};
 		this.promoteCounter = 0;
 	}
 
-	applyActions(actions: Action[]) {
+	getPieceOnCoords(coords: number[]): ChessPiece | null {
+		return this.tiles[coords[0]][coords[1]];
+	}
+
+	getPiecePosition(player: PlayerColor, piece: string): number[] | undefined {
+		const token = piece.substring(0, 1) as PieceToken;
+		return this.pieces[player][token].get(piece);
+	}
+
+	getPositionsForToken(player: PlayerColor, token: PieceToken) {
+		return [...this.pieces[player][token].values()];
+	}
+
+	applyActions(actions: Action[]): void {
 		for (const action of actions) {
 			switch (action.type) {
 				case 'move':
@@ -133,43 +114,42 @@ class ChessBoard {
 		}
 	}
 
-	private move(action: MoveAction) {
-		const { from, to } = action;
+	private move(action: MoveAction): void {
+		const { from, to, player } = action;
 
 		// update piece map
-		this.pieces.moves(action.player, action.piece, to);
+		this.pieces[player].moves(action.piece, to);
 
 		// update board
 		this.tiles[to[0]][to[1]] = this.tiles[from[0]][from[1]];
 		this.tiles[from[0]][from[1]] = null;
 	}
 
-	private capture(action: CaptureAction) {
+	private capture(action: CaptureAction): void {
 		// update piece map
-		this.pieces.takes(action.player === 'w' ? 'b' : 'w', action.takenPiece);
+		this.pieces[action.player === 'w' ? 'b' : 'w'].takes(action.takenPiece);
 
 		// update board
 		this.tiles[action.on[0]][action.on[1]] = null;
 	}
 
-	private promote(action: PromoteAction) {
+	private promote(action: PromoteAction): void {
 		const newPieceName = `${action.to}${this.promoteCounter}`;
 		this.tiles[action.on[0]][action.on[1]] = {
 			name: newPieceName,
 			color: action.player
 		};
-		this.pieces.promotes(action.player, newPieceName, action.on);
+		this.pieces[action.player].promotes(newPieceName, action.on);
 		this.promoteCounter += 1;
 	}
 
 	reset(): void {
 		this.tiles = this.defaultTiles.map((arr) => arr.slice());
-		this.pieces = new PiecePositionTable();
+		this.pieces = {
+			w: new PiecePositions('w'),
+			b: new PiecePositions('b')
+		};
 		this.promoteCounter = 0;
-	}
-
-	getPieceOnCoords(coords: number[]): ChessPiece | null {
-		return this.tiles[coords[0]][coords[1]];
 	}
 
 	/** Prints the current board position to the console. */

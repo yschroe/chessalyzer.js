@@ -1,9 +1,3 @@
-export type Rook = 'Ra' | 'Rh';
-export type Knight = 'Nb' | 'Ng';
-export type Bishop = 'Bc' | 'Bf';
-export type Queen = 'Qd';
-export type King = 'Ke';
-
 export type PieceToken = 'R' | 'N' | 'B' | 'Q' | 'K';
 
 export type PawnToken = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h';
