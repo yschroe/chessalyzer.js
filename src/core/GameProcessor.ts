@@ -607,7 +607,6 @@ class GameProcessor {
 		return actions;
 	}
 
-	// todo: just make two move actions out of it?
 	castle(san: string): MoveAction[] {
 		const actions: MoveAction[] = [];
 
@@ -735,11 +734,12 @@ class GameProcessor {
 			}
 		}
 
+		console.log(this.board.getPositionsForToken(player, token));
 		throw new MoveNotFoundException(token, player, tarRow, tarCol);
 	}
 
 	checkCheck(move: Move, player: PlayerColor): boolean {
-		const { from } = move;
+		const { from, to } = move;
 		const opColor = player === 'w' ? 'b' : 'w';
 		const king = this.board.getPiecePosition(player, 'Ke');
 
@@ -766,12 +766,19 @@ class GameProcessor {
 		const rowDir = Math.sign(diff[0]);
 		const colDir = Math.sign(diff[1]);
 
+		const srcTilePiece = this.board.tiles[from[0]][from[1]];
+		const tarTilePiece = this.board.tiles[to[0]][to[1]];
+
+		// premove and check if check
+		this.board.tiles[from[0]][from[1]] = null;
+		this.board.tiles[to[0]][to[1]] = srcTilePiece;
+
 		// check for check
-		const startDist = Math.max(...absDiff) + 1;
-		for (let j = startDist; j < 8; j += 1) {
+		let isInCheck = false;
+		for (let j = 1; j < 8; j += 1) {
 			const row = king[0] + j * rowDir;
 			const col = king[1] + j * colDir;
-			if (row < 0 || row > 7 || col < 0 || col > 7) return false;
+			if (row < 0 || row > 7 || col < 0 || col > 7) break;
 
 			const piece = this.board.getPieceOnCoords([row, col]);
 			if (piece) {
@@ -780,14 +787,19 @@ class GameProcessor {
 						piece.name.startsWith(checkFor[1])) &&
 					piece.color === opColor
 				) {
-					return true;
+					isInCheck = true;
+					break;
 				} else {
-					return false;
+					break;
 				}
 			}
 		}
 
-		return false;
+		// revert premove
+		this.board.tiles[from[0]][from[1]] = srcTilePiece;
+		this.board.tiles[to[0]][to[1]] = tarTilePiece;
+
+		return isInCheck;
 	}
 
 	static preprocess(move: string): string {

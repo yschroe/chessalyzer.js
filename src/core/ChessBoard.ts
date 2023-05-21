@@ -62,7 +62,7 @@ class PiecePositions implements PosMap {
 }
 
 class ChessBoard {
-	private tiles: (ChessPiece | null)[][];
+	tiles: (ChessPiece | null)[][];
 	private defaultTiles: (ChessPiece | null)[][];
 	private pieces: { w: PiecePositions; b: PiecePositions };
 	private promoteCounter: number;
