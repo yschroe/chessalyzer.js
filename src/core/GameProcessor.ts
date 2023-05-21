@@ -12,7 +12,8 @@ import type {
 	MultithreadConfig,
 	GameAndMoveCount,
 	WorkerMessage,
-	Action
+	Action,
+	MoveAction
 } from '../interfaces/index.js';
 import ChessBoard from './ChessBoard.js';
 import Utils from './Utils.js';
@@ -608,9 +609,57 @@ class GameProcessor {
 	}
 
 	// todo: just make two move actions out of it?
-	castle(san: string): Action[] {
-		const actions: Action[] = [];
-		actions.push({ type: 'castle', san, player: this.activePlayer });
+	castle(san: string): MoveAction[] {
+		const actions: MoveAction[] = [];
+
+		const player = this.activePlayer;
+		const row = player === 'w' ? 7 : 0;
+
+		switch (san) {
+			case 'O-O': {
+				actions.push({
+					type: 'move',
+					san,
+					player,
+					piece: 'Ke',
+					from: [row, 4],
+					to: [row, 6]
+				});
+				actions.push({
+					type: 'move',
+					san,
+					player,
+					piece: 'Rh',
+					from: [row, 7],
+					to: [row, 5]
+				});
+				break;
+			}
+
+			case 'O-O-O':
+				actions.push({
+					type: 'move',
+					san,
+					player,
+					piece: 'Ke',
+					from: [row, 4],
+					to: [row, 2]
+				});
+				actions.push({
+					type: 'move',
+					san,
+					player,
+					piece: 'Ra',
+					from: [row, 0],
+					to: [row, 3]
+				});
+				break;
+			default:
+				console.log(
+					'Castle action called without a castle SAN. This is probably a bug.'
+				);
+				break;
+		}
 
 		return actions;
 	}

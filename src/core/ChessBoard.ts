@@ -2,7 +2,6 @@ import type {
 	ChessPiece,
 	Action,
 	MoveAction,
-	CastleAction,
 	CaptureAction,
 	PromoteAction
 } from '../interfaces/index.js';
@@ -127,9 +126,6 @@ class ChessBoard {
 				case 'capture':
 					this.capture(action);
 					break;
-				case 'castle':
-					this.castle(action);
-					break;
 				case 'promote':
 					this.promote(action);
 					break;
@@ -164,33 +160,6 @@ class ChessBoard {
 		};
 		this.pieces.promotes(action.player, newPieceName, action.on);
 		this.promoteCounter += 1;
-	}
-
-	private castle(action: CastleAction): void {
-		const { san, player } = action;
-		const row = player === 'w' ? 7 : 0;
-		const scrKingCol = 4;
-		let tarKingCol = 6;
-		let srcRookCol = 7;
-		let tarRookCol = 5;
-
-		if (san === 'O-O-O') {
-			tarKingCol = 2;
-			tarRookCol = 3;
-			srcRookCol = 0;
-		}
-		// move king
-		this.pieces.moves(player, 'Ke', [row, tarKingCol]);
-		this.tiles[row][tarKingCol] = this.tiles[row][scrKingCol];
-		this.tiles[row][scrKingCol] = null;
-
-		// move rook
-		this.pieces.moves(player, this.tiles[row][srcRookCol].name, [
-			row,
-			tarRookCol
-		]);
-		this.tiles[row][tarRookCol] = this.tiles[row][srcRookCol];
-		this.tiles[row][srcRookCol] = null;
 	}
 
 	reset(): void {

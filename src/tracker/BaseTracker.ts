@@ -2,7 +2,7 @@ import { performance } from 'node:perf_hooks';
 import Utils from '../core/Utils.js';
 import type {
 	Game,
-	MoveData,
+	Action,
 	Tracker,
 	TrackerConfig,
 	HeatmapAnalysisFunc,
@@ -30,13 +30,13 @@ class BaseTracker implements Tracker {
 		}
 	}
 
-	analyze(data: Game | MoveData) {
+	analyze(data: Game | Action) {
 		if (this.cfg.profilingActive) this.t0 = performance.now();
 		this.track(data);
 		if (this.cfg.profilingActive) this.time += performance.now() - this.t0;
 	}
 
-	track(_data: Game | MoveData) {
+	track(_data: Game | Action) {
 		throw new Error('Your analyzer must implement a track(...) method!');
 	}
 

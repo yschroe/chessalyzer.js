@@ -1,5 +1,5 @@
 import BaseTracker from './BaseTracker.js';
-import type { Move, MoveData } from '../interfaces/index.js';
+import type { Move, Action } from '../interfaces/index.js';
 import HeatmapPresets from './heatmaps/TileHeatmaps.js';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
@@ -181,49 +181,44 @@ class TileTrackerBase extends BaseTracker {
 		}
 	}
 
-	track(moveData: MoveData) {
-		const { move } = moveData;
-		const { player } = moveData;
-		const { piece } = moveData;
-		const { takes } = moveData;
-		const { castles } = moveData;
-
-		// move
-		if (move) {
-			this.cntMovesGame += 1;
-
-			if (takes) {
-				this.processTakes(takes.pos, player, piece, takes.piece);
-			}
-
-			this.processMove(move, player, piece);
-
-			// castle
-		} else if (castles) {
-			this.cntMovesGame += 1;
-
-			const row = player === 'w' ? 7 : 0;
-			let rook = 'Rh';
-			let tarKingCol = 6;
-			let tarRookCol = 5;
-			let srcRookCol = 7;
-			if (castles === 'O-O-O') {
-				rook = 'Ra';
-				tarKingCol = 2;
-				tarRookCol = 3;
-				srcRookCol = 0;
-			}
-			this.processMove(
-				{ from: [row, 4], to: [row, tarKingCol] },
-				player,
-				'Ke'
-			);
-			this.processMove(
-				{ from: [row, srcRookCol], to: [row, tarRookCol] },
-				player,
-				rook
-			);
-		}
+	track(moveData: Action) {
+		// const { move } = moveData;
+		// const { player } = moveData;
+		// const { piece } = moveData;
+		// const { takes } = moveData;
+		// const { castles } = moveData;
+		// // move
+		// if (move) {
+		// 	this.cntMovesGame += 1;
+		// 	if (takes) {
+		// 		this.processTakes(takes.pos, player, piece, takes.piece);
+		// 	}
+		// 	this.processMove(move, player, piece);
+		// 	// castle
+		// } else if (castles) {
+		// 	this.cntMovesGame += 1;
+		// 	const row = player === 'w' ? 7 : 0;
+		// 	let rook = 'Rh';
+		// 	let tarKingCol = 6;
+		// 	let tarRookCol = 5;
+		// 	let srcRookCol = 7;
+		// 	if (castles === 'O-O-O') {
+		// 		rook = 'Ra';
+		// 		tarKingCol = 2;
+		// 		tarRookCol = 3;
+		// 		srcRookCol = 0;
+		// 	}
+		// 	this.processMove(
+		// 		{ from: [row, 4], to: [row, tarKingCol] },
+		// 		player,
+		// 		'Ke'
+		// 	);
+		// 	this.processMove(
+		// 		{ from: [row, srcRookCol], to: [row, tarRookCol] },
+		// 		player,
+		// 		rook
+		// 	);
+		// }
 	}
 
 	nextGame() {

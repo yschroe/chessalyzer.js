@@ -1,5 +1,5 @@
 import BaseTracker from './BaseTracker.js';
-import type { MoveData } from '../interfaces/index.js';
+import type { Action } from '../interfaces/index.js';
 import HeatmapPresets from './heatmaps/PieceHeatmaps.js';
 import { PlayerColor } from '../types/index.js';
 
@@ -73,20 +73,19 @@ class PieceTrackerBase extends BaseTracker {
 		}
 	}
 
-	track(moveData: MoveData) {
-		const { player, piece, takes } = moveData;
-
-		if (takes) {
-			// exlude promoted pawns from tracking
-			if (
-				piece.length > 1 &&
-				takes.piece.length > 1 &&
-				!piece.match(/\d/g) &&
-				!takes.piece.match(/\d/g)
-			) {
-				this.processTakes(player, piece as Piece, takes.piece as Piece);
-			}
-		}
+	track(moveData: Action) {
+		// const { player, piece, takes } = moveData;
+		// if (takes) {
+		// 	// exlude promoted pawns from tracking
+		// 	if (
+		// 		piece.length > 1 &&
+		// 		takes.piece.length > 1 &&
+		// 		!piece.match(/\d/g) &&
+		// 		!takes.piece.match(/\d/g)
+		// 	) {
+		// 		this.processTakes(player, piece as Piece, takes.piece as Piece);
+		// 	}
+		// }
 	}
 
 	processTakes(player: PlayerColor, takingPiece: Piece, takenPiece: Piece) {

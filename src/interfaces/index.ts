@@ -11,18 +11,8 @@ export interface Move {
 	to: number[];
 }
 
-export interface MoveData {
-	san: string;
-	player: PlayerColor;
-	piece: string; // not Piece since promoted pawns can be included here
-	castles: string;
-	takes: { piece: string; pos: number[] };
-	promotesTo: string;
-	move: Move;
-}
-
 interface BaseAction {
-	type: 'move' | 'capture' | 'castle' | 'promote';
+	type: 'move' | 'capture' | 'promote';
 	san: string;
 	player: PlayerColor;
 }
@@ -41,17 +31,13 @@ export interface CaptureAction extends BaseAction {
 	on: number[];
 }
 
-export interface CastleAction extends BaseAction {
-	type: 'castle';
-}
-
 export interface PromoteAction extends BaseAction {
 	type: 'promote';
 	to: string;
 	on: number[];
 }
 
-export type Action = MoveAction | CaptureAction | CastleAction | PromoteAction;
+export type Action = MoveAction | CaptureAction | PromoteAction;
 
 export interface SquareData {
 	alg: string;
@@ -102,7 +88,7 @@ export interface Tracker {
 	time: number;
 	t0: number;
 	path?: string;
-	analyze: (arg: Game | MoveData) => void;
+	analyze: (arg: Game | Action) => void;
 	generateHeatmap: (
 		fun: string | HeatmapAnalysisFunc,
 		square?: string | number[],
@@ -114,7 +100,7 @@ export interface Tracker {
 		square?: string | number[],
 		optData?: unknown
 	) => HeatmapData;
-	track: (arg: Game | MoveData) => void;
+	track: (arg: Game | Action) => void;
 	nextGame?: () => void;
 	finish?: () => void;
 	add?: (arg: this) => void;
