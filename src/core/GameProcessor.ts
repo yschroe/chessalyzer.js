@@ -412,11 +412,11 @@ class GameProcessor {
 
 		if (token.toLowerCase() === token) {
 			return this.pawnMove(san);
-		} else if (token !== 'O') {
-			return this.pieceMove(san);
+		} else if (token === 'O') {
+			return this.castle(san);
 		}
 
-		return this.castle(san);
+		return this.pieceMove(san);
 	}
 
 	pawnMove(san: string): Action[] {
@@ -428,7 +428,7 @@ class GameProcessor {
 		let offset = 0;
 		const coords: Move = { from: [], to: [] };
 
-		// takes
+		// capture
 		if (san.includes('x')) {
 			const sanAdapted = san.replace('x', '');
 
@@ -466,17 +466,16 @@ class GameProcessor {
 			const tarCol = Utils.getFileNumber(
 				san.substring(0, 1) as FileLetter
 			);
-			coords.from[0] = -1; // to be found in for loop
-			coords.from[1] = tarCol;
-			coords.to[0] = tarRow;
-			coords.to[1] = tarCol;
-			for (let i = tarRow + direction; i < 8 && i >= 0; i += direction) {
+			coords.from = [-1, tarCol]; // -1: to be found in for loop
+			coords.to = [tarRow, tarCol];
+
+			for (let i = 1; i <= 2; i += 1) {
 				if (
 					this.board
-						.getPieceOnCoords([i, tarCol])
+						.getPieceOnCoords([tarRow + i * direction, tarCol])
 						?.name.startsWith('P')
 				) {
-					coords.from[0] = i;
+					coords.from[0] = tarRow + i * direction;
 					break;
 				}
 			}
@@ -514,7 +513,7 @@ class GameProcessor {
 		// const moveData = new ParsedMove();
 		const player = this.activePlayer;
 
-		let takes = false;
+		let capture = false;
 		let coords: Move = { from: [], to: [] };
 		const token = san.substring(0, 1) as PieceToken;
 
@@ -522,9 +521,9 @@ class GameProcessor {
 		// remove token
 		let tempSan = san.substring(1);
 
-		// takes
+		// capture
 		if (tempSan.includes('x')) {
-			takes = true;
+			capture = true;
 			tempSan = tempSan.replace('x', '');
 		}
 
@@ -549,16 +548,13 @@ class GameProcessor {
 			let mustBeInCol: number | null = null; // to be found
 
 			// file is specified
-			if (
-				Utils.getFileNumber(tempSan.substring(0, 1) as FileLetter) >= 0
-			) {
-				mustBeInCol = Utils.getFileNumber(
-					tempSan.substring(0, 1) as FileLetter
-				);
+			const firstChar = tempSan.substring(0, 1);
+			if (firstChar.match(/\D/)) {
+				mustBeInCol = Utils.getFileNumber(firstChar as FileLetter);
 
 				// rank is specified
 			} else {
-				mustBeInRow = 8 - parseInt(tempSan.substring(0, 1), 10);
+				mustBeInRow = 8 - Number(firstChar);
 			}
 			coords = this.findPiece(
 				tarRow,
@@ -581,7 +577,7 @@ class GameProcessor {
 		const piece = this.board.getPieceOnCoords(coords.from)?.name;
 		// if (!piece) throw new Error();
 
-		if (takes) {
+		if (capture) {
 			const takenPiece = this.board.getPieceOnCoords(coords.to)?.name;
 			// if (!takenPiece) throw new Error();
 			actions.push({
@@ -662,6 +658,16 @@ class GameProcessor {
 		return actions;
 	}
 
+	/**
+	 * Search the current position for a piece that could perform the move.
+	 * @param tarRow Row number (0-7) of the square the piece should move to.
+	 * @param tarCol Column number (0-7) of the square the piece should move to.
+	 * @param mustBeInRow If value is passed, only pieces in that row are checked.
+	 * @param mustBeInCol If value is passed, only pieces in that column are checked.
+	 * @param token Type of piece that is looked for.
+	 * @param player The moving player
+	 * @returns The move which will fulfill all criteria.
+	 */
 	findPiece(
 		tarRow: number,
 		tarCol: number,
@@ -738,58 +744,68 @@ class GameProcessor {
 		throw new MoveNotFoundException(token, player, tarRow, tarCol);
 	}
 
+	/**
+	 * Checks if performing the move would result in the king being in check.
+	 *
+	 * @param move The move to be checked.
+	 * @param player The moving player.
+	 * @returns King would be in check true/false
+	 */
 	checkCheck(move: Move, player: PlayerColor): boolean {
 		const { from, to } = move;
 		const opColor = player === 'w' ? 'b' : 'w';
 		const king = this.board.getPiecePosition(player, 'Ke');
 
-		// if king move, no check is possible, exit function
-		if (king[0] === from[0] && king[1] === from[1]) return false;
-
 		// check if moving piece is on same line/diag as king, else exit
-		const diff: number[] = [];
-		diff[0] = from[0] - king[0];
-		diff[1] = from[1] - king[1];
+		const diff = [from[0] - king[0], from[1] - king[1]];
 		const checkFor: string[] = [];
-
-		const absDiff = [Math.abs(diff[0]), Math.abs(diff[1])];
-
 		if (diff[0] === 0 || diff[1] === 0) {
 			checkFor[0] = 'Q';
 			checkFor[1] = 'R';
-		} else if (absDiff[0] === absDiff[1]) {
+		} else if (Math.abs(diff[0]) === Math.abs(diff[1])) {
 			checkFor[0] = 'Q';
 			checkFor[1] = 'B';
 		} else {
 			return false;
 		}
-		const rowDir = Math.sign(diff[0]);
-		const colDir = Math.sign(diff[1]);
+		const vertDir = Math.sign(diff[0]);
+		const horzDir = Math.sign(diff[1]);
 
-		const srcTilePiece = this.board.tiles[from[0]][from[1]];
-		const tarTilePiece = this.board.tiles[to[0]][to[1]];
+		// calculate distance from king to edge of board in direction of the moving piece
+		let distanceHorizontal = 8;
+		if (horzDir !== 0) {
+			distanceHorizontal = horzDir === -1 ? king[1] : 8 - 1 - king[1];
+		}
+		let distanceVertical = 8;
+		if (vertDir !== 0) {
+			distanceVertical = vertDir === -1 ? king[0] : 8 - 1 - king[0];
+		}
+		const distanceToEdge = Math.min(distanceHorizontal, distanceVertical);
+		if (distanceToEdge < 2) return false;
 
-		// premove and check if check
+		const srcTilePiece = this.board.getPieceOnCoords(from);
+		const tarTilePiece = this.board.getPieceOnCoords(to);
+
+		// premove
 		this.board.tiles[from[0]][from[1]] = null;
 		this.board.tiles[to[0]][to[1]] = srcTilePiece;
 
 		// check for check
 		let isInCheck = false;
-		for (let j = 1; j < 8; j += 1) {
-			const row = king[0] + j * rowDir;
-			const col = king[1] + j * colDir;
-			if (row < 0 || row > 7 || col < 0 || col > 7) break;
+		for (let i = 1; i < distanceToEdge; i += 1) {
+			const row = king[0] + i * vertDir;
+			const col = king[1] + i * horzDir;
 
 			const piece = this.board.getPieceOnCoords([row, col]);
 			if (piece) {
 				if (
-					(piece.name.startsWith(checkFor[0]) ||
-						piece.name.startsWith(checkFor[1])) &&
+					checkFor.some((token) => piece.name.startsWith(token)) &&
 					piece.color === opColor
 				) {
 					isInCheck = true;
 					break;
 				} else {
+					// way is obstructed by other piece
 					break;
 				}
 			}
