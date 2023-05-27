@@ -28,7 +28,7 @@ A JavaScript library for batch analyzing chess games.
 -   Filter games (e.g. only analyze games where WhiteElo > 1800)
 -   Fully modular, track only the stats you need to preserve performance
 -   Generate heatmaps out of the generated data
--   It's fast and highly parallelized: Processes >5.500.000 moves/s on an Apple M1, >3.300.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
+-   It's fast and highly parallelized: Processes >5.750.000 moves/s on an Apple M1, >3.300.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
 -   Handles big files easily
 -   Just one dependency (chalk)
 
@@ -268,42 +268,35 @@ Your tracker also must have the following properties:
 -   `track(data)`:  
      The main analysis function that is called during the PGN processing. Depending on your `type` the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The `data` object contains the following properties:
 
-    -   For move-typed trackers: A `MoveData` object with the following properties:
+    -   For move-typed trackers: An `Action` array with one or more entries of the following action types. If e.g. a piece captures another piece this array will contain a `CaptureAction` and a `MoveAction`:
 
         ```typescript
-        interface MoveData {
-            // The processed move in standard algebraic notation (e.g. 'Nxe3')
+        type Action = MoveAction | CaptureAction | PromoteAction;
+
+        interface BaseAction {
+            type: 'move' | 'capture' | 'promote';
             san: string;
+            player: 'b' | 'w';
+        }
 
-            // The moving player ('b' or 'w')
-            player: string;
-
-            // The moving piece (e.g. 'Pa' for the a-pawn)
+        interface MoveAction extends BaseAction {
+            type: 'move';
             piece: string;
+            from: number[];
+            to: number[];
+        }
 
-            // If the move is castling it's either 'O-O' or 'O-O-O', null else
-            castles: string;
+        interface CaptureAction extends BaseAction {
+            type: 'capture';
+            takingPiece: string;
+            takenPiece: string;
+            on: number[];
+        }
 
-            // Contains the coordinates of the move
-            move: {
-                // Start coordinates of the move (e.g. [0,0]).
-                from: number[];
-
-                // Target coordinates of the move (e.g. [7,0]).
-                to: number[];
-            };
-
-            // In case of pawn promotion contains the piece the pawn promotes to (e.g. 'Q'), null else
-            promotesTo: string;
-
-            // If the move contains taking another piece, takes is an object with following properties, null else
-            takes: {
-                // The piece that is taken (e.g. 'Pa' for the a-pawn)
-                piece: string;
-
-                // Board coordinates of the taken piece. Is equal to the move.to property in all cases but 'en passant'
-                pos: number[];
-            };
+        interface PromoteAction extends BaseAction {
+            type: 'promote';
+            to: string;
+            on: number[];
         }
         ```
 
@@ -383,6 +376,11 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 <img src="https://i.imgur.com/tZVkPs3.png" width="30%">
 
 # Changelog
+
+-   3.0.0 (Upcoming):
+
+    -   Restructured the return value of the move parser. Now an array of different `Action` types is returned to easier differentiate between actions like 'Move' or 'Capture'. Previously all possible actions were included in the single `MoveData` object. Your custom move trackers will need to be adapted.
+    -   Various minor performance improvements and code simplifications.
 
 -   2.2.0:
 
