@@ -1,6 +1,6 @@
-import { Tracker } from '../lib/chessalyzer.js';
+import { BaseTracker } from '../lib/chessalyzer.js';
 
-export default class CustomGameTracker extends Tracker.Base {
+export default class CustomGameTracker extends BaseTracker {
 	constructor() {
 		super('game');
 		this.path = import.meta.url;

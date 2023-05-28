@@ -22,15 +22,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  */
 class GameProcessor {
 	configs: GameProcessorAnalysisConfigFull[];
+	lineReader: Interface;
 	readInHeader: boolean;
+	readerFinished: boolean;
+	status: EventEmitter;
 	workers: {
 		worker: Worker;
 		isReady: boolean;
 	}[];
-	lineReader: Interface;
 	errorInWorker: unknown;
-	readerFinished: boolean;
-	status: EventEmitter;
 
 	constructor() {
 		this.configs = [];
@@ -39,134 +39,6 @@ class GameProcessor {
 
 		this.workers = [];
 		this.status = new EventEmitter();
-	}
-
-	attachConfigs(configs: AnalysisConfig[]): void {
-		for (const cfg of configs) {
-			const tempCfg: GameProcessorAnalysisConfigFull = {
-				analyzers: {
-					move: [],
-					game: []
-				},
-				analyzerData: [],
-				config: this.checkConfig(cfg.config || {}),
-				cntGames: 0,
-				processedMoves: 0,
-				isDone: false
-			};
-
-			if (cfg.trackers) {
-				for (const tracker of cfg.trackers) {
-					if (tracker.type === 'move') {
-						tempCfg.analyzers.move.push(tracker);
-					} else if (tracker.type === 'game') {
-						tempCfg.analyzers.game.push(tracker);
-
-						// we need to read in the header if at least one game tracker is attached
-						this.readInHeader = true;
-					}
-
-					tempCfg.analyzerData.push({
-						name: tracker.constructor.name,
-						cfg: tracker.cfg,
-						path: tracker.path
-					});
-				}
-			}
-
-			this.configs.push(tempCfg);
-		}
-	}
-
-	private checkConfig(config: AnalysisConfig['config']): GameProcessorConfig {
-		const hasFilter = config.filter !== undefined;
-
-		// if we need to filter the games, we need the header informations
-		if (hasFilter) this.readInHeader = true;
-
-		const cfg: GameProcessorConfig = {
-			hasFilter,
-			filter: hasFilter ? config.filter : () => true,
-			cntGames: config.cntGames || Infinity
-		};
-		return cfg;
-	}
-
-	private async sendDataToWorker(games: Game[], idxConfig: number) {
-		let freeWorker = this.workers.find((w) => w.isReady);
-		if (!freeWorker) {
-			const freeIndex = this.workers.length;
-			freeWorker = {
-				worker: this.forkWorker(freeIndex),
-				isReady: false
-			};
-			this.workers.push(freeWorker);
-
-			// normally we could use w.send(...) outside of this function
-			// there is a bug in node though, which sometimes sends the data too early
-			// --> wait until the worker sends a custom ready message
-			// see: https://github.com/nodejs/node/issues/39854
-			await EventEmitter.once(freeWorker.worker, 'message');
-		}
-
-		freeWorker.isReady = false;
-		freeWorker.worker.send({
-			games,
-			analyzerData: this.configs[idxConfig].analyzerData,
-			idxConfig
-		});
-	}
-
-	// creates a new worker, that will process an array of games
-	private forkWorker(idx: number) {
-		const w = cluster.fork();
-
-		// on worker finish
-		w.on('message', (msg: WorkerMessage) => {
-			switch (msg.type) {
-				case 'gamesProcessed': {
-					const {
-						idxConfig,
-						gameAnalyzers,
-						moveAnalyzers,
-						cntMoves
-					} = msg;
-					// add tracker data from this worker
-					for (let i = 0; i < gameAnalyzers.length; i += 1) {
-						this.configs[idxConfig].analyzers.game[i].add(
-							gameAnalyzers[i]
-						);
-					}
-					for (let i = 0; i < moveAnalyzers.length; i += 1) {
-						this.configs[idxConfig].analyzers.move[i].add(
-							moveAnalyzers[i]
-						);
-					}
-					this.configs[idxConfig].processedMoves += cntMoves;
-					break;
-				}
-				// in case of error we stop reading in lines and save the error to throw it again later
-				// we cannot immediately throw it when other worker threads are still running
-				case 'error': {
-					this.errorInWorker = msg.error;
-					this.lineReader.close();
-					break;
-				}
-			}
-
-			if (msg.type === 'error' || msg.type === 'gamesProcessed') {
-				this.workers[idx].isReady = true;
-
-				// if this worker was the last one, emit 'finished' event
-				if (
-					this.workers.filter((w) => !w.isReady).length === 0 &&
-					this.readerFinished
-				) {
-					this.status.emit('finished');
-				}
-			}
-		});
-		return w;
 	}
 
 	async processPGN(
@@ -312,6 +184,134 @@ class GameProcessor {
 		}));
 
 		return returnVals;
+	}
+
+	private attachConfigs(configs: AnalysisConfig[]): void {
+		for (const cfg of configs) {
+			const tempCfg: GameProcessorAnalysisConfigFull = {
+				analyzers: {
+					move: [],
+					game: []
+				},
+				analyzerData: [],
+				config: this.checkConfig(cfg.config || {}),
+				cntGames: 0,
+				processedMoves: 0,
+				isDone: false
+			};
+
+			if (cfg.trackers) {
+				for (const tracker of cfg.trackers) {
+					if (tracker.type === 'move') {
+						tempCfg.analyzers.move.push(tracker);
+					} else if (tracker.type === 'game') {
+						tempCfg.analyzers.game.push(tracker);
+
+						// we need to read in the header if at least one game tracker is attached
+						this.readInHeader = true;
+					}
+
+					tempCfg.analyzerData.push({
+						name: tracker.constructor.name,
+						cfg: tracker.cfg,
+						path: tracker.path
+					});
+				}
+			}
+
+			this.configs.push(tempCfg);
+		}
+	}
+
+	private checkConfig(config: AnalysisConfig['config']): GameProcessorConfig {
+		const hasFilter = config.filter !== undefined;
+
+		// if we need to filter the games, we need the header informations
+		if (hasFilter) this.readInHeader = true;
+
+		const cfg: GameProcessorConfig = {
+			hasFilter,
+			filter: hasFilter ? config.filter : () => true,
+			cntGames: config.cntGames || Infinity
+		};
+		return cfg;
+	}
+
+	private async sendDataToWorker(games: Game[], idxConfig: number) {
+		let freeWorker = this.workers.find((w) => w.isReady);
+		if (!freeWorker) {
+			const freeIndex = this.workers.length;
+			freeWorker = {
+				worker: this.forkWorker(freeIndex),
+				isReady: false
+			};
+			this.workers.push(freeWorker);
+
+			// normally we could use w.send(...) outside of this function
+			// there is a bug in node though, which sometimes sends the data too early
+			// --> wait until the worker sends a custom ready message
+			// see: https://github.com/nodejs/node/issues/39854
+			await EventEmitter.once(freeWorker.worker, 'message');
+		}
+
+		freeWorker.isReady = false;
+		freeWorker.worker.send({
+			games,
+			analyzerData: this.configs[idxConfig].analyzerData,
+			idxConfig
+		});
+	}
+
+	// creates a new worker, that will process an array of games
+	private forkWorker(idx: number) {
+		const w = cluster.fork();
+
+		// on worker finish
+		w.on('message', (msg: WorkerMessage) => {
+			switch (msg.type) {
+				case 'gamesProcessed': {
+					const {
+						idxConfig,
+						gameAnalyzers,
+						moveAnalyzers,
+						cntMoves
+					} = msg;
+					// add tracker data from this worker
+					for (let i = 0; i < gameAnalyzers.length; i += 1) {
+						this.configs[idxConfig].analyzers.game[i].add(
+							gameAnalyzers[i]
+						);
+					}
+					for (let i = 0; i < moveAnalyzers.length; i += 1) {
+						this.configs[idxConfig].analyzers.move[i].add(
+							moveAnalyzers[i]
+						);
+					}
+					this.configs[idxConfig].processedMoves += cntMoves;
+					break;
+				}
+				// in case of error we stop reading in lines and save the error to throw it again later
+				// we cannot immediately throw it when other worker threads are still running
+				case 'error': {
+					this.errorInWorker = msg.error;
+					this.lineReader.close();
+					break;
+				}
+			}
+
+			if (msg.type === 'error' || msg.type === 'gamesProcessed') {
+				this.workers[idx].isReady = true;
+
+				// if this worker was the last one, emit 'finished' event
+				if (
+					this.workers.filter((w) => !w.isReady).length === 0 &&
+					this.readerFinished
+				) {
+					this.status.emit('finished');
+				}
+			}
+		});
+		return w;
 	}
 }
 

@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import Tracker from '../tracker/Tracker.js';
+import PieceTracker from '../tracker/PieceTrackerBase.js';
+import TileTracker from '../tracker/TileTrackerBase.js';
+import GameTracker from '../tracker/GameTrackerBase.js';
+import BaseTracker from '../tracker/BaseTracker.js';
 import type {
 	Game,
 	GameProcessorAnalysisConfig,
@@ -9,7 +9,6 @@ import type {
 	WorkerMessage
 } from '../interfaces/index.js';
 import GameParser from './GameParser.js';
-import BaseTracker from '../tracker/BaseTracker.js';
 
 process.on(
 	'message',
@@ -23,8 +22,9 @@ process.on(
 			const gameParser = new GameParser();
 
 			// prepare built-in trackers
-			for (const key of Object.keys(Tracker))
-				TrackerList[Tracker[key].name] = Tracker[key];
+			TrackerList[PieceTracker.name] = PieceTracker;
+			TrackerList[TileTracker.name] = TileTracker;
+			TrackerList[GameTracker.name] = GameTracker;
 
 			// import custom trackers
 			for (const a of msg.analyzerData.filter((val) => val.path)) {

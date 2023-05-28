@@ -380,6 +380,7 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 -   3.0.0 (Upcoming):
 
     -   Restructured the return value of the move parser. Now an array of different `Action` types is returned to easier differentiate between actions like 'Move' or 'Capture'. Previously all possible actions were included in the single `MoveData` object. Your custom move trackers will need to be adapted.
+    -   Built-in trackers must now be imported separately (`TileTracker`, `PieceTracker`, `GameTracker`) instead of importing just the `Tracker` object.
     -   Various minor performance improvements and code simplifications.
 
 -   2.2.0:
