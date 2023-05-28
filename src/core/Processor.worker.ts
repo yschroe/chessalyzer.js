@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import GameProcessor from './GameProcessor.js';
 import Tracker from '../tracker/Tracker.js';
 import type { Game, WorkerMessage } from '../interfaces/index.js';
@@ -41,7 +44,7 @@ process.on(
 				for (const game of msg.games)
 					proc.processGame(game, proc.configs[0]);
 			} catch (err) {
-				console.log(err);
+				console.error(err);
 				process.send({
 					type: 'error',
 					error: err
