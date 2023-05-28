@@ -1,5 +1,24 @@
 import type { PlayerColor } from '../types/index.js';
 
+export interface GameProcessorConfig {
+	hasFilter: boolean;
+	filter: (game: object) => boolean;
+	cntGames: number;
+}
+
+export interface GameProcessorAnalysisConfig {
+	analyzers: { move: Tracker[]; game: Tracker[] };
+	processedMoves: number;
+}
+
+export interface GameProcessorAnalysisConfigFull
+	extends GameProcessorAnalysisConfig {
+	config: GameProcessorConfig;
+	analyzerData: { name: string; cfg: unknown; path: string }[];
+	cntGames: number;
+	isDone: boolean;
+}
+
 export interface Game {
 	Result?: string;
 	ECO?: string;

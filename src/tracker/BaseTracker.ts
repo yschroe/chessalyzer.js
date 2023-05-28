@@ -10,13 +10,13 @@ import type {
 } from '../interfaces/index.js';
 
 class BaseTracker implements Tracker {
-	type: string;
+	type: 'move' | 'game';
 	cfg: TrackerConfig;
 	time: number;
 	t0: number;
 	heatmapPresets: { [name: string]: { calc: HeatmapAnalysisFunc } };
 
-	constructor(type: string) {
+	constructor(type: 'move' | 'game') {
 		this.type = type;
 		this.cfg = {
 			profilingActive: false

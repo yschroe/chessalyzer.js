@@ -1,20 +1,26 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import GameProcessor from './GameProcessor.js';
 import Tracker from '../tracker/Tracker.js';
-import type { Game, WorkerMessage } from '../interfaces/index.js';
+import type {
+	Game,
+	GameProcessorAnalysisConfig,
+	TrackerConfig,
+	WorkerMessage
+} from '../interfaces/index.js';
+import GameParser from './GameParser.js';
+import BaseTracker from '../tracker/BaseTracker.js';
 
 process.on(
 	'message',
 	(msg: {
 		games: Game[];
-		analyzerData: { name: string; cfg: object; path?: string }[];
+		analyzerData: { name: string; cfg: TrackerConfig; path?: string }[];
 		idxConfig: number;
 	}) => {
 		void (async () => {
 			const TrackerList = {};
-			const proc = new GameProcessor();
+			const gameParser = new GameParser();
 
 			// prepare built-in trackers
 			for (const key of Object.keys(Tracker))
@@ -29,20 +35,19 @@ process.on(
 			}
 
 			// select needed trackers
-			const analyzer = [];
+			const cfg: GameProcessorAnalysisConfig = {
+				analyzers: { move: [], game: [] },
+				processedMoves: 0
+			};
 			for (const a of msg.analyzerData) {
-				const currentAnalyzer = new TrackerList[a.name]();
+				const currentAnalyzer: BaseTracker = new TrackerList[a.name]();
 				currentAnalyzer.cfg = a.cfg;
-				analyzer.push(currentAnalyzer);
+				cfg.analyzers[currentAnalyzer.type].push(currentAnalyzer);
 			}
-
-			const cfg = { trackers: analyzer };
-			proc.attachConfigs([cfg]);
 
 			// analyze each game
 			try {
-				for (const game of msg.games)
-					proc.processGame(game, proc.configs[0]);
+				for (const game of msg.games) gameParser.processGame(game, cfg);
 			} catch (err) {
 				console.error(err);
 				process.send({
@@ -54,9 +59,9 @@ process.on(
 			// send result of batch to master
 			process.send({
 				type: 'gamesProcessed',
-				cntMoves: proc.configs[0].processedMoves,
-				gameAnalyzers: proc.configs[0].analyzers.game,
-				moveAnalyzers: proc.configs[0].analyzers.move,
+				cntMoves: cfg.processedMoves,
+				gameAnalyzers: cfg.analyzers.game,
+				moveAnalyzers: cfg.analyzers.move,
 				idxConfig: msg.idxConfig
 			} as WorkerMessage);
 		})();
