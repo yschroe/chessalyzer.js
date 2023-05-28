@@ -41,7 +41,7 @@ process.on(
 				for (const game of msg.games)
 					proc.processGame(game, proc.configs[0]);
 			} catch (err) {
-				console.log('HALP');
+				console.log(err);
 				process.send({
 					type: 'error',
 					error: err
