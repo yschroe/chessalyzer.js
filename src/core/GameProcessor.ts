@@ -45,14 +45,18 @@ const moveCfg = {
 	}
 };
 
-class MoveNotFoundExceptionData {
+class MoveNotFoundException extends Error {
 	constructor(
-		public token: string,
-		public player: PlayerColor,
-		public tarRow: number,
-		public tarCol: number,
-		public board: ChessBoard
-	) {}
+		token: string,
+		player: PlayerColor,
+		tarRow: number,
+		tarCol: number
+	) {
+		super(
+			`${player}: No piece for move ${token} to (${tarRow},${tarCol}) found!`
+		);
+		this.name = 'MoveNotFoundError';
+	}
 }
 
 interface GameProcessorConfig {
@@ -313,7 +317,7 @@ class GameProcessor {
 
 			if (allDone) {
 				lr.close();
-				lr.removeAllListeners();
+				// lr.removeAllListeners();
 			}
 		});
 
@@ -345,9 +349,7 @@ class GameProcessor {
 		}
 
 		readerFinished = true;
-		console.log('waiting');
 		if (isMultithreaded) await EventEmitter.once(status, 'finished');
-		console.log('waited');
 		for (const w of workers) w.worker.kill();
 
 		if (errorInWorker) throw errorInWorker;
@@ -378,17 +380,23 @@ class GameProcessor {
 		const { moves } = game;
 
 		this.activePlayer = 'w';
-		for (const move of moves) {
-			// parse move from san to coordinates (and meta info)
-			const currentMoveActions = this.parseMove(move);
+		try {
+			for (const move of moves) {
+				// parse move from san to coordinates (and meta info)
+				const currentMoveActions = this.parseMove(move);
 
-			// move based analyzers
-			for (const analyzer of analysisCfg.analyzers.move) {
-				analyzer.analyze(currentMoveActions);
+				// move based analyzers
+				for (const analyzer of analysisCfg.analyzers.move) {
+					analyzer.analyze(currentMoveActions);
+				}
+
+				this.board.applyActions(currentMoveActions);
+				this.activePlayer = this.activePlayer === 'w' ? 'b' : 'w';
 			}
-
-			this.board.applyActions(currentMoveActions);
-			this.activePlayer = this.activePlayer === 'w' ? 'b' : 'w';
+		} catch (err) {
+			console.log(game);
+			this.board.printPosition();
+			throw err;
 		}
 
 		// notify move analyzers that the current game is done
@@ -509,7 +517,6 @@ class GameProcessor {
 
 	pieceMove(san: string): Action[] {
 		const actions: Action[] = [];
-		// const moveData = new ParsedMove();
 		const player = this.activePlayer;
 
 		let capture = false;
@@ -739,13 +746,7 @@ class GameProcessor {
 			}
 		}
 
-		throw new MoveNotFoundExceptionData(
-			token,
-			player,
-			tarRow,
-			tarCol,
-			this.board
-		);
+		throw new MoveNotFoundException(token, player, tarRow, tarCol);
 	}
 
 	/**
@@ -796,7 +797,7 @@ class GameProcessor {
 
 		// check for check
 		let isInCheck = false;
-		for (let i = 1; i < distanceToEdge; i += 1) {
+		for (let i = 1; i <= distanceToEdge; i += 1) {
 			const row = king[0] + i * vertDir;
 			const col = king[1] + i * horzDir;
 
