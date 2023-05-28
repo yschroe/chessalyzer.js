@@ -7,6 +7,7 @@ import type {
 	HeatmapData,
 	MultithreadConfig
 } from '../interfaces/index.js';
+import { error } from 'node:console';
 
 export default class Chessalyzer {
 	static async analyzePGN(
@@ -22,22 +23,30 @@ export default class Chessalyzer {
 
 		const t0 = performance.now();
 
-		const header = await gameProcessor.processPGN(
-			pathToPgn,
-			configArray,
-			multithreadCfg
-		);
+		try {
+			const header = await gameProcessor.processPGN(
+				pathToPgn,
+				configArray,
+				multithreadCfg
+			);
 
-		const t1 = performance.now();
-		const tdiff = Math.round(t1 - t0) / 1000;
+			const t1 = performance.now();
+			const tdiff = Math.round(t1 - t0) / 1000;
 
-		const returnVals: GameAndMoveCountFull[] = [];
-		for (const h of header)
-			returnVals.push({ ...h, mps: Math.round(h.cntMoves / tdiff) });
+			const returnVals: GameAndMoveCountFull[] = [];
+			for (const h of header)
+				returnVals.push({ ...h, mps: Math.round(h.cntMoves / tdiff) });
 
-		return Array.isArray(configs) && configs.length > 1
-			? returnVals
-			: returnVals[0];
+			return Array.isArray(configs) && configs.length > 1
+				? returnVals
+				: returnVals[0];
+		} catch (err) {
+			console.error(
+				'Error occurred during processing. This is probably a bug in the library or you are using an unkown PGN format. Aborting...'
+			);
+			console.error(err);
+			return [];
+		}
 	}
 
 	static printHeatmap(data: HeatmapData) {

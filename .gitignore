@@ -32,6 +32,8 @@ node_modules
 
 .DS_Store
 
+*.0x
+
 *.pgn
 
 *.csv

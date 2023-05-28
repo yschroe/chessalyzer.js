@@ -12,8 +12,8 @@ c.cfg.profilingActive = true;
 
 const header = await Chessalyzer.analyzePGN(
 	'./manualTests/lichess_db_standard_rated_2014-09.pgn',
-	// './test/lichess_db_standard_rated_2013-12.pgn',
-	{ config: { cntGames: 500000 } }
+	undefined,
+	null
 );
 console.log(header);
 console.log(

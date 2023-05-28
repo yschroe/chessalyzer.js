@@ -1,6 +1,6 @@
 import GameProcessor from './GameProcessor.js';
 import Tracker from '../tracker/Tracker.js';
-import type { Game } from '../interfaces/index.js';
+import type { Game, WorkerMessage } from '../interfaces/index.js';
 
 process.on(
 	'message',
@@ -37,19 +37,28 @@ process.on(
 			proc.attachConfigs([cfg]);
 
 			// analyze each game
-			for (const game of msg.games)
-				proc.processGame(game, proc.configs[0]);
+			try {
+				for (const game of msg.games)
+					proc.processGame(game, proc.configs[0]);
+			} catch (err) {
+				console.log('HALP');
+				process.send({
+					type: 'error',
+					error: err
+				} as WorkerMessage);
+			}
 
 			// send result of batch to master
 			process.send({
+				type: 'gamesProcessed',
 				cntMoves: proc.configs[0].processedMoves,
 				gameAnalyzers: proc.configs[0].analyzers.game,
 				moveAnalyzers: proc.configs[0].analyzers.move,
 				idxConfig: msg.idxConfig
-			});
+			} as WorkerMessage);
 		})();
 	}
 );
 
 // only needed for workaround for https://github.com/nodejs/node/issues/39854
-process.send('readyForData');
+process.send({ type: 'readyForData' } as WorkerMessage);

@@ -45,18 +45,14 @@ const moveCfg = {
 	}
 };
 
-class MoveNotFoundException extends Error {
+class MoveNotFoundExceptionData {
 	constructor(
-		token: string,
-		player: PlayerColor,
-		tarRow: number,
-		tarCol: number
-	) {
-		super(
-			`${player}: No piece for move ${token} to (${tarRow},${tarCol}) found!`
-		);
-		this.name = 'MoveNotFoundError';
-	}
+		public token: string,
+		public player: PlayerColor,
+		public tarRow: number,
+		public tarCol: number,
+		public board: ChessBoard
+	) {}
 }
 
 interface GameProcessorConfig {
@@ -146,57 +142,57 @@ class GameProcessor {
 		configArray: AnalysisConfig[],
 		multiThreadCfg: MultithreadConfig | null
 	): Promise<GameAndMoveCount[]> {
-		try {
-			let readerFinished = false;
+		let readerFinished = false;
 
-			const isMultithreaded = multiThreadCfg !== null;
-			const status = new EventEmitter();
+		const isMultithreaded = multiThreadCfg !== null;
+		const status = new EventEmitter();
 
-			cluster.setupPrimary({
-				exec: `${__dirname}/Processor.worker.js`
+		cluster.setupPrimary({
+			exec: `${__dirname}/Processor.worker.js`
+		});
+
+		this.attachConfigs(configArray);
+
+		const workers: {
+			worker: typeof cluster.worker;
+			isReady: boolean;
+		}[] = [];
+
+		let errorInWorker: unknown;
+
+		const sendDataToWorker = async (games: Game[], idxConfig: number) => {
+			let freeWorker = workers.find((w) => w.isReady);
+			if (!freeWorker) {
+				const freeIndex = workers.length;
+				freeWorker = {
+					worker: forkWorker(freeIndex),
+					isReady: false
+				};
+				workers.push(freeWorker);
+
+				// normally we could use w.send(...) outside of this function
+				// there is a bug in node though, which sometimes sends the data too early
+				// --> wait until the worker sends a custom ready message
+				// see: https://github.com/nodejs/node/issues/39854
+				await EventEmitter.once(freeWorker.worker, 'message');
+			}
+
+			freeWorker.isReady = false;
+			freeWorker.worker.send({
+				games,
+				analyzerData: this.configs[idxConfig].analyzerData,
+				idxConfig
 			});
+		};
 
-			this.attachConfigs(configArray);
+		// creates a new worker, that will process an array of games
+		const forkWorker = (idx: number) => {
+			const w = cluster.fork();
 
-			const workers: {
-				worker: typeof cluster.worker;
-				isReady: boolean;
-			}[] = [];
-
-			const sendDataToWorker = async (
-				games: Game[],
-				idxConfig: number
-			) => {
-				let freeWorker = workers.find((w) => w.isReady);
-				if (!freeWorker) {
-					const freeIndex = workers.length;
-					freeWorker = {
-						worker: forkWorker(freeIndex),
-						isReady: false
-					};
-					workers.push(freeWorker);
-					await EventEmitter.once(freeWorker.worker, 'message');
-				}
-
-				freeWorker.isReady = false;
-				freeWorker.worker.send({
-					games,
-					analyzerData: this.configs[idxConfig].analyzerData,
-					idxConfig
-				});
-			};
-
-			// creates a new worker, that will process an array of games
-			const forkWorker = (idx: number) => {
-				const w = cluster.fork();
-
-				// on worker finish
-				w.on('message', (msg: 'readyForData' | WorkerMessage) => {
-					// normally we could use w.send(...) outside of this listener
-					// there is a bug in node though, which sometimes sends the data too early
-					// --> wait until the worker sends a custom ready message
-					// see: https://github.com/nodejs/node/issues/39854
-					if (msg !== 'readyForData') {
+			// on worker finish
+			w.on('message', (msg: WorkerMessage) => {
+				switch (msg.type) {
+					case 'gamesProcessed': {
 						const {
 							idxConfig,
 							gameAnalyzers,
@@ -215,109 +211,116 @@ class GameProcessor {
 							);
 						}
 						this.configs[idxConfig].processedMoves += cntMoves;
-
-						workers[idx].isReady = true;
-
-						// if this worker was the last one, emit 'finished' event
-						if (
-							workers.filter((w) => !w.isReady).length === 0 &&
-							readerFinished
-						) {
-							status.emit('finished');
-						}
+						break;
 					}
-				});
-				return w;
-			};
-
-			const gameStore: Game[][] = [];
-			configArray.forEach(() => {
-				gameStore.push([]);
-			});
-			let game: Game = { moves: [] };
-
-			// init line reader
-			const lr = createInterface({
-				input: createReadStream(path),
-				crlfDelay: Infinity
-			});
-
-			// on new line
-			lr.on('line', (line) => {
-				// data tag
-				if (this.readInHeader && line.startsWith('[')) {
-					const key = line.match(/\[(.*?)\s/)[1];
-					const value = line.match(/"(.*?)"/)[1];
-
-					game[key] = value;
-
-					// moves
-				} else if (line.match(/^\d/)) {
-					// add current move line
-					game.moves = game.moves.concat(
-						line
-							.replace(/(\d+\.{1,3}\s)|(\s?\{(.*?)\})/g, '')
-							.split(' ')
-					);
-
-					// only if the result marker is in the line, all moves have been read -> start analyzing
-					if (line.match(/((1-0)|(0-1)|(1\/2-1\/2)|(\*))$/)) {
-						// remove the result from the moves array
-						game.moves.pop();
-
-						for (
-							let idxCfg = 0;
-							idxCfg < this.configs.length;
-							idxCfg += 1
-						) {
-							const cfg = this.configs[idxCfg];
-							if (
-								!cfg.isDone &&
-								(!cfg.config.hasFilter ||
-									cfg.config.filter(game))
-							) {
-								cfg.cntGames += 1;
-								if (isMultithreaded) {
-									gameStore[idxCfg].push(game);
-
-									// if enough games have been read in, start worker threads and let them analyze
-									if (
-										cfg.cntGames %
-											multiThreadCfg.batchSize ===
-										0
-									) {
-										void sendDataToWorker(
-											gameStore[idxCfg],
-											idxCfg
-										);
-
-										gameStore[idxCfg] = [];
-									}
-								} else {
-									this.processGame(game, cfg);
-								}
-								if (cfg.cntGames >= cfg.config.cntGames)
-									cfg.isDone = true;
-							}
-						}
-
-						game = { moves: [] };
+					// in case of error we stop reading in lines and save the error to throw it again later
+					// we cannot immediately throw it when other worker threads are still running
+					case 'error': {
+						errorInWorker = msg.error;
+						lr.close();
+						break;
 					}
 				}
-				const allDone = this.configs.reduce(
-					(a, c) => a && c.isDone,
-					true
+
+				if (msg.type === 'error' || msg.type === 'gamesProcessed') {
+					workers[idx].isReady = true;
+
+					// if this worker was the last one, emit 'finished' event
+					if (
+						workers.filter((w) => !w.isReady).length === 0 &&
+						readerFinished
+					) {
+						status.emit('finished');
+					}
+				}
+			});
+			return w;
+		};
+
+		const gameStore: Game[][] = [];
+		configArray.forEach(() => {
+			gameStore.push([]);
+		});
+		let game: Game = { moves: [] };
+
+		// init line reader
+		const lr = createInterface({
+			input: createReadStream(path),
+			crlfDelay: Infinity
+		});
+
+		// on new line
+		lr.on('line', (line) => {
+			// data tag
+			if (this.readInHeader && line.startsWith('[')) {
+				const key = line.match(/\[(.*?)\s/)[1];
+				const value = line.match(/"(.*?)"/)[1];
+
+				game[key] = value;
+
+				// moves
+			} else if (line.match(/^\d/)) {
+				// add current move line
+				game.moves = game.moves.concat(
+					line
+						.replace(/(\d+\.{1,3}\s)|(\s?\{(.*?)\})/g, '')
+						.split(' ')
 				);
 
-				if (allDone) {
-					lr.close();
-					lr.removeAllListeners();
+				// only if the result marker is in the line, all moves have been read -> start analyzing
+				if (line.match(/((1-0)|(0-1)|(1\/2-1\/2)|(\*))$/)) {
+					// remove the result from the moves array
+					game.moves.pop();
+
+					for (
+						let idxCfg = 0;
+						idxCfg < this.configs.length;
+						idxCfg += 1
+					) {
+						const cfg = this.configs[idxCfg];
+						if (
+							!cfg.isDone &&
+							(!cfg.config.hasFilter || cfg.config.filter(game))
+						) {
+							cfg.cntGames += 1;
+							if (isMultithreaded) {
+								gameStore[idxCfg].push(game);
+
+								// if enough games have been read in, start worker threads and let them analyze
+								if (
+									cfg.cntGames % multiThreadCfg.batchSize ===
+									0
+								) {
+									void sendDataToWorker(
+										gameStore[idxCfg],
+										idxCfg
+									);
+
+									gameStore[idxCfg] = [];
+								}
+							} else {
+								this.processGame(game, cfg);
+							}
+							if (cfg.cntGames >= cfg.config.cntGames)
+								cfg.isDone = true;
+						}
+					}
+
+					game = { moves: [] };
 				}
-			});
+			}
+			const allDone = this.configs.reduce((a, c) => a && c.isDone, true);
 
-			await EventEmitter.once(lr, 'close');
+			if (allDone) {
+				lr.close();
+				lr.removeAllListeners();
+			}
+		});
 
-			// if on end there are still unprocessed games, start a last worker batch
+		await EventEmitter.once(lr, 'close');
+
+		// if on end there are still unprocessed games, start a last worker batch
+		if (!errorInWorker) {
 			for (const [idx, games] of gameStore.entries()) {
 				if (games.length > 0) {
 					if (games.length > multiThreadCfg.batchSize) {
@@ -339,30 +342,31 @@ class GameProcessor {
 					}
 				}
 			}
+		}
 
-			readerFinished = true;
-			if (isMultithreaded) await EventEmitter.once(status, 'finished');
-			for (const w of workers) w.worker.kill();
+		readerFinished = true;
+		console.log('waiting');
+		if (isMultithreaded) await EventEmitter.once(status, 'finished');
+		console.log('waited');
+		for (const w of workers) w.worker.kill();
 
-			// trigger finish events on trackers
-			for (const cfg of configArray) {
-				if (cfg.trackers) {
-					for (const tracker of cfg.trackers) {
-						tracker.finish?.();
-					}
+		if (errorInWorker) throw errorInWorker;
+
+		// trigger finish events on trackers
+		for (const cfg of configArray) {
+			if (cfg.trackers) {
+				for (const tracker of cfg.trackers) {
+					tracker.finish?.();
 				}
 			}
-
-			const returnVals: GameAndMoveCount[] = this.configs.map((cfg) => ({
-				cntGames: cfg.cntGames,
-				cntMoves: cfg.processedMoves
-			}));
-
-			return returnVals;
-		} catch (err) {
-			console.log(err);
-			return [{ cntGames: -1, cntMoves: -1 }];
 		}
+
+		const returnVals: GameAndMoveCount[] = this.configs.map((cfg) => ({
+			cntGames: cfg.cntGames,
+			cntMoves: cfg.processedMoves
+		}));
+
+		return returnVals;
 	}
 
 	processGame(game: Game, analysisCfg: GameProcessorAnalysisConfig): void {
@@ -372,24 +376,19 @@ class GameProcessor {
 		}
 
 		const { moves } = game;
-		try {
-			this.activePlayer = 'w';
-			for (const move of moves) {
-				// parse move from san to coordinates (and meta info)
-				const currentMoveActions = this.parseMove(move);
 
-				// move based analyzers
-				for (const analyzer of analysisCfg.analyzers.move) {
-					analyzer.analyze(currentMoveActions);
-				}
+		this.activePlayer = 'w';
+		for (const move of moves) {
+			// parse move from san to coordinates (and meta info)
+			const currentMoveActions = this.parseMove(move);
 
-				this.board.applyActions(currentMoveActions);
-				this.activePlayer = this.activePlayer === 'w' ? 'b' : 'w';
+			// move based analyzers
+			for (const analyzer of analysisCfg.analyzers.move) {
+				analyzer.analyze(currentMoveActions);
 			}
-		} catch (err) {
-			console.log(err, game);
-			this.board.printPosition();
-			// throw new Error();
+
+			this.board.applyActions(currentMoveActions);
+			this.activePlayer = this.activePlayer === 'w' ? 'b' : 'w';
 		}
 
 		// notify move analyzers that the current game is done
@@ -740,8 +739,13 @@ class GameProcessor {
 			}
 		}
 
-		console.log(this.board.getPositionsForToken(player, token));
-		throw new MoveNotFoundException(token, player, tarRow, tarCol);
+		throw new MoveNotFoundExceptionData(
+			token,
+			player,
+			tarRow,
+			tarCol,
+			this.board
+		);
 	}
 
 	/**

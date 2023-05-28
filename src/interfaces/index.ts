@@ -114,9 +114,24 @@ export interface GameAndMoveCountFull extends GameAndMoveCount {
 	mps: number;
 }
 
-export interface WorkerMessage {
+export type WorkerMessage =
+	| GamesProcessedMessage
+	| ReadyForDataMessage
+	| WorkerErrorMessage;
+
+interface GamesProcessedMessage {
+	type: 'gamesProcessed';
 	cntMoves: number;
 	gameAnalyzers: Tracker[];
 	moveAnalyzers: Tracker[];
 	idxConfig: number;
+}
+
+interface ReadyForDataMessage {
+	type: 'readyForData';
+}
+
+interface WorkerErrorMessage {
+	type: 'error';
+	error: unknown;
 }
