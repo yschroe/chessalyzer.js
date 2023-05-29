@@ -9,13 +9,14 @@ export interface GameProcessorConfig {
 export interface GameProcessorAnalysisConfig {
 	analyzers: { move: Tracker[]; game: Tracker[] };
 	processedMoves: number;
+	processedGames: number;
 }
 
 export interface GameProcessorAnalysisConfigFull
 	extends GameProcessorAnalysisConfig {
 	config: GameProcessorConfig;
 	analyzerData: { name: string; cfg: unknown; path: string }[];
-	cntGames: number;
+	cntReadGames: number;
 	isDone: boolean;
 }
 
@@ -141,6 +142,7 @@ export type WorkerMessage =
 interface GamesProcessedMessage {
 	type: 'gamesProcessed';
 	cntMoves: number;
+	cntGames: number;
 	gameAnalyzers: Tracker[];
 	moveAnalyzers: Tracker[];
 	idxConfig: number;

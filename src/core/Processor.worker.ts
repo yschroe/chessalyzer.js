@@ -37,7 +37,8 @@ process.on(
 			// select needed trackers
 			const cfg: GameProcessorAnalysisConfig = {
 				analyzers: { move: [], game: [] },
-				processedMoves: 0
+				processedMoves: 0,
+				processedGames: 0
 			};
 			for (const a of msg.analyzerData) {
 				const currentAnalyzer: BaseTracker = new TrackerList[a.name]();
@@ -56,14 +57,17 @@ process.on(
 				} as WorkerMessage);
 			}
 
-			// send result of batch to master
-			process.send({
+			const result: WorkerMessage = {
 				type: 'gamesProcessed',
 				cntMoves: cfg.processedMoves,
+				cntGames: cfg.processedGames,
 				gameAnalyzers: cfg.analyzers.game,
 				moveAnalyzers: cfg.analyzers.move,
 				idxConfig: msg.idxConfig
-			} as WorkerMessage);
+			};
+
+			// send result of batch to master
+			process.send(result);
 		})();
 	}
 );

@@ -12,7 +12,7 @@ import CustomGameTracker from './CustomGameTracker.js';
 
 const header = await Chessalyzer.analyzePGN(
 	'./manualTests/lichess_db_standard_rated_2014-09.pgn',
-	{ config: { cntGames: 500000, filter: () => true } },
+	{ config: { cntGames: 750000, filter: () => true } },
 	null
 );
 console.log(header);

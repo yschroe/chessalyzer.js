@@ -17,6 +17,19 @@ import GameParser from './GameParser.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+class ChessWorker {
+	worker: ChildProcess;
+	isReady: boolean;
+
+	constructor(pathToFile: string) {
+		this.worker = fork(pathToFile);
+
+		// ready status must be false initially or we run into a race condition
+		// where are newly created worker is not taken into account for work left
+		this.isReady = false;
+	}
+}
+
 /**
  * Class that processes games.
  */
@@ -26,11 +39,9 @@ class GameProcessor {
 	readInHeader: boolean;
 	readerFinished: boolean;
 	status: EventEmitter;
-	workers: {
-		worker: ChildProcess;
-		isReady: boolean;
-	}[];
+	workers: ChessWorker[];
 	errorInWorker: unknown;
+	readInGamesCount: number[];
 
 	constructor() {
 		this.configs = [];
@@ -97,14 +108,14 @@ class GameProcessor {
 							!cfg.isDone &&
 							(!cfg.config.hasFilter || cfg.config.filter(game))
 						) {
-							cfg.cntGames += 1;
+							cfg.cntReadGames += 1;
 							if (isMultithreaded) {
 								gameStore[idxCfg].push(game);
 
 								// if enough games have been read in, start worker threads and let them analyze
 								if (
-									cfg.cntGames % multiThreadCfg.batchSize ===
-									0
+									gameStore[idxCfg].length ===
+									multiThreadCfg.batchSize
 								) {
 									void this.sendDataToWorker(
 										gameStore[idxCfg],
@@ -116,7 +127,7 @@ class GameProcessor {
 							} else {
 								gameParser.processGame(game, cfg);
 							}
-							if (cfg.cntGames >= cfg.config.cntGames)
+							if (cfg.cntReadGames >= cfg.config.cntGames)
 								cfg.isDone = true;
 						}
 					}
@@ -128,6 +139,7 @@ class GameProcessor {
 
 			if (allDone) {
 				this.lineReader.close();
+				// this.lineReader.removeAllListeners();
 			}
 		});
 
@@ -139,29 +151,30 @@ class GameProcessor {
 		if (!this.errorInWorker) {
 			for (const [idx, games] of gameStore.entries()) {
 				if (games.length > 0) {
-					if (games.length > multiThreadCfg.batchSize) {
-						const nEndForks = Math.ceil(
-							games.length / multiThreadCfg.batchSize
+					const nEndForks = Math.ceil(
+						games.length / multiThreadCfg.batchSize
+					);
+					// console.log(
+					// 	`${games.length} games left. Starting ${nEndForks} workers.`
+					// );
+					for (let i = 0; i < nEndForks; i += 1) {
+						void this.sendDataToWorker(
+							games.slice(
+								i * multiThreadCfg.batchSize,
+								i * multiThreadCfg.batchSize +
+									multiThreadCfg.batchSize
+							),
+							idx
 						);
-						for (let i = 0; i < nEndForks; i += 1) {
-							void this.sendDataToWorker(
-								games.slice(
-									i * multiThreadCfg.batchSize,
-									i * multiThreadCfg.batchSize +
-										multiThreadCfg.batchSize
-								),
-								idx
-							);
-						}
-					} else {
-						void this.sendDataToWorker(games, idx);
 					}
 				}
 			}
 		}
 
 		this.readerFinished = true;
+
 		if (isMultithreaded) await EventEmitter.once(this.status, 'finished');
+		// console.log(`${this.workers.length} Workers were spawned.`);
 		for (const w of this.workers) w.worker.kill();
 
 		if (this.errorInWorker) throw this.errorInWorker;
@@ -176,7 +189,7 @@ class GameProcessor {
 		}
 
 		const returnVals: GameAndMoveCount[] = this.configs.map((cfg) => ({
-			cntGames: cfg.cntGames,
+			cntGames: cfg.processedGames,
 			cntMoves: cfg.processedMoves
 		}));
 
@@ -192,8 +205,9 @@ class GameProcessor {
 				},
 				analyzerData: [],
 				config: this.checkConfig(cfg.config || {}),
-				cntGames: 0,
 				processedMoves: 0,
+				processedGames: 0,
+				cntReadGames: 0,
 				isDone: false
 			};
 
@@ -217,6 +231,7 @@ class GameProcessor {
 			}
 
 			this.configs.push(tempCfg);
+			this.readInGamesCount = configs.map((_val) => 0);
 		}
 	}
 
@@ -235,13 +250,13 @@ class GameProcessor {
 	}
 
 	private async sendDataToWorker(games: Game[], idxConfig: number) {
+		// get first free worker
 		let freeWorker = this.workers.find((w) => w.isReady);
+
+		// if there is no free worker, spawn new one
 		if (!freeWorker) {
-			const freeIndex = this.workers.length;
-			freeWorker = {
-				worker: this.forkWorker(freeIndex),
-				isReady: false
-			};
+			freeWorker = this.forkWorker();
+
 			this.workers.push(freeWorker);
 
 			// normally we could use w.send(...) outside of this function
@@ -251,6 +266,7 @@ class GameProcessor {
 			await EventEmitter.once(freeWorker.worker, 'message');
 		}
 
+		// send data to worker for processing
 		freeWorker.isReady = false;
 		freeWorker.worker.send({
 			games,
@@ -260,18 +276,19 @@ class GameProcessor {
 	}
 
 	// creates a new worker, that will process an array of games
-	private forkWorker(idx: number) {
-		const w = fork(`${__dirname}/Processor.worker.js`);
+	private forkWorker() {
+		const w = new ChessWorker(`${__dirname}/Processor.worker.js`);
 
 		// on worker finish
-		w.on('message', (msg: WorkerMessage) => {
+		w.worker.on('message', (msg: WorkerMessage) => {
 			switch (msg.type) {
 				case 'gamesProcessed': {
 					const {
 						idxConfig,
 						gameAnalyzers,
 						moveAnalyzers,
-						cntMoves
+						cntMoves,
+						cntGames
 					} = msg;
 					// add tracker data from this worker
 					for (let i = 0; i < gameAnalyzers.length; i += 1) {
@@ -285,6 +302,7 @@ class GameProcessor {
 						);
 					}
 					this.configs[idxConfig].processedMoves += cntMoves;
+					this.configs[idxConfig].processedGames += cntGames;
 					break;
 				}
 				// in case of error we stop reading in lines and save the error to throw it again later
@@ -297,7 +315,7 @@ class GameProcessor {
 			}
 
 			if (msg.type === 'error' || msg.type === 'gamesProcessed') {
-				this.workers[idx].isReady = true;
+				w.isReady = true;
 
 				// if this worker was the last one, emit 'finished' event
 				if (

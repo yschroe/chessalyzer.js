@@ -85,6 +85,7 @@ class GameParser {
 		}
 
 		analysisCfg.processedMoves += moves.length;
+		analysisCfg.processedGames += 1;
 		this.board.reset();
 	}
 
