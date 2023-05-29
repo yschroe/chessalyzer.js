@@ -238,7 +238,7 @@ class GameProcessor {
 			}
 
 			this.configs.push(tempCfg);
-			this.readInGamesCount = configs.map((_val) => 0);
+			this.readInGamesCount = configs.map(() => 0);
 		}
 	}
 
