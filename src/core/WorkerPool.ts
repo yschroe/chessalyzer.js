@@ -1,4 +1,4 @@
-// https://nodejs.org/api/async_context.html#using-asyncresource-for-a-worker-thread-pool
+// based on: https://nodejs.org/api/async_context.html#using-asyncresource-for-a-worker-thread-pool
 import { AsyncResource } from 'node:async_hooks';
 import { EventEmitter } from 'node:events';
 import { Worker } from 'node:worker_threads';
@@ -54,6 +54,7 @@ export default class WorkerPool extends EventEmitter {
 	addNewWorker(filePath: string) {
 		const worker: Worker & { [kTaskInfo]?: WorkerPoolTaskInfo } =
 			new Worker(filePath);
+
 		worker.on('message', (result: WorkerMessage) => {
 			// In case of success: Call the callback that was passed to `runTask`,
 			// remove the `TaskInfo` associated with the Worker, and mark it as free

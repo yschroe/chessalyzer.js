@@ -9,6 +9,14 @@ import type {
 } from '../interfaces/index.js';
 
 export default class Chessalyzer {
+	/**
+	 * Main function for analyzing PGN files.
+	 * @param pathToPgn Path to the .pgn file which should be parsed and analyzed.
+	 * @param configs Configuration for the analysis. Via this config the games can be filtered and analyzers can be attached.
+	 * @param multithreadCfg Configuration for multithreaded analysis.
+	 *  Here the size per batch that shall be analyzed on a separate thread can be set.
+	 * @returns Meta information about the analysis like the amount of processed games/moves and the time it took.
+	 */
 	static async analyzePGN(
 		pathToPgn: string,
 		configs: AnalysisConfig | AnalysisConfig[] = { trackers: [] },
@@ -44,6 +52,10 @@ export default class Chessalyzer {
 		}
 	}
 
+	/**
+	 * Prints HeatmapData to the console.
+	 * @param data Data for the heatmap.
+	 */
 	static printHeatmap(data: HeatmapData) {
 		const color1 = [255, 128, 0];
 		const color2 = [0, 128, 255];

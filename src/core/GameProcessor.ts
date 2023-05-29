@@ -73,6 +73,11 @@ class GameProcessor {
 		}
 	}
 
+	/**
+	 * Main function for parsing and analyzing.
+	 * @param path Path to the PGN file.
+	 * @returns Count of processed games and moves.
+	 */
 	async processPGN(path: string): Promise<GameAndMoveCount[]> {
 		const isMultithreaded = this.multithreadConfig !== null;
 
@@ -221,6 +226,12 @@ class GameProcessor {
 		return returnVals;
 	}
 
+	/**
+	 * If configured for multithreading, this function adds the result from a worker
+	 * thread to the main thread.
+	 * @param err Error object, if an error occured.
+	 * @param result The result of the PGN parsing from the worker thread.
+	 */
 	private addDataFromWorker(err: Error, result: WorkerMessage) {
 		if (err) throw err;
 

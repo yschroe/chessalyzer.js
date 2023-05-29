@@ -51,6 +51,13 @@ class GameParser {
 		this.activePlayer = 'w';
 	}
 
+	/**
+	 * Main function for parsing a read-in PGN game. In here the moves are transformed from algebraic notation
+	 * to a list of different Actions like `MoveAction` or `CaptureAction`. This parsed data is the passed
+	 * into the Trackers for generating the stats.
+	 * @param game A game read-in by the GameProcessor class.
+	 * @param analysisCfg Trackers into which the parsed data should be passed.
+	 */
 	processGame(game: Game, analysisCfg: GameProcessorAnalysisConfig): void {
 		// game based analyzers
 		for (const analyzer of analysisCfg.analyzers.game) {
@@ -89,11 +96,19 @@ class GameParser {
 		this.board.reset();
 	}
 
+	/**
+	 * Resets the board so a new game can be started.
+	 */
 	reset(): void {
 		this.board.reset();
 		this.activePlayer = 'w';
 	}
 
+	/**
+	 * Main function to parse a single move from algebraic notation to a list of `Action`s.
+	 * @param rawMove The move in standard algebraic notation.
+	 * @returns A list of `Action`s to perform on the board.
+	 */
 	private parseMove(rawMove: string): Action[] {
 		const token = rawMove.substring(0, 1) as Token;
 		const san = GameParser.preprocess(rawMove);
@@ -107,6 +122,11 @@ class GameParser {
 		return this.pieceMove(san);
 	}
 
+	/**
+	 * Parses a single pawn move from algebraic notation to a list of `Action`s.
+	 * @param san The move in standard algebraic notation.
+	 * @returns A list of `Action`s to perform on the board.
+	 */
 	private pawnMove(san: string): Action[] {
 		const actions: Action[] = [];
 
@@ -197,6 +217,11 @@ class GameParser {
 		return actions;
 	}
 
+	/**
+	 * Parses a single piece move (KQBNR) from algebraic notation to a list of `Action`s.
+	 * @param san The move in standard algebraic notation.
+	 * @returns A list of `Action`s to perform on the board.
+	 */
 	private pieceMove(san: string): Action[] {
 		const actions: Action[] = [];
 		const player = this.activePlayer;
@@ -291,6 +316,11 @@ class GameParser {
 		return actions;
 	}
 
+	/**
+	 * Parses a castle move ('O-O' or 'O-O-O') from algebraic notation to a list of `MoveAction`s.
+	 * @param san The move in standard algebraic notation.
+	 * @returns A list of `MoveAction`s to perform on the board.
+	 */
 	private castle(san: string): MoveAction[] {
 		const actions: MoveAction[] = [];
 
@@ -505,8 +535,13 @@ class GameParser {
 		return isInCheck;
 	}
 
+	/**
+	 * Helper function to remove special tokens (#, +, ?, !) like ratings (??, ?!) or the check mark (+) from the move.
+	 * @param move The raw move in standard algebraic notation.
+	 * @returns The cleaned move with removed special tokens.
+	 */
 	private static preprocess(move: string): string {
-		return move.replace(/#|\+|\?|!/g, '');
+		return move.replace(/[#+?!]/g, '');
 	}
 }
 
