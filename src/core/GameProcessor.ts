@@ -48,9 +48,10 @@ class GameProcessor {
 	): Promise<GameAndMoveCount[]> {
 		const isMultithreaded = multiThreadCfg !== null;
 
-		cluster.setupPrimary({
-			exec: `${__dirname}/Processor.worker.js`
-		});
+		if (isMultithreaded)
+			cluster.setupPrimary({
+				exec: `${__dirname}/Processor.worker.js`
+			});
 
 		this.attachConfigs(configArray);
 
@@ -224,7 +225,7 @@ class GameProcessor {
 	}
 
 	private checkConfig(config: AnalysisConfig['config']): GameProcessorConfig {
-		const hasFilter = config.filter !== undefined;
+		const hasFilter = !!config.filter;
 
 		// if we need to filter the games, we need the header informations
 		if (hasFilter) this.readInHeader = true;
