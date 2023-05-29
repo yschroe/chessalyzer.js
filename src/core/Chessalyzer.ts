@@ -7,13 +7,12 @@ import type {
 	HeatmapData,
 	MultithreadConfig
 } from '../interfaces/index.js';
-import { error } from 'node:console';
 
 export default class Chessalyzer {
 	static async analyzePGN(
 		pathToPgn: string,
 		configs: AnalysisConfig | AnalysisConfig[] = { trackers: [] },
-		multithreadCfg: MultithreadConfig | null = { batchSize: 1000 }
+		multithreadCfg: MultithreadConfig | null = { batchSize: 5000 }
 	): Promise<GameAndMoveCountFull[] | GameAndMoveCountFull> {
 		// handler for single analyzer or array of analyzers
 		let configArray: AnalysisConfig[] = [];
