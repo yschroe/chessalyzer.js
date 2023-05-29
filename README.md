@@ -156,7 +156,7 @@ const heatmapData = tileT1.generateComparisonHeatmap(tileT2, func);
 
 ## Multithreaded analysis
 
-Per default chessalyzer.js uses the Node.js [Cluster module](https://nodejs.org/api/cluster.html) to read-in the pgn file and analyze the data in parallel.
+Per default chessalyzer.js uses Node.js [Worker Threads](https://nodejs.org/api/worker_threads.html) to read-in the pgn file and analyze the data in parallel.
 
 ```javascript
 // start a multithreaded batch analysis for the PGN file at <pathToPgnFile>
