@@ -56,7 +56,7 @@ Chessalyzer.analyzePGN('<pathToPgnFile', yourAnalysisConfig);
 
 # How it works
 
-Chessalyzer.js consists of two submodules which work hand-in-hand: The first module is the `Chessalyzer` class which handles the PGN parsing and provides you with a function for previewing heatmaps. The class by itself is static (meaning it can not be instantiated and does not store data in itself) and does not track any statistics though. For this you need a `Tracker` object which you then can pass into the parsing function of the Chessalyzer class. The Chessalyzer class recognizes the Tracker objects and passes data into it. Typically this will either be `MoveData` containing information about e.g. which piece moved from where to where or which piece took which other piece for each move of each game. Additionally you can also use the information from the header of the PGN file, where you can find e.g. the player names and which opening was played (ECO code).
+Chessalyzer.js consists of two submodules which work hand-in-hand: The first module is the `Chessalyzer` class which handles the PGN parsing and provides you with a function for previewing heatmaps. The class by itself is static (meaning it can not be instantiated and does not store data in itself) and does not track any statistics though. For this you need a `Tracker` object which you then can pass into the parsing function of the Chessalyzer class. The Chessalyzer class recognizes the Tracker objects and passes data into it. Typically this will either be an `Action[]` containing information about e.g. which piece moved from where to where or which piece captured which other piece for each move of each game. Additionally you can also use the information from the header of the PGN file, where you can find e.g. the player names and which opening was played (ECO code).
 
 Inside the Tracker object you can do whatever you want with the data. If you want to track some obscure stat like how often the e pawn was promoted to a rook on the a8 square you could write a Tracker for that. Chessalyzer.js ships with three different preconfigured Trackers which should cover most usecases, so if you are happy with that you don't need to code your own Tracker.
 
@@ -70,10 +70,10 @@ Let's start with a basic example. Here we simply want to track the tile occupati
 
 ```javascript
 // import the library and trackers
-import { Chessalyzer, Tracker } from 'chessalyzer.js';
+import { Chessalyzer, TileTracker } from 'chessalyzer.js';
 
 // create basic tile tracker
-const tileTracker = new Tracker.Tile();
+const tileTracker = new TileTracker();
 
 // start a batch analysis for the PGN file at <pathToPgnFile>
 // the data is tracked directly inside the tileTracker instance
@@ -117,8 +117,8 @@ You can also generate a comparison heat map where you can compare the data of tw
 
 ```javascript
 // create two Tile Trackers
-const tileT1 = new Tracker.Tile();
-const tileT2 = new Tracker.Tile();
+const tileT1 = new TileTracker();
+const tileT2 = new TileTracker();
 
 // start the analysis
 // instead of passing just one analysis config you can also pass an array of configs
@@ -185,12 +185,12 @@ To use singlethreaded mode in which the games are read in and analyzed sequentia
 
 To use a custom tracker with your multithreaded analysis please see the important notes at the [Custom Trackers](#custom-trackers) section.
 
-# Heatmap analysis functions
+# Heatmap generation functions
 
-The function you create for heatmap generation gets passed up to four parameters (inside `generateHeatMap()`):
+The function you create for heatmap generation gets passed up to four parameters (inside `generateHeatMap(...)`):
 
-1. `data`: The data that is the basis for the heatmap. Per default this data is the Tracker you called the `generateHeatMap()` function from itself.
-2. `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The `generateHeatMap()` function loops over every square of the board to calculate a heat map value for each tile. `sqrData` is an object with the following entries:
+1. `data`: The data that is the basis for the heatmap. Per default this data is the Tracker you called the `generateHeatMap(...)` function from itself.
+2. `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The `generateHeatMap(...)` function loops over every square of the board to calculate a heat map value for each tile. `sqrData` is an object with the following entries:
 
     ```typescript
     interface SquareData {
@@ -218,9 +218,9 @@ The function you create for heatmap generation gets passed up to four parameters
 
 ## Built-in
 
-chessalyzer.js comes with three built-in trackers, available from the `Chessalyzer.Tracker` object:
+chessalyzer.js comes with three built-in trackers, which can be directly imported into your script:
 
-`Tracker.Game`:
+`GameTracker`:
 
 -   `result`
     An object which counts the results of the tracked games. Contains the keys `white`, `draw` and `black`
@@ -231,7 +231,7 @@ chessalyzer.js comes with three built-in trackers, available from the `Chessalyz
 -   `cntGames`  
     Number of games processed
 
-`Tracker.Piece`:
+`PieceTracker`:
 
 -   `b`  
     Blacks pieces. Tracks how often a specific black piece took a specific white piece. E.g. `b.Pa.Qd` tracks how often the black a-pawn took whites queen.
@@ -239,7 +239,7 @@ chessalyzer.js comes with three built-in trackers, available from the `Chessalyz
 -   `w`  
     Same for whites pieces.
 
-`Tracker.Tile`:
+`TileTracker`:
 
 -   `tiles[][]`  
     Represents the tiles of the board. Has two objects (`b`, `w`) on the first layer, and then each piece inside these objects as a second layer (`Pa`, `Ra` etc.). For each piece following stats are tracked:
@@ -255,7 +255,7 @@ chessalyzer.js comes with three built-in trackers, available from the `Chessalyz
 
 ## Custom Trackers
 
-If you want to have other stats tracked you can easily create a custom tracker. You must derive your tracker from the `Tracker.Base` class.
+If you want to have other stats tracked you can easily create a custom tracker. You must derive your tracker from the `BaseTracker` class.
 
 Your tracker also must have the following properties:
 
@@ -268,7 +268,7 @@ Your tracker also must have the following properties:
 -   `track(data)`:  
      The main analysis function that is called during the PGN processing. Depending on your `type` the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The `data` object contains the following properties:
 
-    -   For move-typed trackers: An `Action` array with one or more entries of the following action types. If e.g. a piece captures another piece this array will contain a `CaptureAction` and a `MoveAction`:
+    -   For move-typed trackers: An `Action` array with one or more entries of the following action types:
 
         ```typescript
         type Action = MoveAction | CaptureAction | PromoteAction;
@@ -299,6 +299,8 @@ Your tracker also must have the following properties:
             on: number[];
         }
         ```
+
+        If e.g. a piece captures another piece this array will contain a `CaptureAction` and a `MoveAction`
 
     -   For game-typed trackers:
         `data` is an object that contains `{key: value}` entries, where `key` is the property in the header of the PGN (e.g. `'WhiteElo'`, case sensitive) and `value` is the respective value of the property. The property `data.moves` is an array that contains the moves of the game in standard algebraic notation.
