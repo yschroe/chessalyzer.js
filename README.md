@@ -169,13 +169,13 @@ await Chessalyzer.analyzePGN(
             cntGames: 10000
         }
     },
-    { batchSize: 8000 }
+    { batchSize: 500 }
 );
 
 // ...
 ```
 
-`analyzePGN(...)` in multithreaded mode reads in chunks of games of size `batchSize` and starts the analysis of this chunk in a different thread. While the other tread parses and analyzes the games, the next chunk is read-in from the PGN file in the main thread in parallel. Every time the defined count of games has been read in, chessalyzer.js checks if any of the previously started threads is ready to analyze new data. If no free thread is found a new thread is started.
+`analyzePGN(...)` in multithreaded mode reads in chunks of games of size `batchSize` and starts the analysis of this chunk in a different thread. While the other thread parses and analyzes the games, the next chunk is read-in from the PGN file in the main thread in parallel. Every time the defined count of games has been read in, chessalyzer.js checks if any of the previously started threads is ready to analyze new data. If no free thread is found a new thread is started.
 
 ### Forcing single threaded mode
 
