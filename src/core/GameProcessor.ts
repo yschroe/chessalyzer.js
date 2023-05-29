@@ -1,9 +1,9 @@
 import { createReadStream } from 'node:fs';
 import { Interface, createInterface } from 'node:readline';
 import { EventEmitter } from 'node:events';
-import cluster, { Worker } from 'node:cluster';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ChildProcess, fork } from 'node:child_process';
 import type {
 	Game,
 	AnalysisConfig,
@@ -27,7 +27,7 @@ class GameProcessor {
 	readerFinished: boolean;
 	status: EventEmitter;
 	workers: {
-		worker: Worker;
+		worker: ChildProcess;
 		isReady: boolean;
 	}[];
 	errorInWorker: unknown;
@@ -47,11 +47,6 @@ class GameProcessor {
 		multiThreadCfg: MultithreadConfig | null
 	): Promise<GameAndMoveCount[]> {
 		const isMultithreaded = multiThreadCfg !== null;
-
-		if (isMultithreaded)
-			cluster.setupPrimary({
-				exec: `${__dirname}/Processor.worker.js`
-			});
 
 		this.attachConfigs(configArray);
 
@@ -133,10 +128,11 @@ class GameProcessor {
 
 			if (allDone) {
 				this.lineReader.close();
-				// lr.removeAllListeners();
 			}
 		});
 
+		// since the line reader reads in lines async, we need to wait here until
+		// all lines have been read in
 		await EventEmitter.once(this.lineReader, 'close');
 
 		// if on end there are still unprocessed games, start a last worker batch
@@ -265,7 +261,7 @@ class GameProcessor {
 
 	// creates a new worker, that will process an array of games
 	private forkWorker(idx: number) {
-		const w = cluster.fork();
+		const w = fork(`${__dirname}/Processor.worker.js`);
 
 		// on worker finish
 		w.on('message', (msg: WorkerMessage) => {
