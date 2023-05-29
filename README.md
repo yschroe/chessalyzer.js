@@ -28,7 +28,7 @@ A JavaScript library for batch analyzing chess games.
 -   Filter games (e.g. only analyze games where WhiteElo > 1800)
 -   Fully modular, track only the stats you need to preserve performance
 -   Generate heatmaps out of the generated data
--   It's fast and highly parallelized: Processes >6.000.000 moves/s on an Apple M1, >3.300.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
+-   It's fast and highly parallelized: Processes >6.850.000 moves/s on an Apple M1, >3.300.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
 -   Handles big files easily
 -   Just one dependency (chalk)
 
@@ -381,7 +381,8 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
     -   Restructured the return value of the move parser. Now an array of different `Action` types is returned to easier differentiate between actions like 'Move' or 'Capture'. Previously all possible actions were included in the single `MoveData` object. Your custom move trackers will need to be adapted.
     -   Built-in trackers must now be imported separately (`TileTracker`, `PieceTracker`, `GameTracker`) instead of importing just the `Tracker` object.
-    -   Various minor performance improvements and code simplifications.
+    -   Switched from the `Cluster` to the `Worker Thread` module for multithreading which results in a big performance boost.
+    -   Various other performance improvements and code simplifications.
 
 -   2.2.0:
 
