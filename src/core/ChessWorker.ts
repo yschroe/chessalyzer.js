@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { parentPort } from 'node:worker_threads';
 import PieceTracker from '../tracker/PieceTrackerBase.js';
 import TileTracker from '../tracker/TileTrackerBase.js';
 import GameTracker from '../tracker/GameTrackerBase.js';
@@ -10,7 +14,7 @@ import type {
 } from '../interfaces/index.js';
 import GameParser from './GameParser.js';
 
-process.on(
+parentPort.on(
 	'message',
 	(msg: {
 		games: Game[];
@@ -47,18 +51,10 @@ process.on(
 			}
 
 			// analyze each game
-			try {
-				for (const game of msg.games) gameParser.processGame(game, cfg);
-			} catch (err) {
-				console.error(err);
-				process.send({
-					type: 'error',
-					error: err
-				} as WorkerMessage);
-			}
+
+			for (const game of msg.games) gameParser.processGame(game, cfg);
 
 			const result: WorkerMessage = {
-				type: 'gamesProcessed',
 				cntMoves: cfg.processedMoves,
 				cntGames: cfg.processedGames,
 				gameAnalyzers: cfg.analyzers.game,
@@ -67,10 +63,7 @@ process.on(
 			};
 
 			// send result of batch to master
-			process.send(result);
+			parentPort.postMessage(result);
 		})();
 	}
 );
-
-// only needed for workaround for https://github.com/nodejs/node/issues/39854
-process.send({ type: 'readyForData' } as WorkerMessage);

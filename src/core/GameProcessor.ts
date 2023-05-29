@@ -3,7 +3,7 @@ import { Interface, createInterface } from 'node:readline';
 import { EventEmitter } from 'node:events';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ChildProcess, fork } from 'node:child_process';
+import os from 'node:os';
 import type {
 	Game,
 	AnalysisConfig,
@@ -14,21 +14,9 @@ import type {
 	GameProcessorConfig
 } from '../interfaces/index.js';
 import GameParser from './GameParser.js';
+import WorkerPool from './WorkerPool.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-class ChessWorker {
-	worker: ChildProcess;
-	isReady: boolean;
-
-	constructor(pathToFile: string) {
-		this.worker = fork(pathToFile);
-
-		// ready status must be false initially or we run into a race condition
-		// where are newly created worker is not taken into account for work left
-		this.isReady = false;
-	}
-}
 
 /**
  * Class that processes games.
@@ -37,19 +25,11 @@ class GameProcessor {
 	configs: GameProcessorAnalysisConfigFull[];
 	lineReader: Interface;
 	readInHeader: boolean;
-	readerFinished: boolean;
-	status: EventEmitter;
-	workers: ChessWorker[];
-	errorInWorker: unknown;
 	readInGamesCount: number[];
 
 	constructor() {
 		this.configs = [];
 		this.readInHeader = false;
-		this.readerFinished = false;
-
-		this.workers = [];
-		this.status = new EventEmitter();
 	}
 
 	async processPGN(
@@ -58,6 +38,12 @@ class GameProcessor {
 		multiThreadCfg: MultithreadConfig | null
 	): Promise<GameAndMoveCount[]> {
 		const isMultithreaded = multiThreadCfg !== null;
+		let workerPool: WorkerPool;
+		if (isMultithreaded)
+			workerPool = new WorkerPool(
+				os.availableParallelism(),
+				`${__dirname}/ChessWorker.js`
+			);
 
 		this.attachConfigs(configArray);
 
@@ -117,9 +103,16 @@ class GameProcessor {
 									gameStore[idxCfg].length ===
 									multiThreadCfg.batchSize
 								) {
-									void this.sendDataToWorker(
-										gameStore[idxCfg],
-										idxCfg
+									workerPool.runTask(
+										{
+											games: gameStore[idxCfg],
+											analyzerData:
+												this.configs[idxCfg]
+													.analyzerData,
+											idxConfig: idxCfg
+										},
+										(err: Error, result: WorkerMessage) =>
+											this.addDataFromWorker(err, result)
 									);
 
 									gameStore[idxCfg] = [];
@@ -139,7 +132,6 @@ class GameProcessor {
 
 			if (allDone) {
 				this.lineReader.close();
-				// this.lineReader.removeAllListeners();
 			}
 		});
 
@@ -148,36 +140,34 @@ class GameProcessor {
 		await EventEmitter.once(this.lineReader, 'close');
 
 		// if on end there are still unprocessed games, start a last worker batch
-		if (!this.errorInWorker) {
-			for (const [idx, games] of gameStore.entries()) {
-				if (games.length > 0) {
-					const nEndForks = Math.ceil(
-						games.length / multiThreadCfg.batchSize
-					);
-					// console.log(
-					// 	`${games.length} games left. Starting ${nEndForks} workers.`
-					// );
-					for (let i = 0; i < nEndForks; i += 1) {
-						void this.sendDataToWorker(
-							games.slice(
+		for (const [idx, games] of gameStore.entries()) {
+			if (games.length > 0) {
+				const nEndForks = Math.ceil(
+					games.length / multiThreadCfg.batchSize
+				);
+				for (let i = 0; i < nEndForks; i += 1) {
+					workerPool.runTask(
+						{
+							games: games.slice(
 								i * multiThreadCfg.batchSize,
 								i * multiThreadCfg.batchSize +
 									multiThreadCfg.batchSize
 							),
-							idx
-						);
-					}
+							analyzerData: this.configs[idx].analyzerData,
+							idxConfig: idx
+						},
+						(err: Error, result: WorkerMessage) =>
+							this.addDataFromWorker(err, result)
+					);
 				}
 			}
 		}
 
-		this.readerFinished = true;
-
-		if (isMultithreaded) await EventEmitter.once(this.status, 'finished');
-		// console.log(`${this.workers.length} Workers were spawned.`);
-		for (const w of this.workers) w.worker.kill();
-
-		if (this.errorInWorker) throw this.errorInWorker;
+		if (isMultithreaded) {
+			workerPool.flagNotifyWhenDone = true;
+			await EventEmitter.once(workerPool, 'done');
+			await workerPool.close();
+		}
 
 		// trigger finish events on trackers
 		for (const cfg of configArray) {
@@ -194,6 +184,23 @@ class GameProcessor {
 		}));
 
 		return returnVals;
+	}
+
+	private addDataFromWorker(err: Error, result: WorkerMessage) {
+		if (err) throw err;
+
+		const { idxConfig, gameAnalyzers, moveAnalyzers, cntMoves, cntGames } =
+			result;
+
+		// add tracker data from this worker
+		for (let i = 0; i < gameAnalyzers.length; i += 1) {
+			this.configs[idxConfig].analyzers.game[i].add(gameAnalyzers[i]);
+		}
+		for (let i = 0; i < moveAnalyzers.length; i += 1) {
+			this.configs[idxConfig].analyzers.move[i].add(moveAnalyzers[i]);
+		}
+		this.configs[idxConfig].processedMoves += cntMoves;
+		this.configs[idxConfig].processedGames += cntGames;
 	}
 
 	private attachConfigs(configs: AnalysisConfig[]): void {
@@ -247,86 +254,6 @@ class GameProcessor {
 			cntGames: config.cntGames || Infinity
 		};
 		return cfg;
-	}
-
-	private async sendDataToWorker(games: Game[], idxConfig: number) {
-		// get first free worker
-		let freeWorker = this.workers.find((w) => w.isReady);
-
-		// if there is no free worker, spawn new one
-		if (!freeWorker) {
-			freeWorker = this.forkWorker();
-
-			this.workers.push(freeWorker);
-
-			// normally we could use w.send(...) outside of this function
-			// there is a bug in node though, which sometimes sends the data too early
-			// --> wait until the worker sends a custom ready message
-			// see: https://github.com/nodejs/node/issues/39854
-			await EventEmitter.once(freeWorker.worker, 'message');
-		}
-
-		// send data to worker for processing
-		freeWorker.isReady = false;
-		freeWorker.worker.send({
-			games,
-			analyzerData: this.configs[idxConfig].analyzerData,
-			idxConfig
-		});
-	}
-
-	// creates a new worker, that will process an array of games
-	private forkWorker() {
-		const w = new ChessWorker(`${__dirname}/Processor.worker.js`);
-
-		// on worker finish
-		w.worker.on('message', (msg: WorkerMessage) => {
-			switch (msg.type) {
-				case 'gamesProcessed': {
-					const {
-						idxConfig,
-						gameAnalyzers,
-						moveAnalyzers,
-						cntMoves,
-						cntGames
-					} = msg;
-					// add tracker data from this worker
-					for (let i = 0; i < gameAnalyzers.length; i += 1) {
-						this.configs[idxConfig].analyzers.game[i].add(
-							gameAnalyzers[i]
-						);
-					}
-					for (let i = 0; i < moveAnalyzers.length; i += 1) {
-						this.configs[idxConfig].analyzers.move[i].add(
-							moveAnalyzers[i]
-						);
-					}
-					this.configs[idxConfig].processedMoves += cntMoves;
-					this.configs[idxConfig].processedGames += cntGames;
-					break;
-				}
-				// in case of error we stop reading in lines and save the error to throw it again later
-				// we cannot immediately throw it when other worker threads are still running
-				case 'error': {
-					this.errorInWorker = msg.error;
-					this.lineReader.close();
-					break;
-				}
-			}
-
-			if (msg.type === 'error' || msg.type === 'gamesProcessed') {
-				w.isReady = true;
-
-				// if this worker was the last one, emit 'finished' event
-				if (
-					this.workers.filter((w) => !w.isReady).length === 0 &&
-					this.readerFinished
-				) {
-					this.status.emit('finished');
-				}
-			}
-		});
-		return w;
 	}
 }
 

@@ -134,25 +134,17 @@ export interface GameAndMoveCountFull extends GameAndMoveCount {
 	mps: number;
 }
 
-export type WorkerMessage =
-	| GamesProcessedMessage
-	| ReadyForDataMessage
-	| WorkerErrorMessage;
+export interface WorkerTaskData {
+	games: Game[];
+	// TODO: cfg should be of type Tracker[‚]
+	analyzerData: { name: string; cfg: unknown; path?: string }[];
+	idxConfig: number;
+}
 
-interface GamesProcessedMessage {
-	type: 'gamesProcessed';
+export interface WorkerMessage {
 	cntMoves: number;
 	cntGames: number;
 	gameAnalyzers: Tracker[];
 	moveAnalyzers: Tracker[];
 	idxConfig: number;
-}
-
-interface ReadyForDataMessage {
-	type: 'readyForData';
-}
-
-interface WorkerErrorMessage {
-	type: 'error';
-	error: unknown;
 }
