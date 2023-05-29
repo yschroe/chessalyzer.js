@@ -25,19 +25,57 @@ class GameProcessor {
 	configs: GameProcessorAnalysisConfigFull[];
 	lineReader: Interface;
 	readInHeader: boolean;
-	readInGamesCount: number[];
+	multithreadConfig: MultithreadConfig | null;
 
-	constructor() {
-		this.configs = [];
+	constructor(
+		configs: AnalysisConfig[],
+		multithreadCfg: MultithreadConfig | null
+	) {
 		this.readInHeader = false;
+		this.configs = [];
+		this.multithreadConfig = multithreadCfg;
+
+		// convert AnalysisConfigs to GameProcessorAnalysisConfigFull
+		for (const cfg of configs) {
+			const tempCfg: GameProcessorAnalysisConfigFull = {
+				analyzers: {
+					move: [],
+					game: []
+				},
+				analyzerData: [],
+				config: this.checkConfig(cfg.config || {}),
+				processedMoves: 0,
+				processedGames: 0,
+				cntReadGames: 0,
+				isDone: false
+			};
+
+			if (cfg.trackers) {
+				for (const tracker of cfg.trackers) {
+					if (tracker.type === 'move') {
+						tempCfg.analyzers.move.push(tracker);
+					} else if (tracker.type === 'game') {
+						tempCfg.analyzers.game.push(tracker);
+
+						// we need to read in the header if at least one game tracker is attached
+						this.readInHeader = true;
+					}
+
+					tempCfg.analyzerData.push({
+						name: tracker.constructor.name,
+						cfg: tracker.cfg,
+						path: tracker.path
+					});
+				}
+			}
+
+			this.configs.push(tempCfg);
+		}
 	}
 
-	async processPGN(
-		path: string,
-		configArray: AnalysisConfig[],
-		multiThreadCfg: MultithreadConfig | null
-	): Promise<GameAndMoveCount[]> {
-		const isMultithreaded = multiThreadCfg !== null;
+	async processPGN(path: string): Promise<GameAndMoveCount[]> {
+		const isMultithreaded = this.multithreadConfig !== null;
+
 		let workerPool: WorkerPool;
 		if (isMultithreaded)
 			workerPool = new WorkerPool(
@@ -45,10 +83,9 @@ class GameProcessor {
 				`${__dirname}/ChessWorker.js`
 			);
 
-		this.attachConfigs(configArray);
-
+		// create gamestore for each config
 		const gameStore: Game[][] = [];
-		configArray.forEach(() => {
+		this.configs.forEach(() => {
 			gameStore.push([]);
 		});
 		let game: Game = { moves: [] };
@@ -101,7 +138,7 @@ class GameProcessor {
 								// if enough games have been read in, start worker threads and let them analyze
 								if (
 									gameStore[idxCfg].length ===
-									multiThreadCfg.batchSize
+									this.multithreadConfig.batchSize
 								) {
 									workerPool.runTask(
 										{
@@ -139,42 +176,40 @@ class GameProcessor {
 		// all lines have been read in
 		await EventEmitter.once(this.lineReader, 'close');
 
-		// if on end there are still unprocessed games, start a last worker batch
-		for (const [idx, games] of gameStore.entries()) {
-			if (games.length > 0) {
-				const nEndForks = Math.ceil(
-					games.length / multiThreadCfg.batchSize
-				);
-				for (let i = 0; i < nEndForks; i += 1) {
-					workerPool.runTask(
-						{
-							games: games.slice(
-								i * multiThreadCfg.batchSize,
-								i * multiThreadCfg.batchSize +
-									multiThreadCfg.batchSize
-							),
-							analyzerData: this.configs[idx].analyzerData,
-							idxConfig: idx
-						},
-						(err: Error, result: WorkerMessage) =>
-							this.addDataFromWorker(err, result)
-					);
+		if (isMultithreaded) {
+			// if on end there are still unprocessed games, start a last worker batch
+			for (const [idx, games] of gameStore.entries()) {
+				if (games.length > 0) {
+					const { batchSize } = this.multithreadConfig;
+					const nEndForks = Math.ceil(games.length / batchSize);
+					for (let i = 0; i < nEndForks; i += 1) {
+						workerPool.runTask(
+							{
+								games: games.slice(
+									i * batchSize,
+									i * batchSize + batchSize
+								),
+								analyzerData: this.configs[idx].analyzerData,
+								idxConfig: idx
+							},
+							(err: Error, result: WorkerMessage) =>
+								this.addDataFromWorker(err, result)
+						);
+					}
 				}
 			}
-		}
-
-		if (isMultithreaded) {
 			workerPool.flagNotifyWhenDone = true;
 			await EventEmitter.once(workerPool, 'done');
 			await workerPool.close();
 		}
 
 		// trigger finish events on trackers
-		for (const cfg of configArray) {
-			if (cfg.trackers) {
-				for (const tracker of cfg.trackers) {
-					tracker.finish?.();
-				}
+		for (const { analyzers } of this.configs) {
+			for (const tracker of analyzers.game) {
+				tracker.finish?.();
+			}
+			for (const tracker of analyzers.move) {
+				tracker.finish?.();
 			}
 		}
 
@@ -201,45 +236,6 @@ class GameProcessor {
 		}
 		this.configs[idxConfig].processedMoves += cntMoves;
 		this.configs[idxConfig].processedGames += cntGames;
-	}
-
-	private attachConfigs(configs: AnalysisConfig[]): void {
-		for (const cfg of configs) {
-			const tempCfg: GameProcessorAnalysisConfigFull = {
-				analyzers: {
-					move: [],
-					game: []
-				},
-				analyzerData: [],
-				config: this.checkConfig(cfg.config || {}),
-				processedMoves: 0,
-				processedGames: 0,
-				cntReadGames: 0,
-				isDone: false
-			};
-
-			if (cfg.trackers) {
-				for (const tracker of cfg.trackers) {
-					if (tracker.type === 'move') {
-						tempCfg.analyzers.move.push(tracker);
-					} else if (tracker.type === 'game') {
-						tempCfg.analyzers.game.push(tracker);
-
-						// we need to read in the header if at least one game tracker is attached
-						this.readInHeader = true;
-					}
-
-					tempCfg.analyzerData.push({
-						name: tracker.constructor.name,
-						cfg: tracker.cfg,
-						path: tracker.path
-					});
-				}
-			}
-
-			this.configs.push(tempCfg);
-			this.readInGamesCount = configs.map(() => 0);
-		}
 	}
 
 	private checkConfig(config: AnalysisConfig['config']): GameProcessorConfig {

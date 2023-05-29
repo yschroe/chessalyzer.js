@@ -18,16 +18,12 @@ export default class Chessalyzer {
 		let configArray: AnalysisConfig[] = [];
 		configArray = configArray.concat(configs);
 
-		const gameProcessor = new GameProcessor();
+		const gameProcessor = new GameProcessor(configArray, multithreadCfg);
 
 		const t0 = performance.now();
 
 		try {
-			const header = await gameProcessor.processPGN(
-				pathToPgn,
-				configArray,
-				multithreadCfg
-			);
+			const header = await gameProcessor.processPGN(pathToPgn);
 
 			const t1 = performance.now();
 			const tdiff = Math.round(t1 - t0) / 1000;

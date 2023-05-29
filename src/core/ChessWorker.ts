@@ -14,6 +14,15 @@ import type {
 } from '../interfaces/index.js';
 import GameParser from './GameParser.js';
 
+// init GameParser
+const gameParser = new GameParser();
+
+// prepare built-in trackers
+const TrackerList = {};
+TrackerList[PieceTracker.name] = PieceTracker;
+TrackerList[TileTracker.name] = TileTracker;
+TrackerList[GameTracker.name] = GameTracker;
+
 parentPort.on(
 	'message',
 	(msg: {
@@ -22,20 +31,14 @@ parentPort.on(
 		idxConfig: number;
 	}) => {
 		void (async () => {
-			const TrackerList = {};
-			const gameParser = new GameParser();
-
-			// prepare built-in trackers
-			TrackerList[PieceTracker.name] = PieceTracker;
-			TrackerList[TileTracker.name] = TileTracker;
-			TrackerList[GameTracker.name] = GameTracker;
-
 			// import custom trackers
 			for (const a of msg.analyzerData.filter((val) => val.path)) {
-				const customTracker = await import(a.path);
-				TrackerList[a.name] = customTracker.default
-					? customTracker.default
-					: customTracker;
+				if (!(a.name in TrackerList)) {
+					const customTracker = await import(a.path);
+					TrackerList[a.name] = customTracker.default
+						? customTracker.default
+						: customTracker;
+				}
 			}
 
 			// select needed trackers
@@ -51,7 +54,6 @@ parentPort.on(
 			}
 
 			// analyze each game
-
 			for (const game of msg.games) gameParser.processGame(game, cfg);
 
 			const result: WorkerMessage = {
