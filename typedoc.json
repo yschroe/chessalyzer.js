@@ -1,0 +1,6 @@
+{
+	"entryPointStrategy": "expand",
+	"entryPoints": ["./src"],
+	"plugin": ["typedoc-plugin-merge-modules"],
+	"excludePrivate": false
+}
