@@ -21,6 +21,10 @@ class WorkerPoolTaskInfo extends AsyncResource {
 	}
 }
 
+/**
+ * A pool of workers which are running on a separate thread each. Tasks can be
+ * sent to the pool to be processed without blocking the main thread.
+ */
 export default class WorkerPool extends EventEmitter {
 	flagNotifyWhenDone: boolean;
 	numThreads: number;
@@ -31,6 +35,11 @@ export default class WorkerPool extends EventEmitter {
 		callback: (err: Error, result: WorkerMessage) => void;
 	}[];
 
+	/**
+	 * Creates a new `WorkerPool`.
+	 * @param numThreads Count of workers that will be created for the pool.
+	 * @param filePath Path of the code each worker shall execute.
+	 */
 	constructor(numThreads: number, filePath: string) {
 		super();
 		this.numThreads = numThreads;
@@ -51,6 +60,11 @@ export default class WorkerPool extends EventEmitter {
 			}
 		});
 	}
+
+	/**
+	 * Adds a new Worker to the Workerpool and attaches the event listeners.
+	 * @param filePath Path to the file the Worker shall execute.
+	 */
 	addNewWorker(filePath: string) {
 		const worker: Worker & { [kTaskInfo]?: WorkerPoolTaskInfo } =
 			new Worker(filePath);
@@ -90,6 +104,13 @@ export default class WorkerPool extends EventEmitter {
 		this.emit(kWorkerFreedEvent);
 	}
 
+	/**
+	 * Adds a new task for the `WorkerPool` to execute. If a free worker is available, it will
+	 * directly execute the task. Else the task is pushed to the queue waiting for a worker to
+	 * pick it up.
+	 * @param task Data the worker shall process.
+	 * @param callback The callback function which is called when the task is done or on error.
+	 */
 	runTask(
 		task: WorkerTaskData,
 		callback: (err: Error, result: WorkerMessage) => void
@@ -105,6 +126,9 @@ export default class WorkerPool extends EventEmitter {
 		worker.postMessage(task);
 	}
 
+	/**
+	 * Closes the `WorkerPool` by terminating all workers.
+	 */
 	async close() {
 		for (const worker of this.workers) await worker.terminate();
 	}
