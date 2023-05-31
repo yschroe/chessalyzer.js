@@ -2,7 +2,7 @@ import PieceTrackerBase from '../PieceTrackerBase.js';
 import type { SquareData } from '../../interfaces/index.js';
 
 export default {
-	PIECE_KILLED_BY: {
+	PIECE_CAPTURED_BY: {
 		scope: 'specific',
 		unit: '',
 		description: 'Selected piece was taken by piece X Y times.',
@@ -20,7 +20,7 @@ export default {
 			return val;
 		}
 	},
-	PIECE_KILLED: {
+	PIECE_CAPTURED: {
 		scope: 'specific',
 		unit: '',
 		description: 'Selected piece took piece X Y times.',

@@ -63,15 +63,15 @@ export default {
 			return val;
 		}
 	},
-	TILE_KILLCOUNT: {
+	TILE_CAPTURE_COUNT: {
 		scope: 'global',
 		unit: '',
 		description: 'Count of Pieces that were taken on each tile.',
 		calc: (data: TileTrackerBase, loopSqrData: SquareData) => {
 			const { coords } = loopSqrData;
 			const val =
-				data.tiles[coords[0]][coords[1]].b.wasKilledOn +
-				data.tiles[coords[0]][coords[1]].w.wasKilledOn;
+				data.tiles[coords[0]][coords[1]].b.wasCapturedOn +
+				data.tiles[coords[0]][coords[1]].w.wasCapturedOn;
 			return val;
 		}
 	},

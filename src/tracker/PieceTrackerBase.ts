@@ -84,7 +84,7 @@ class PieceTrackerBase extends BaseTracker {
 					!takingPiece.match(/\d/g) &&
 					!takingPiece.match(/\d/g)
 				) {
-					this.processTakes(
+					this.processCapture(
 						player,
 						takingPiece as Piece,
 						takenPiece as Piece
@@ -94,7 +94,7 @@ class PieceTrackerBase extends BaseTracker {
 		}
 	}
 
-	processTakes(player: PlayerColor, takingPiece: Piece, takenPiece: Piece) {
+	processCapture(player: PlayerColor, takingPiece: Piece, takenPiece: Piece) {
 		this[player][takingPiece][takenPiece] += 1;
 	}
 }

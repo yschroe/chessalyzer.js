@@ -14,14 +14,14 @@ interface StatsField {
 class TileStats {
 	movedTo: number;
 	wasOn: number;
-	killedOn: number;
-	wasKilledOn: number;
+	capturedOn: number;
+	wasCapturedOn: number;
 
 	constructor() {
 		this.movedTo = 0;
 		this.wasOn = 0;
-		this.killedOn = 0;
-		this.wasKilledOn = 0;
+		this.capturedOn = 0;
+		this.wasCapturedOn = 0;
 	}
 }
 
@@ -94,15 +94,15 @@ class TileTrackerBase extends BaseTracker {
 				this.tiles[row][col].b.wasOn += tracker.tiles[row][col].b.wasOn;
 				this.tiles[row][col].w.wasOn += tracker.tiles[row][col].w.wasOn;
 
-				this.tiles[row][col].b.killedOn +=
-					tracker.tiles[row][col].b.killedOn;
-				this.tiles[row][col].w.killedOn +=
-					tracker.tiles[row][col].w.killedOn;
+				this.tiles[row][col].b.capturedOn +=
+					tracker.tiles[row][col].b.capturedOn;
+				this.tiles[row][col].w.capturedOn +=
+					tracker.tiles[row][col].w.capturedOn;
 
-				this.tiles[row][col].b.wasKilledOn +=
-					tracker.tiles[row][col].b.wasKilledOn;
-				this.tiles[row][col].w.wasKilledOn +=
-					tracker.tiles[row][col].w.wasKilledOn;
+				this.tiles[row][col].b.wasCapturedOn +=
+					tracker.tiles[row][col].b.wasCapturedOn;
+				this.tiles[row][col].w.wasCapturedOn +=
+					tracker.tiles[row][col].w.wasCapturedOn;
 
 				pawnTemplate.forEach((piece) => {
 					this.tiles[row][col].b[piece].movedTo +=
@@ -115,15 +115,15 @@ class TileTrackerBase extends BaseTracker {
 					this.tiles[row][col].w[piece].wasOn +=
 						tracker.tiles[row][col].w[piece].wasOn;
 
-					this.tiles[row][col].b[piece].killedOn +=
-						tracker.tiles[row][col].b[piece].killedOn;
-					this.tiles[row][col].w[piece].killedOn +=
-						tracker.tiles[row][col].w[piece].killedOn;
+					this.tiles[row][col].b[piece].capturedOn +=
+						tracker.tiles[row][col].b[piece].capturedOn;
+					this.tiles[row][col].w[piece].capturedOn +=
+						tracker.tiles[row][col].w[piece].capturedOn;
 
-					this.tiles[row][col].b[piece].wasKilledOn +=
-						tracker.tiles[row][col].b[piece].wasKilledOn;
-					this.tiles[row][col].w[piece].wasKilledOn +=
-						tracker.tiles[row][col].w[piece].wasKilledOn;
+					this.tiles[row][col].b[piece].wasCapturedOn +=
+						tracker.tiles[row][col].b[piece].wasCapturedOn;
+					this.tiles[row][col].w[piece].wasCapturedOn +=
+						tracker.tiles[row][col].w[piece].wasCapturedOn;
 				});
 
 				pieceTemplate.forEach((piece) => {
@@ -137,15 +137,15 @@ class TileTrackerBase extends BaseTracker {
 					this.tiles[row][col].w[piece].wasOn +=
 						tracker.tiles[row][col].w[piece].wasOn;
 
-					this.tiles[row][col].b[piece].killedOn +=
-						tracker.tiles[row][col].b[piece].killedOn;
-					this.tiles[row][col].w[piece].killedOn +=
-						tracker.tiles[row][col].w[piece].killedOn;
+					this.tiles[row][col].b[piece].capturedOn +=
+						tracker.tiles[row][col].b[piece].capturedOn;
+					this.tiles[row][col].w[piece].capturedOn +=
+						tracker.tiles[row][col].w[piece].capturedOn;
 
-					this.tiles[row][col].b[piece].wasKilledOn +=
-						tracker.tiles[row][col].b[piece].wasKilledOn;
-					this.tiles[row][col].w[piece].wasKilledOn +=
-						tracker.tiles[row][col].w[piece].wasKilledOn;
+					this.tiles[row][col].b[piece].wasCapturedOn +=
+						tracker.tiles[row][col].b[piece].wasCapturedOn;
+					this.tiles[row][col].w[piece].wasCapturedOn +=
+						tracker.tiles[row][col].w[piece].wasCapturedOn;
 				});
 			}
 		}
@@ -245,16 +245,16 @@ class TileTrackerBase extends BaseTracker {
 	): void {
 		if (takenPiece.length > 1 && !takenPiece.match(/\d/g)) {
 			const opPlayer = player === 'w' ? 'b' : 'w';
-			this.tiles[pos[0]][pos[1]][opPlayer].wasKilledOn += 1;
-			this.tiles[pos[0]][pos[1]][opPlayer][takenPiece].wasKilledOn += 1;
+			this.tiles[pos[0]][pos[1]][opPlayer].wasCapturedOn += 1;
+			this.tiles[pos[0]][pos[1]][opPlayer][takenPiece].wasCapturedOn += 1;
 
 			this.addOccupation(pos);
 			this.tiles[pos[0]][pos[1]].currentPiece = null;
 		}
 
 		if (takingPiece.length > 1 && !takingPiece.match(/\d/g)) {
-			this.tiles[pos[0]][pos[1]][player].killedOn += 1;
-			this.tiles[pos[0]][pos[1]][player][takingPiece].killedOn += 1;
+			this.tiles[pos[0]][pos[1]][player].capturedOn += 1;
+			this.tiles[pos[0]][pos[1]][player][takingPiece].capturedOn += 1;
 		}
 	}
 

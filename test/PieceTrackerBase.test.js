@@ -43,8 +43,8 @@ context('PieceTrackerBase', function () {
 			);
 		});
 
-		it('Worked with PIECE_KILLED preset', function () {
-			const data = pieceTracker.generateHeatmap('PIECE_KILLED', 'a8');
+		it('Worked with PIECE_CAPTURED preset', function () {
+			const data = pieceTracker.generateHeatmap('PIECE_CAPTURED', 'a8');
 			// didn't take itself
 			assert.strictEqual(data.map[0][0], 0);
 
@@ -54,8 +54,11 @@ context('PieceTrackerBase', function () {
 			assert.strictEqual(data.map[7][0], 4510);
 		});
 
-		it('Worked with PIECE_KILLED_BY preset', function () {
-			const data = pieceTracker.generateHeatmap('PIECE_KILLED_BY', 'a8');
+		it('Worked with PIECE_CAPTURED_BY preset', function () {
+			const data = pieceTracker.generateHeatmap(
+				'PIECE_CAPTURED_BY',
+				'a8'
+			);
 			// wasn't taken by itself
 			assert.strictEqual(data.map[0][0], 0);
 

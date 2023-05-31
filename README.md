@@ -246,8 +246,8 @@ chessalyzer.js comes with three built-in trackers, which can be directly importe
 
     -   `movedTo`: How often the piece moved to this tile
     -   `wasOn`: Amount of half-moves the piece was on this tile
-    -   `killedOn`: How often the piece took another piece on this tile
-    -   `wasKilledOn`: How often the piece was taken on this tile
+    -   `capturedOn`: How often the piece captured another piece on this tile
+    -   `wasCapturedOn`: How often the piece was captured on this tile
 
     These stats are also tracked for black and white as a whole. Simply omit the piece name to get the total stats of one side for a specific tile, e.g. `tiles[0][6].b.wasOn`.
 
@@ -349,16 +349,16 @@ Instead of defining your own heatmap function you can also use the heatmap prese
 | TILE_OCC_ALL        | Tile Occupation All               | global        | Calculates how often each tile of the board had any piece on it (as a percentage of all moves)                                                                                        |
 | TILE_OCC_WHITE      | Tile Occupation (White Pieces)    | global        | Calculates how often each tile of the board had a white piece on it (as a percentage of all moves)                                                                                    |
 | TILE_OCC_BLACK      | Tile Occupation (Black Pieces)    | global        | Calculates how often each tile of the board had a black piece on it (as a percentage of all moves)                                                                                    |
-| TILE_KILLCOUNT      | Tile Killcount                    | global        | Count of Pieces that were taken on each tile.                                                                                                                                         |
+| TILE_CAPTURE_COUNT  | Tile Capture Count                | global        | Count of Pieces that were captured on each tile.                                                                                                                                      |
 | TILE_OCC_BY_PIECE   | Tile Occupation for selected Tile | Tile specific | Calculates how often the passed tile was occupated by each piece on the board. The values are shown at the starting position of each piece.                                           |
 | PIECE_MOVED_TO_TILE | Target squares for selected Piece | Tile specific | Shows how often the piece that starts at the selected tile moved to each tile of the board. Only makes sense for tiles with a piece on it at the start of the game (Rank 1,2,7 and 8) |
 
 ### Piece Tracker
 
-| Short Name      | Long Name | Scope          | Description                                                                                                                                               |
-| --------------- | --------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PIECE_KILLED_BY |           | Piece specific | Shows how often the piece that starts at the passed tile was taken by other pieces. The values are shown at the starting position of each opposing piece. |
-| PIECE_KILLED    |           | Piece specific | Shows how often the piece that starts at the passed tile took other pieces. The values are shown at the starting position of each opposing piece.         |
+| Short Name        | Long Name | Scope          | Description                                                                                                                                                  |
+| ----------------- | --------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| PIECE_CAPTURED_BY |           | Piece specific | Shows how often the piece that starts at the passed tile was captured by other pieces. The values are shown at the starting position of each opposing piece. |
+| PIECE_CAPTURED    |           | Piece specific | Shows how often the piece that starts at the passed tile captured other pieces. The values are shown at the starting position of each opposing piece.        |
 
 # Visualisation
 

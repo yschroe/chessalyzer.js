@@ -37,17 +37,17 @@ class PiecePositions {
 		this.K = new Map([['Ke', [row, 4]]]);
 	}
 
-	takes(piece: string): void {
+	capture(piece: string): void {
 		const token = piece.substring(0, 1) as PieceToken;
 		this[token]?.delete(piece);
 	}
 
-	moves(piece: string, destinationSquare: number[]): void {
+	move(piece: string, destinationSquare: number[]): void {
 		const token = piece.substring(0, 1) as PieceToken;
 		this[token]?.set(piece, destinationSquare);
 	}
 
-	promotes(piece: string, onSquare: number[]): void {
+	promote(piece: string, onSquare: number[]): void {
 		const token = piece.substring(0, 1) as PieceToken;
 		this[token]?.set(piece, onSquare);
 	}
@@ -110,7 +110,7 @@ class ChessBoard {
 		const { from, to, player } = action;
 
 		// update piece map
-		this.pieces[player].moves(action.piece, to);
+		this.pieces[player].move(action.piece, to);
 
 		// update board
 		this.tiles[to[0]][to[1]] = this.tiles[from[0]][from[1]];
@@ -119,7 +119,9 @@ class ChessBoard {
 
 	private capture(action: CaptureAction): void {
 		// update piece map
-		this.pieces[action.player === 'w' ? 'b' : 'w'].takes(action.takenPiece);
+		this.pieces[action.player === 'w' ? 'b' : 'w'].capture(
+			action.takenPiece
+		);
 
 		// update board
 		this.tiles[action.on[0]][action.on[1]] = null;
@@ -131,7 +133,7 @@ class ChessBoard {
 			name: newPieceName,
 			color: action.player
 		};
-		this.pieces[action.player].promotes(newPieceName, action.on);
+		this.pieces[action.player].promote(newPieceName, action.on);
 		this.promoteCounter += 1;
 	}
 
