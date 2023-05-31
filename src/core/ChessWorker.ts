@@ -50,6 +50,11 @@ parentPort.on(
 			for (const a of msg.analyzerData) {
 				const currentAnalyzer: BaseTracker = new TrackerList[a.name]();
 				currentAnalyzer.cfg = a.cfg;
+
+				// we need to remove the heatmapPresets here or we will get an
+				// DOMException [DataCloneError] when sending the data back to the main thread
+				currentAnalyzer.heatmapPresets = null;
+
 				cfg.analyzers[currentAnalyzer.type].push(currentAnalyzer);
 			}
 
@@ -69,3 +74,10 @@ parentPort.on(
 		})();
 	}
 );
+
+// handle errors
+// since above code runs inside a promise, simply catching and rethrowing
+// causes a ERR_UNHANDLED_REJECTION error
+process.on('unhandledRejection', (e: any) => {
+	throw e.message;
+});
