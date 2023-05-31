@@ -1,13 +1,13 @@
 /* eslint-disable no-undef */
 import assert from 'assert';
-import { Chessalyzer, Tracker } from '../lib/chessalyzer.js';
+import { Chessalyzer, GameTracker } from '../lib/chessalyzer.js';
 
 context('GameTrackerBase', function () {
 	this.timeout(20000);
 
 	describe('Basic Tests: Multithreaded', function () {
 		let data;
-		let gameTracker = new Tracker.Game();
+		let gameTracker = new GameTracker();
 		before(async function () {
 			data = await Chessalyzer.analyzePGN(
 				'./test/lichess_db_standard_rated_2013-01_min.pgn',
@@ -29,7 +29,7 @@ context('GameTrackerBase', function () {
 
 	describe('Basic Tests: Singlethreaded', function () {
 		let data;
-		let gameTracker = new Tracker.Game();
+		let gameTracker = new GameTracker();
 		before(async function () {
 			data = await Chessalyzer.analyzePGN(
 				'./test/lichess_db_standard_rated_2013-01_min.pgn',
@@ -51,7 +51,7 @@ context('GameTrackerBase', function () {
 	});
 
 	describe('Filtered Games: Result 1-0', function () {
-		let gameTracker = new Tracker.Game();
+		let gameTracker = new GameTracker();
 		before(async function () {
 			await Chessalyzer.analyzePGN(
 				'./test/lichess_db_standard_rated_2013-01_min.pgn',

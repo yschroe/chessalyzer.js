@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import assert from 'assert';
-import { Chessalyzer, Tracker } from '../lib/chessalyzer.js';
+import { Chessalyzer, GameTracker, PieceTracker } from '../lib/chessalyzer.js';
 
 context('Core Features', function () {
 	this.timeout(20000);
@@ -107,8 +107,8 @@ context('Core Features', function () {
 	});
 
 	context('Attaching Trackers', function () {
-		let gameTracker = new Tracker.Game();
-		let pieceTracker = new Tracker.Piece();
+		let gameTracker = new GameTracker();
+		let pieceTracker = new PieceTracker();
 
 		describe('Single Tracker', function () {
 			let data;
