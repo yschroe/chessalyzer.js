@@ -82,7 +82,7 @@ class PieceTrackerBase extends BaseTracker {
 					takingPiece.length > 1 &&
 					takenPiece.length > 1 &&
 					!takingPiece.match(/\d/g) &&
-					!takingPiece.match(/\d/g)
+					!takenPiece.match(/\d/g)
 				) {
 					this.processCapture(
 						player,
