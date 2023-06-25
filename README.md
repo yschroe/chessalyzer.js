@@ -379,6 +379,10 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 # Changelog
 
+-   3.0.1:
+
+    -   Made package importable in non-ESM environments. Running processPGN(...) still requires ESM.
+
 -   3.0.0:
 
     -   Restructured the return value of the move parser. Now an array of different `Action` types is returned to easier differentiate between actions like 'Move' or 'Capture'. Previously all possible actions were included in the single `MoveData` object. Your custom move trackers will need to be adapted.
