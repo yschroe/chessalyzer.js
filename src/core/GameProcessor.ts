@@ -16,8 +16,6 @@ import type {
 import GameParser from './GameParser.js';
 import WorkerPool from './WorkerPool.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
 /**
  * Class that processes games.
  */
@@ -82,11 +80,13 @@ class GameProcessor {
 		const isMultithreaded = this.multithreadConfig !== null;
 
 		let workerPool: WorkerPool;
-		if (isMultithreaded)
+		if (isMultithreaded) {
+			const __dirname = dirname(fileURLToPath(import.meta.url));
 			workerPool = new WorkerPool(
 				os.availableParallelism(),
 				`${__dirname}/ChessWorker.js`
 			);
+		}
 
 		// create gamestore for each config
 		const gameStore: Game[][] = [];
