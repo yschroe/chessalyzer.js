@@ -379,6 +379,10 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 # Changelog
 
+-   3.0.2:
+
+    -   Removed unused files from the package.
+
 -   3.0.1:
 
     -   Made package importable in non-ESM environments. Running processPGN(...) still requires ESM.
