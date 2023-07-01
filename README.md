@@ -379,6 +379,10 @@ Difference of whites tiles occupation between a higher (green) and a lower rated
 
 # Changelog
 
+-   3.0.4:
+
+    -   Fixed comments like `{ (0.00 → -0.67) Inaccuracy. h5 was best. }` in the PGN file breaking the parser.
+
 -   3.0.3:
 
     -   Optimized PGN parsing Regexes. Results in another 15% performance boost.
