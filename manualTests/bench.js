@@ -17,11 +17,20 @@ const lineReader = createInterface({
 // lineReader.on('line', (_) => (lineCount += 1));
 
 lineReader.on('line', (line) => {
-	if (line.startsWith('[')) {
+	lineCount += 1;
+	const isHeaderTag = line.startsWith('[');
+	if (isHeaderTag) {
 		const [_, key, value] = /\[(.*?)\s"(.*?)"\]/g.exec(line);
+	} else if (line !== '') {
+		// console.log(/\d+\.{1,3} (.*?) /g.exec(line));
+		// line.match(/\d+\.{1,3} (.*?) /g);
+		line.match(
+			/([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?[?!+#]?)|O(-O){1,2}|1\/2-1\/2|1-0|0-1/g
+		);
+		// line.trim()
+		// 	.replace(/(\d+\.{1,3}\s)|(\s?\{(.*?)\})/g, '')
+		// 	.split(' ');
 	}
-	if (line === '') console.log('empty');
-	else console.log(line);
 });
 
 // =================
