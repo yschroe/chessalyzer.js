@@ -1,7 +1,7 @@
 {
 	"name": "chessalyzer.js",
 	"version": "3.0.4",
-	"description": "Batch analyze PGN and generate heat maps",
+	"description": "A JavaScript library for batch analyzing chess games.",
 	"author": "Yannik Schröder",
 	"type": "module",
 	"main": "lib/chessalyzer.js",
