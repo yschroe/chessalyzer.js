@@ -16,6 +16,8 @@ import type {
 import GameParser from './GameParser.js';
 import WorkerPool from './WorkerPool.js';
 
+const RESULT_TOKENS = ['1-0', '0-1', '1/2-1/2'];
+
 /**
  * Class that processes games.
  */
@@ -105,24 +107,24 @@ class GameProcessor {
 
 		// on new line
 		this.lineReader.on('line', (line) => {
-			// data tag
-			if (this.readInHeader && line.startsWith('[')) {
-				const key = line.match(/\[(.*?)\s/)[1];
-				const value = line.match(/"(.*?)"/)[1];
-
+			const isHeaderTag = line.startsWith('[');
+			// header tag
+			if (this.readInHeader && isHeaderTag) {
+				const [_, key, value] = /\[(.*?)\s"(.*?)"\]/.exec(line);
 				game[key] = value;
 
 				// moves
-			} else if (line.match(/^\d/)) {
-				// add current move line
-				game.moves = game.moves.concat(
-					line
+			} else if (!isHeaderTag && line !== '') {
+				// add moves from line to move array
+				game.moves.push(
+					...line
+						.trim()
 						.replace(/(\d+\.{1,3}\s)|(\s?\{(.*?)\})/g, '')
 						.split(' ')
 				);
 
-				// only if the result marker is in the line, all moves have been read -> start analyzing
-				if (line.match(/((1-0)|(0-1)|(1\/2-1\/2)|(\*))$/)) {
+				// only if the result marker is found, all moves have been read -> start analyzing
+				if (RESULT_TOKENS.includes(game.moves.at(-1))) {
 					// remove the result from the moves array
 					game.moves.pop();
 
