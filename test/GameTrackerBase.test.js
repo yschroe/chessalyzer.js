@@ -9,10 +9,9 @@ context('GameTrackerBase', function () {
 		let data;
 		let gameTracker = new GameTracker();
 		before(async function () {
-			data = await Chessalyzer.analyzePGN(
-				'./test/lichess_db_standard_rated_2013-01_min.pgn',
-				{ trackers: [gameTracker] }
-			);
+			data = await Chessalyzer.analyzePGN('./test/asorted_games.pgn', {
+				trackers: [gameTracker]
+			});
 		});
 
 		it('Game count inside Game Tracker matches game count of Parser', function () {
@@ -32,7 +31,7 @@ context('GameTrackerBase', function () {
 		let gameTracker = new GameTracker();
 		before(async function () {
 			data = await Chessalyzer.analyzePGN(
-				'./test/lichess_db_standard_rated_2013-01_min.pgn',
+				'./test/asorted_games.pgn',
 				{ trackers: [gameTracker] },
 				null
 			);
@@ -53,16 +52,13 @@ context('GameTrackerBase', function () {
 	describe('Filtered Games: Result 1-0', function () {
 		let gameTracker = new GameTracker();
 		before(async function () {
-			await Chessalyzer.analyzePGN(
-				'./test/lichess_db_standard_rated_2013-01_min.pgn',
-				{
-					trackers: [gameTracker],
-					config: {
-						cntGames: 500,
-						filter: (game) => game.Result === '1-0'
-					}
+			await Chessalyzer.analyzePGN('./test/asorted_games.pgn', {
+				trackers: [gameTracker],
+				config: {
+					cntGames: 500,
+					filter: (game) => game.Result === '1-0'
 				}
-			);
+			});
 		});
 
 		it('Win array shows only white wins', function () {
@@ -75,15 +71,15 @@ context('GameTrackerBase', function () {
 	describe('ECO Counts', function () {
 		let gameTracker = new GameTracker();
 		before(async function () {
-			await Chessalyzer.analyzePGN('./test/PGN_for_ECO_check.pgn', {
+			await Chessalyzer.analyzePGN('./test/asorted_games.pgn', {
 				trackers: [gameTracker]
 			});
 		});
 
-		it('Should count the ECOs correctly', function () {
-			assert.strictEqual(gameTracker.ECO['A00'], 3);
-			assert.strictEqual(gameTracker.ECO['B00'], 2);
-			assert.strictEqual(gameTracker.ECO['C00'], 1);
+		it('Counted the ECOs correctly', function () {
+			assert.strictEqual(gameTracker.ECO['A00'], 1177);
+			assert.strictEqual(gameTracker.ECO['B00'], 632);
+			assert.strictEqual(gameTracker.ECO['C00'], 805);
 		});
 	});
 });

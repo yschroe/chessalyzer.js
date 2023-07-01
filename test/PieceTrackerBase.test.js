@@ -8,14 +8,13 @@ context('PieceTrackerBase', function () {
 	describe('Basic Tests: Multithreaded', function () {
 		let pieceTracker = new PieceTracker();
 		before(async function () {
-			await Chessalyzer.analyzePGN(
-				'./test/lichess_db_standard_rated_2013-01_min.pgn',
-				{ trackers: [pieceTracker] }
-			);
+			await Chessalyzer.analyzePGN('./test/asorted_games.pgn', {
+				trackers: [pieceTracker]
+			});
 		});
 
 		it('Tracked the correct values', function () {
-			assert.strictEqual(pieceTracker.b.Ra.Qd, 1930);
+			assert.strictEqual(pieceTracker.b.Ra.Qd, 631);
 		});
 	});
 
@@ -23,24 +22,23 @@ context('PieceTrackerBase', function () {
 		let pieceTracker = new PieceTracker();
 		before(async function () {
 			await Chessalyzer.analyzePGN(
-				'./test/lichess_db_standard_rated_2013-01_min.pgn',
+				'./test/asorted_games.pgn',
 				{ trackers: [pieceTracker] },
 				null
 			);
 		});
 
 		it('Tracked the correct values', function () {
-			assert.strictEqual(pieceTracker.b.Ra.Qd, 1930);
+			assert.strictEqual(pieceTracker.b.Ra.Qd, 631);
 		});
 	});
 
 	describe('Heatmaps', function () {
 		let pieceTracker = new PieceTracker();
 		before(async function () {
-			await Chessalyzer.analyzePGN(
-				'./test/lichess_db_standard_rated_2013-01_min.pgn',
-				{ trackers: [pieceTracker] }
-			);
+			await Chessalyzer.analyzePGN('./test/asorted_games.pgn', {
+				trackers: [pieceTracker]
+			});
 		});
 
 		it('Worked with PIECE_CAPTURED preset', function () {
@@ -51,7 +49,7 @@ context('PieceTrackerBase', function () {
 			// didn't take anything of same team
 			assert.strictEqual(data.map[1][0], 0);
 
-			assert.strictEqual(data.map[7][0], 4510);
+			assert.strictEqual(data.map[7][0], 1514);
 		});
 
 		it('Worked with PIECE_CAPTURED_BY preset', function () {
@@ -65,7 +63,7 @@ context('PieceTrackerBase', function () {
 			// wasn't taken by own team
 			assert.strictEqual(data.map[1][0], 0);
 
-			assert.strictEqual(data.map[7][0], 4603);
+			assert.strictEqual(data.map[7][0], 1487);
 		});
 
 		it('Works with Custom Function', function () {
@@ -89,7 +87,7 @@ context('PieceTrackerBase', function () {
 			// wasn't taken by own team
 			assert.strictEqual(data.map[1][0], 0);
 
-			assert.strictEqual(data.map[7][0], 4603);
+			assert.strictEqual(data.map[7][0], 1487);
 		});
 
 		it('Throws an error if preset is not found', function () {

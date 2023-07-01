@@ -24,7 +24,7 @@ lineReader.on('line', (line) => {
 	} else if (line !== '') {
 		// console.log(/\d+\.{1,3} (.*?) /g.exec(line));
 		// line.match(/\d+\.{1,3} (.*?) /g);
-		line.match(
+		line.replaceAll(/\{.*?\}/g, '').match(
 			/([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?[?!+#]?)|O(-O){1,2}|1\/2-1\/2|1-0|0-1/g
 		);
 		// line.trim()
