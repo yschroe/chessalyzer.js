@@ -117,9 +117,13 @@ class GameProcessor {
 			} else if (!isHeaderTag && line !== '') {
 				// add moves from line to move array
 				game.moves.push(
-					...line.match(
-						/([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?[?!+#]?)|O(-O){1,2}|1\/2-1\/2|1-0|0-1/g
-					)
+					...line
+						// remove comments from line
+						.replaceAll(/\{.*?\}|\(.*?\)/g, '')
+						// extract move SANs
+						.match(
+							/([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?[?!+#]?)|O(-O){1,2}|1\/2-1\/2|1-0|0-1/g
+						)
 				);
 
 				// only if the result marker is found, all moves have been read -> start analyzing
