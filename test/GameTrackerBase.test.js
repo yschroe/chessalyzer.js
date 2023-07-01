@@ -71,4 +71,19 @@ context('GameTrackerBase', function () {
 			assert.strictEqual(gameTracker.results.draw, 0);
 		});
 	});
+
+	describe('ECO Counts', function () {
+		let gameTracker = new GameTracker();
+		before(async function () {
+			await Chessalyzer.analyzePGN('./test/PGN_for_ECO_check.pgn', {
+				trackers: [gameTracker]
+			});
+		});
+
+		it('Should count the ECOs correctly', function () {
+			assert.strictEqual(gameTracker.ECO['A00'], 3);
+			assert.strictEqual(gameTracker.ECO['B00'], 2);
+			assert.strictEqual(gameTracker.ECO['C00'], 1);
+		});
+	});
 });
