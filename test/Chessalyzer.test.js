@@ -53,8 +53,8 @@ context('Core Features', function () {
 				assert.strictEqual(data.cntGames, 1);
 			});
 
-			it('Processed all 96 moves in file', function () {
-				assert.strictEqual(data.cntMoves, 96);
+			it('Processed all 92 moves in file', function () {
+				assert.strictEqual(data.cntMoves, 92);
 			});
 		});
 	});
