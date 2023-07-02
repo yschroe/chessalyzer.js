@@ -109,9 +109,8 @@ class GameParser {
 	 * @param rawMove The move in standard algebraic notation.
 	 * @returns A list of `Action`s to perform on the board.
 	 */
-	private parseMove(rawMove: string): Action[] {
-		const token = rawMove.substring(0, 1) as Token;
-		const san = GameParser.preprocess(rawMove);
+	private parseMove(san: string): Action[] {
+		const token = san.substring(0, 1) as Token;
 
 		if (token.toLowerCase() === token) {
 			return this.pawnMove(san);
@@ -533,15 +532,6 @@ class GameParser {
 		this.board.tiles[to[0]][to[1]] = tarTilePiece;
 
 		return isInCheck;
-	}
-
-	/**
-	 * Helper function to remove special tokens (#, +, ?, !) like ratings (??, ?!) or the check mark (+) from the move.
-	 * @param move The raw move in standard algebraic notation.
-	 * @returns The cleaned move with removed special tokens.
-	 */
-	private static preprocess(move: string): string {
-		return move.replace(/[#+?!]/g, '');
 	}
 }
 

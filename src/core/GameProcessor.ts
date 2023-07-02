@@ -16,8 +16,10 @@ import type {
 import GameParser from './GameParser.js';
 import WorkerPool from './WorkerPool.js';
 
+const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
 const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
-const MOVE_REGEX = /([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?[?!+#]?)|O(-O){1,2}/g;
+const MOVE_REGEX = /([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?)|O(-O){1,2}/g;
+// const MOVE_REGEX = /([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?[?!#+]*)|O(-O){1,2}/g; // includes [?!#+] tokens
 const RESULT_REGEX = /(1\/2-1\/2|1-0|0-1)$/;
 
 /**
@@ -112,7 +114,7 @@ class GameProcessor {
 			const isHeaderTag = line.startsWith('[');
 			// header tag
 			if (this.readInHeader && isHeaderTag) {
-				const [_, key, value] = /\[(.*?)\s"(.*?)"\]/.exec(line);
+				const [_, key, value] = HEADER_REGEX.exec(line);
 				game[key] = value;
 
 				// moves
