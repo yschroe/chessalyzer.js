@@ -274,7 +274,7 @@ Your tracker also must have the following properties:
 
         interface BaseAction {
             type: 'move' | 'capture' | 'promote';
-            san: string;
+            san: string; // special tokens like [?!#+] are not included here
             player: 'b' | 'w';
         }
 

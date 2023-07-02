@@ -4,6 +4,12 @@
 
 -   Nothing.
 
+## [3.0.5] - 2023-07-02
+
+### Fixed
+
+-   Further optimized PGN parsing.
+
 ## [3.0.4] - 2023-07-01
 
 ### Fixed
@@ -12,7 +18,7 @@
 
 ## [3.0.3] - 2023-07-01
 
-### Changed
+### Fixed
 
 -   Optimized PGN parsing Regexes. Results in another 15% performance boost.
 
