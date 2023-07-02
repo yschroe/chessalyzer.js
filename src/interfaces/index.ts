@@ -7,7 +7,7 @@ export interface GameProcessorConfig {
 }
 
 export interface GameProcessorAnalysisConfig {
-	analyzers: { move: Tracker[]; game: Tracker[] };
+	trackers: { move: Tracker[]; game: Tracker[] };
 	processedMoves: number;
 	processedGames: number;
 }
@@ -15,7 +15,7 @@ export interface GameProcessorAnalysisConfig {
 export interface GameProcessorAnalysisConfigFull
 	extends GameProcessorAnalysisConfig {
 	config: GameProcessorConfig;
-	analyzerData: { name: string; cfg: unknown; path: string }[];
+	trackerData: { name: string; cfg: TrackerConfig; path: string }[];
 	cntReadGames: number;
 	isDone: boolean;
 }
@@ -136,15 +136,14 @@ export interface GameAndMoveCountFull extends GameAndMoveCount {
 
 export interface WorkerTaskData {
 	games: Game[];
-	// TODO: cfg should be of type Tracker[‚]
-	analyzerData: { name: string; cfg: unknown; path?: string }[];
+	trackerData: { name: string; cfg: TrackerConfig; path?: string }[];
 	idxConfig: number;
 }
 
 export interface WorkerMessage {
 	cntMoves: number;
 	cntGames: number;
-	gameAnalyzers: Tracker[];
-	moveAnalyzers: Tracker[];
+	gameTrackers: Tracker[];
+	moveTrackers: Tracker[];
 	idxConfig: number;
 }

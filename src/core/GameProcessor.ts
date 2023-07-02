@@ -16,7 +16,9 @@ import type {
 import GameParser from './GameParser.js';
 import WorkerPool from './WorkerPool.js';
 
-const RESULT_TOKENS = ['1-0', '0-1', '1/2-1/2'];
+const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
+const MOVE_REGEX = /([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?[?!+#]?)|O(-O){1,2}/g;
+const RESULT_REGEX = /(1\/2-1\/2|1-0|0-1)$/;
 
 /**
  * Class that processes games.
@@ -38,11 +40,11 @@ class GameProcessor {
 		// convert AnalysisConfigs to GameProcessorAnalysisConfigFull
 		for (const cfg of configs) {
 			const tempCfg: GameProcessorAnalysisConfigFull = {
-				analyzers: {
+				trackers: {
 					move: [],
 					game: []
 				},
-				analyzerData: [],
+				trackerData: [],
 				config: this.checkConfig(cfg.config || {}),
 				processedMoves: 0,
 				processedGames: 0,
@@ -53,15 +55,15 @@ class GameProcessor {
 			if (cfg.trackers) {
 				for (const tracker of cfg.trackers) {
 					if (tracker.type === 'move') {
-						tempCfg.analyzers.move.push(tracker);
+						tempCfg.trackers.move.push(tracker);
 					} else if (tracker.type === 'game') {
-						tempCfg.analyzers.game.push(tracker);
+						tempCfg.trackers.game.push(tracker);
 
 						// we need to read in the header if at least one game tracker is attached
 						this.readInHeader = true;
 					}
 
-					tempCfg.analyzerData.push({
+					tempCfg.trackerData.push({
 						name: tracker.constructor.name,
 						cfg: tracker.cfg,
 						path: tracker.path
@@ -115,22 +117,13 @@ class GameProcessor {
 
 				// moves
 			} else if (!isHeaderTag && line !== '') {
-				// add moves from line to move array
-				game.moves.push(
-					...line
-						// remove comments from line
-						.replaceAll(/\{.*?\}|\(.*?\)/g, '')
-						// extract move SANs
-						.match(
-							/([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?[?!+#]?)|O(-O){1,2}|1\/2-1\/2|1-0|0-1/g
-						)
-				);
+				// extract move SANs
+				const lineWithoutComments = line.replaceAll(COMMENT_REGEX, '');
+				const movesInLine = lineWithoutComments.match(MOVE_REGEX);
+				if (movesInLine) game.moves.push(...movesInLine);
 
 				// only if the result marker is found, all moves have been read -> start analyzing
-				if (RESULT_TOKENS.includes(game.moves.at(-1))) {
-					// remove the result from the moves array
-					game.moves.pop();
-
+				if (RESULT_REGEX.test(lineWithoutComments)) {
 					for (
 						let idxCfg = 0;
 						idxCfg < this.configs.length;
@@ -153,9 +146,9 @@ class GameProcessor {
 									workerPool.runTask(
 										{
 											games: gameStore[idxCfg],
-											analyzerData:
+											trackerData:
 												this.configs[idxCfg]
-													.analyzerData,
+													.trackerData,
 											idxConfig: idxCfg
 										},
 										(err: Error, result: WorkerMessage) =>
@@ -199,7 +192,7 @@ class GameProcessor {
 									i * batchSize,
 									i * batchSize + batchSize
 								),
-								analyzerData: this.configs[idx].analyzerData,
+								trackerData: this.configs[idx].trackerData,
 								idxConfig: idx
 							},
 							(err: Error, result: WorkerMessage) =>
@@ -214,11 +207,11 @@ class GameProcessor {
 		}
 
 		// trigger finish events on trackers
-		for (const { analyzers } of this.configs) {
-			for (const tracker of analyzers.game) {
+		for (const { trackers } of this.configs) {
+			for (const tracker of trackers.game) {
 				tracker.finish?.();
 			}
-			for (const tracker of analyzers.move) {
+			for (const tracker of trackers.move) {
 				tracker.finish?.();
 			}
 		}
@@ -240,15 +233,15 @@ class GameProcessor {
 	private addDataFromWorker(err: Error, result: WorkerMessage) {
 		if (err) throw err;
 
-		const { idxConfig, gameAnalyzers, moveAnalyzers, cntMoves, cntGames } =
+		const { idxConfig, gameTrackers, moveTrackers, cntMoves, cntGames } =
 			result;
 
 		// add tracker data from this worker
-		for (let i = 0; i < gameAnalyzers.length; i += 1) {
-			this.configs[idxConfig].analyzers.game[i].add(gameAnalyzers[i]);
+		for (let i = 0; i < gameTrackers.length; i += 1) {
+			this.configs[idxConfig].trackers.game[i].add(gameTrackers[i]);
 		}
-		for (let i = 0; i < moveAnalyzers.length; i += 1) {
-			this.configs[idxConfig].analyzers.move[i].add(moveAnalyzers[i]);
+		for (let i = 0; i < moveTrackers.length; i += 1) {
+			this.configs[idxConfig].trackers.move[i].add(moveTrackers[i]);
 		}
 		this.configs[idxConfig].processedMoves += cntMoves;
 		this.configs[idxConfig].processedGames += cntGames;

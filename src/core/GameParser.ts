@@ -59,9 +59,9 @@ class GameParser {
 	 * @param analysisCfg Trackers into which the parsed data should be passed.
 	 */
 	processGame(game: Game, analysisCfg: GameProcessorAnalysisConfig): void {
-		// game based analyzers
-		for (const analyzer of analysisCfg.analyzers.game) {
-			analyzer.analyze(game);
+		// game based trackers
+		for (const tracker of analysisCfg.trackers.game) {
+			tracker.analyze(game);
 		}
 
 		const { moves } = game;
@@ -72,9 +72,9 @@ class GameParser {
 				// parse move from san to coordinates (and meta info)
 				const currentMoveActions = this.parseMove(move);
 
-				// move based analyzers
-				for (const analyzer of analysisCfg.analyzers.move) {
-					analyzer.analyze(currentMoveActions);
+				// move based trackers
+				for (const tracker of analysisCfg.trackers.move) {
+					tracker.analyze(currentMoveActions);
 				}
 
 				this.board.applyActions(currentMoveActions);
@@ -86,9 +86,9 @@ class GameParser {
 			throw err;
 		}
 
-		// notify move analyzers that the current game is done
-		for (const analyzer of analysisCfg.analyzers.move) {
-			analyzer.nextGame?.();
+		// notify move trackers that the current game is done
+		for (const tracker of analysisCfg.trackers.move) {
+			tracker.nextGame?.();
 		}
 
 		analysisCfg.processedMoves += moves.length;

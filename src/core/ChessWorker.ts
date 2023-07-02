@@ -7,10 +7,9 @@ import TileTracker from '../tracker/TileTrackerBase.js';
 import GameTracker from '../tracker/GameTrackerBase.js';
 import BaseTracker from '../tracker/BaseTracker.js';
 import type {
-	Game,
 	GameProcessorAnalysisConfig,
-	TrackerConfig,
-	WorkerMessage
+	WorkerMessage,
+	WorkerTaskData
 } from '../interfaces/index.js';
 import GameParser from './GameParser.js';
 
@@ -23,57 +22,50 @@ TrackerList[PieceTracker.name] = PieceTracker;
 TrackerList[TileTracker.name] = TileTracker;
 TrackerList[GameTracker.name] = GameTracker;
 
-parentPort.on(
-	'message',
-	(msg: {
-		games: Game[];
-		analyzerData: { name: string; cfg: TrackerConfig; path?: string }[];
-		idxConfig: number;
-	}) => {
-		void (async () => {
-			// import custom trackers
-			for (const a of msg.analyzerData.filter((val) => val.path)) {
-				if (!(a.name in TrackerList)) {
-					const customTracker = await import(a.path);
-					TrackerList[a.name] = customTracker.default
-						? customTracker.default
-						: customTracker;
-				}
+parentPort.on('message', (msg: WorkerTaskData) => {
+	void (async () => {
+		// import custom trackers
+		for (const tracker of msg.trackerData.filter((val) => val.path)) {
+			if (!(tracker.name in TrackerList)) {
+				const customTracker = await import(tracker.path);
+				TrackerList[tracker.name] = customTracker.default
+					? customTracker.default
+					: customTracker;
 			}
+		}
 
-			// select needed trackers
-			const cfg: GameProcessorAnalysisConfig = {
-				analyzers: { move: [], game: [] },
-				processedMoves: 0,
-				processedGames: 0
-			};
-			for (const a of msg.analyzerData) {
-				const currentAnalyzer: BaseTracker = new TrackerList[a.name]();
-				currentAnalyzer.cfg = a.cfg;
+		// select needed trackers
+		const cfg: GameProcessorAnalysisConfig = {
+			trackers: { move: [], game: [] },
+			processedMoves: 0,
+			processedGames: 0
+		};
+		for (const tracker of msg.trackerData) {
+			const currentTracker: BaseTracker = new TrackerList[tracker.name]();
+			currentTracker.cfg = tracker.cfg;
 
-				// we need to remove the heatmapPresets here or we will get an
-				// DOMException [DataCloneError] when sending the data back to the main thread
-				currentAnalyzer.heatmapPresets = null;
+			// we need to remove the heatmapPresets here or we will get an
+			// DOMException [DataCloneError] when sending the data back to the main thread
+			currentTracker.heatmapPresets = null;
 
-				cfg.analyzers[currentAnalyzer.type].push(currentAnalyzer);
-			}
+			cfg.trackers[currentTracker.type].push(currentTracker);
+		}
 
-			// analyze each game
-			for (const game of msg.games) gameParser.processGame(game, cfg);
+		// analyze each game
+		for (const game of msg.games) gameParser.processGame(game, cfg);
 
-			const result: WorkerMessage = {
-				cntMoves: cfg.processedMoves,
-				cntGames: cfg.processedGames,
-				gameAnalyzers: cfg.analyzers.game,
-				moveAnalyzers: cfg.analyzers.move,
-				idxConfig: msg.idxConfig
-			};
+		const result: WorkerMessage = {
+			cntMoves: cfg.processedMoves,
+			cntGames: cfg.processedGames,
+			gameTrackers: cfg.trackers.game,
+			moveTrackers: cfg.trackers.move,
+			idxConfig: msg.idxConfig
+		};
 
-			// send result of batch to master
-			parentPort.postMessage(result);
-		})();
-	}
-);
+		// send result of batch to master
+		parentPort.postMessage(result);
+	})();
+});
 
 // handle errors
 // since above code runs inside a promise, simply catching and rethrowing

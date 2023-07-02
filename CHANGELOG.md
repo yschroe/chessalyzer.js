@@ -66,5 +66,5 @@
 -   Chessalyzer.js is now an ES module (ESM). See [this guide](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#file-esm-package-md) for how to use this package.
 -   runBatch(...) and runBatchMulticore(...) were merged into the single function analyzePGN(...). Per default the function will run in multithreaded mode, but you can override the config to force singlethreaded mode if it is needed in your environment.
 -   The heatmap generation functions have been moved into the Tracker objects.
--   Changed the data structure of the move data passed into the analyzers.
+-   Changed the data structure of the move data passed into the trackers.
 -   Ported code base to TypeScript.

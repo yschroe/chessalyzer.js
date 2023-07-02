@@ -26,7 +26,7 @@ class BaseTracker implements Tracker {
 		this.heatmapPresets = {};
 
 		if (this.type === undefined) {
-			throw new Error('Your analyzer must specify a type!');
+			throw new Error('Your tracker must specify a type!');
 		}
 	}
 
@@ -37,12 +37,12 @@ class BaseTracker implements Tracker {
 	}
 
 	track(_data: Game | Action[]) {
-		throw new Error('Your analyzer must implement a track(...) method!');
+		throw new Error('Your tracker must implement a track(...) method!');
 	}
 
 	add(_data: this) {
 		throw new Error(
-			'Your analyzer must implement an add(...) method if you are using multihread mode!'
+			'Your tracker must implement an add(...) method if you are using multihread mode!'
 		);
 	}
 
@@ -56,7 +56,7 @@ class BaseTracker implements Tracker {
 		if (typeof analysisFunc === 'string') {
 			if (Object.keys(this.heatmapPresets).length === 0)
 				throw new Error(
-					'Your analyzer does not define any heatmap presets!'
+					'Your tracker does not define any heatmap presets!'
 				);
 			heatmapFunction = this.heatmapPresets[analysisFunc]?.calc;
 			if (!heatmapFunction)
@@ -79,7 +79,7 @@ class BaseTracker implements Tracker {
 		if (typeof analysisFunc === 'string') {
 			if (Object.keys(this.heatmapPresets).length === 0)
 				throw new Error(
-					'Your analyzer does not define any heatmap presets!'
+					'Your tracker does not define any heatmap presets!'
 				);
 			heatmapFunction = this.heatmapPresets[analysisFunc]?.calc;
 			if (!heatmapFunction)
