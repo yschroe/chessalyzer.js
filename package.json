@@ -43,16 +43,16 @@
 	},
 	"homepage": "https://github.com/YSchroe/chessalyzer.js",
 	"devDependencies": {
-		"@types/node": "^20.4.2",
-		"@typescript-eslint/eslint-plugin": "^6.1.0",
-		"@typescript-eslint/parser": "^6.1.0",
-		"eslint": "^8.45.0",
+		"@types/node": "^20.6.0",
+		"@typescript-eslint/eslint-plugin": "^6.7.0",
+		"@typescript-eslint/parser": "^6.7.0",
+		"eslint": "^8.49.0",
 		"mocha": "^10.2.0",
-		"rollup": "^3.26.3",
-		"rollup-plugin-dts": "^5.3.0",
-		"typedoc": "^0.24.8",
-		"typedoc-plugin-merge-modules": "^5.0.1",
-		"typescript": "^5.1.6"
+		"rollup": "^3.29.1",
+		"rollup-plugin-dts": "^6.0.2",
+		"typedoc": "^0.25.1",
+		"typedoc-plugin-merge-modules": "^5.1.0",
+		"typescript": "^5.2.2"
 	},
 	"dependencies": {
 		"chalk": "^5.3.0"
