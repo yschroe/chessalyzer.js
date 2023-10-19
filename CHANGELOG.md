@@ -4,6 +4,7 @@
 
 ### Ideas
 
+-   Do not create numThreads workers on init of the workerpool, but dynamically if needed.
 -   Send tracker config only once on init of the worker pool
 -   Do not send result back to main thread every time a chunk was processed, but only once at the end.
 

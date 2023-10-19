@@ -115,8 +115,8 @@ export default class WorkerPool extends EventEmitter {
 		task: WorkerTaskData,
 		callback: (err: Error, result: WorkerMessage) => void
 	) {
+		// No free threads, wait until a worker thread becomes free.
 		if (this.freeWorkers.length === 0) {
-			// No free threads, wait until a worker thread becomes free.
 			this.tasks.push({ task, callback });
 			return;
 		}
