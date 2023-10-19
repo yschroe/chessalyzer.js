@@ -2,7 +2,10 @@
 
 ## [Unreleased]
 
--   Nothing.
+### Ideas
+
+-   Send tracker config only once on init of the worker pool
+-   Do not send result back to main thread every time a chunk was processed, but only once at the end.
 
 ## [3.0.5] - 2023-07-02
 
