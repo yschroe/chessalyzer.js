@@ -20,7 +20,8 @@ const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
 const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
 const MOVE_REGEX = /([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?)|O(-O){1,2}/g;
 // const MOVE_REGEX = /([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?[?!#+]*)|O(-O){1,2}/g; // includes [?!#+] tokens
-const RESULT_REGEX = /(1\/2-1\/2|1-0|0-1)$/;
+const RESULT_REGEX = /-(1\/2|0|1)$/;
+// const RESULT_REGEX = /-/;
 
 /**
  * Class that processes games.
@@ -120,12 +121,16 @@ class GameProcessor {
 				// moves
 			} else if (!isHeaderTag && line !== '') {
 				// extract move SANs
-				const lineWithoutComments = line.replaceAll(COMMENT_REGEX, '');
-				const movesInLine = lineWithoutComments.match(MOVE_REGEX);
-				if (movesInLine) game.moves.push(...movesInLine);
+				const cleanedLine = line.replaceAll(COMMENT_REGEX, '');
+				const matchedMoves = cleanedLine.match(MOVE_REGEX) || [];
+
+				// For performance reasons, do not use spread operator if it's not necessary
+				// -> PGNs which use a single line for all moves only use one assignment instead spreading
+				if (game.moves.length === 0) game.moves = matchedMoves;
+				else game.moves.push(...matchedMoves);
 
 				// only if the result marker is found, all moves have been read -> start analyzing
-				if (RESULT_REGEX.test(lineWithoutComments)) {
+				if (RESULT_REGEX.test(cleanedLine)) {
 					for (
 						let idxCfg = 0;
 						idxCfg < this.configs.length;
@@ -172,9 +177,7 @@ class GameProcessor {
 			}
 			const allDone = this.configs.reduce((a, c) => a && c.isDone, true);
 
-			if (allDone) {
-				this.lineReader.close();
-			}
+			if (allDone) this.lineReader.close();
 		});
 
 		// since the line reader reads in lines async, we need to wait here until
