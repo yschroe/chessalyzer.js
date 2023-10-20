@@ -21,7 +21,6 @@ const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
 const MOVE_REGEX = /([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?)|O(-O){1,2}/g;
 // const MOVE_REGEX = /([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?[?!#+]*)|O(-O){1,2}/g; // includes [?!#+] tokens
 const RESULT_REGEX = /-(1\/2|0|1)$/;
-// const RESULT_REGEX = /-/;
 
 /**
  * Class that processes games.
@@ -96,10 +95,8 @@ class GameProcessor {
 		}
 
 		// create gamestore for each config
-		const gameStore: Game[][] = [];
-		this.configs.forEach(() => {
-			gameStore.push([]);
-		});
+		const gameStore: Game[][] = this.configs.map(() => [] as Game[]);
+
 		let game: Game = { moves: [] };
 
 		const gameParser = new GameParser();
@@ -125,7 +122,7 @@ class GameProcessor {
 				const matchedMoves = cleanedLine.match(MOVE_REGEX) || [];
 
 				// For performance reasons, do not use spread operator if it's not necessary
-				// -> PGNs which use a single line for all moves only use one assignment instead spreading
+				// -> PGNs which use a single line for all moves only use one assignment instead of spreading
 				if (game.moves.length === 0) game.moves = matchedMoves;
 				else game.moves.push(...matchedMoves);
 
