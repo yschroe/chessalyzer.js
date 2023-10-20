@@ -514,16 +514,11 @@ class GameParser {
 
 			const piece = this.board.getPieceOnCoords([row, col]);
 			if (piece) {
-				if (
-					checkFor.some((token) => piece.name.startsWith(token)) &&
-					piece.color === opColor
-				) {
-					isInCheck = true;
-					break;
-				} else {
-					// way is obstructed by other piece
-					break;
-				}
+				// way is obstructed
+				isInCheck =
+					piece.color === opColor &&
+					checkFor.some((token) => piece.name.startsWith(token));
+				break;
 			}
 		}
 
