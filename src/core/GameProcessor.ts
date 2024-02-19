@@ -1,5 +1,5 @@
 import { createReadStream } from 'node:fs';
-import { Interface, createInterface } from 'node:readline';
+import { createInterface } from 'node:readline';
 import { EventEmitter } from 'node:events';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,7 +28,6 @@ const RESULT_REGEX = /-(1\/2|0|1)$/;
  */
 class GameProcessor {
 	configs: GameProcessorAnalysisConfigFull[];
-	lineReader: Interface;
 	readInHeader: boolean;
 	multithreadConfig: MultithreadConfig | null;
 
@@ -103,13 +102,13 @@ class GameProcessor {
 		const gameParser = new GameParser();
 
 		// init line reader
-		this.lineReader = createInterface({
+		const lineReader = createInterface({
 			input: createReadStream(path),
 			crlfDelay: Infinity
 		});
 
 		// on new line
-		this.lineReader.on('line', (line) => {
+		lineReader.on('line', (line) => {
 			const isHeaderTag = line.startsWith('[');
 			// header tag
 			if (this.readInHeader && isHeaderTag) {
@@ -175,12 +174,12 @@ class GameProcessor {
 			}
 			const allDone = this.configs.reduce((a, c) => a && c.isDone, true);
 
-			if (allDone) this.lineReader.close();
+			if (allDone) lineReader.close();
 		});
 
 		// since the line reader reads in lines async, we need to wait here until
 		// all lines have been read in
-		await EventEmitter.once(this.lineReader, 'close');
+		await EventEmitter.once(lineReader, 'close');
 
 		if (isMultithreaded) {
 			// if on end there are still unprocessed games, start a last worker batch
