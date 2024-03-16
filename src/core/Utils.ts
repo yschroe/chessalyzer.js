@@ -4,40 +4,42 @@ import type {
 	HeatmapData,
 	SquareData
 } from '../interfaces/index.js';
-import type { FileLetter } from '../types/index.js';
 
-const files = 'abcdefgh';
-const fileMap: { [letter in FileLetter]: number } = {
-	a: 0,
-	b: 1,
-	c: 2,
-	d: 3,
-	e: 4,
-	f: 5,
-	g: 6,
-	h: 7
-};
+// const files = 'abcdefgh';
+const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+const ranks = [1, 2, 3, 4, 5, 6, 7, 8];
+
+const algebraicToCoordsMap = new Map<string, number[]>();
+for (const [fileIdx, file] of files.entries()) {
+	for (const rank of ranks) {
+		algebraicToCoordsMap.set(`${file}${rank}`, [8 - rank, fileIdx]);
+	}
+}
+
+const fileToNumberMap = new Map([
+	['a', 0],
+	['b', 1],
+	['c', 2],
+	['d', 3],
+	['e', 4],
+	['f', 5],
+	['g', 6],
+	['h', 7]
+]);
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
 export default class Utils {
-	static algebraicToCoords(square: string): number[] {
-		const coords: number[] = [];
-		const temp = square.split('');
-		coords.push(8 - Number(temp[1]));
-		coords.push(Utils.getFileNumber(temp[0] as FileLetter));
-
-		return coords;
+	static algebraicToCoords(square: string): number[] | undefined {
+		return algebraicToCoordsMap.get(square);
 	}
 
 	static coordsToAlgebraic(coords: number[]): string {
-		let name = files[coords[1]];
-		name += 8 - coords[0];
-		return name;
+		return `${files[coords[1]]}${8 - coords[0]}`;
 	}
 
-	static getFileNumber(file: FileLetter): number {
-		return fileMap[file];
+	static getFileNumber(file: string): number | null {
+		return fileToNumberMap.get(file) ?? null;
 	}
 
 	static getStartingPiece(sqr: number[]): ChessPiece | null {

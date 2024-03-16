@@ -5,7 +5,7 @@ import {
 	Move,
 	MoveAction
 } from '../interfaces/index.js';
-import { FileLetter, PieceToken, PlayerColor, Token } from '../types/index.js';
+import { PieceToken, PlayerColor, Token } from '../types/index.js';
 import ChessBoard from './ChessBoard.js';
 import Utils from './Utils.js';
 
@@ -110,7 +110,7 @@ class GameParser {
 	 * @returns A list of `Action`s to perform on the board.
 	 */
 	private parseMove(san: string): Action[] {
-		const token = san.substring(0, 1) as Token;
+		const token = san.at(0) as Token;
 
 		if (token.toLowerCase() === token) {
 			return this.pawnMove(san);
@@ -135,19 +135,23 @@ class GameParser {
 		let offset = 0;
 		const coords: Move = { from: [], to: [] };
 
-		// capture
-		if (san.includes('x')) {
-			const sanAdapted = san.replace('x', '');
+		// Create temp copy of SAN so we can remove some characters.
+		let tempSan = san.slice();
 
-			coords.to[0] = 8 - parseInt(sanAdapted.substring(2, 3), 10);
+		// Check for promotion.
+		let promotesTo = '';
+		if (tempSan.at(-2) === '=') {
+			promotesTo = tempSan.at(-1);
+			tempSan = tempSan.slice(0, -2);
+		}
 
-			coords.to[1] = Utils.getFileNumber(
-				sanAdapted.substring(1, 2) as FileLetter
-			);
+		// Target square is always last two characters of SAN.
+		coords.to = Utils.algebraicToCoords(tempSan.slice(-2));
+
+		// Capture
+		if (tempSan.at(1) == 'x') {
 			coords.from[0] = coords.to[0] + direction;
-			coords.from[1] = Utils.getFileNumber(
-				sanAdapted.substring(0, 1) as FileLetter
-			);
+			coords.from[1] = Utils.getFileNumber(tempSan.at(0));
 
 			// en passant
 			if (this.board.getPieceOnCoords(coords.to) === null) {
@@ -167,15 +171,10 @@ class GameParser {
 				takingPiece,
 				takenPiece
 			});
-
-			// moves
-		} else {
-			const tarRow = 8 - parseInt(san.substring(1, 2), 10);
-			const tarCol = Utils.getFileNumber(
-				san.substring(0, 1) as FileLetter
-			);
-			coords.from = [-1, tarCol]; // -1: to be found in for loop
-			coords.to = [tarRow, tarCol];
+		}
+		// Moves
+		else {
+			const [tarRow, tarCol] = coords.to;
 
 			for (let i = 1; i <= 2; i += 1) {
 				if (
@@ -183,7 +182,7 @@ class GameParser {
 						.getPieceOnCoords([tarRow + i * direction, tarCol])
 						?.name.startsWith('P')
 				) {
-					coords.from[0] = tarRow + i * direction;
+					coords.from = [tarRow + i * direction, tarCol];
 					break;
 				}
 			}
@@ -203,13 +202,13 @@ class GameParser {
 		});
 
 		// promotes
-		if (san.includes('=')) {
+		if (promotesTo) {
 			actions.push({
 				type: 'promote',
 				san,
 				player,
 				on: coords.to,
-				to: san.slice(-1)
+				to: promotesTo
 			});
 		}
 
@@ -226,12 +225,12 @@ class GameParser {
 		const player = this.activePlayer;
 
 		let capture = false;
-		let coords: Move = { from: [], to: [] };
-		const token = san.substring(0, 1) as PieceToken;
+		const coords: Move = { from: [], to: [] };
+		const token = san.at(0) as PieceToken;
 
 		// create copy of san to be able to remove characters without altering the original san
 		// remove token
-		let tempSan = san.substring(1);
+		let tempSan = san.slice(1);
 
 		// capture
 		if (tempSan.includes('x')) {
@@ -239,51 +238,40 @@ class GameParser {
 			tempSan = tempSan.replace('x', '');
 		}
 
-		// e.g. Re3f5
-		if (tempSan.length === 4) {
-			coords.from[0] = 8 - parseInt(tempSan.substring(1, 2), 10);
-			coords.from[1] = Utils.getFileNumber(
-				tempSan.substring(0, 1) as FileLetter
-			);
-			coords.to[0] = 8 - parseInt(tempSan.substring(3, 4), 10);
-			coords.to[1] = Utils.getFileNumber(
-				tempSan.substring(2, 3) as FileLetter
-			);
+		// Target square is always last two characters of SAN.
+		coords.to = Utils.algebraicToCoords(tempSan.slice(-2));
 
-			// e.g. Ref3
-		} else if (tempSan.length === 3) {
-			const tarRow = 8 - parseInt(tempSan.substring(2, 3), 10);
-			const tarCol = Utils.getFileNumber(
-				tempSan.substring(1, 2) as FileLetter
-			);
+		// Get rest of string, removing the last two characters.
+		const rest = tempSan.slice(0, -2);
+
+		// E.g. 'Re3f5' -> rest is 'e3'
+		if (rest.length === 2) {
+			coords.from = Utils.algebraicToCoords(tempSan.slice(0, 2));
+		}
+		// E.g. 'Ref3' -> rest is 'e'
+		else if (rest.length === 1) {
 			let mustBeInRow: number | null = null; // to be found
-			let mustBeInCol: number | null = null; // to be found
 
-			// file is specified
-			const firstChar = tempSan.substring(0, 1);
-			if (firstChar.match(/\D/)) {
-				mustBeInCol = Utils.getFileNumber(firstChar as FileLetter);
+			// If letter can be parsed to number: col is specified.
+			const mustBeInCol = Utils.getFileNumber(rest);
+			// Else: row is specified
+			if (mustBeInCol === null) mustBeInRow = 8 - Number(rest);
 
-				// rank is specified
-			} else {
-				mustBeInRow = 8 - Number(firstChar);
-			}
-			coords = this.findPiece(
-				tarRow,
-				tarCol,
-				mustBeInRow,
-				mustBeInCol,
+			coords.from = this.findPiece(
+				coords.to,
+				[mustBeInRow, mustBeInCol],
 				token,
 				player
 			);
-
-			// e.g. Rf3
-		} else {
-			const tarRow = 8 - parseInt(tempSan.substring(1, 2), 10);
-			const tarCol = Utils.getFileNumber(
-				tempSan.substring(0, 1) as FileLetter
+		}
+		// E.g. 'Rf3' -> rest is ''
+		else {
+			coords.from = this.findPiece(
+				coords.to,
+				[null, null],
+				token,
+				player
 			);
-			coords = this.findPiece(tarRow, tarCol, null, null, token, player);
 		}
 
 		const piece = this.board.getPieceOnCoords(coords.from)?.name;
@@ -302,7 +290,7 @@ class GameParser {
 			});
 		}
 
-		// move action must always come after capture action
+		// Move action must always come after capture action
 		actions.push({
 			type: 'move',
 			san,
@@ -377,55 +365,56 @@ class GameParser {
 
 	/**
 	 * Search the current position for a piece that could perform the move.
-	 * @param tarRow Row number (0-7) of the square the piece should move to.
-	 * @param tarCol Column number (0-7) of the square the piece should move to.
-	 * @param mustBeInRow If value is passed, only pieces in that row are checked.
-	 * @param mustBeInCol If value is passed, only pieces in that column are checked.
+	 * @param toPosition Coordinates of the square the piece should move to.
+	 * @param knownFromParts Parts of the starting position that are known via the SAN.
 	 * @param token Type of piece that is looked for.
 	 * @param player The moving player
-	 * @returns The move which will fulfill all criteria.
+	 * @returns The position of the piece which will fulfill all criteria.
 	 */
 	private findPiece(
-		tarRow: number,
-		tarCol: number,
-		mustBeInRow: number | null,
-		mustBeInCol: number | null,
+		toPosition: number[],
+		knownFromParts: (number | null)[],
 		token: PieceToken,
 		player: PlayerColor
-	): Move {
-		const to = [tarRow, tarCol];
-
+	): number[] {
+		const [tarRow, tarCol] = toPosition;
+		const [mustBeInRow, mustBeInCol] = knownFromParts;
 		// get array of positions of pieces of type <token>
 		let validPieces = this.board.getPositionsForToken(player, token);
 
 		// filter pieces that can reach target square
 		if (validPieces.length > 1) {
+			const allowedDirections =
+				moveCfg[token as Exclude<PieceToken, 'K'>];
+
 			validPieces = validPieces.filter((val) => {
-				const mustBeInFulfilled =
-					(mustBeInRow === null || val[0] === mustBeInRow) &&
-					(mustBeInCol === null || val[1] === mustBeInCol);
+				const [row, col] = val;
+
+				if (!(mustBeInRow === null || row === mustBeInRow))
+					return false;
+				if (!(mustBeInCol === null || col === mustBeInCol))
+					return false;
+
+				const rowDiff = Math.abs(row - tarRow);
+				const colDiff = Math.abs(col - tarCol);
+
+				if (token === 'N')
+					return (
+						(rowDiff === 2 && colDiff === 1) ||
+						(rowDiff === 1 && colDiff === 2)
+					);
+
 				return (
-					mustBeInFulfilled &&
-					((moveCfg[token as Exclude<PieceToken, 'K'>].line &&
-						(val[0] === tarRow || val[1] === tarCol)) ||
-						(moveCfg[token as Exclude<PieceToken, 'K'>].diag &&
-							Math.abs(val[0] - tarRow) ===
-								Math.abs(val[1] - tarCol)) ||
-						(token === 'N' &&
-							((Math.abs(val[0] - tarRow) === 2 &&
-								Math.abs(val[1] - tarCol) === 1) ||
-								(Math.abs(val[0] - tarRow) === 1 &&
-									Math.abs(val[1] - tarCol) === 2))))
+					(allowedDirections.line &&
+						(rowDiff === 0 || colDiff === 0)) ||
+					(allowedDirections.diag && rowDiff === colDiff)
 				);
 			});
 		}
 
 		// if only one piece is left, move is found
 		if (validPieces.length === 1) {
-			return {
-				from: validPieces[0],
-				to
-			};
+			return validPieces[0];
 		}
 
 		// else: one of the remaining pieces cannot move because of obstruction or it
@@ -449,11 +438,11 @@ class GameParser {
 				}
 			}
 
-			if (!obstructed && !this.checkCheck({ from: piece, to }, player)) {
-				return {
-					from: piece,
-					to
-				};
+			if (
+				!obstructed &&
+				!this.checkCheck({ from: piece, to: toPosition }, player)
+			) {
+				return piece;
 			}
 		}
 

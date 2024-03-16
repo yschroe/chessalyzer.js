@@ -13,8 +13,7 @@ export default class Chessalyzer {
 	 * Main function for analyzing PGN files.
 	 * @param pathToPgn Path to the .pgn file which should be parsed and analyzed.
 	 * @param configs Configuration for the analysis. Via this config the games can be filtered and trackers can be attached.
-	 * @param multithreadCfg Configuration for multithreaded analysis.
-	 *  Here the size per batch that shall be analyzed on a separate thread can be set.
+	 * @param multithreadCfg Configuration for multithreaded analysis. Here the size per batch that shall be analyzed on a separate thread can be set.
 	 * @returns Meta information about the analysis like the amount of processed games/moves and the time it took.
 	 */
 	static async analyzePGN(
