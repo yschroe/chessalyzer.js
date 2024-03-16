@@ -42,12 +42,9 @@ class GameProcessor {
 		// convert AnalysisConfigs to GameProcessorAnalysisConfigFull
 		for (const cfg of configs) {
 			const tempCfg: GameProcessorAnalysisConfigFull = {
-				trackers: {
-					move: [],
-					game: []
-				},
+				trackers: { move: [], game: [] },
 				trackerData: [],
-				config: this.checkConfig(cfg.config || {}),
+				config: this.checkConfig(cfg.config ?? {}),
 				processedMoves: 0,
 				processedGames: 0,
 				cntReadGames: 0,
@@ -119,7 +116,7 @@ class GameProcessor {
 			} else if (!isHeaderTag && line !== '') {
 				// extract move SANs
 				const cleanedLine = line.replaceAll(COMMENT_REGEX, '');
-				const matchedMoves = cleanedLine.match(MOVE_REGEX) || [];
+				const matchedMoves = cleanedLine.match(MOVE_REGEX) ?? [];
 
 				// For performance reasons, do not use spread operator if it's not necessary
 				// -> PGNs which use a single line for all moves only use one assignment instead of spreading
@@ -210,12 +207,8 @@ class GameProcessor {
 
 		// trigger finish events on trackers
 		for (const { trackers } of this.configs) {
-			for (const tracker of trackers.game) {
-				tracker.finish?.();
-			}
-			for (const tracker of trackers.move) {
-				tracker.finish?.();
-			}
+			for (const tracker of trackers.game) tracker.finish?.();
+			for (const tracker of trackers.move) tracker.finish?.();
 		}
 
 		const returnVals: GameAndMoveCount[] = this.configs.map((cfg) => ({
@@ -258,7 +251,7 @@ class GameProcessor {
 		const cfg: GameProcessorConfig = {
 			hasFilter,
 			filter: hasFilter ? config.filter : () => true,
-			cntGames: config.cntGames || Infinity
+			cntGames: config.cntGames ?? Infinity
 		};
 		return cfg;
 	}

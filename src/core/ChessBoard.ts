@@ -38,17 +38,17 @@ class PiecePositions {
 	}
 
 	capture(piece: string): void {
-		const token = piece.substring(0, 1) as PieceToken;
+		const token = piece.at(0) as PieceToken;
 		this[token]?.delete(piece);
 	}
 
 	move(piece: string, destinationSquare: number[]): void {
-		const token = piece.substring(0, 1) as PieceToken;
+		const token = piece.at(0) as PieceToken;
 		this[token]?.set(piece, destinationSquare);
 	}
 
 	promote(piece: string, onSquare: number[]): void {
-		const token = piece.substring(0, 1) as PieceToken;
+		const token = piece.at(0) as PieceToken;
 		this[token]?.set(piece, onSquare);
 	}
 }
@@ -82,7 +82,7 @@ class ChessBoard {
 	}
 
 	getPiecePosition(player: PlayerColor, piece: string): number[] | undefined {
-		const token = piece.substring(0, 1) as PieceToken;
+		const token = piece.at(0) as PieceToken;
 		return this.pieces[player][token].get(piece);
 	}
 
