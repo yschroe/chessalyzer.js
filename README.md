@@ -27,7 +27,7 @@ A JavaScript library for batch analyzing chess games.
 -   Filter games (e.g. only analyze games where WhiteElo > 1800)
 -   Fully modular, track only the stats you need to preserve performance
 -   Generate heatmaps out of the generated data
--   It's fast and highly parallelized: Processes >8.700.000 moves/s on an Apple M1, >4.400.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
+-   It's fast and highly parallelized: Processes >8.700.000 moves/s on an Apple M1, >4.600.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
 -   Handles big files easily
 -   Just one dependency (chalk)
 
@@ -68,25 +68,24 @@ Lastly chessalyzer.js provides you with functions to convert your raw data from 
 Let's start with a basic example. Here we simply want to track the tile occupation (=how often did each tile have a piece on it) for the whole board. For this we can use the preconfigured TileTracker class from the library. Afterwards we want to create a heatmap out of the data to visualize the tile occupation. For this basic heatmap a preset is also provided:
 
 ```javascript
-// import the library and trackers
+// Import the library and trackers.
 import { Chessalyzer, TileTracker } from 'chessalyzer.js';
 
-// create basic tile tracker
+// Create basic tile tracker.
 const tileTracker = new TileTracker();
 
-// start a batch analysis for the PGN file at <pathToPgnFile>
-// the data is tracked directly inside the tileTracker instance
-// see later chapters for how the data is structured inside the trackers
-// (top level awaits are possible with ESM :))
+// Start a batch analysis for the PGN file at <pathToPgnFile>.
+// The data is tracked directly inside the tileTracker instance.
+// See later chapters for how the data is structured inside the trackers.
 await Chessalyzer.analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
 
-// generate a tile occupation heatmap
+// Generate a tile occupation heatmap.
 const heatmapData = tileTracker.generateHeatmap('TILE_OCC_ALL');
 
-// print heatmap to console for preview
+// Print heatmap to console for preview.
 Chessalyzer.printHeatmap(heatmapData);
 
-// ...or use heatmapData with your favourite frontend
+// ...or use heatmapData with your favourite frontend.
 ```
 
 ## Filtering
@@ -94,8 +93,8 @@ Chessalyzer.printHeatmap(heatmapData);
 You can also filter the PGN file for specific criteria, e.g. only evaluate games where `WhiteElo > 2000`:
 
 ```javascript
-// create filter function that returns true for all games where WhiteElo > 2000
-// the 'game' object passed contains every header key included in the pgn file (case sensitive)
+// Create filter function that returns true for all games where WhiteElo > 2000.
+// The 'game' object passed contains every header key included in the pgn file (case sensitive).
 let fil = function (game) {
     return game.WhiteElo > 2000;
 };
@@ -107,7 +106,7 @@ await Chessalyzer.analyzePGN('<pathToPgnFile>', {
     }
 });
 
-// ...do something with the tileTracker data
+// ...do something with the tileTracker data.
 ```
 
 ## Compare Analyses
@@ -115,13 +114,13 @@ await Chessalyzer.analyzePGN('<pathToPgnFile>', {
 You can also generate a comparison heat map where you can compare the data of two different analyses. Let's say you wanted to compare how the white player occupates the board between a lower rated player and a higher rated player. To get comparable results 1000 games of each shall be evaluated:
 
 ```javascript
-// create two Tile Trackers
+// Create two Tile Trackers.
 const tileT1 = new TileTracker();
 const tileT2 = new TileTracker();
 
-// start the analysis
-// instead of passing just one analysis config you can also pass an array of configs
-// tileT1 will only receive games with WhiteElo >2000, tileT2 only receives games with WhiteElo < 1200
+// Start the analysis.
+// Instead of passing just one analysis config you can also pass an array of configs,
+// tileT1 will only receive games with WhiteElo >2000, tileT2 only receives games with WhiteElo < 1200.
 await Chessalyzer.analyzePGN('<pathToPgnFile>', [
     {
         trackers: [tileT1],
@@ -139,7 +138,7 @@ await Chessalyzer.analyzePGN('<pathToPgnFile>', [
     }
 ]);
 
-// create an evaluation function for the heat map
+// Create an evaluation function for the heat map.
 let func = (data, loopSqrData) => {
     const { coords } = loopSqrData;
     let val = data.tiles[coords[0]][coords[1]].w.wasOn;
@@ -147,10 +146,10 @@ let func = (data, loopSqrData) => {
     return val;
 };
 
-// generate the comparison heatmap
+// Generate the comparison heatmap.
 const heatmapData = tileT1.generateComparisonHeatmap(tileT2, func);
 
-// use heatmapData
+// Use heatmapData.
 ```
 
 ## Multithreaded analysis
@@ -158,7 +157,7 @@ const heatmapData = tileT1.generateComparisonHeatmap(tileT2, func);
 Per default chessalyzer.js uses Node.js [Worker Threads](https://nodejs.org/api/worker_threads.html) to read-in the pgn file and analyze the data in parallel.
 
 ```javascript
-// start a multithreaded batch analysis for the PGN file at <pathToPgnFile>
+// Start a multithreaded batch analysis for the PGN file at <pathToPgnFile>.
 
 await Chessalyzer.analyzePGN(
     '<pathToPgnFile>',
@@ -193,15 +192,15 @@ The function you create for heatmap generation gets passed up to four parameters
 
     ```typescript
     interface SquareData {
-        // The square in algebraic notation (e.g. 'a2')
+        // The square in algebraic notation (e.g. 'a2').
         alg: string;
 
-        // The square in board coordinates (e.g. [6,0])
+        // The square in board coordinates (e.g. [6,0]).
         coords: number[];
 
         // The piece that starts at the passed square. If no piece starts at the passed square, piece is null.
         piece: {
-            // Name of the piece (e.g. 'Pa' for the a-pawn)
+            // Name of the piece (e.g. 'Pa' for the a-pawn).
             color: string;
             // Color of the piece ('b' or 'w').
             name: string;
