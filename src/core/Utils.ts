@@ -47,17 +47,19 @@ export default class Utils {
 			const row = sqr[0];
 			const col = sqr[1];
 
-			if (row === 0) {
-				return { color: 'b', name: pieceTemplate[col] };
-			} else if (row === 1) {
-				return { color: 'b', name: pawnTemplate[col] };
-			} else if (row === 6) {
-				return { color: 'w', name: pawnTemplate[col] };
-			} else if (row === 7) {
-				return { color: 'w', name: pieceTemplate[col] };
+			switch (row) {
+				case 0:
+					return { color: 'b', name: pieceTemplate[col] };
+				case 1:
+					return { color: 'b', name: pawnTemplate[col] };
+				case 6:
+					return { color: 'w', name: pawnTemplate[col] };
+				case 7:
+					return { color: 'w', name: pieceTemplate[col] };
+				default:
+					return null;
 			}
 		}
-
 		return null;
 	}
 
