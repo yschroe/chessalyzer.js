@@ -488,32 +488,26 @@ class GameParser {
 		const distanceToEdge = Math.min(distanceHorizontal, distanceVertical);
 		if (distanceToEdge < 2) return false;
 
-		const srcTilePiece = this.board.getPieceOnCoords(from);
-		const tarTilePiece = this.board.getPieceOnCoords(to);
-
-		// premove
-		this.board.tiles[from[0]][from[1]] = null;
-		this.board.tiles[to[0]][to[1]] = srcTilePiece;
-
 		// check for check
 		let isInCheck = false;
 		for (let i = 1; i <= distanceToEdge; i += 1) {
 			const row = king[0] + i * vertDir;
 			const col = king[1] + i * horzDir;
 
-			const piece = this.board.getPieceOnCoords([row, col]);
-			if (piece) {
-				// way is obstructed
-				isInCheck =
-					piece.color === opColor &&
-					checkFor.some((token) => piece.name.startsWith(token));
-				break;
+			// If move target -> Break since moving piece blocks checks.
+			if (row === to[0] && col === to[1]) break;
+
+			if (!(row === from[0] && col === from[1])) {
+				const piece = this.board.getPieceOnCoords([row, col]);
+				if (piece) {
+					// way is obstructed
+					isInCheck =
+						piece.color === opColor &&
+						checkFor.some((token) => piece.name.startsWith(token));
+					break;
+				}
 			}
 		}
-
-		// revert premove
-		this.board.tiles[from[0]][from[1]] = srcTilePiece;
-		this.board.tiles[to[0]][to[1]] = tarTilePiece;
 
 		return isInCheck;
 	}

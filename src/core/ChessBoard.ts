@@ -6,7 +6,6 @@ import type {
 	PromoteAction
 } from '../interfaces/index.js';
 import type { PieceToken, PlayerColor } from '../types/index.js';
-import Utils from './Utils.js';
 
 class PiecePositions {
 	R: Map<string, number[]>;
@@ -53,32 +52,70 @@ class PiecePositions {
 	}
 }
 
+const defaultTiles = new Int8Array([
+	-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8
+]);
+const pieces = [
+	'Ra',
+	'Nb',
+	'Bc',
+	'Qd',
+	'Ke',
+	'Bf',
+	'Ng',
+	'Rh',
+	'Pa',
+	'Pb',
+	'Pc',
+	'Pd',
+	'Pe',
+	'Pf',
+	'Pg',
+	'Ph'
+];
+
 class ChessBoard {
-	tiles: (ChessPiece | null)[][];
-	private defaultTiles: (ChessPiece | null)[][];
+	tiles: Int8Array;
 	private pieces: { w: PiecePositions; b: PiecePositions };
-	private promoteCounter: number;
+	private promotedPieces: {
+		w: string[];
+		b: string[];
+	};
 
 	constructor() {
-		this.defaultTiles = [];
-		for (let row = 0; row < 8; row += 1) {
-			const currRow: (ChessPiece | null)[] = [];
-			for (let col = 0; col < 8; col += 1) {
-				currRow.push(Utils.getStartingPiece([row, col]));
-			}
-			this.defaultTiles.push(currRow);
-		}
+		this.init();
+	}
 
-		this.tiles = this.defaultTiles.map((arr) => arr.slice());
+	private init() {
+		this.tiles = defaultTiles.slice();
 		this.pieces = {
 			w: new PiecePositions('w'),
 			b: new PiecePositions('b')
 		};
-		this.promoteCounter = 0;
+		this.promotedPieces = {
+			w: [],
+			b: []
+		};
 	}
 
 	getPieceOnCoords(coords: number[]): ChessPiece | null {
-		return this.tiles[coords[0]][coords[1]];
+		const [row, col] = coords;
+		const pieceNumber = this.tiles[ChessBoard.coordsToIndex([row, col])];
+		if (pieceNumber === 0) return null;
+
+		const color = pieceNumber > 0 ? 'w' : 'b';
+		const absPieceNumber = Math.abs(pieceNumber);
+
+		const pieceName =
+			pieces.at(absPieceNumber - 1) ??
+			this.promotedPieces[color].at(absPieceNumber - 1 - 16);
+
+		return {
+			name: pieceName,
+			color
+		};
 	}
 
 	getPiecePosition(player: PlayerColor, piece: string): number[] | undefined {
@@ -107,19 +144,15 @@ class ChessBoard {
 	}
 
 	reset(): void {
-		this.tiles = this.defaultTiles.map((arr) => [...arr]);
-		this.pieces = {
-			w: new PiecePositions('w'),
-			b: new PiecePositions('b')
-		};
-		this.promoteCounter = 0;
+		this.init();
 	}
 
 	/** Prints the current board position to the console. */
 	printPosition(): void {
+		console.log(this.tiles);
 		for (let row = 0; row < 8; row += 1) {
 			for (let col = 0; col < 8; col += 1) {
-				const piece = this.tiles[row][col];
+				const piece = this.getPieceOnCoords([row, col]);
 				if (piece !== null) {
 					process.stdout.write(`|${piece.color}${piece.name}|`);
 				} else {
@@ -131,34 +164,47 @@ class ChessBoard {
 	}
 
 	private move(action: MoveAction): void {
-		const { from, to, player } = action;
+		const { from, to, player, piece } = action;
 
 		// update piece map
-		this.pieces[player].move(action.piece, to);
+		this.pieces[player].move(piece, to);
+
+		const fromIdx = ChessBoard.coordsToIndex(from);
+		const toIdx = ChessBoard.coordsToIndex(to);
 
 		// update board
-		this.tiles[to[0]][to[1]] = this.tiles[from[0]][from[1]];
-		this.tiles[from[0]][from[1]] = null;
+		this.tiles[toIdx] = this.tiles[fromIdx];
+		this.tiles[fromIdx] = 0;
 	}
 
 	private capture(action: CaptureAction): void {
+		const { on, player, takenPiece } = action;
+
 		// update piece map
-		this.pieces[action.player === 'w' ? 'b' : 'w'].capture(
-			action.takenPiece
-		);
+		this.pieces[player === 'w' ? 'b' : 'w'].capture(takenPiece);
 
 		// update board
-		this.tiles[action.on[0]][action.on[1]] = null;
+		const captureIdx = ChessBoard.coordsToIndex(on);
+		this.tiles[captureIdx] = 0;
 	}
 
 	private promote(action: PromoteAction): void {
-		const newPieceName = `${action.to}${this.promoteCounter}`;
-		this.tiles[action.on[0]][action.on[1]] = {
-			name: newPieceName,
-			color: action.player
-		};
-		this.pieces[action.player].promote(newPieceName, action.on);
-		this.promoteCounter += 1;
+		const { on, to, player } = action;
+
+		const pieceNumber =
+			(this.promotedPieces[player].length + 16 + 1) *
+			(player === 'w' ? 1 : -1);
+
+		const piecename = `${to}${pieceNumber}`;
+
+		this.promotedPieces[player].push(piecename);
+
+		this.tiles[ChessBoard.coordsToIndex(on)] = pieceNumber;
+		this.pieces[player].promote(piecename, on);
+	}
+
+	private static coordsToIndex(coords: number[]) {
+		return coords[0] * 8 + coords[1];
 	}
 }
 

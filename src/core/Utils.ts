@@ -146,4 +146,8 @@ export default class Utils {
 
 		return { map, min, max };
 	}
+
+	static isBitOn(number: number, index: number) {
+		(number >>> index) & 1;
+	}
 }
