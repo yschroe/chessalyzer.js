@@ -52,39 +52,37 @@ class PiecePositions {
 	}
 }
 
-// prettier-ignore
-const defaultTiles = new Uint8Array([
-	129, 	130, 	131, 	132, 	133, 	134, 	135, 	136,
-	137, 	138, 	139, 	140, 	141, 	142, 	143, 	144, 
-	0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 
-	0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 
-	0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 
-	0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 
-	9, 		10, 	11,		12, 	13, 	14, 	15, 	16, 
-	1, 		2, 		3, 		4, 		5, 		6, 		7, 		8
-]);
-
-const pieces = [
-	null,
-	'Ra',
-	'Nb',
-	'Bc',
-	'Qd',
-	'Ke',
-	'Bf',
-	'Ng',
-	'Rh',
-	'Pa',
-	'Pb',
-	'Pc',
-	'Pd',
-	'Pe',
-	'Pf',
-	'Pg',
-	'Ph'
-];
-
 class ChessBoard {
+	// prettier-ignore
+	private static defaultTiles = new Uint8Array([
+		129, 	130, 	131, 	132, 	133, 	134, 	135, 	136,
+		137, 	138, 	139, 	140, 	141, 	142, 	143, 	144, 
+		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 
+		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 
+		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 
+		0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 
+		9, 		10, 	11,		12, 	13, 	14, 	15, 	16, 
+		1, 		2, 		3, 		4, 		5, 		6, 		7, 		8
+	]);
+	private static pieceLookupList = [
+		null,
+		'Ra',
+		'Nb',
+		'Bc',
+		'Qd',
+		'Ke',
+		'Bf',
+		'Ng',
+		'Rh',
+		'Pa',
+		'Pb',
+		'Pc',
+		'Pd',
+		'Pe',
+		'Pf',
+		'Pg',
+		'Ph'
+	];
 	private tiles: Uint8Array;
 	private pieces: { w: PiecePositions; b: PiecePositions };
 	private promotedPieces: {
@@ -97,7 +95,7 @@ class ChessBoard {
 	}
 
 	private init() {
-		this.tiles = defaultTiles.slice();
+		this.tiles = ChessBoard.defaultTiles.slice();
 		this.pieces = {
 			w: new PiecePositions('w'),
 			b: new PiecePositions('b')
@@ -110,15 +108,17 @@ class ChessBoard {
 
 	getPieceOnCoords(coords: number[]): ChessPiece | null {
 		const pieceNumber = this.tiles[ChessBoard.coordsToIndex(coords)];
-		const pieceIdx = pieceNumber & 0b01111111;
-		if (pieceIdx === 0) return null;
+		if (pieceNumber === 0) return null;
 
 		// Get first bit -> 1: black, 0: white
 		const color = pieceNumber & 0b10000000 ? 'b' : 'w';
+		const pieceIdx = pieceNumber & 0b01111111;
 
 		const pieceName =
-			pieces.at(pieceIdx) ??
-			this.promotedPieces[color].at(pieceIdx - pieces.length - 1);
+			ChessBoard.pieceLookupList.at(pieceIdx) ??
+			this.promotedPieces[color].at(
+				pieceIdx - ChessBoard.pieceLookupList.length - 1
+			);
 
 		return {
 			name: pieceName,
@@ -200,8 +200,10 @@ class ChessBoard {
 		const { on, to, player } = action;
 
 		const pieceNumber =
-			(player === 'w' ? 0 : 0b10000000) |
-			(this.promotedPieces[player].length + pieces.length + 1);
+			(player === 'w' ? 0b00000000 : 0b10000000) |
+			(this.promotedPieces[player].length +
+				ChessBoard.pieceLookupList.length +
+				1);
 
 		const piecename = `${to}${pieceNumber}`;
 
