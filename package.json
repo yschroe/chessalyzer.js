@@ -1,6 +1,6 @@
 {
 	"name": "chessalyzer.js",
-	"version": "3.0.5",
+	"version": "3.0.6",
 	"description": "A JavaScript library for batch analyzing chess games.",
 	"author": "Yannik Schröder",
 	"type": "module",
