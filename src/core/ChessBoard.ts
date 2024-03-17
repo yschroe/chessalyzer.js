@@ -106,6 +106,30 @@ class ChessBoard {
 		}
 	}
 
+	reset(): void {
+		this.tiles = this.defaultTiles.map((arr) => [...arr]);
+		this.pieces = {
+			w: new PiecePositions('w'),
+			b: new PiecePositions('b')
+		};
+		this.promoteCounter = 0;
+	}
+
+	/** Prints the current board position to the console. */
+	printPosition(): void {
+		for (let row = 0; row < 8; row += 1) {
+			for (let col = 0; col < 8; col += 1) {
+				const piece = this.tiles[row][col];
+				if (piece !== null) {
+					process.stdout.write(`|${piece.color}${piece.name}|`);
+				} else {
+					process.stdout.write('|...|');
+				}
+			}
+			process.stdout.write('\n');
+		}
+	}
+
 	private move(action: MoveAction): void {
 		const { from, to, player } = action;
 
@@ -135,30 +159,6 @@ class ChessBoard {
 		};
 		this.pieces[action.player].promote(newPieceName, action.on);
 		this.promoteCounter += 1;
-	}
-
-	reset(): void {
-		this.tiles = this.defaultTiles.map((arr) => arr.slice());
-		this.pieces = {
-			w: new PiecePositions('w'),
-			b: new PiecePositions('b')
-		};
-		this.promoteCounter = 0;
-	}
-
-	/** Prints the current board position to the console. */
-	printPosition(): void {
-		for (let row = 0; row < 8; row += 1) {
-			for (let col = 0; col < 8; col += 1) {
-				const piece = this.tiles[row][col];
-				if (piece !== null) {
-					process.stdout.write(`|${piece.color}${piece.name}|`);
-				} else {
-					process.stdout.write('|...|');
-				}
-			}
-			process.stdout.write('\n');
-		}
 	}
 }
 
