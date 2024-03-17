@@ -8,6 +8,12 @@
 -   Send tracker config only once on init of the worker pool
 -   Do not send result back to main thread every time a chunk was processed, but only once at the end.
 
+## [3.0.6] - 2024-03-17
+
+### Changes
+
+-   Internal: Switched to typed arrays for storing the board state. Boosts performance by around 5-10%.
+
 ## [3.0.5] - 2023-07-02
 
 ### Fixed
