@@ -52,12 +52,20 @@ class PiecePositions {
 	}
 }
 
-const defaultTiles = new Int8Array([
-	-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8
+// prettier-ignore
+const defaultTiles = new Uint8Array([
+	129, 	130, 	131, 	132, 	133, 	134, 	135, 	136,
+	137, 	138, 	139, 	140, 	141, 	142, 	143, 	144, 
+	0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 
+	0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 
+	0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 
+	0, 		0, 		0, 		0, 		0, 		0, 		0, 		0, 
+	9, 		10, 	11,		12, 	13, 	14, 	15, 	16, 
+	1, 		2, 		3, 		4, 		5, 		6, 		7, 		8
 ]);
+
 const pieces = [
+	null,
 	'Ra',
 	'Nb',
 	'Bc',
@@ -77,7 +85,7 @@ const pieces = [
 ];
 
 class ChessBoard {
-	tiles: Int8Array;
+	private tiles: Uint8Array;
 	private pieces: { w: PiecePositions; b: PiecePositions };
 	private promotedPieces: {
 		w: string[];
@@ -101,16 +109,16 @@ class ChessBoard {
 	}
 
 	getPieceOnCoords(coords: number[]): ChessPiece | null {
-		const [row, col] = coords;
-		const pieceNumber = this.tiles[ChessBoard.coordsToIndex([row, col])];
-		if (pieceNumber === 0) return null;
+		const pieceNumber = this.tiles[ChessBoard.coordsToIndex(coords)];
+		const pieceIdx = pieceNumber & 0b01111111;
+		if (pieceIdx === 0) return null;
 
-		const color = pieceNumber > 0 ? 'w' : 'b';
-		const absPieceNumber = Math.abs(pieceNumber);
+		// Get first bit -> 1: black, 0: white
+		const color = pieceNumber & 0b10000000 ? 'b' : 'w';
 
 		const pieceName =
-			pieces.at(absPieceNumber - 1) ??
-			this.promotedPieces[color].at(absPieceNumber - 1 - 16);
+			pieces.at(pieceIdx) ??
+			this.promotedPieces[color].at(pieceIdx - pieces.length - 1);
 
 		return {
 			name: pieceName,
@@ -192,8 +200,8 @@ class ChessBoard {
 		const { on, to, player } = action;
 
 		const pieceNumber =
-			(this.promotedPieces[player].length + 16 + 1) *
-			(player === 'w' ? 1 : -1);
+			(player === 'w' ? 0 : 0b10000000) |
+			(this.promotedPieces[player].length + pieces.length + 1);
 
 		const piecename = `${to}${pieceNumber}`;
 
