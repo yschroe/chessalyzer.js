@@ -112,9 +112,9 @@ class GameParser {
 	private parseMove(san: string): Action[] {
 		const token = san.at(0) as Token;
 
-		if (/[abcdefgh]/.test(token)) return this.pawnMove(san);
-		if (/[KNRBQ]/.test(token)) return this.pieceMove(san);
-		return this.castle(san);
+		if (token.toLowerCase() === token) return this.pawnMove(san);
+		if (token === 'O') return this.castle(san);
+		return this.pieceMove(san);
 	}
 
 	/**

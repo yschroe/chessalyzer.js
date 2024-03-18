@@ -19,8 +19,6 @@ import WorkerPool from './WorkerPool.js';
 const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
 const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
 const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
-// const MOVE_REGEX = /([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?)|O(-O){1,2}/g;
-// const MOVE_REGEX = /([RNBQKa-h][a-hx1-8]{1,5}(=[RNBQK])?[?!#+]*)|O(-O){1,2}/g; // includes [?!#+] tokens
 const RESULT_REGEX = /-(1\/2|0|1)$/;
 
 /**
@@ -106,6 +104,8 @@ class GameProcessor {
 
 		// on new line
 		lineReader.on('line', (line) => {
+			if (line === '') return;
+
 			const isHeaderTag = line.startsWith('[');
 			// header tag
 			if (this.readInHeader && isHeaderTag) {
@@ -113,7 +113,7 @@ class GameProcessor {
 				game[key] = value;
 
 				// moves
-			} else if (!isHeaderTag && line !== '') {
+			} else if (!isHeaderTag) {
 				// extract move SANs
 				const cleanedLine = line.replaceAll(COMMENT_REGEX, '');
 				const matchedMoves = cleanedLine.match(MOVE_REGEX) ?? [];
@@ -161,17 +161,19 @@ class GameProcessor {
 							} else {
 								gameParser.processGame(game, cfg);
 							}
-							if (cfg.cntReadGames >= cfg.config.cntGames)
+							if (cfg.cntReadGames === cfg.config.cntGames) {
 								cfg.isDone = true;
+								const allDone = this.configs.reduce(
+									(a, c) => a && c.isDone,
+									true
+								);
+								if (allDone) lineReader.close();
+							}
 						}
 					}
-
 					game = { moves: [] };
 				}
 			}
-			const allDone = this.configs.reduce((a, c) => a && c.isDone, true);
-
-			if (allDone) lineReader.close();
 		});
 
 		// since the line reader reads in lines async, we need to wait here until
