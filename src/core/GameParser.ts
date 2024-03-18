@@ -112,13 +112,9 @@ class GameParser {
 	private parseMove(san: string): Action[] {
 		const token = san.at(0) as Token;
 
-		if (token.toLowerCase() === token) {
-			return this.pawnMove(san);
-		} else if (token === 'O') {
-			return this.castle(san);
-		}
-
-		return this.pieceMove(san);
+		if (/[abcdefgh]/.test(token)) return this.pawnMove(san);
+		if (/[KNRBQ]/.test(token)) return this.pieceMove(san);
+		return this.castle(san);
 	}
 
 	/**
@@ -244,34 +240,41 @@ class GameParser {
 		// Get rest of string, removing the last two characters.
 		const rest = tempSan.slice(0, -2);
 
-		// E.g. 'Re3f5' -> rest is 'e3'
-		if (rest.length === 2) {
-			coords.from = Utils.algebraicToCoords(tempSan.slice(0, 2));
-		}
-		// E.g. 'Ref3' -> rest is 'e'
-		else if (rest.length === 1) {
-			let mustBeInRow: number | null = null; // to be found
+		switch (rest.length) {
+			// E.g. 'Rf3' -> rest is ''
+			case 0: {
+				coords.from = this.findPiece(
+					coords.to,
+					[null, null],
+					token,
+					player
+				);
+				break;
+			}
 
-			// If letter can be parsed to number: col is specified.
-			const mustBeInCol = Utils.getFileNumber(rest);
-			// Else: row is specified
-			if (mustBeInCol === null) mustBeInRow = 8 - Number(rest);
+			// E.g. 'Ref3' -> rest is 'e'
+			case 1: {
+				let mustBeInRow: number | null = null; // to be found
 
-			coords.from = this.findPiece(
-				coords.to,
-				[mustBeInRow, mustBeInCol],
-				token,
-				player
-			);
-		}
-		// E.g. 'Rf3' -> rest is ''
-		else {
-			coords.from = this.findPiece(
-				coords.to,
-				[null, null],
-				token,
-				player
-			);
+				// If letter can be parsed to number: col is specified.
+				const mustBeInCol = Utils.getFileNumber(rest);
+				// Else: row is specified
+				if (mustBeInCol === null) mustBeInRow = 8 - Number(rest);
+
+				coords.from = this.findPiece(
+					coords.to,
+					[mustBeInRow, mustBeInCol],
+					token,
+					player
+				);
+				break;
+			}
+
+			// E.g. 'Re3f5' -> rest is 'e3'
+			case 2: {
+				coords.from = Utils.algebraicToCoords(tempSan.slice(0, 2));
+				break;
+			}
 		}
 
 		const piece = this.board.getPieceOnCoords(coords.from)?.name;
