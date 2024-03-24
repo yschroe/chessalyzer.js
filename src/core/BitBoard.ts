@@ -59,7 +59,13 @@ function generateAttackMasks() {
 		knightMask.push(s1 | s2 | s3 | s4 | s5 | s6 | s7 | s8);
 	}
 
-	return { STRAIGHT: attacksStraight, DIAG: attacksDiag, KNIGHT: knightMask };
+	return {
+		STRAIGHT: attacksStraight,
+		DIAG: attacksDiag,
+		KNIGHT: knightMask,
+		FILES: files,
+		RANKS: ranks
+	};
 }
 
 const MASKS = generateAttackMasks();
@@ -70,8 +76,14 @@ export default class BitBoard {
 		this.state = value;
 	}
 
-	getLegalPieces(targetIdx: number, pieceType: string) {
+	getLegalPieces(
+		targetIdx: number,
+		pieceType: string,
+		mustBeInRow: number | null,
+		mustBeInCol: number | null
+	) {
 		if ((this.state & -this.state) === this.state) return this.state;
+
 		let mask = 0n;
 		switch (pieceType) {
 			case 'N':
@@ -87,12 +99,10 @@ export default class BitBoard {
 				mask |= MASKS.STRAIGHT[targetIdx];
 				break;
 		}
-		// console.log('Current State');
-		// this.printBoard();
-		// console.log('Mask');
-		// new BitBoard(mask).printBoard();
-		// console.log('Result');
-		// new BitBoard(this.state & mask).printBoard();
+
+		if (mustBeInRow !== null) mask &= MASKS.RANKS[7 - mustBeInRow];
+		if (mustBeInCol !== null) mask &= MASKS.FILES[7 - mustBeInCol];
+
 		return this.state & mask;
 	}
 
@@ -102,8 +112,6 @@ export default class BitBoard {
 	}
 
 	printBoard() {
-		// Rank
-		// process.stdout.write(`${8 - row} `);
 		// Board
 		for (let rank = 0; rank < 8; rank += 1) {
 			const rankSlice =
@@ -116,8 +124,5 @@ export default class BitBoard {
 			);
 		}
 		process.stdout.write('\n');
-
-		// Files
-		// process.stdout.write(`    a    b    c    d    e    f    g    h\n`);
 	}
 }

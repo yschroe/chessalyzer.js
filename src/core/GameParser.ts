@@ -387,7 +387,9 @@ class GameParser {
 		const validPieces = this.board.getPiecesThatCanMoveToSquare(
 			player,
 			token,
-			toPosition
+			toPosition,
+			mustBeInRow,
+			mustBeInCol
 		);
 		if (validPieces.length === 1) return validPieces[0];
 
@@ -464,7 +466,7 @@ class GameParser {
 	private checkCheck(move: Move, player: PlayerColor): boolean {
 		const { from, to } = move;
 		const opColor = player === 'w' ? 'b' : 'w';
-		const king = this.board.getPiecePosition(player, 'Ke');
+		const king = this.board.getKing(player);
 
 		// check if moving piece is on same line/diag as king, else exit
 		const diff = [from[0] - king[0], from[1] - king[1]];

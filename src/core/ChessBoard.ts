@@ -95,54 +95,24 @@ class ChessBoard {
 	private init() {
 		this.piecePositions = new PiecePositions();
 		this.bitboards = {
-			common: new BitBoard(
-				0b1111111111111111000000000000000000000000000000001111111111111111n
-			),
+			common: new BitBoard(0xffff00000000ffffn),
 			w: {
-				all: new BitBoard(
-					0b0000000000000000000000000000000000000000000000001111111111111111n
-				),
-				P: new BitBoard(
-					0b0000000000000000000000000000000000000000000000001111111100000000n
-				),
-				R: new BitBoard(
-					0b0000000000000000000000000000000000000000000000000000000010000001n
-				),
-				N: new BitBoard(
-					0b0000000000000000000000000000000000000000000000000000000001000010n
-				),
-				B: new BitBoard(
-					0b0000000000000000000000000000000000000000000000000000000000100100n
-				),
-				Q: new BitBoard(
-					0b0000000000000000000000000000000000000000000000000000000000010000n
-				),
-				K: new BitBoard(
-					0b0000000000000000000000000000000000000000000000000000000000001000n
-				)
+				all: new BitBoard(0xffffn),
+				P: new BitBoard(0xff00n),
+				R: new BitBoard(0x81n),
+				N: new BitBoard(0x42n),
+				B: new BitBoard(0x24n),
+				Q: new BitBoard(0x10n),
+				K: new BitBoard(0x8n)
 			},
 			b: {
-				all: new BitBoard(
-					0b1111111111111111000000000000000000000000000000000000000000000000n
-				),
-				P: new BitBoard(
-					0b0000000011111111000000000000000000000000000000000000000000000000n
-				),
-				R: new BitBoard(
-					0b1000000100000000000000000000000000000000000000000000000000000000n
-				),
-				N: new BitBoard(
-					0b0100001000000000000000000000000000000000000000000000000000000000n
-				),
-				B: new BitBoard(
-					0b0010010000000000000000000000000000000000000000000000000000000000n
-				),
-				Q: new BitBoard(
-					0b0001000000000000000000000000000000000000000000000000000000000000n
-				),
-				K: new BitBoard(
-					0b0000100000000000000000000000000000000000000000000000000000000000n
-				)
+				all: new BitBoard(0xffff000000000000n),
+				P: new BitBoard(0x00ff000000000000n),
+				R: new BitBoard(0x8100000000000000n),
+				N: new BitBoard(0x4200000000000000n),
+				B: new BitBoard(0x2400000000000000n),
+				Q: new BitBoard(0x1000000000000000n),
+				K: new BitBoard(0x0800000000000000n)
 			}
 		};
 		this.promoteCounter = 0;
@@ -159,40 +129,37 @@ class ChessBoard {
 		};
 	}
 
-	// TODO: Optimize!
-	getPiecePosition(player: PlayerColor, piece: string) {
-		const fullPieceName = `${player}${piece}`;
-		return ChessBoard.indexToCoords(
-			this.piecePositions.state.indexOf(fullPieceName)
-		);
+	getKing(player: PlayerColor) {
+		const bitboard = this.bitboards[player].K;
+		const bits = bitboard.state.toString(2).length - 1;
+		return ChessBoard.indexToCoords(63 - bits);
 	}
 
 	getPiecesThatCanMoveToSquare(
 		player: PlayerColor,
 		token: PieceToken,
-		target: number[]
+		target: number[],
+		mustBeInRow: number | null,
+		mustBeInCol: number | null
 	) {
 		const bitboard = this.bitboards[player][token];
 		const abc = bitboard.getLegalPieces(
 			63 - ChessBoard.coordsToIndex(target),
-			token
+			token,
+			mustBeInRow,
+			mustBeInCol
 		);
 		const isMultOf2 = (abc & -abc) === abc;
 
-		// const bits = Math.log2(abc);
-
-		// console.log('Bitboard check', player, token, abc);
-		// bitboard.printBoard();
-
 		if (Number(abc) > 0 && isMultOf2) {
-			let shifted = abc;
-			let bits = 0;
-			while (shifted >> 1n) {
-				shifted >>= 1n;
-				bits++;
-			}
+			const bits = abc.toString(2).length - 1;
 			return [ChessBoard.indexToCoords(63 - bits)];
 		}
+
+		console.log('No unique piece found!');
+		console.log(token, target, mustBeInRow, mustBeInCol);
+		this.printPosition();
+		new BitBoard(abc).printBoard();
 
 		return this.getPositionsForToken(player, token);
 	}
