@@ -8,18 +8,22 @@ function generateAttackMasks() {
 	for (let file = 0; file < 8; file += 1)
 		files.push(0x0101010101010101n << BigInt(file));
 
-	const attacksStraight: bigint[] = [];
-	for (let i = 0; i < 64; i += 1) {
-		const rankMask = ranks[Math.floor(i / 8)];
-		const fileMask = files[i % 8];
-		const pieceMask = 1n << BigInt(i);
-		attacksStraight.push((rankMask | fileMask) ^ pieceMask);
-	}
+	const queenMasks: bigint[] = [];
+	const rookMasks: bigint[] = [];
+	const bishopMasks: bigint[] = [];
+	const knightMasks: bigint[] = [];
 
-	// DIAG
-	const attacksDiag: bigint[] = [];
 	for (let i = 0; i < 64; i += 1) {
 		const iBig = BigInt(i);
+		const pieceMask = 1n << BigInt(i);
+
+		// STRAIGHT
+		const rankMask = ranks[Math.floor(i / 8)];
+		const fileMask = files[i % 8];
+
+		const straightAttacks = (rankMask | fileMask) ^ pieceMask;
+
+		// DIAG
 		const diag = 8n * (iBig & 7n) - (iBig & 56n);
 		const northDiag = -diag & (diag >> 31n);
 		const southDiag = diag & (-diag >> 31n);
@@ -31,17 +35,13 @@ function generateAttackMasks() {
 		const antiDiagMask =
 			(0x0102040810204080n >> southAntiDiag) << northAntiDiag;
 
-		const pieceMask = 1n << iBig;
+		const diagAttacks = (diagMask | antiDiagMask) ^ pieceMask;
 
-		attacksDiag.push((diagMask | antiDiagMask) ^ pieceMask);
-	}
+		rookMasks.push(straightAttacks);
+		bishopMasks.push(diagAttacks);
+		queenMasks.push(diagAttacks | straightAttacks);
 
-	// KNIGHT
-	const knightMask: bigint[] = [];
-	for (let i = 0; i < 64; i += 1) {
-		const iBig = BigInt(i);
-		const pieceMask = 1n << iBig;
-
+		// KNIGHT
 		const m1 = ~(files[0] | files[1]);
 		const m2 = ~files[0];
 		const m3 = ~files[7];
@@ -56,13 +56,14 @@ function generateAttackMasks() {
 		const s7 = (pieceMask & m2) >> 17n;
 		const s8 = (pieceMask & m1) >> 10n;
 
-		knightMask.push(s1 | s2 | s3 | s4 | s5 | s6 | s7 | s8);
+		knightMasks.push(s1 | s2 | s3 | s4 | s5 | s6 | s7 | s8);
 	}
 
 	return {
-		STRAIGHT: attacksStraight,
-		DIAG: attacksDiag,
-		KNIGHT: knightMask,
+		QUEEN: queenMasks,
+		ROOK: rookMasks,
+		BISHOP: bishopMasks,
+		KNIGHT: knightMasks,
 		FILES: files,
 		RANKS: ranks
 	};
@@ -82,21 +83,22 @@ export default class BitBoard {
 		mustBeInRow: number | null,
 		mustBeInCol: number | null
 	) {
+		// If there is only one piece left in mask, return it.
 		if ((this.state & -this.state) === this.state) return this.state;
 
 		let mask = 0n;
 		switch (pieceType) {
 			case 'N':
-				mask |= MASKS.KNIGHT[targetIdx];
+				mask = MASKS.KNIGHT[targetIdx];
 				break;
 			case 'Q':
-				mask |= MASKS.DIAG[targetIdx] | MASKS.STRAIGHT[targetIdx];
+				mask = MASKS.QUEEN[targetIdx];
 				break;
 			case 'B':
-				mask |= MASKS.DIAG[targetIdx];
+				mask = MASKS.BISHOP[targetIdx];
 				break;
 			case 'R':
-				mask |= MASKS.STRAIGHT[targetIdx];
+				mask = MASKS.ROOK[targetIdx];
 				break;
 		}
 

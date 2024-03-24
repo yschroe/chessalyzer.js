@@ -9,66 +9,56 @@ import type { PieceToken, PlayerColor } from '../types/index.js';
 import BitBoard from './BitBoard.js';
 
 class PiecePositions {
-	state: (string | null)[];
+	private state: (string | null)[][];
 
 	constructor() {
 		this.state = [
-			'bRa',
-			'bNb',
-			'bBc',
-			'bQd',
-			'bKe',
-			'bBf',
-			'bNg',
-			'bRh',
-			'bPa',
-			'bPb',
-			'bPc',
-			'bPd',
-			'bPe',
-			'bPf',
-			'bPg',
-			'bPh',
-			...(Array(32).fill(null) as null[]),
-			'wPa',
-			'wPb',
-			'wPc',
-			'wPd',
-			'wPe',
-			'wPf',
-			'wPg',
-			'wPh',
-			'wRa',
-			'wNb',
-			'wBc',
-			'wQd',
-			'wKe',
-			'wBf',
-			'wNg',
-			'wRh'
+			['bRa', 'bNb', 'bBc', 'bQd', 'bKe', 'bBf', 'bNg', 'bRh'],
+			['bPa', 'bPb', 'bPc', 'bPd', 'bPe', 'bPf', 'bPg', 'bPh'],
+			[null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null],
+			['wPa', 'wPb', 'wPc', 'wPd', 'wPe', 'wPf', 'wPg', 'wPh'],
+			['wRa', 'wNb', 'wBc', 'wQd', 'wKe', 'wBf', 'wNg', 'wRh']
 		];
 	}
 
-	move(fromIdx: number, toIdx: number): void {
-		this.state[toIdx] = this.state[fromIdx];
-		this.state[fromIdx] = null;
+	get(coords: number[]) {
+		return this.state[coords[0]][coords[1]];
 	}
 
-	capture(onIdx: number): void {
-		this.state[onIdx] = null;
+	getAllForToken(player: PlayerColor, token: string) {
+		const positions: number[][] = [];
+
+		for (const [rowIdx, row] of this.state.entries()) {
+			for (const [colIdx, cell] of row.entries())
+				if (cell?.startsWith(player) && cell?.includes(token))
+					positions.push([rowIdx, colIdx]);
+		}
+		return positions;
 	}
 
-	promote(piece: string, onIdx: number): void {
-		this.state[onIdx] = piece;
+	move(from: number[], to: number[]): void {
+		this.state[to[0]][to[1]] = this.state[from[0]][from[1]];
+		this.state[from[0]][from[1]] = null;
+	}
+
+	capture(on: number[]): void {
+		this.state[on[0]][on[1]] = null;
+	}
+
+	promote(piece: string, on: number[]): void {
+		this.state[on[0]][on[1]] = piece;
 	}
 }
 
 class ChessBoard {
 	piecePositions: PiecePositions;
 	bitboards: {
-		common: BitBoard;
+		// common: BitBoard;
 		w: {
-			all: BitBoard;
+			// all: BitBoard;
 			P: BitBoard;
 			R: BitBoard;
 			N: BitBoard;
@@ -77,7 +67,7 @@ class ChessBoard {
 			K: BitBoard;
 		};
 		b: {
-			all: BitBoard;
+			// all: BitBoard;
 			P: BitBoard;
 			R: BitBoard;
 			N: BitBoard;
@@ -95,9 +85,9 @@ class ChessBoard {
 	private init() {
 		this.piecePositions = new PiecePositions();
 		this.bitboards = {
-			common: new BitBoard(0xffff00000000ffffn),
+			// common: new BitBoard(0xffff00000000ffffn),
 			w: {
-				all: new BitBoard(0xffffn),
+				// all: new BitBoard(0xffffn),
 				P: new BitBoard(0xff00n),
 				R: new BitBoard(0x81n),
 				N: new BitBoard(0x42n),
@@ -106,7 +96,7 @@ class ChessBoard {
 				K: new BitBoard(0x8n)
 			},
 			b: {
-				all: new BitBoard(0xffff000000000000n),
+				// all: new BitBoard(0xffff000000000000n),
 				P: new BitBoard(0x00ff000000000000n),
 				R: new BitBoard(0x8100000000000000n),
 				N: new BitBoard(0x4200000000000000n),
@@ -119,8 +109,7 @@ class ChessBoard {
 	}
 
 	getPieceOnCoords(coords: number[]): ChessPiece | null {
-		const piece =
-			this.piecePositions.state[ChessBoard.coordsToIndex(coords)];
+		const piece = this.piecePositions.get(coords);
 		if (!piece) return null;
 
 		return {
@@ -156,22 +145,17 @@ class ChessBoard {
 			return [ChessBoard.indexToCoords(63 - bits)];
 		}
 
-		console.log('No unique piece found!');
-		console.log(token, target, mustBeInRow, mustBeInCol);
-		this.printPosition();
-		new BitBoard(abc).printBoard();
+		// console.log('No unique piece found!');
+		// console.log(token, target, mustBeInRow, mustBeInCol);
+		// this.printPosition();
+		// new BitBoard(abc).printBoard();
 
 		return this.getPositionsForToken(player, token);
 	}
 
 	// TODO: Optimize!
 	getPositionsForToken(player: PlayerColor, token: PieceToken) {
-		const positions: number[][] = [];
-		for (const [idx, cell] of this.piecePositions.state.entries()) {
-			if (cell?.startsWith(player) && cell?.includes(token))
-				positions.push(ChessBoard.indexToCoords(idx));
-		}
-		return positions;
+		return this.piecePositions.getAllForToken(player, token);
 	}
 
 	applyActions(actions: Action[]): void {
@@ -223,7 +207,7 @@ class ChessBoard {
 		const toIdx = ChessBoard.coordsToIndex(to);
 
 		// update piece map
-		this.piecePositions.move(fromIdx, toIdx);
+		this.piecePositions.move(from, to);
 
 		const token = piece.at(0) as PieceToken; // TODO: can also be pawntoken
 
@@ -237,7 +221,7 @@ class ChessBoard {
 		const onIdx = ChessBoard.coordsToIndex(on);
 
 		// update piece map
-		this.piecePositions.capture(onIdx);
+		this.piecePositions.capture(on);
 
 		const token = takenPiece.at(0) as PieceToken; // TODO: can also be pawntoken
 		const otherPlayer = player === 'w' ? 'b' : 'w';
@@ -250,7 +234,7 @@ class ChessBoard {
 		const onIdx = ChessBoard.coordsToIndex(on);
 
 		const pieceName = `${player}${to}${this.promoteCounter++}`;
-		this.piecePositions.promote(pieceName, onIdx);
+		this.piecePositions.promote(pieceName, on);
 
 		this.bitboards[player][to as PieceToken].invertBit(63 - onIdx);
 	}
