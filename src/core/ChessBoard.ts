@@ -126,7 +126,7 @@ class ChessBoard {
 		};
 	}
 
-	getPiecePosition(player: PlayerColor, piece: string): number[] | undefined {
+	getPiecePosition(player: PlayerColor, piece: string) {
 		const token = piece.at(0) as PieceToken;
 		return this.pieces[player][token].get(piece);
 	}
@@ -159,6 +159,10 @@ class ChessBoard {
 	printPosition(): void {
 		console.log(this.tiles);
 		for (let row = 0; row < 8; row += 1) {
+			// Rank
+			process.stdout.write(`${8 - row} `);
+
+			// Board
 			for (let col = 0; col < 8; col += 1) {
 				const piece = this.getPieceOnCoords([row, col]);
 				if (piece !== null) {
@@ -169,6 +173,9 @@ class ChessBoard {
 			}
 			process.stdout.write('\n');
 		}
+
+		// Files
+		process.stdout.write(`    a    b    c    d    e    f    g    h\n`);
 	}
 
 	private move(action: MoveAction): void {
