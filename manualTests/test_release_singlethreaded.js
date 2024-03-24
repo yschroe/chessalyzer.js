@@ -2,7 +2,7 @@ import { Chessalyzer } from '../lib/chessalyzer.js';
 
 const header = await Chessalyzer.analyzePGN(
 	'./manualTests/lichess_db_standard_rated_2013-12.pgn',
-	{ config: { cntGames: 1 } },
+	{ config: { cntGames: 50 } },
 	null
 );
 console.log(header);

@@ -171,7 +171,31 @@ class ChessBoard {
 		player: PlayerColor,
 		token: PieceToken,
 		target: number[]
-	) {}
+	) {
+		const bitboard = this.bitboards[player][token];
+		const abc = bitboard.getLegalPieces(
+			63 - ChessBoard.coordsToIndex(target),
+			token
+		);
+		const isMultOf2 = (abc & -abc) === abc;
+
+		// const bits = Math.log2(abc);
+
+		// console.log('Bitboard check', player, token, abc);
+		// bitboard.printBoard();
+
+		if (Number(abc) > 0 && isMultOf2) {
+			let shifted = abc;
+			let bits = 0;
+			while (shifted >> 1n) {
+				shifted >>= 1n;
+				bits++;
+			}
+			return [ChessBoard.indexToCoords(63 - bits)];
+		}
+
+		return this.getPositionsForToken(player, token);
+	}
 
 	// TODO: Optimize!
 	getPositionsForToken(player: PlayerColor, token: PieceToken) {
@@ -249,7 +273,8 @@ class ChessBoard {
 		this.piecePositions.capture(onIdx);
 
 		const token = takenPiece.at(0) as PieceToken; // TODO: can also be pawntoken
-		this.bitboards[player][token].invertBit(63 - onIdx);
+		const otherPlayer = player === 'w' ? 'b' : 'w';
+		this.bitboards[otherPlayer][token].invertBit(63 - onIdx);
 	}
 
 	private promote(action: PromoteAction): void {

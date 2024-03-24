@@ -1,13 +1,41 @@
 import BitBoard from '../lib/core/BitBoard.js';
 
-const bitboard = new BitBoard(
-	0b0000000000000000000000000000000000000000000000000000000000100100n
-);
-bitboard.printBoard();
+// const bitboard = new BitBoard(
+// 	0b0000000000000000000000000000000000000000000000000000000000100100n
+// );
+// bitboard.printBoard();
 
-new BitBoard(bitboard.getLegalPieces(12, 'B')).printBoard();
+// new BitBoard(bitboard.getLegalPieces(12, 'B')).printBoard();
 
-console.log(Math.log2(Number(bitboard.getLegalPieces(12, 'B'))));
+// console.log(Math.log2(Number(bitboard.getLegalPieces(12, 'B'))));
+const files = [];
+for (let file = 0; file < 8; file += 1)
+	files.push(0x0101010101010101n << BigInt(file));
+
+// KNIGHT
+const knightMask = [];
+for (let i = 0; i < 64; i += 1) {
+	const iBig = BigInt(i);
+	const pieceMask = 1n << iBig;
+
+	const m1 = ~(files[0] | files[1]);
+	const m2 = ~files[0];
+	const m3 = ~files[7];
+	const m4 = ~(files[7] | files[6]);
+
+	const s1 = (pieceMask & m1) << 6n;
+	const s2 = (pieceMask & m2) << 15n;
+	const s3 = (pieceMask & m3) << 17n;
+	const s4 = (pieceMask & m4) << 10n;
+	const s5 = (pieceMask & m4) >> 6n;
+	const s6 = (pieceMask & m3) >> 15n;
+	const s7 = (pieceMask & m2) >> 17n;
+	const s8 = (pieceMask & m1) >> 10n;
+
+	knightMask.push(s1 | s2 | s3 | s4 | s5 | s6 | s7 | s8);
+}
+
+for (const b of knightMask) new BitBoard(b).printBoard();
 
 // const ranks = [];
 // for (let rank = 0; rank < 8; rank += 1)

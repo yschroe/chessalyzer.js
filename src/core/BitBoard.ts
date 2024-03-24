@@ -1,4 +1,5 @@
 function generateAttackMasks() {
+	// STRAIGHT
 	const ranks: bigint[] = [];
 	for (let rank = 0; rank < 8; rank += 1)
 		ranks.push(0x00000000000000ffn << BigInt(8 * rank));
@@ -15,6 +16,7 @@ function generateAttackMasks() {
 		attacksStraight.push((rankMask | fileMask) ^ pieceMask);
 	}
 
+	// DIAG
 	const attacksDiag: bigint[] = [];
 	for (let i = 0; i < 64; i += 1) {
 		const iBig = BigInt(i);
@@ -34,7 +36,30 @@ function generateAttackMasks() {
 		attacksDiag.push((diagMask | antiDiagMask) ^ pieceMask);
 	}
 
-	return { STRAIGHT: attacksStraight, DIAG: attacksDiag };
+	// KNIGHT
+	const knightMask: bigint[] = [];
+	for (let i = 0; i < 64; i += 1) {
+		const iBig = BigInt(i);
+		const pieceMask = 1n << iBig;
+
+		const m1 = ~(files[0] | files[1]);
+		const m2 = ~files[0];
+		const m3 = ~files[7];
+		const m4 = ~(files[7] | files[6]);
+
+		const s1 = (pieceMask & m1) << 6n;
+		const s2 = (pieceMask & m2) << 15n;
+		const s3 = (pieceMask & m3) << 17n;
+		const s4 = (pieceMask & m4) << 10n;
+		const s5 = (pieceMask & m4) >> 6n;
+		const s6 = (pieceMask & m3) >> 15n;
+		const s7 = (pieceMask & m2) >> 17n;
+		const s8 = (pieceMask & m1) >> 10n;
+
+		knightMask.push(s1 | s2 | s3 | s4 | s5 | s6 | s7 | s8);
+	}
+
+	return { STRAIGHT: attacksStraight, DIAG: attacksDiag, KNIGHT: knightMask };
 }
 
 const MASKS = generateAttackMasks();
@@ -46,9 +71,11 @@ export default class BitBoard {
 	}
 
 	getLegalPieces(targetIdx: number, pieceType: string) {
+		if ((this.state & -this.state) === this.state) return this.state;
 		let mask = 0n;
 		switch (pieceType) {
 			case 'N':
+				mask |= MASKS.KNIGHT[targetIdx];
 				break;
 			case 'Q':
 				mask |= MASKS.DIAG[targetIdx] | MASKS.STRAIGHT[targetIdx];
@@ -60,6 +87,12 @@ export default class BitBoard {
 				mask |= MASKS.STRAIGHT[targetIdx];
 				break;
 		}
+		// console.log('Current State');
+		// this.printBoard();
+		// console.log('Mask');
+		// new BitBoard(mask).printBoard();
+		// console.log('Result');
+		// new BitBoard(this.state & mask).printBoard();
 		return this.state & mask;
 	}
 

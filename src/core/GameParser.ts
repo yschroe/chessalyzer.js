@@ -384,7 +384,11 @@ class GameParser {
 		const [mustBeInRow, mustBeInCol] = knownFromParts;
 
 		// Get array of positions of pieces of type <token>
-		const validPieces = this.board.getPositionsForToken(player, token);
+		const validPieces = this.board.getPiecesThatCanMoveToSquare(
+			player,
+			token,
+			toPosition
+		);
 		if (validPieces.length === 1) return validPieces[0];
 
 		const allowedDirections = moveCfg[token as Exclude<PieceToken, 'K'>];
