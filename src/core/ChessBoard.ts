@@ -6,7 +6,7 @@ import type {
 	PromoteAction
 } from '../interfaces/index.js';
 import type { PieceToken, PlayerColor } from '../types/index.js';
-import BitBoard from './BitBoard.js';
+import BitBoard from './bitboard/BitBoard.js';
 
 class PiecePositions {
 	private state: (string | null)[][];
@@ -120,7 +120,7 @@ class ChessBoard {
 
 	getKing(player: PlayerColor) {
 		const bitboard = this.bitboards[player].K;
-		const bits = bitboard.state.toString(2).length - 1;
+		const bits = bitboard.getHighestBit();
 		return ChessBoard.indexToCoords(63 - bits);
 	}
 
@@ -132,23 +132,22 @@ class ChessBoard {
 		mustBeInCol: number | null
 	) {
 		const bitboard = this.bitboards[player][token];
-		const abc = bitboard.getLegalPieces(
+		const legalPieceBitboard = bitboard.getLegalPieces(
 			63 - ChessBoard.coordsToIndex(target),
 			token,
 			mustBeInRow,
 			mustBeInCol
 		);
-		const isMultOf2 = (abc & -abc) === abc;
 
-		if (Number(abc) > 0 && isMultOf2) {
-			const bits = abc.toString(2).length - 1;
-			return [ChessBoard.indexToCoords(63 - bits)];
+		if (legalPieceBitboard.isMultipleOfTwo()) {
+			const bit = legalPieceBitboard.getHighestBit();
+			return [ChessBoard.indexToCoords(63 - bit)];
 		}
 
-		// console.log('No unique piece found!');
-		// console.log(token, target, mustBeInRow, mustBeInCol);
-		// this.printPosition();
-		// new BitBoard(abc).printBoard();
+		console.log('No unique piece found!');
+		console.log(token, target, mustBeInRow, mustBeInCol);
+		this.printPosition();
+		legalPieceBitboard.printBoard();
 
 		return this.getPositionsForToken(player, token);
 	}

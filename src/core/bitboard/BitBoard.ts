@@ -72,7 +72,7 @@ function generateAttackMasks() {
 const MASKS = generateAttackMasks();
 
 export default class BitBoard {
-	state: bigint;
+	private state: bigint;
 	constructor(value: bigint) {
 		this.state = value;
 	}
@@ -84,7 +84,8 @@ export default class BitBoard {
 		mustBeInCol: number | null
 	) {
 		// If there is only one piece left in mask, return it.
-		if ((this.state & -this.state) === this.state) return this.state;
+		if ((this.state & -this.state) === this.state)
+			return new BitBoard(this.state);
 
 		let mask = 0n;
 		switch (pieceType) {
@@ -105,12 +106,20 @@ export default class BitBoard {
 		if (mustBeInRow !== null) mask &= MASKS.RANKS[7 - mustBeInRow];
 		if (mustBeInCol !== null) mask &= MASKS.FILES[7 - mustBeInCol];
 
-		return this.state & mask;
+		return new BitBoard(this.state & mask);
 	}
 
 	invertBit(bitIdx: number) {
 		const mask = 1n << BigInt(bitIdx);
 		this.state ^= mask;
+	}
+
+	isMultipleOfTwo() {
+		return (this.state & -this.state) === this.state;
+	}
+
+	getHighestBit() {
+		return this.state.toString(2).length - 1;
 	}
 
 	printBoard() {
