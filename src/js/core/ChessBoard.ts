@@ -6,7 +6,7 @@ import type {
 	PromoteAction
 } from '../interfaces/index.js';
 import type { PieceToken, PlayerColor } from '../types/index.js';
-import BitBoard from './bitboard/BitBoard.js';
+import { BitBoard } from './bitboard/bitboard.js';
 
 class PiecePositions {
 	private state: (string | null)[];
@@ -120,7 +120,7 @@ class ChessBoard {
 
 	getKingIdx(player: PlayerColor) {
 		const bitboard = this.bitboards[player].K;
-		const bit = bitboard.getHighestBitIdx();
+		const bit = bitboard.get_highest_bit_idx();
 		return bit;
 	}
 
@@ -132,22 +132,22 @@ class ChessBoard {
 		mustBeInCol: number | null
 	) {
 		const bitboard = this.bitboards[player][token];
-		const legalPieceBitboard = bitboard.getLegalPieces(
+		const legalPieceBitboard = bitboard.get_legal_pieces(
 			targetIdx,
 			token,
-			mustBeInRow,
-			mustBeInCol
+			mustBeInRow ?? -1,
+			mustBeInCol ?? -1
 		);
 
-		if (legalPieceBitboard.isMultipleOfTwo()) {
-			const bit = legalPieceBitboard.getHighestBitIdx();
-			return bit;
-		}
+		// if (legalPieceBitboard.()) {
+		const bit = legalPieceBitboard.get_highest_bit_idx();
+		return bit;
+		// }
 
 		console.log('No unique piece found!');
 		console.log(token, targetIdx, mustBeInRow, mustBeInCol);
 		this.printPosition();
-		legalPieceBitboard.printBoard();
+		legalPieceBitboard.print_board();
 
 		return -1; // this.getPositionsForToken(player, token);
 	}
@@ -207,8 +207,8 @@ class ChessBoard {
 
 		const token = piece.at(0) as PieceToken; // TODO: can also be pawntoken
 
-		this.bitboards[player][token].invertBit(fromIdx);
-		this.bitboards[player][token].invertBit(toIdx);
+		this.bitboards[player][token].invert_bit(fromIdx);
+		this.bitboards[player][token].invert_bit(toIdx);
 	}
 
 	private capture(action: CaptureAction): void {
@@ -219,7 +219,7 @@ class ChessBoard {
 
 		const token = takenPiece.at(0) as PieceToken; // TODO: can also be pawntoken
 		const otherPlayer = player === 'w' ? 'b' : 'w';
-		this.bitboards[otherPlayer][token].invertBit(onIdx);
+		this.bitboards[otherPlayer][token].invert_bit(onIdx);
 	}
 
 	private promote(action: PromoteAction): void {
@@ -228,7 +228,7 @@ class ChessBoard {
 		const pieceName = `${player}${to}${this.promoteCounter++}`;
 		this.piecePositions.promote(pieceName, onIdx);
 
-		this.bitboards[player][to as PieceToken].invertBit(onIdx);
+		this.bitboards[player][to as PieceToken].invert_bit(onIdx);
 	}
 
 	// a8 = 0, h1 = 63
