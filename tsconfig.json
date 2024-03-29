@@ -5,7 +5,8 @@
 		"moduleResolution": "nodenext",
 		"declaration": true,
 		"declarationDir": "./lib/dts",
-		"outDir": "./lib"
+		"outDir": "./lib",
+		"rootDir": "src/js/"
 		// "strictNullChecks": true
 	}
 }

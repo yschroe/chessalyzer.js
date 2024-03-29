@@ -86,8 +86,6 @@ const MASKS: Masks = generate_masks();
 
 #[wasm_bindgen]
 extern "C" {
-    // Use `js_namespace` here to bind `console.log(..)` instead of just
-    // `log(..)`
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
 }
@@ -101,7 +99,7 @@ pub struct BitBoard {
 impl BitBoard {
     #[wasm_bindgen(constructor)]
     pub fn new(state: u64) -> BitBoard {
-        BitBoard { state }
+        return BitBoard { state };
     }
 
     pub fn get_legal_pieces(
@@ -110,10 +108,10 @@ impl BitBoard {
         piece_type: char,
         must_be_in_row: i8,
         must_be_in_col: i8,
-    ) -> BitBoard {
+    ) -> u32 {
         // If there is only one piece left in mask, return it.
         if self.state.is_power_of_two() {
-            return BitBoard { state: self.state };
+            return self.state.ilog2();
         }
 
         let mut mask;
@@ -132,9 +130,9 @@ impl BitBoard {
             mask &= MASKS.files[7 - must_be_in_col as usize];
         }
 
-        return BitBoard {
-            state: self.state & mask,
-        };
+        // TODO: We need to ensure only one piece remains!
+
+        return (self.state & mask).ilog2();
     }
 
     pub fn invert_bit(&mut self, bit_idx: i8) {

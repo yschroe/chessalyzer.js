@@ -12,6 +12,9 @@
 			"import": "./lib/chessalyzer.js"
 		}
 	},
+	"imports": {
+		"#bitboard": "./pkg/bitboard.js"
+	},
 	"files": [
 		"lib/chessalyzer.js",
 		"lib/chessalyzer.d.ts",

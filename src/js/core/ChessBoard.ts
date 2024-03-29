@@ -6,7 +6,7 @@ import type {
 	PromoteAction
 } from '../interfaces/index.js';
 import type { PieceToken, PlayerColor } from '../types/index.js';
-import { BitBoard } from './bitboard/bitboard.js';
+import { BitBoard } from '#bitboard';
 
 class PiecePositions {
 	private state: (string | null)[];
@@ -132,7 +132,7 @@ class ChessBoard {
 		mustBeInCol: number | null
 	) {
 		const bitboard = this.bitboards[player][token];
-		const legalPieceBitboard = bitboard.get_legal_pieces(
+		return bitboard.get_legal_pieces(
 			targetIdx,
 			token,
 			mustBeInRow ?? -1,
@@ -140,14 +140,14 @@ class ChessBoard {
 		);
 
 		// if (legalPieceBitboard.()) {
-		const bit = legalPieceBitboard.get_highest_bit_idx();
-		return bit;
+		// const bit = legalPieceBitboard.get_highest_bit_idx();
+		// return bit;
 		// }
 
-		console.log('No unique piece found!');
-		console.log(token, targetIdx, mustBeInRow, mustBeInCol);
-		this.printPosition();
-		legalPieceBitboard.print_board();
+		// console.log('No unique piece found!');
+		// console.log(token, targetIdx, mustBeInRow, mustBeInCol);
+		// this.printPosition();
+		// legalPieceBitboard.print_board();
 
 		return -1; // this.getPositionsForToken(player, token);
 	}
