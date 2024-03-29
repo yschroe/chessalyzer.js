@@ -2,10 +2,19 @@
 // Import the wasm-bindgen crate.
 use wasm_bindgen::prelude::*;
 
-// Our Add function
-// wasm-pack requires "exported" functions
-// to include #[wasm_bindgen]
 #[wasm_bindgen]
-pub fn add(a: i32, b: i32) -> i32 {
-    return a + b;
+pub struct BitBoard {
+    state: u64,
+}
+
+#[wasm_bindgen]
+impl BitBoard {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> BitBoard {
+        BitBoard { state: 0 }
+    }
+
+    pub fn get_state(&self) -> u64 {
+        self.state
+    }
 }
