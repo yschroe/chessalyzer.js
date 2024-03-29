@@ -120,8 +120,8 @@ class ChessBoard {
 
 	getKing(player: PlayerColor) {
 		const bitboard = this.bitboards[player].K;
-		const bits = bitboard.getHighestBit();
-		return ChessBoard.indexToCoords(63 - bits);
+		const bit = bitboard.getHighestBit();
+		return ChessBoard.indexToCoords(64 - bit);
 	}
 
 	getPiecesThatCanMoveToSquare(
@@ -141,7 +141,7 @@ class ChessBoard {
 
 		if (legalPieceBitboard.isMultipleOfTwo()) {
 			const bit = legalPieceBitboard.getHighestBit();
-			return [ChessBoard.indexToCoords(63 - bit)];
+			return [ChessBoard.indexToCoords(64 - bit)];
 		}
 
 		console.log('No unique piece found!');
@@ -153,7 +153,7 @@ class ChessBoard {
 	}
 
 	// TODO: Optimize!
-	getPositionsForToken(player: PlayerColor, token: PieceToken) {
+	private getPositionsForToken(player: PlayerColor, token: PieceToken) {
 		return this.piecePositions.getAllForToken(player, token);
 	}
 
