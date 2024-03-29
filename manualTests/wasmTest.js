@@ -2,4 +2,5 @@
 // Which, export default's, an initialization function
 import { BitBoard } from '../pkg/bitboard.js';
 
-console.log(new BitBoard().get_state());
+const a = new BitBoard(2n);
+a.print_board();
