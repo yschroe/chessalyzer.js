@@ -104,49 +104,49 @@ class TileTrackerBase extends BaseTracker {
 				this.tiles[row][col].w.wasCapturedOn +=
 					tracker.tiles[row][col].w.wasCapturedOn;
 
-				pawnTemplate.forEach((piece) => {
-					this.tiles[row][col].b[piece].movedTo +=
-						tracker.tiles[row][col].b[piece].movedTo;
-					this.tiles[row][col].w[piece].movedTo +=
-						tracker.tiles[row][col].w[piece].movedTo;
+				// pawnTemplate.forEach((piece) => {
+				// 	this.tiles[row][col].b[piece].movedTo +=
+				// 		tracker.tiles[row][col].b[piece].movedTo;
+				// 	this.tiles[row][col].w[piece].movedTo +=
+				// 		tracker.tiles[row][col].w[piece].movedTo;
 
-					this.tiles[row][col].b[piece].wasOn +=
-						tracker.tiles[row][col].b[piece].wasOn;
-					this.tiles[row][col].w[piece].wasOn +=
-						tracker.tiles[row][col].w[piece].wasOn;
+				// 	this.tiles[row][col].b[piece].wasOn +=
+				// 		tracker.tiles[row][col].b[piece].wasOn;
+				// 	this.tiles[row][col].w[piece].wasOn +=
+				// 		tracker.tiles[row][col].w[piece].wasOn;
 
-					this.tiles[row][col].b[piece].capturedOn +=
-						tracker.tiles[row][col].b[piece].capturedOn;
-					this.tiles[row][col].w[piece].capturedOn +=
-						tracker.tiles[row][col].w[piece].capturedOn;
+				// 	this.tiles[row][col].b[piece].capturedOn +=
+				// 		tracker.tiles[row][col].b[piece].capturedOn;
+				// 	this.tiles[row][col].w[piece].capturedOn +=
+				// 		tracker.tiles[row][col].w[piece].capturedOn;
 
-					this.tiles[row][col].b[piece].wasCapturedOn +=
-						tracker.tiles[row][col].b[piece].wasCapturedOn;
-					this.tiles[row][col].w[piece].wasCapturedOn +=
-						tracker.tiles[row][col].w[piece].wasCapturedOn;
-				});
+				// 	this.tiles[row][col].b[piece].wasCapturedOn +=
+				// 		tracker.tiles[row][col].b[piece].wasCapturedOn;
+				// 	this.tiles[row][col].w[piece].wasCapturedOn +=
+				// 		tracker.tiles[row][col].w[piece].wasCapturedOn;
+				// });
 
-				pieceTemplate.forEach((piece) => {
-					this.tiles[row][col].b[piece].movedTo +=
-						tracker.tiles[row][col].b[piece].movedTo;
-					this.tiles[row][col].w[piece].movedTo +=
-						tracker.tiles[row][col].w[piece].movedTo;
+				// pieceTemplate.forEach((piece) => {
+				// 	this.tiles[row][col].b[piece].movedTo +=
+				// 		tracker.tiles[row][col].b[piece].movedTo;
+				// 	this.tiles[row][col].w[piece].movedTo +=
+				// 		tracker.tiles[row][col].w[piece].movedTo;
 
-					this.tiles[row][col].b[piece].wasOn +=
-						tracker.tiles[row][col].b[piece].wasOn;
-					this.tiles[row][col].w[piece].wasOn +=
-						tracker.tiles[row][col].w[piece].wasOn;
+				// 	this.tiles[row][col].b[piece].wasOn +=
+				// 		tracker.tiles[row][col].b[piece].wasOn;
+				// 	this.tiles[row][col].w[piece].wasOn +=
+				// 		tracker.tiles[row][col].w[piece].wasOn;
 
-					this.tiles[row][col].b[piece].capturedOn +=
-						tracker.tiles[row][col].b[piece].capturedOn;
-					this.tiles[row][col].w[piece].capturedOn +=
-						tracker.tiles[row][col].w[piece].capturedOn;
+				// 	this.tiles[row][col].b[piece].capturedOn +=
+				// 		tracker.tiles[row][col].b[piece].capturedOn;
+				// 	this.tiles[row][col].w[piece].capturedOn +=
+				// 		tracker.tiles[row][col].w[piece].capturedOn;
 
-					this.tiles[row][col].b[piece].wasCapturedOn +=
-						tracker.tiles[row][col].b[piece].wasCapturedOn;
-					this.tiles[row][col].w[piece].wasCapturedOn +=
-						tracker.tiles[row][col].w[piece].wasCapturedOn;
-				});
+				// 	this.tiles[row][col].b[piece].wasCapturedOn +=
+				// 		tracker.tiles[row][col].b[piece].wasCapturedOn;
+				// 	this.tiles[row][col].w[piece].wasCapturedOn +=
+				// 		tracker.tiles[row][col].w[piece].wasCapturedOn;
+				// });
 			}
 		}
 	}
@@ -182,29 +182,29 @@ class TileTrackerBase extends BaseTracker {
 	}
 
 	track(actions: Action[]) {
-		for (const action of actions) {
-			switch (action.type) {
-				case 'move':
-					// TODO: castle is counted as two moves. fix
-					this.cntMovesGame += 1;
-					this.processMove(
-						{ from: action.from, to: action.to },
-						action.player,
-						action.piece
-					);
-					break;
-				case 'capture':
-					this.processCapture(
-						action.on,
-						action.player,
-						action.takingPiece,
-						action.takenPiece
-					);
-					break;
-				default:
-					break;
-			}
-		}
+		// for (const action of actions) {
+		// 	switch (action.type) {
+		// 		case 'move':
+		// 			// TODO: castle is counted as two moves. fix
+		// 			this.cntMovesGame += 1;
+		// 			this.processMove(
+		// 				{ from: action.from, to: action.to },
+		// 				action.player,
+		// 				action.piece
+		// 			);
+		// 			break;
+		// 		case 'capture':
+		// 			this.processCapture(
+		// 				action.on,
+		// 				action.player,
+		// 				action.takingPiece,
+		// 				action.takenPiece
+		// 			);
+		// 			break;
+		// 		default:
+		// 			break;
+		// 	}
+		// }
 	}
 
 	nextGame() {
@@ -222,19 +222,16 @@ class TileTrackerBase extends BaseTracker {
 	}
 
 	processMove(move: Move, player: string, piece: string) {
-		if (piece.length > 1 && !piece.match(/\d/g)) {
-			this.addOccupation(move.from);
-
-			this.tiles[move.to[0]][move.to[1]].currentPiece =
-				this.tiles[move.from[0]][move.from[1]].currentPiece;
-			this.tiles[move.to[0]][move.to[1]].currentPiece.lastMovedOn =
-				this.cntMovesGame;
-
-			this.tiles[move.from[0]][move.from[1]].currentPiece = null;
-
-			this.tiles[move.to[0]][move.to[1]][player].movedTo += 1;
-			this.tiles[move.to[0]][move.to[1]][player][piece].movedTo += 1;
-		}
+		// if (piece.length > 1 && !piece.match(/\d/g)) {
+		// 	this.addOccupation(move.from);
+		// 	this.tiles[move.to[0]][move.to[1]].currentPiece =
+		// 		this.tiles[move.from[0]][move.from[1]].currentPiece;
+		// 	this.tiles[move.to[0]][move.to[1]].currentPiece.lastMovedOn =
+		// 		this.cntMovesGame;
+		// 	this.tiles[move.from[0]][move.from[1]].currentPiece = null;
+		// 	this.tiles[move.to[0]][move.to[1]][player].movedTo += 1;
+		// 	this.tiles[move.to[0]][move.to[1]][player][piece].movedTo += 1;
+		// }
 	}
 
 	processCapture(
@@ -243,28 +240,26 @@ class TileTrackerBase extends BaseTracker {
 		takingPiece: string,
 		takenPiece: string
 	): void {
-		if (takenPiece.length > 1 && !takenPiece.match(/\d/g)) {
-			const opPlayer = player === 'w' ? 'b' : 'w';
-			this.tiles[pos[0]][pos[1]][opPlayer].wasCapturedOn += 1;
-			this.tiles[pos[0]][pos[1]][opPlayer][takenPiece].wasCapturedOn += 1;
-
-			this.addOccupation(pos);
-			this.tiles[pos[0]][pos[1]].currentPiece = null;
-		}
-
-		if (takingPiece.length > 1 && !takingPiece.match(/\d/g)) {
-			this.tiles[pos[0]][pos[1]][player].capturedOn += 1;
-			this.tiles[pos[0]][pos[1]][player][takingPiece].capturedOn += 1;
-		}
+		// if (takenPiece.length > 1 && !takenPiece.match(/\d/g)) {
+		// 	const opPlayer = player === 'w' ? 'b' : 'w';
+		// 	this.tiles[pos[0]][pos[1]][opPlayer].wasCapturedOn += 1;
+		// 	this.tiles[pos[0]][pos[1]][opPlayer][takenPiece].wasCapturedOn += 1;
+		// 	this.addOccupation(pos);
+		// 	this.tiles[pos[0]][pos[1]].currentPiece = null;
+		// }
+		// if (takingPiece.length > 1 && !takingPiece.match(/\d/g)) {
+		// 	this.tiles[pos[0]][pos[1]][player].capturedOn += 1;
+		// 	this.tiles[pos[0]][pos[1]][player][takingPiece].capturedOn += 1;
+		// }
 	}
 
 	addOccupation(pos: number[]): void {
-		const { currentPiece } = this.tiles[pos[0]][pos[1]];
-		const toAdd = this.cntMovesGame - currentPiece.lastMovedOn;
-		this.tiles[pos[0]][pos[1]][currentPiece.color].wasOn += toAdd;
-		this.tiles[pos[0]][pos[1]][currentPiece.color][
-			currentPiece.piece
-		].wasOn += toAdd;
+		// const { currentPiece } = this.tiles[pos[0]][pos[1]];
+		// const toAdd = this.cntMovesGame - currentPiece.lastMovedOn;
+		// this.tiles[pos[0]][pos[1]][currentPiece.color].wasOn += toAdd;
+		// this.tiles[pos[0]][pos[1]][currentPiece.color][
+		// 	currentPiece.piece
+		// ].wasOn += toAdd;
 	}
 }
 

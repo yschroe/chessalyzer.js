@@ -46,10 +46,10 @@ export default class BitBoard {
 		return (this.state & -this.state) === this.state;
 	}
 
-	getHighestBit() {
+	getHighestBitIdx() {
 		const i = (this.state.toString(16).length - 1) * 4;
-		return i + 32 - Math.clz32(Number(this.state >> BigInt(i)));
-		// return this.state.toString(2).length;
+		return i + 32 - Math.clz32(Number(this.state >> BigInt(i))) - 1;
+		// return this.state.toString(2).length - 1;
 	}
 
 	printBoard() {

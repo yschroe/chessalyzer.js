@@ -16,6 +16,16 @@ for (const [fileIdx, file] of files.entries()) {
 	}
 }
 
+const algebraicToBitIdxMap = new Map<string, number>();
+for (const [fileIdx, file] of files.entries()) {
+	for (const rank of ranks) {
+		algebraicToBitIdxMap.set(
+			`${file}${rank}`,
+			7 - fileIdx + 8 * (rank - 1)
+		);
+	}
+}
+
 const fileToNumberMap = new Map([
 	['a', 0],
 	['b', 1],
@@ -32,6 +42,11 @@ const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 export default class Utils {
 	static algebraicToCoords(square: string): number[] | undefined {
 		return algebraicToCoordsMap.get(square);
+	}
+
+	// h1 = 0, a8 = 63
+	static algebraicToBitIndex(square: string) {
+		return algebraicToBitIdxMap.get(square);
 	}
 
 	static coordsToAlgebraic(coords: number[]): string {

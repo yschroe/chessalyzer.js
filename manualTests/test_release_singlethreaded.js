@@ -1,7 +1,8 @@
 import { Chessalyzer } from '../lib/chessalyzer.js';
 
 const header = await Chessalyzer.analyzePGN(
-	'./test/asorted_games.pgn',
+	// './test/asorted_games.pgn',
+	'./manualTests/lichess_db_standard_rated_2013-12.pgn',
 	{ config: { cntGames: 5 } },
 	null
 );
