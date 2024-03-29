@@ -41,3 +41,9 @@ node_modules
 *.csv
 
 lib
+
+
+# Added by cargo
+/target
+/pkg
+/wasm-pack.log

@@ -23,6 +23,7 @@
 	},
 	"scripts": {
 		"build": "tsc && rollup --config",
+		"build:rust": "wasm-pack build --target nodejs",
 		"docs": "typedoc",
 		"test": "mocha"
 	},

@@ -1,5 +1,5 @@
 {
-	"include": ["src/**/*", "test/**/*", "manualTests/**/*"],
+	"include": ["src/js/**/*", "test/**/*", "manualTests/**/*"],
 	"compilerOptions": {
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
