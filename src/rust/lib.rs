@@ -2,6 +2,8 @@
 // Import the wasm-bindgen crate.
 use wasm_bindgen::prelude::*;
 
+const TEST: u64 = 64;
+
 #[wasm_bindgen]
 pub struct BitBoard {
     state: u64,
@@ -15,6 +17,6 @@ impl BitBoard {
     }
 
     pub fn get_state(&self) -> u64 {
-        self.state
+        return self.state + TEST;
     }
 }
