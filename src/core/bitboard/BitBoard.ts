@@ -1,5 +1,10 @@
 import Masks from './Masks.js';
 
+const testersCoeff: number[] = [];
+const testersBigCoeff: bigint[] = [];
+const testers: bigint[] = [];
+let testersN = 0;
+
 export default class BitBoard {
 	private state: bigint;
 	constructor(value: bigint) {
@@ -47,8 +52,39 @@ export default class BitBoard {
 	}
 
 	getHighestBitIdx() {
-		const i = (this.state.toString(16).length - 1) * 4;
-		return i + 32 - Math.clz32(Number(this.state >> BigInt(i))) - 1;
+		// https://stackoverflow.com/a/76616288
+		// VAR 1
+		const x = this.state;
+		let k = 0;
+		while (true) {
+			if (testersN === k) {
+				testersCoeff.push(32 << testersN);
+				testersBigCoeff.push(BigInt(testersCoeff[testersN]));
+				testers.push(1n << testersBigCoeff[testersN]);
+				testersN++;
+			}
+			if (x < testers[k]) break;
+			k++;
+		}
+
+		if (!k) return 32 - Math.clz32(Number(x)) - 1;
+
+		// determine length by bisection
+		k--;
+		let i = testersCoeff[k];
+		let a = x >> testersBigCoeff[k];
+		while (k--) {
+			const b = a >> testersBigCoeff[k];
+			if (b) (i += testersCoeff[k]), (a = b);
+		}
+
+		return i + 32 - Math.clz32(Number(a)) - 1;
+
+		// VAR 2
+		// const i = (this.state.toString(16).length - 1) * 4;
+		// return i + 32 - Math.clz32(Number(this.state >> BigInt(i))) - 1;
+
+		// VAR 3
 		// return this.state.toString(2).length - 1;
 	}
 

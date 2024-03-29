@@ -1,3 +1,5 @@
+// Reference: https://github.com/cglouch/snakefish/blob/master/src/tables.py
+
 const ranks: bigint[] = [];
 for (let rank = 0; rank < 8; rank += 1)
 	ranks.push(0x00000000000000ffn << BigInt(8 * rank));

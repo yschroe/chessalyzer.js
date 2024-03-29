@@ -12,17 +12,6 @@ class PiecePositions {
 	private state: (string | null)[];
 
 	constructor() {
-		// this.state = [
-		// 	['bRa', 'bNb', 'bBc', 'bQd', 'bKe', 'bBf', 'bNg', 'bRh'],
-		// 	['bPa', 'bPb', 'bPc', 'bPd', 'bPe', 'bPf', 'bPg', 'bPh'],
-		// 	[null, null, null, null, null, null, null, null],
-		// 	[null, null, null, null, null, null, null, null],
-		// 	[null, null, null, null, null, null, null, null],
-		// 	[null, null, null, null, null, null, null, null],
-		// 	['wPa', 'wPb', 'wPc', 'wPd', 'wPe', 'wPf', 'wPg', 'wPh'],
-		// 	['wRa', 'wNb', 'wBc', 'wQd', 'wKe', 'wBf', 'wNg', 'wRh']
-		// ];
-
 		// prettier-ignore
 		this.state = [
 			'wRh', 'wNg', 'wBf', 'wKe', 'wQd', 'wBc', 'wNb', 'wRa',
@@ -160,7 +149,7 @@ class ChessBoard {
 		this.printPosition();
 		legalPieceBitboard.printBoard();
 
-		return 0; // this.getPositionsForToken(player, token);
+		return -1; // this.getPositionsForToken(player, token);
 	}
 
 	// TODO: Optimize!
