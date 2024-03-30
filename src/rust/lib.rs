@@ -6,6 +6,7 @@ use wasm_bindgen::prelude::*;
 struct Masks {
     ranks: [u64; 8],
     files: [u64; 8],
+    cell: [u64; 64],
     queen: [u64; 64],
     rook: [u64; 64],
     bishop: [u64; 64],
@@ -28,6 +29,7 @@ const fn generate_masks() -> Masks {
     let mut rook: [u64; 64] = [0; 64];
     let mut bishop: [u64; 64] = [0; 64];
     let mut knight: [u64; 64] = [0; 64];
+    let mut cell: [u64; 64] = [0; 64];
 
     idx = 0;
     while idx < 64 {
@@ -52,6 +54,7 @@ const fn generate_masks() -> Masks {
         rook[idx] = straight_attacks;
         bishop[idx] = diag_attacks;
         queen[idx] = straight_attacks | diag_attacks;
+        cell[idx] = piece_mask;
 
         // KNIGHT
         let m1 = !(files[0] | files[1]);
@@ -75,6 +78,7 @@ const fn generate_masks() -> Masks {
     return Masks {
         ranks,
         files,
+        cell,
         queen,
         rook,
         bishop,
@@ -93,13 +97,21 @@ extern "C" {
 #[wasm_bindgen]
 pub struct BitBoard {
     state: u64,
+    initial_state: u64,
 }
 
 #[wasm_bindgen]
 impl BitBoard {
     #[wasm_bindgen(constructor)]
     pub fn new(state: u64) -> BitBoard {
-        return BitBoard { state };
+        return BitBoard {
+            state,
+            initial_state: state,
+        };
+    }
+
+    pub fn reset(&mut self) {
+        self.state = self.initial_state
     }
 
     pub fn get_legal_pieces(
@@ -120,14 +132,14 @@ impl BitBoard {
             'Q' => mask = MASKS.queen[target_idx],
             'B' => mask = MASKS.bishop[target_idx],
             'R' => mask = MASKS.rook[target_idx],
-            _ => todo!(),
+            _ => panic!(),
         }
 
         if must_be_in_row > -1 {
-            mask &= MASKS.ranks[7 - must_be_in_row as usize];
+            mask &= MASKS.ranks[must_be_in_row as usize];
         }
         if must_be_in_col > -1 {
-            mask &= MASKS.files[7 - must_be_in_col as usize];
+            mask &= MASKS.files[must_be_in_col as usize];
         }
 
         // TODO: We need to ensure only one piece remains!
@@ -135,9 +147,8 @@ impl BitBoard {
         return (self.state & mask).ilog2();
     }
 
-    pub fn invert_bit(&mut self, bit_idx: i8) {
-        let mask = 1 << bit_idx;
-        self.state ^= mask;
+    pub fn invert_bit(&mut self, bit_idx: usize) {
+        self.state ^= MASKS.cell[bit_idx];
     }
 
     pub fn get_highest_bit_idx(&self) -> u32 {

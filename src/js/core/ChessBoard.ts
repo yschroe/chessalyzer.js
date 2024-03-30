@@ -79,11 +79,6 @@ class ChessBoard {
 	promoteCounter: number;
 
 	constructor() {
-		this.init();
-	}
-
-	private init() {
-		this.piecePositions = new PiecePositions();
 		this.bitboards = {
 			// common: new BitBoard(0xffff00000000ffffn),
 			w: {
@@ -105,7 +100,7 @@ class ChessBoard {
 				K: new BitBoard(0x0800000000000000n)
 			}
 		};
-		this.promoteCounter = 0;
+		this.reset();
 	}
 
 	getPieceOnBitIdx(idx: number): ChessPiece | null {
@@ -135,8 +130,8 @@ class ChessBoard {
 		return bitboard.get_legal_pieces(
 			targetIdx,
 			token,
-			mustBeInRow ?? -1,
-			mustBeInCol ?? -1
+			mustBeInRow == null ? -1 : 7 - mustBeInRow,
+			mustBeInCol === null ? -1 : 7 - mustBeInCol
 		);
 
 		// if (legalPieceBitboard.()) {
@@ -174,7 +169,22 @@ class ChessBoard {
 	}
 
 	reset(): void {
-		this.init();
+		this.piecePositions = new PiecePositions();
+		this.promoteCounter = 0;
+
+		this.bitboards.w.P.reset();
+		this.bitboards.w.N.reset();
+		this.bitboards.w.K.reset();
+		this.bitboards.w.R.reset();
+		this.bitboards.w.Q.reset();
+		this.bitboards.w.B.reset();
+
+		this.bitboards.b.P.reset();
+		this.bitboards.b.N.reset();
+		this.bitboards.b.K.reset();
+		this.bitboards.b.R.reset();
+		this.bitboards.b.Q.reset();
+		this.bitboards.b.B.reset();
 	}
 
 	/** Prints the current board position to the console. */

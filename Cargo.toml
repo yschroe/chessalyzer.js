@@ -11,3 +11,6 @@ wasm-bindgen = "0.2.92"
 [lib]
 path="src/rust/lib.rs"
 crate-type=["cdylib"]
+
+[profile.release]
+lto = true
