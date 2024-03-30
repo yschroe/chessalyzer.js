@@ -113,11 +113,11 @@ class ChessBoard {
 		};
 	}
 
-	getKingIdx(player: PlayerColor) {
-		const bitboard = this.bitboards[player].K;
-		const bit = bitboard.get_highest_bit_idx();
-		return bit;
-	}
+	// getKingIdx(player: PlayerColor) {
+	// 	const bitboard = this.bitboards[player].K;
+	// 	const bit = bitboard.get_highest_bit_idx();
+	// 	return bit;
+	// }
 
 	getPiecesThatCanMoveToSquare(
 		player: PlayerColor,
@@ -242,15 +242,15 @@ class ChessBoard {
 	}
 
 	// a8 = 0, h1 = 63
-	private static coordsToIndex(coords: number[]) {
-		return coords[0] * 8 + coords[1];
-	}
+	// private static coordsToIndex(coords: number[]) {
+	// 	return coords[0] * 8 + coords[1];
+	// }
 
-	private static indexToCoords(index: number) {
-		const row = Math.floor(index / 8);
-		const col = index % 8;
-		return [row, col];
-	}
+	// private static indexToCoords(index: number) {
+	// 	const row = Math.floor(index / 8);
+	// 	const col = index % 8;
+	// 	return [row, col];
+	// }
 }
 
 export default ChessBoard;

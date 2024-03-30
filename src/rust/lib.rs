@@ -132,6 +132,7 @@ impl BitBoard {
             'Q' => mask = MASKS.queen[target_idx],
             'B' => mask = MASKS.bishop[target_idx],
             'R' => mask = MASKS.rook[target_idx],
+            'K' => mask = u64::MAX,
             _ => panic!(),
         }
 
@@ -151,15 +152,15 @@ impl BitBoard {
         self.state ^= MASKS.cell[bit_idx];
     }
 
-    pub fn get_highest_bit_idx(&self) -> u32 {
-        return self.state.ilog2();
-    }
+    // pub fn get_highest_bit_idx(&self) -> u32 {
+    //     return self.state.ilog2();
+    // }
 
     pub fn print_board(&self) {
         // Board
         for rank in 0..8 {
             let rank_slice = (self.state >> (8 * (7 - rank))) & 0b11111111;
-            log(format!("{rank_slice:08b}").as_str());
+            log(format!("{rank_slice:08b}").replace("0", ".").as_str());
         }
         log("");
     }
