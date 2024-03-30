@@ -24,8 +24,10 @@ TrackerList[GameTracker.name] = GameTracker;
 
 parentPort.on('message', (msg: WorkerTaskData) => {
 	void (async () => {
-		// import custom trackers
-		for (const tracker of msg.trackerData.filter((val) => val.path)) {
+		const { trackerData, games, idxConfig } = msg;
+
+		// Import custom trackers
+		for (const tracker of trackerData.filter((val) => val.path)) {
 			if (!(tracker.name in TrackerList)) {
 				const customTracker = await import(tracker.path);
 				TrackerList[tracker.name] = customTracker.default
@@ -34,13 +36,14 @@ parentPort.on('message', (msg: WorkerTaskData) => {
 			}
 		}
 
-		// select needed trackers
+		// Select needed trackers
 		const cfg: GameProcessorAnalysisConfig = {
 			trackers: { move: [], game: [] },
 			processedMoves: 0,
 			processedGames: 0
 		};
-		for (const tracker of msg.trackerData) {
+
+		for (const tracker of trackerData) {
 			const currentTracker: BaseTracker = new TrackerList[tracker.name]();
 			currentTracker.cfg = tracker.cfg;
 
@@ -52,14 +55,14 @@ parentPort.on('message', (msg: WorkerTaskData) => {
 		}
 
 		// analyze each game
-		for (const game of msg.games) gameParser.processGame(game, cfg);
+		for (const game of games) gameParser.processGame(game, cfg);
 
 		const result: WorkerMessage = {
 			cntMoves: cfg.processedMoves,
 			cntGames: cfg.processedGames,
 			gameTrackers: cfg.trackers.game,
 			moveTrackers: cfg.trackers.move,
-			idxConfig: msg.idxConfig
+			idxConfig
 		};
 
 		// send result of batch to master
