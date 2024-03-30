@@ -18,7 +18,7 @@ import WorkerPool from './WorkerPool.js';
 
 const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
 const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
-const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
+const MOVE_REGEX = /\b[RNBQKOa-h][^\s?!#+]{1,5}/g;
 const RESULT_REGEX = /-(1\/2|0|1)$/;
 
 /**
