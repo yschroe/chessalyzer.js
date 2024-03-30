@@ -25,7 +25,7 @@
 		"node": ">=16.0.0"
 	},
 	"scripts": {
-		"build": "tsc && rollup --config && wasm-pack build --target nodejs",
+		"build": "wasm-pack build --target nodejs && tsc && rollup --config",
 		"docs": "typedoc",
 		"test": "mocha"
 	},
