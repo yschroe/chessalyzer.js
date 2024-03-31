@@ -28,7 +28,7 @@ const fn generate_masks() -> Masks {
         cell[idx] = 1 << idx as u64;
     });
 
-    return Masks { rank, file, cell };
+    Masks { rank, file, cell }
 }
 
 const fn generate_attacks(masks: Masks) -> Attacks {
@@ -49,12 +49,12 @@ const fn generate_attacks(masks: Masks) -> Attacks {
         let diag = 8 * (idx as i64 & 7) - (idx as i64 & 56);
         let north_diag = -diag & (diag >> 31);
         let south_diag = diag & (-diag >> 31);
-        let diag_mask = (0x8040201008040201 as u64 >> south_diag) << north_diag;
+        let diag_mask = (0x8040201008040201_u64 >> south_diag) << north_diag;
 
         let anti_diag = 56 - 8 * (idx as i64 & 7) - (idx as i64 & 56);
         let north_anti_diag = -anti_diag & (anti_diag >> 31);
         let south_anti_diag = anti_diag & (-anti_diag >> 31);
-        let anti_diag_mask = (0x0102040810204080 as u64 >> south_anti_diag) << north_anti_diag;
+        let anti_diag_mask = (0x0102040810204080_u64 >> south_anti_diag) << north_anti_diag;
 
         let diag_attacks = (diag_mask | anti_diag_mask) ^ piece_mask;
 
@@ -78,12 +78,12 @@ const fn generate_attacks(masks: Masks) -> Attacks {
         knight[idx] = s1 | s2 | s3 | s4 | s5 | s6 | s7 | s8;
     });
 
-    return Attacks {
+    Attacks {
         queen,
         rook,
         bishop,
         knight,
-    };
+    }
 }
 
 pub const MASKS: Masks = generate_masks();

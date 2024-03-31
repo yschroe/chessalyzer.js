@@ -18,10 +18,10 @@ pub struct BitBoard {
 impl BitBoard {
     #[wasm_bindgen(constructor)]
     pub fn new(state: u64) -> BitBoard {
-        return BitBoard {
+        BitBoard {
             state,
             initial_state: state,
-        };
+        }
     }
 
     pub fn reset(&mut self) {
@@ -58,7 +58,7 @@ impl BitBoard {
 
         // TODO: We need to ensure only one piece remains!
 
-        return (self.state & mask).ilog2();
+        (self.state & mask).ilog2()
     }
 
     pub fn invert_bit(&mut self, bit_idx: usize) {
@@ -69,7 +69,7 @@ impl BitBoard {
         // Board
         for rank in 0..8 {
             let rank_slice = (self.state >> (8 * (7 - rank))) & 0b11111111;
-            log(format!("{rank_slice:08b}").replace("0", ".").as_str());
+            log(format!("{rank_slice:08b}").replace('0', ".").as_str());
         }
         log("");
     }
