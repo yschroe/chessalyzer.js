@@ -1,38 +1,53 @@
-pub struct Masks {
-    pub ranks: [u64; 8],
-    pub files: [u64; 8],
-    pub cell: [u64; 64],
+// Reference: https://github.com/cglouch/snakefish/blob/master/src/tables.py
+
+pub struct Attacks {
     pub queen: [u64; 64],
     pub rook: [u64; 64],
     pub bishop: [u64; 64],
     pub knight: [u64; 64],
 }
 
-// Reference: https://github.com/cglouch/snakefish/blob/master/src/tables.py
-pub const fn generate_masks() -> Masks {
-    let mut ranks: [u64; 8] = [0; 8];
-    let mut files: [u64; 8] = [0; 8];
+pub struct Masks {
+    pub rank: [u64; 8],
+    pub file: [u64; 8],
+    pub cell: [u64; 64],
+}
+
+const fn generate_masks() -> Masks {
+    let mut rank: [u64; 8] = [0; 8];
+    let mut file: [u64; 8] = [0; 8];
+    let mut cell: [u64; 64] = [0; 64];
+
     let mut idx: usize = 0;
 
     // For loops cannot be used in const fns -> use while.
     while idx < 8 {
-        ranks[idx] = 0x00000000000000FF << (8 * idx);
-        files[idx] = 0x0101010101010101 << idx;
+        rank[idx] = 0x00000000000000FF << (8 * idx);
+        file[idx] = 0x0101010101010101 << idx;
         idx += 1
     }
 
+    idx = 0;
+    while idx < 64 {
+        cell[idx] = 1 << idx as u64;
+        idx += 1
+    }
+
+    return Masks { rank, file, cell };
+}
+
+const fn generate_attacks(masks: Masks) -> Attacks {
     let mut queen: [u64; 64] = [0; 64];
     let mut rook: [u64; 64] = [0; 64];
     let mut bishop: [u64; 64] = [0; 64];
     let mut knight: [u64; 64] = [0; 64];
-    let mut cell: [u64; 64] = [0; 64];
 
-    idx = 0;
+    let mut idx: usize = 0;
     while idx < 64 {
-        let piece_mask = 1 << idx as u64;
+        let piece_mask = masks.cell[idx];
 
-        let rank_mask = ranks[idx / 8]; // We don't need floor here, int division automatically rounds down
-        let file_mask = files[idx % 8];
+        let rank_mask = masks.rank[idx / 8]; // We don't need floor here, int division automatically rounds down
+        let file_mask = masks.file[idx % 8];
         let straight_attacks = (rank_mask | file_mask) ^ piece_mask;
 
         let diag = 8 * (idx as i64 & 7) - (idx as i64 & 56);
@@ -50,13 +65,12 @@ pub const fn generate_masks() -> Masks {
         rook[idx] = straight_attacks;
         bishop[idx] = diag_attacks;
         queen[idx] = straight_attacks | diag_attacks;
-        cell[idx] = piece_mask;
 
         // KNIGHT
-        let m1 = !(files[0] | files[1]);
-        let m2 = !files[0];
-        let m3 = !files[7];
-        let m4 = !(files[7] | files[6]);
+        let m1 = !(masks.file[0] | masks.file[1]);
+        let m2 = !masks.file[0];
+        let m3 = !masks.file[7];
+        let m4 = !(masks.file[7] | masks.file[6]);
         let s1 = (piece_mask & m1) << 6;
         let s2 = (piece_mask & m2) << 15;
         let s3 = (piece_mask & m3) << 17;
@@ -71,13 +85,13 @@ pub const fn generate_masks() -> Masks {
         idx += 1
     }
 
-    return Masks {
-        ranks,
-        files,
-        cell,
+    return Attacks {
         queen,
         rook,
         bishop,
         knight,
     };
 }
+
+pub const MASKS: Masks = generate_masks();
+pub const ATTACKS: Attacks = generate_attacks(MASKS);

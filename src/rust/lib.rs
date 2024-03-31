@@ -1,7 +1,5 @@
-mod masks;
+mod tables;
 use wasm_bindgen::prelude::*;
-
-const MASKS: masks::Masks = masks::generate_masks();
 
 #[wasm_bindgen]
 extern "C" {
@@ -44,19 +42,18 @@ impl BitBoard {
 
         let mut mask;
         match piece_type {
-            'N' => mask = MASKS.knight[target_idx],
-            'Q' => mask = MASKS.queen[target_idx],
-            'B' => mask = MASKS.bishop[target_idx],
-            'R' => mask = MASKS.rook[target_idx],
+            'N' => mask = tables::ATTACKS.knight[target_idx],
+            'Q' => mask = tables::ATTACKS.queen[target_idx],
+            'B' => mask = tables::ATTACKS.bishop[target_idx],
+            'R' => mask = tables::ATTACKS.rook[target_idx],
             'K' => mask = u64::MAX,
             _ => panic!(),
         }
 
         if must_be_in_row > -1 {
-            mask &= MASKS.ranks[must_be_in_row as usize];
-        }
-        if must_be_in_col > -1 {
-            mask &= MASKS.files[must_be_in_col as usize];
+            mask &= tables::MASKS.rank[must_be_in_row as usize];
+        } else if must_be_in_col > -1 {
+            mask &= tables::MASKS.file[must_be_in_col as usize];
         }
 
         // TODO: We need to ensure only one piece remains!
@@ -65,7 +62,7 @@ impl BitBoard {
     }
 
     pub fn invert_bit(&mut self, bit_idx: usize) {
-        self.state ^= MASKS.cell[bit_idx];
+        self.state ^= tables::MASKS.cell[bit_idx];
     }
 
     pub fn print_board(&self) {
