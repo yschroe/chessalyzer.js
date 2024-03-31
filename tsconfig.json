@@ -1,12 +1,12 @@
 {
-	"include": ["src/js/**/*", "test/**/*", "manualTests/**/*"],
+	"include": ["src/js/**/*"],
 	"compilerOptions": {
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
 		"declaration": true,
 		"declarationDir": "./lib/dts",
 		"outDir": "./lib",
-		"rootDir": "src/js/"
+		"rootDir": "."
 		// "strictNullChecks": true
 	}
 }
