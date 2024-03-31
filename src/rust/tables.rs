@@ -1,4 +1,5 @@
 // Reference: https://github.com/cglouch/snakefish/blob/master/src/tables.py
+use const_for::const_for;
 
 pub struct Attacks {
     pub queen: [u64; 64],
@@ -18,20 +19,14 @@ const fn generate_masks() -> Masks {
     let mut file: [u64; 8] = [0; 8];
     let mut cell: [u64; 64] = [0; 64];
 
-    let mut idx: usize = 0;
-
-    // For loops cannot be used in const fns -> use while.
-    while idx < 8 {
+    const_for!(idx in 0..8 => {
         rank[idx] = 0x00000000000000FF << (8 * idx);
         file[idx] = 0x0101010101010101 << idx;
-        idx += 1
-    }
+    });
 
-    idx = 0;
-    while idx < 64 {
+    const_for!(idx in 0..64 => {
         cell[idx] = 1 << idx as u64;
-        idx += 1
-    }
+    });
 
     return Masks { rank, file, cell };
 }
@@ -42,14 +37,15 @@ const fn generate_attacks(masks: Masks) -> Attacks {
     let mut bishop: [u64; 64] = [0; 64];
     let mut knight: [u64; 64] = [0; 64];
 
-    let mut idx: usize = 0;
-    while idx < 64 {
+    const_for!(idx in 0..64 => {
         let piece_mask = masks.cell[idx];
 
+        // STRAIGHT ATTACKS
         let rank_mask = masks.rank[idx / 8]; // We don't need floor here, int division automatically rounds down
         let file_mask = masks.file[idx % 8];
         let straight_attacks = (rank_mask | file_mask) ^ piece_mask;
 
+        // DIAG ATTACKS
         let diag = 8 * (idx as i64 & 7) - (idx as i64 & 56);
         let north_diag = -diag & (diag >> 31);
         let south_diag = diag & (-diag >> 31);
@@ -62,11 +58,7 @@ const fn generate_attacks(masks: Masks) -> Attacks {
 
         let diag_attacks = (diag_mask | anti_diag_mask) ^ piece_mask;
 
-        rook[idx] = straight_attacks;
-        bishop[idx] = diag_attacks;
-        queen[idx] = straight_attacks | diag_attacks;
-
-        // KNIGHT
+        // KNIGHT ATTACKS
         let m1 = !(masks.file[0] | masks.file[1]);
         let m2 = !masks.file[0];
         let m3 = !masks.file[7];
@@ -80,10 +72,11 @@ const fn generate_attacks(masks: Masks) -> Attacks {
         let s7 = (piece_mask & m2) >> 17;
         let s8 = (piece_mask & m1) >> 10;
 
+        rook[idx] = straight_attacks;
+        bishop[idx] = diag_attacks;
+        queen[idx] = straight_attacks | diag_attacks;
         knight[idx] = s1 | s2 | s3 | s4 | s5 | s6 | s7 | s8;
-
-        idx += 1
-    }
+    });
 
     return Attacks {
         queen,
