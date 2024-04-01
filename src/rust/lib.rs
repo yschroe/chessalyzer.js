@@ -56,9 +56,14 @@ impl BitBoard {
             mask &= tables::MASKS.file[must_be_in_col as usize];
         }
 
-        // TODO: We need to ensure only one piece remains!
+        let masked_state = self.state & mask;
+        if masked_state.is_power_of_two() {
+            return masked_state.ilog2();
+        }
 
-        (self.state & mask).ilog2()
+        // TODO: Using FIRST_RANK_MOVES here so it is no dead code.
+        // Actual logic needs to be implemented
+        (masked_state & tables::FIRST_RANK_MOVES[0][0] as u64).ilog2()
     }
 
     pub fn invert_bit(&mut self, bit_idx: usize) {

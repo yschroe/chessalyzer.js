@@ -95,29 +95,36 @@ const fn right_ray(x: u8) -> u8 {
 }
 
 // TODO
-const fn compute_first_rank_moves(i: u8, occ: u8) -> u8 {
-    let x = 1_u8 << i;
+const fn compute_first_rank_moves() -> [[u8; 256]; 8] {
+    let mut first_rank_moves: [[u8; 256]; 8] = [[0; 256]; 8];
 
-    let mut left_attacks = left_ray(x);
-    let left_blockers = left_attacks & occ;
-    if left_blockers != 0 {
-        let leftmost = 1_u8 << left_blockers.leading_zeros();
-        let left_garbage = left_ray(leftmost);
-        left_attacks ^= left_garbage;
-    }
+    const_for!(i in 0..8 => {
+        let x = 1_u8 << i;
+        const_for!(occ in 0..256_u16 => {
+            let mut left_attacks = left_ray(x);
+            let left_blockers = left_attacks & occ as u8;
+            if left_blockers != 0 {
+                let leftmost = 1_u8 << left_blockers.leading_zeros();
+                let left_garbage = left_ray(leftmost);
+                left_attacks ^= left_garbage;
+            }
 
-    let mut right_attacks = right_ray(x);
-    let right_blockers = right_attacks & occ;
-    if right_blockers != 0 {
-        let rightmost = 1 << right_blockers.trailing_zeros();
-        let right_garbage = right_ray(rightmost);
-        right_attacks ^= right_garbage
-    }
+            let mut right_attacks = right_ray(x);
+            let right_blockers = right_attacks & occ as u8;
+            if right_blockers != 0 {
+                let rightmost = 1 << right_blockers.trailing_zeros();
+                let right_garbage = right_ray(rightmost);
+                right_attacks ^= right_garbage
+            }
 
-    left_attacks ^ right_attacks
+            first_rank_moves[i][occ as usize] = left_attacks ^ right_attacks
+        });
+
+    });
+    first_rank_moves
 }
 
 pub const MASKS: Masks = generate_masks();
 pub const ATTACKS: Attacks = generate_attacks(MASKS);
 
-pub const ABC: u8 = compute_first_rank_moves(0, 2);
+pub const FIRST_RANK_MOVES: [[u8; 256]; 8] = compute_first_rank_moves();
