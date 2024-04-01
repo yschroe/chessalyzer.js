@@ -86,5 +86,38 @@ const fn generate_attacks(masks: Masks) -> Attacks {
     }
 }
 
+const fn left_ray(x: u8) -> u8 {
+    x - 1_u8
+}
+
+const fn right_ray(x: u8) -> u8 {
+    !x & !(x - 1_u8)
+}
+
+// TODO
+const fn compute_first_rank_moves(i: u8, occ: u8) -> u8 {
+    let x = 1_u8 << i;
+
+    let mut left_attacks = left_ray(x);
+    let left_blockers = left_attacks & occ;
+    if left_blockers != 0 {
+        let leftmost = 1_u8 << left_blockers.leading_zeros();
+        let left_garbage = left_ray(leftmost);
+        left_attacks ^= left_garbage;
+    }
+
+    let mut right_attacks = right_ray(x);
+    let right_blockers = right_attacks & occ;
+    if right_blockers != 0 {
+        let rightmost = 1 << right_blockers.trailing_zeros();
+        let right_garbage = right_ray(rightmost);
+        right_attacks ^= right_garbage
+    }
+
+    left_attacks ^ right_attacks
+}
+
 pub const MASKS: Masks = generate_masks();
 pub const ATTACKS: Attacks = generate_attacks(MASKS);
+
+pub const ABC: u8 = compute_first_rank_moves(0, 2);
