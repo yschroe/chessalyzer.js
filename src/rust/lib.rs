@@ -40,15 +40,14 @@ impl BitBoard {
             return self.state.ilog2();
         }
 
-        let mut mask;
-        match piece_type {
-            'N' => mask = tables::ATTACKS.knight[target_idx],
-            'Q' => mask = tables::ATTACKS.queen[target_idx],
-            'B' => mask = tables::ATTACKS.bishop[target_idx],
-            'R' => mask = tables::ATTACKS.rook[target_idx],
-            'K' => mask = u64::MAX,
+        let mut mask = match piece_type {
+            'N' => tables::ATTACKS.knight[target_idx],
+            'Q' => tables::ATTACKS.queen[target_idx],
+            'B' => tables::ATTACKS.bishop[target_idx],
+            'R' => tables::ATTACKS.rook[target_idx],
+            'K' => u64::MAX,
             _ => panic!(),
-        }
+        };
 
         if must_be_in_row > -1 {
             mask &= tables::MASKS.rank[must_be_in_row as usize];
