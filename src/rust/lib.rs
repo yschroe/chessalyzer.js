@@ -32,8 +32,8 @@ impl BitBoard {
         &self,
         target_idx: usize,
         piece_type: char,
-        must_be_in_row: i8,
-        must_be_in_col: i8,
+        must_be_in_row: Option<usize>,
+        must_be_in_col: Option<usize>,
     ) -> u32 {
         // If there is only one piece left in mask, return it.
         if self.state.is_power_of_two() {
@@ -49,10 +49,10 @@ impl BitBoard {
             _ => panic!(),
         };
 
-        if must_be_in_row > -1 {
-            mask &= tables::MASKS.rank[must_be_in_row as usize];
-        } else if must_be_in_col > -1 {
-            mask &= tables::MASKS.file[must_be_in_col as usize];
+        if must_be_in_row.is_some() {
+            mask &= tables::MASKS.rank[must_be_in_row.unwrap()];
+        } else if must_be_in_col.is_some() {
+            mask &= tables::MASKS.file[must_be_in_col.unwrap()];
         }
 
         let masked_state = self.state & mask;

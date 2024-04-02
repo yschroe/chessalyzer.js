@@ -147,7 +147,7 @@ class GameParser {
 
 		// Capture
 		if (tempSan.at(1) == 'x') {
-			const colIdx = 7 - Utils.getFileNumber(tempSan.at(0));
+			const colIdx = Utils.getFileNumber(tempSan.at(0));
 			fromIdx = toIdx - 8 * direction + (colIdx - (toIdx % 8));
 
 			// en passant
@@ -238,34 +238,24 @@ class GameParser {
 
 		switch (rest.length) {
 			// E.g. 'Rf3' -> rest is ''
-			case 0: {
+			case 0:
 				fromIdx = this.findPiece(toIdx, [null, null], token, player);
 				break;
-			}
 
 			// E.g. 'Ref3' -> rest is 'e'
-			case 1: {
-				let mustBeInRow: number | null = null; // to be found
-
-				// If letter can be parsed to number: col is specified.
-				const mustBeInCol = Utils.getFileNumber(rest);
-				// Else: row is specified
-				if (mustBeInCol === null) mustBeInRow = 8 - Number(rest);
-
+			case 1:
 				fromIdx = this.findPiece(
 					toIdx,
-					[mustBeInRow, mustBeInCol],
+					Utils.getTargetRowCol(rest),
 					token,
 					player
 				);
 				break;
-			}
 
 			// E.g. 'Re3f5' -> rest is 'e3'
-			case 2: {
+			case 2:
 				fromIdx = Utils.algebraicToBitIndex(tempSan.slice(0, 2));
 				break;
-			}
 		}
 
 		const piece = this.board.getPieceOnBitIdx(fromIdx)?.name;

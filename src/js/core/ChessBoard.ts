@@ -130,8 +130,8 @@ class ChessBoard {
 		return bitboard.get_legal_pieces(
 			targetIdx,
 			token,
-			mustBeInRow == null ? -1 : 7 - mustBeInRow,
-			mustBeInCol === null ? -1 : 7 - mustBeInCol
+			mustBeInRow,
+			mustBeInCol
 		);
 
 		// if (legalPieceBitboard.()) {
@@ -145,11 +145,6 @@ class ChessBoard {
 		// legalPieceBitboard.print_board();
 
 		return -1; // this.getPositionsForToken(player, token);
-	}
-
-	// TODO: Optimize!
-	private getPositionsForToken(player: PlayerColor, token: PieceToken) {
-		return this.piecePositions.getAllForToken(player, token);
 	}
 
 	applyActions(actions: Action[]): void {
@@ -240,17 +235,6 @@ class ChessBoard {
 
 		this.bitboards[player][to as PieceToken].invert_bit(onIdx);
 	}
-
-	// a8 = 0, h1 = 63
-	// private static coordsToIndex(coords: number[]) {
-	// 	return coords[0] * 8 + coords[1];
-	// }
-
-	// private static indexToCoords(index: number) {
-	// 	const row = Math.floor(index / 8);
-	// 	const col = index % 8;
-	// 	return [row, col];
-	// }
 }
 
 export default ChessBoard;
