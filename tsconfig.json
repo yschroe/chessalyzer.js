@@ -6,7 +6,7 @@
 		"declaration": true,
 		"declarationDir": "./lib/dts",
 		"outDir": "./lib",
-		"rootDir": "."
+		"rootDir": "src/js/"
 		// "strictNullChecks": true
 	}
 }
