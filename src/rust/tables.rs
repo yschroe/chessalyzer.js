@@ -11,14 +11,14 @@ pub struct Attacks {
 pub struct Masks {
     pub rank: [u64; 8],
     pub file: [u64; 8],
-    pub ranks_and_files: [u64; 16],
+    pub ranks_and_files: [u64; 17],
     pub cell: [u64; 64],
 }
 
 const fn generate_masks() -> Masks {
     let mut rank = [0; 8];
     let mut file = [0; 8];
-    let mut ranks_and_files = [0; 16];
+    let mut ranks_and_files = [u64::MAX; 17];
     let mut cell = [0; 64];
 
     const_for!(idx in 0..8 => {
@@ -26,8 +26,8 @@ const fn generate_masks() -> Masks {
         let file_mask = 0x0101010101010101 << idx;
         rank[idx] = rank_mask;
         file[idx] = file_mask;
-        ranks_and_files[idx] = rank_mask;
-        ranks_and_files[idx + 8] = file_mask;
+        ranks_and_files[idx + 1] = rank_mask;
+        ranks_and_files[idx + 1 + 8] = file_mask;
     });
 
     const_for!(idx in 0..64 => {

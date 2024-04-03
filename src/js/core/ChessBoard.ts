@@ -123,7 +123,7 @@ class ChessBoard {
 		player: PlayerColor,
 		token: PieceToken,
 		targetIdx: number,
-		knownFromParts: number | null
+		knownFromParts: number
 	) {
 		const bitboard = this.bitboards[player][token];
 		return bitboard.get_legal_pieces(targetIdx, token, knownFromParts);

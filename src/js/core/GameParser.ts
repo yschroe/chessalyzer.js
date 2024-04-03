@@ -239,7 +239,7 @@ class GameParser {
 		switch (rest.length) {
 			// E.g. 'Rf3' -> rest is ''
 			case 0:
-				fromIdx = this.findPiece(toIdx, null, token, player);
+				fromIdx = this.findPiece(toIdx, 0, token, player);
 				break;
 
 			// E.g. 'Ref3' -> rest is 'e'

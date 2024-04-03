@@ -20,18 +20,23 @@ import {
 // b.cfg.profilingActive = true;
 // c.cfg.profilingActive = true;
 
+let mps = 0;
+const cntRepeats = 3;
+
 console.time('Time elapsed');
-const header = await Chessalyzer.analyzePGN(
-	// './manualTests/lichess_db_standard_rated_2014-09.pgn',
-	'./manualTests/lichess_db_standard_rated_2013-12.pgn'
-	// { config: { filter: () => true } },
-	// null
-	// { config: { cntGames: 750000 }, trackers: [b] }
-	// null
-);
-console.log(
-	`${header.cntGames} games (${header.cntMoves} moves) processed (${header.mps} moves/s)`
-);
+for (let _ = 0; _ < cntRepeats; _ += 1) {
+	const result = await Chessalyzer.analyzePGN(
+		// './manualTests/lichess_db_standard_rated_2014-09.pgn',
+		'./manualTests/lichess_db_standard_rated_2013-12.pgn'
+		// { config: { filter: () => true } },
+		// null
+		// { config: { cntGames: 750000 }, trackers: [b] }
+		// null
+	);
+	mps += result.mps;
+}
+
+console.log(`--------> ${Math.round(mps / cntRepeats)} moves/s`);
 console.timeEnd('Time elapsed');
 // console.log('Game: ' + Math.round(a.time) / 1000);
 // console.log('Piece: ' + Math.round(b.time) / 1000);

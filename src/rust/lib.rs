@@ -34,7 +34,7 @@ impl BitBoard {
         &self,
         target_idx: usize,
         piece_type: char,
-        must_be_in_row_or_col: Option<usize>,
+        must_be_in_row_or_col: usize,
     ) -> u32 {
         let non_zero_state;
         unsafe {
@@ -55,9 +55,7 @@ impl BitBoard {
             _ => panic!(),
         };
 
-        if must_be_in_row_or_col.is_some() {
-            mask &= tables::MASKS.ranks_and_files[must_be_in_row_or_col.unwrap()];
-        }
+        mask &= tables::MASKS.ranks_and_files[must_be_in_row_or_col];
 
         let masked_state;
         unsafe {
