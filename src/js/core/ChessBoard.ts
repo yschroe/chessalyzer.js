@@ -123,16 +123,10 @@ class ChessBoard {
 		player: PlayerColor,
 		token: PieceToken,
 		targetIdx: number,
-		mustBeInRow: number | null,
-		mustBeInCol: number | null
+		knownFromParts: number | null
 	) {
 		const bitboard = this.bitboards[player][token];
-		return bitboard.get_legal_pieces(
-			targetIdx,
-			token,
-			mustBeInRow,
-			mustBeInCol
-		);
+		return bitboard.get_legal_pieces(targetIdx, token, knownFromParts);
 
 		// if (legalPieceBitboard.()) {
 		// const bit = legalPieceBitboard.get_highest_bit_idx();

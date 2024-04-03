@@ -239,7 +239,7 @@ class GameParser {
 		switch (rest.length) {
 			// E.g. 'Rf3' -> rest is ''
 			case 0:
-				fromIdx = this.findPiece(toIdx, [null, null], token, player);
+				fromIdx = this.findPiece(toIdx, null, token, player);
 				break;
 
 			// E.g. 'Ref3' -> rest is 'e'
@@ -357,20 +357,16 @@ class GameParser {
 	 */
 	private findPiece(
 		toIdx: number,
-		knownFromParts: (number | null)[],
+		knownFromParts: number | null,
 		token: PieceToken,
 		player: PlayerColor
 	) {
-		// const [tarRow, tarCol] = toPosition;
-		const [mustBeInRow, mustBeInCol] = knownFromParts;
-
 		// Get array of positions of pieces of type <token>
 		return this.board.getPiecesThatCanMoveToSquare(
 			player,
 			token,
 			toIdx,
-			mustBeInRow,
-			mustBeInCol
+			knownFromParts
 		);
 		// if (validPieces.length === 1) return validPieces[0];
 

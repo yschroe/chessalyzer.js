@@ -27,22 +27,22 @@ for (const [fileIdx, file] of files.entries()) {
 }
 
 const targetColRowMap = new Map([
-	['a', [null, 7]],
-	['b', [null, 6]],
-	['c', [null, 5]],
-	['d', [null, 4]],
-	['e', [null, 3]],
-	['f', [null, 2]],
-	['g', [null, 1]],
-	['h', [null, 0]],
-	['1', [0, null]],
-	['2', [1, null]],
-	['3', [2, null]],
-	['4', [3, null]],
-	['5', [4, null]],
-	['6', [5, null]],
-	['7', [6, null]],
-	['8', [7, null]]
+	['a', 15],
+	['b', 14],
+	['c', 13],
+	['d', 12],
+	['e', 11],
+	['f', 10],
+	['g', 9],
+	['h', 8],
+	['1', 0],
+	['2', 1],
+	['3', 2],
+	['4', 3],
+	['5', 4],
+	['6', 5],
+	['7', 6],
+	['8', 7]
 ]);
 
 const fileToNumberMap = new Map([
@@ -76,8 +76,8 @@ export default class Utils {
 		return fileToNumberMap.get(file) ?? null;
 	}
 
-	static getTargetRowCol(char: string): (number | null)[] {
-		return targetColRowMap.get(char) ?? [null, null];
+	static getTargetRowCol(char: string): number | null {
+		return targetColRowMap.get(char) ?? null;
 	}
 
 	static getStartingPiece(sqr: number[]): ChessPiece | null {
