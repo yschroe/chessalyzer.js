@@ -1,4 +1,6 @@
 mod tables;
+use std::num::NonZeroU64;
+
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -35,9 +37,14 @@ impl BitBoard {
         must_be_in_row: Option<usize>,
         must_be_in_col: Option<usize>,
     ) -> u32 {
+        let non_zero_state;
+        unsafe {
+            non_zero_state = NonZeroU64::new_unchecked(self.state);
+        }
+
         // If there is only one piece left in mask, return it.
-        if self.state.is_power_of_two() {
-            return self.state.ilog2();
+        if non_zero_state.is_power_of_two() {
+            return non_zero_state.trailing_zeros();
         }
 
         let mut mask = match piece_type {
@@ -55,14 +62,17 @@ impl BitBoard {
             mask &= tables::MASKS.file[must_be_in_col.unwrap()];
         }
 
-        let masked_state = self.state & mask;
+        let masked_state;
+        unsafe {
+            masked_state = NonZeroU64::new_unchecked(self.state & mask);
+        }
         if masked_state.is_power_of_two() {
-            return masked_state.ilog2();
+            return masked_state.trailing_zeros();
         }
 
         // TODO: Using FIRST_RANK_MOVES here so it is no dead code.
         // Actual logic needs to be implemented
-        (masked_state & tables::FIRST_RANK_MOVES[0][0] as u64).ilog2()
+        (self.state & tables::FIRST_RANK_MOVES[0][0] as u64).ilog2()
     }
 
     pub fn invert_bit(&mut self, bit_idx: usize) {
