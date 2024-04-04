@@ -1,6 +1,5 @@
 mod tables;
 use std::num::NonZeroU64;
-
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
