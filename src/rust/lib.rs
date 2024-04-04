@@ -1,5 +1,4 @@
 mod tables;
-use std::num::NonZeroU64;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -35,14 +34,9 @@ impl BitBoard {
         piece_type: char,
         must_be_in_row_or_col: usize,
     ) -> u32 {
-        let non_zero_state;
-        unsafe {
-            non_zero_state = NonZeroU64::new_unchecked(self.state);
-        }
-
         // If there is only one piece left in mask, return it.
-        if non_zero_state.is_power_of_two() {
-            return non_zero_state.trailing_zeros();
+        if self.state.is_power_of_two() {
+            return self.state.trailing_zeros();
         }
 
         let mut mask = match piece_type {
@@ -51,15 +45,13 @@ impl BitBoard {
             'B' => tables::ATTACKS.bishop[target_idx],
             'R' => tables::ATTACKS.rook[target_idx],
             'K' => u64::MAX,
-            _ => panic!(),
+            _ => unreachable!(),
         };
 
         mask &= tables::MASKS.ranks_and_files[must_be_in_row_or_col];
 
-        let masked_state;
-        unsafe {
-            masked_state = NonZeroU64::new_unchecked(self.state & mask);
-        }
+        let masked_state = self.state & mask;
+
         if masked_state.is_power_of_two() {
             return masked_state.trailing_zeros();
         }
