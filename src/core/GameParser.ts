@@ -241,21 +241,20 @@ class GameParser {
 		const rest = tempSan.slice(0, -2);
 
 		switch (rest.length) {
+			// E.g. 'Re3f5' -> rest is 'e3'
+			case 2:
+				coords.from = Utils.algebraicToCoords(tempSan.slice(0, 2));
+				break;
+
 			// E.g. 'Rf3' -> rest is ''
 			// E.g. 'Ref3' -> rest is 'e'
-			case 0:
-			case 1:
+			default:
 				coords.from = this.findPiece(
 					coords.to,
 					Utils.getRowCol(rest),
 					token,
 					player
 				);
-				break;
-
-			// E.g. 'Re3f5' -> rest is 'e3'
-			case 2:
-				coords.from = Utils.algebraicToCoords(tempSan.slice(0, 2));
 				break;
 		}
 
@@ -404,29 +403,24 @@ class GameParser {
 
 		// else: one of the remaining pieces cannot move because of obstruction or it
 		// would result in the king being in check. Find the allowed piece.
-		for (const piece of validPieces) {
-			let obstructed = false;
-
+		pieceLoop: for (const piece of validPieces) {
 			if (token !== 'N') {
 				const diff = [tarRow - piece[0], tarCol - piece[1]];
 				const steps = Math.max(...diff.map((val) => Math.abs(val)));
 				const dir = [Math.sign(diff[0]), Math.sign(diff[1])];
-				for (let i = 1; i < steps && !obstructed; i += 1) {
+				for (let i = 1; i < steps; i += 1) {
 					if (
 						this.board.getPieceOnCoords([
 							piece[0] + i * dir[0],
 							piece[1] + i * dir[1]
 						])
 					) {
-						obstructed = true;
+						continue pieceLoop;
 					}
 				}
 			}
 
-			if (
-				!obstructed &&
-				!this.checkCheck({ from: piece, to: toPosition }, player)
-			) {
+			if (!this.checkCheck({ from: piece, to: toPosition }, player)) {
 				return piece;
 			}
 		}
