@@ -16,6 +16,25 @@ for (const [fileIdx, file] of files.entries()) {
 	}
 }
 
+const tokenToRowColMap = new Map([
+	['a', [null, 0]],
+	['b', [null, 1]],
+	['c', [null, 2]],
+	['d', [null, 3]],
+	['e', [null, 4]],
+	['f', [null, 5]],
+	['g', [null, 6]],
+	['h', [null, 7]],
+	['1', [7, null]],
+	['2', [6, null]],
+	['3', [5, null]],
+	['4', [4, null]],
+	['5', [3, null]],
+	['6', [2, null]],
+	['7', [1, null]],
+	['8', [0, null]]
+]);
+
 const fileToNumberMap = new Map([
 	['a', 0],
 	['b', 1],
@@ -36,6 +55,10 @@ export default class Utils {
 
 	static coordsToAlgebraic(coords: number[]): string {
 		return `${files[coords[1]]}${8 - coords[0]}`;
+	}
+
+	static getRowCol(file: string): (number | null)[] {
+		return tokenToRowColMap.get(file) ?? [null, null];
 	}
 
 	static getFileNumber(file: string): number | null {

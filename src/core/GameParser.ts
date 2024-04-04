@@ -242,39 +242,21 @@ class GameParser {
 
 		switch (rest.length) {
 			// E.g. 'Rf3' -> rest is ''
-			case 0: {
-				coords.from = this.findPiece(
-					coords.to,
-					[null, null],
-					token,
-					player
-				);
-				break;
-			}
-
 			// E.g. 'Ref3' -> rest is 'e'
-			case 1: {
-				let mustBeInRow: number | null = null; // to be found
-
-				// If letter can be parsed to number: col is specified.
-				const mustBeInCol = Utils.getFileNumber(rest);
-				// Else: row is specified
-				if (mustBeInCol === null) mustBeInRow = 8 - Number(rest);
-
+			case 0:
+			case 1:
 				coords.from = this.findPiece(
 					coords.to,
-					[mustBeInRow, mustBeInCol],
+					Utils.getRowCol(rest),
 					token,
 					player
 				);
 				break;
-			}
 
 			// E.g. 'Re3f5' -> rest is 'e3'
-			case 2: {
+			case 2:
 				coords.from = Utils.algebraicToCoords(tempSan.slice(0, 2));
 				break;
-			}
 		}
 
 		const piece = this.board.getPieceOnCoords(coords.from)?.name;
@@ -382,68 +364,70 @@ class GameParser {
 	): number[] {
 		const [tarRow, tarCol] = toPosition;
 		const [mustBeInRow, mustBeInCol] = knownFromParts;
+		// get array of positions of pieces of type <token>
+		let validPieces = this.board.getPositionsForToken(player, token);
 
-		// Get array of positions of pieces of type <token>
-		const validPieces = this.board.getPositionsForToken(player, token);
-		if (validPieces.length === 1) return validPieces[0];
+		// filter pieces that can reach target square
+		if (validPieces.length > 1) {
+			const allowedDirections =
+				moveCfg[token as Exclude<PieceToken, 'K'>];
 
-		const allowedDirections = moveCfg[token as Exclude<PieceToken, 'K'>];
+			validPieces = validPieces.filter((val) => {
+				const [row, col] = val;
 
-		pieceLoop: for (const piecePosition of validPieces) {
-			const [row, col] = piecePosition;
+				if (!(mustBeInRow === null || row === mustBeInRow))
+					return false;
+				if (!(mustBeInCol === null || col === mustBeInCol))
+					return false;
 
-			if (mustBeInRow !== null && row !== mustBeInRow) continue;
-			if (mustBeInCol !== null && col !== mustBeInCol) continue;
+				const rowDiff = Math.abs(row - tarRow);
+				const colDiff = Math.abs(col - tarCol);
 
-			const rowDiff = Math.abs(row - tarRow);
-			const colDiff = Math.abs(col - tarCol);
+				if (token === 'N')
+					return (
+						(rowDiff === 2 && colDiff === 1) ||
+						(rowDiff === 1 && colDiff === 2)
+					);
 
-			switch (token) {
-				case 'N':
+				return (
+					(allowedDirections.line &&
+						(rowDiff === 0 || colDiff === 0)) ||
+					(allowedDirections.diag && rowDiff === colDiff)
+				);
+			});
+		}
+
+		// if only one piece is left, move is found
+		if (validPieces.length === 1) {
+			return validPieces[0];
+		}
+
+		// else: one of the remaining pieces cannot move because of obstruction or it
+		// would result in the king being in check. Find the allowed piece.
+		for (const piece of validPieces) {
+			let obstructed = false;
+
+			if (token !== 'N') {
+				const diff = [tarRow - piece[0], tarCol - piece[1]];
+				const steps = Math.max(...diff.map((val) => Math.abs(val)));
+				const dir = [Math.sign(diff[0]), Math.sign(diff[1])];
+				for (let i = 1; i < steps && !obstructed; i += 1) {
 					if (
-						!(
-							(rowDiff === 2 && colDiff === 1) ||
-							(rowDiff === 1 && colDiff === 2)
-						)
-					)
-						continue;
-
-					break;
-
-				default: {
-					if (
-						!(
-							(allowedDirections.line &&
-								(rowDiff === 0 || colDiff === 0)) ||
-							(allowedDirections.diag && rowDiff === colDiff)
-						)
-					)
-						continue;
-
-					const diff = [tarRow - row, tarCol - col];
-					const steps = Math.max(...diff.map((val) => Math.abs(val)));
-					const dir = [Math.sign(diff[0]), Math.sign(diff[1])];
-					for (let i = 1; i < steps; i += 1) {
-						if (
-							this.board.getPieceOnCoords([
-								row + i * dir[0],
-								col + i * dir[1]
-							])
-						) {
-							continue pieceLoop;
-						}
+						this.board.getPieceOnCoords([
+							piece[0] + i * dir[0],
+							piece[1] + i * dir[1]
+						])
+					) {
+						obstructed = true;
 					}
-					break;
 				}
 			}
 
 			if (
-				!this.checkCheck(
-					{ from: piecePosition, to: toPosition },
-					player
-				)
+				!obstructed &&
+				!this.checkCheck({ from: piece, to: toPosition }, player)
 			) {
-				return piecePosition;
+				return piece;
 			}
 		}
 
