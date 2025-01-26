@@ -44,10 +44,10 @@
 	"homepage": "https://github.com/yschroe/chessalyzer.js",
 	"devDependencies": {
 		"@types/bun": "^1.2.0",
-		"@typescript-eslint/eslint-plugin": "^7.2.0",
-		"@typescript-eslint/parser": "^7.2.0",
+		"@typescript-eslint/eslint-plugin": "^7.18.0",
+		"@typescript-eslint/parser": "^7.18.0",
 		"bun-plugin-dts": "^0.3.0",
-		"eslint": "^8.57.0",
+		"eslint": "^8.57.1",
 		"mocha": "^11.1.0",
 		"typedoc": "^0.27.6",
 		"typedoc-plugin-merge-modules": "^6.1.0",
