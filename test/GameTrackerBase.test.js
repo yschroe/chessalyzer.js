@@ -1,35 +1,32 @@
-/* eslint-disable no-undef */
-import assert from 'assert';
 import { Chessalyzer, GameTracker } from '../lib/chessalyzer.js';
+import { describe, it, beforeAll, expect } from 'bun:test';
 
-context('GameTrackerBase', function () {
-	this.timeout(20000);
-
-	describe('Basic Tests: Multithreaded', function () {
+describe('GameTrackerBase', () => {
+	describe('Basic Tests: Multithreaded', () => {
 		let data;
-		let gameTracker = new GameTracker();
-		before(async function () {
+		const gameTracker = new GameTracker();
+		beforeAll(async () => {
 			data = await Chessalyzer.analyzePGN('./test/asorted_games.pgn', {
 				trackers: [gameTracker]
 			});
 		});
 
-		it('Game count inside Game Tracker matches game count of Parser', function () {
-			assert.strictEqual(data.cntGames, gameTracker.cntGames);
+		it('Game count inside Game Tracker matches game count of Parser', () => {
+			expect(data.cntGames).toBe(gameTracker.cntGames);
 		});
 
-		it('Sum of result object matches count of games', function () {
-			assert.strictEqual(
-				Object.values(gameTracker.results).reduce((a, c) => a + c),
-				data.cntGames
+		it('Sum of result object matches count of games', () => {
+			const resultsSum = Object.values(gameTracker.results).reduce(
+				(a, c) => a + c
 			);
+			expect(resultsSum).toBe(data.cntGames);
 		});
 	});
 
-	describe('Basic Tests: Singlethreaded', function () {
+	describe('Basic Tests: Singlethreaded', () => {
 		let data;
-		let gameTracker = new GameTracker();
-		before(async function () {
+		const gameTracker = new GameTracker();
+		beforeAll(async () => {
 			data = await Chessalyzer.analyzePGN(
 				'./test/asorted_games.pgn',
 				{ trackers: [gameTracker] },
@@ -37,21 +34,21 @@ context('GameTrackerBase', function () {
 			);
 		});
 
-		it('Game count inside Game Tracker matches game count of Parser', function () {
-			assert.strictEqual(data.cntGames, gameTracker.cntGames);
+		it('Game count inside Game Tracker matches game count of Parser', () => {
+			expect(data.cntGames).toBe(gameTracker.cntGames);
 		});
 
-		it('Sum of result object matches count of games', function () {
-			assert.strictEqual(
-				Object.values(gameTracker.results).reduce((a, c) => a + c),
-				data.cntGames
+		it('Sum of result object matches count of games', () => {
+			const resultsSum = Object.values(gameTracker.results).reduce(
+				(a, c) => a + c
 			);
+			expect(resultsSum).toBe(data.cntGames);
 		});
 	});
 
-	describe('Filtered Games: Result 1-0', function () {
-		let gameTracker = new GameTracker();
-		before(async function () {
+	describe('Filtered Games: Result 1-0', () => {
+		const gameTracker = new GameTracker();
+		beforeAll(async () => {
 			await Chessalyzer.analyzePGN('./test/asorted_games.pgn', {
 				trackers: [gameTracker],
 				config: {
@@ -61,25 +58,25 @@ context('GameTrackerBase', function () {
 			});
 		});
 
-		it('Win array shows only white wins', function () {
-			assert.strictEqual(gameTracker.results.white, 500);
-			assert.strictEqual(gameTracker.results.black, 0);
-			assert.strictEqual(gameTracker.results.draw, 0);
+		it('Win array shows only white wins', () => {
+			expect(gameTracker.results.white).toBe(500);
+			expect(gameTracker.results.black).toBe(0);
+			expect(gameTracker.results.draw).toBe(0);
 		});
 	});
 
-	describe('ECO Counts', function () {
-		let gameTracker = new GameTracker();
-		before(async function () {
+	describe('ECO Counts', () => {
+		const gameTracker = new GameTracker();
+		beforeAll(async () => {
 			await Chessalyzer.analyzePGN('./test/asorted_games.pgn', {
 				trackers: [gameTracker]
 			});
 		});
 
-		it('Counted the ECOs correctly', function () {
-			assert.strictEqual(gameTracker.ECO['A00'], 1177);
-			assert.strictEqual(gameTracker.ECO['B00'], 632);
-			assert.strictEqual(gameTracker.ECO['C00'], 805);
+		it('Counted the ECOs correctly', () => {
+			expect(gameTracker.ECO['A00']).toBe(1177);
+			expect(gameTracker.ECO['B00']).toBe(632);
+			expect(gameTracker.ECO['C00']).toBe(805);
 		});
 	});
 });
