@@ -1,26 +1,23 @@
-/* eslint-disable no-undef */
-import assert from 'assert';
 import { Chessalyzer, PieceTracker } from '../lib/chessalyzer.js';
+import { describe, it, beforeAll, expect } from 'bun:test';
 
-context('PieceTrackerBase', function () {
-	this.timeout(20000);
-
-	describe('Basic Tests: Multithreaded', function () {
+describe('PieceTrackerBase', () => {
+	describe('Basic Tests: Multithreaded', () => {
 		let pieceTracker = new PieceTracker();
-		before(async function () {
+		beforeAll(async () => {
 			await Chessalyzer.analyzePGN('./test/asorted_games.pgn', {
 				trackers: [pieceTracker]
 			});
 		});
 
-		it('Tracked the correct values', function () {
-			assert.strictEqual(pieceTracker.b.Ra.Qd, 631);
+		it('Tracked the correct values', () => {
+			expect(pieceTracker.b.Ra.Qd).toBe(631);
 		});
 	});
 
-	describe('Basic Tests: Singlethreaded', function () {
+	describe('Basic Tests: Singlethreaded', () => {
 		let pieceTracker = new PieceTracker();
-		before(async function () {
+		beforeAll(async () => {
 			await Chessalyzer.analyzePGN(
 				'./test/asorted_games.pgn',
 				{ trackers: [pieceTracker] },
@@ -28,45 +25,45 @@ context('PieceTrackerBase', function () {
 			);
 		});
 
-		it('Tracked the correct values', function () {
-			assert.strictEqual(pieceTracker.b.Ra.Qd, 631);
+		it('Tracked the correct values', () => {
+			expect(pieceTracker.b.Ra.Qd).toBe(631);
 		});
 	});
 
-	describe('Heatmaps', function () {
+	describe('Heatmaps', () => {
 		let pieceTracker = new PieceTracker();
-		before(async function () {
+		beforeAll(async () => {
 			await Chessalyzer.analyzePGN('./test/asorted_games.pgn', {
 				trackers: [pieceTracker]
 			});
 		});
 
-		it('Worked with PIECE_CAPTURED preset', function () {
+		it('Worked with PIECE_CAPTURED preset', () => {
 			const data = pieceTracker.generateHeatmap('PIECE_CAPTURED', 'a8');
 			// didn't take itself
-			assert.strictEqual(data.map[0][0], 0);
+			expect(data.map[0][0]).toBe(0);
 
 			// didn't take anything of same team
-			assert.strictEqual(data.map[1][0], 0);
+			expect(data.map[1][0]).toBe(0);
 
-			assert.strictEqual(data.map[7][0], 1514);
+			expect(data.map[7][0]).toBe(1514);
 		});
 
-		it('Worked with PIECE_CAPTURED_BY preset', function () {
+		it('Worked with PIECE_CAPTURED_BY preset', () => {
 			const data = pieceTracker.generateHeatmap(
 				'PIECE_CAPTURED_BY',
 				'a8'
 			);
 			// wasn't taken by itself
-			assert.strictEqual(data.map[0][0], 0);
+			expect(data.map[0][0]).toBe(0);
 
 			// wasn't taken by own team
-			assert.strictEqual(data.map[1][0], 0);
+			expect(data.map[1][0]).toBe(0);
 
-			assert.strictEqual(data.map[7][0], 1487);
+			expect(data.map[7][0]).toBe(1487);
 		});
 
-		it('Works with Custom Function', function () {
+		it('Works with Custom Function', () => {
 			let customFunc = (data, loopSqrData, sqrData) => {
 				const sqrPiece = sqrData.piece;
 				const loopPiece = loopSqrData.piece;
@@ -82,20 +79,18 @@ context('PieceTrackerBase', function () {
 			};
 			const data = pieceTracker.generateHeatmap(customFunc, 'a8');
 			// wasn't taken by itself
-			assert.strictEqual(data.map[0][0], 0);
+			expect(data.map[0][0]).toBe(0);
 
 			// wasn't taken by own team
-			assert.strictEqual(data.map[1][0], 0);
+			expect(data.map[1][0]).toBe(0);
 
-			assert.strictEqual(data.map[7][0], 1487);
+			expect(data.map[7][0]).toBe(1487);
 		});
 
-		it('Throws an error if preset is not found', function () {
-			assert.throws(
-				() => pieceTracker.generateHeatmap('I_DO_NOT_EXIST', 'a8'),
-				Error,
-				`Heatmap preset 'I_DO_NOT_EXIST' not found!`
-			);
+		it('Throws an error if preset is not found', () => {
+			expect(() =>
+				pieceTracker.generateHeatmap('I_DO_NOT_EXIST', 'a8')
+			).toThrow("Heatmap preset 'I_DO_NOT_EXIST' not found!");
 		});
 	});
 });
