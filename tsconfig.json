@@ -6,6 +6,7 @@
 		"declaration": true,
 		"declarationDir": "./lib/dts",
 		"outDir": "./lib",
+		"rootDir": ".",
 		"skipLibCheck": true
 		// "strictNullChecks": true
 	}

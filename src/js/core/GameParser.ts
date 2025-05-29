@@ -237,20 +237,24 @@ class GameParser {
 		const rest = tempSan.slice(0, -2);
 
 		switch (rest.length) {
-			// E.g. 'Re3f5' -> rest is 'e3'
-			case 2:
-				coords.from = Utils.algebraicToCoords(tempSan.slice(0, 2));
+			// E.g. 'Rf3' -> rest is ''
+			case 0:
+				fromIdx = this.findPiece(toIdx, 0, token, player);
 				break;
 
-			// E.g. 'Rf3' -> rest is ''
 			// E.g. 'Ref3' -> rest is 'e'
-			default:
-				coords.from = this.findPiece(
-					coords.to,
-					Utils.getRowCol(rest),
+			case 1:
+				fromIdx = this.findPiece(
+					toIdx,
+					Utils.getTargetRowCol(rest),
 					token,
 					player
 				);
+				break;
+
+			// E.g. 'Re3f5' -> rest is 'e3'
+			case 2:
+				fromIdx = Utils.algebraicToBitIndex(tempSan.slice(0, 2));
 				break;
 		}
 
@@ -356,70 +360,75 @@ class GameParser {
 		knownFromParts: number | null,
 		token: PieceToken,
 		player: PlayerColor
-	): number[] {
-		const [tarRow, tarCol] = toPosition;
-		const [mustBeInRow, mustBeInCol] = knownFromParts;
-		// get array of positions of pieces of type <token>
-		let validPieces = this.board.getPositionsForToken(player, token);
+	) {
+		// Get array of positions of pieces of type <token>
+		return this.board.getPiecesThatCanMoveToSquare(
+			player,
+			token,
+			toIdx,
+			knownFromParts
+		);
+		// if (validPieces.length === 1) return validPieces[0];
 
-		// filter pieces that can reach target square
-		if (validPieces.length > 1) {
-			const allowedDirections =
-				moveCfg[token as Exclude<PieceToken, 'K'>];
+		// const allowedDirections = moveCfg[token as Exclude<PieceToken, 'K'>];
 
-			validPieces = validPieces.filter((val) => {
-				const [row, col] = val;
+		// pieceLoop: for (const piecePosition of validPieces) {
+		// 	const [row, col] = piecePosition;
 
-				if (!(mustBeInRow === null || row === mustBeInRow))
-					return false;
-				if (!(mustBeInCol === null || col === mustBeInCol))
-					return false;
+		// 	if (mustBeInRow !== null && row !== mustBeInRow) continue;
+		// 	if (mustBeInCol !== null && col !== mustBeInCol) continue;
 
-				const rowDiff = Math.abs(row - tarRow);
-				const colDiff = Math.abs(col - tarCol);
+		// 	const rowDiff = Math.abs(row - tarRow);
+		// 	const colDiff = Math.abs(col - tarCol);
 
-				if (token === 'N')
-					return (
-						(rowDiff === 2 && colDiff === 1) ||
-						(rowDiff === 1 && colDiff === 2)
-					);
+		// 	switch (token) {
+		// 		case 'N':
+		// 			if (
+		// 				!(
+		// 					(rowDiff === 2 && colDiff === 1) ||
+		// 					(rowDiff === 1 && colDiff === 2)
+		// 				)
+		// 			)
+		// 				continue;
 
-				return (
-					(allowedDirections.line &&
-						(rowDiff === 0 || colDiff === 0)) ||
-					(allowedDirections.diag && rowDiff === colDiff)
-				);
-			});
-		}
+		// 			break;
 
-		// if only one piece is left, move is found
-		if (validPieces.length === 1) {
-			return validPieces[0];
-		}
+		// 		default: {
+		// 			if (
+		// 				!(
+		// 					(allowedDirections.line &&
+		// 						(rowDiff === 0 || colDiff === 0)) ||
+		// 					(allowedDirections.diag && rowDiff === colDiff)
+		// 				)
+		// 			)
+		// 				continue;
 
-		// else: one of the remaining pieces cannot move because of obstruction or it
-		// would result in the king being in check. Find the allowed piece.
-		pieceLoop: for (const piece of validPieces) {
-			if (token !== 'N') {
-				const diff = [tarRow - piece[0], tarCol - piece[1]];
-				const steps = Math.max(...diff.map((val) => Math.abs(val)));
-				const dir = [Math.sign(diff[0]), Math.sign(diff[1])];
-				for (let i = 1; i < steps; i += 1) {
-					if (
-						this.board.getPieceOnCoords([
-							piece[0] + i * dir[0],
-							piece[1] + i * dir[1]
-						])
-					) {
-						continue pieceLoop;
-					}
-				}
-			}
+		// 			const diff = [tarRow - row, tarCol - col];
+		// 			const steps = Math.max(...diff.map((val) => Math.abs(val)));
+		// 			const dir = [Math.sign(diff[0]), Math.sign(diff[1])];
+		// 			for (let i = 1; i < steps; i += 1) {
+		// 				if (
+		// 					this.board.getPieceOnCoords([
+		// 						row + i * dir[0],
+		// 						col + i * dir[1]
+		// 					])
+		// 				) {
+		// 					continue pieceLoop;
+		// 				}
+		// 			}
+		// 			break;
+		// 		}
+		// 	}
 
-			if (!this.checkCheck({ from: piece, to: toPosition }, player)) {
-				return piece;
-			}
-		}
+		// 	if (
+		// 		!this.checkCheck(
+		// 			{ from: piecePosition, to: toPosition },
+		// 			player
+		// 		)
+		// 	) {
+		// 		return piecePosition;
+		// 	}
+		// }
 
 		// throw new MoveNotFoundException(token, player, tarRow, tarCol);
 	}

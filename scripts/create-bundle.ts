@@ -5,7 +5,7 @@ await Bun.$`rm -rf lib`;
 
 // Create a bundle
 const result = await Bun.build({
-	entrypoints: ['./src/chessalyzer.ts', './src/core/ChessWorker.ts'],
+	entrypoints: ['./src/js/chessalyzer.ts', './src/js/core/ChessWorker.ts'],
 	outdir: './lib/',
 	target: 'node',
 	splitting: true,
