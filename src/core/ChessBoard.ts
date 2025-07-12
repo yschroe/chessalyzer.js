@@ -4,8 +4,8 @@ import type {
 	MoveAction,
 	CaptureAction,
 	PromoteAction
-} from '../interfaces/index.js';
-import type { PieceToken, PlayerColor } from '../types/index.js';
+} from '../interfaces/index';
+import type { PieceToken, PlayerColor } from '../types/index';
 
 class PiecePositions {
 	R: Map<string, number[]>;

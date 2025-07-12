@@ -4,10 +4,10 @@ import {
 	GameProcessorAnalysisConfig,
 	Move,
 	MoveAction
-} from '../interfaces/index.js';
-import { PieceToken, PlayerColor, Token } from '../types/index.js';
-import ChessBoard from './ChessBoard.js';
-import Utils from './Utils.js';
+} from '../interfaces/index';
+import { PieceToken, PlayerColor, Token } from '../types/index';
+import ChessBoard from './ChessBoard';
+import Utils from './Utils';
 
 const moveCfg = {
 	Q: {

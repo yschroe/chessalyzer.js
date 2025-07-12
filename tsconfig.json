@@ -1,12 +1,15 @@
 {
 	"include": ["src/**/*", "scripts/**/*", "test/**/*", "manualTests/**/*"],
 	"compilerOptions": {
-		"module": "nodenext",
-		"moduleResolution": "nodenext",
-		"declaration": true,
-		"declarationDir": "./lib/dts",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"target": "ESNext",
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
 		"outDir": "./lib",
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true
 		// "strictNullChecks": true
 	}
 }

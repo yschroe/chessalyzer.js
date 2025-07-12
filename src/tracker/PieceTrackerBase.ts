@@ -1,7 +1,7 @@
-import BaseTracker from './BaseTracker.js';
-import type { Action } from '../interfaces/index.js';
-import HeatmapPresets from './heatmaps/PieceHeatmaps.js';
-import { PlayerColor } from '../types/index.js';
+import BaseTracker from './BaseTracker';
+import type { Action } from '../interfaces/index';
+import HeatmapPresets from './heatmaps/PieceHeatmaps';
+import { PlayerColor } from '../types/index';
 
 type Piece =
 	| 'Pa'

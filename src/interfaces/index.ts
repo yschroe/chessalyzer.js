@@ -1,4 +1,4 @@
-import type { PlayerColor } from '../types/index.js';
+import type { PlayerColor } from '../types/index';
 
 export interface GameProcessorConfig {
 	hasFilter: boolean;

@@ -1,7 +1,7 @@
-import Chessalyzer from './core/Chessalyzer.js';
-import PieceTracker from './tracker/PieceTrackerBase.js';
-import TileTracker from './tracker/TileTrackerBase.js';
-import GameTracker from './tracker/GameTrackerBase.js';
-import BaseTracker from './tracker/BaseTracker.js';
+import Chessalyzer from './core/Chessalyzer';
+import PieceTracker from './tracker/PieceTrackerBase';
+import TileTracker from './tracker/TileTrackerBase';
+import GameTracker from './tracker/GameTrackerBase';
+import BaseTracker from './tracker/BaseTracker';
 
 export { Chessalyzer, PieceTracker, GameTracker, TileTracker, BaseTracker };
