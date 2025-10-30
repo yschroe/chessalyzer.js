@@ -10,8 +10,8 @@ const result = await Bun.build({
 	target: 'node',
 	splitting: true,
 	naming: '[name].[ext]',
-	minify: true,
-	plugins: [dts()]
+	plugins: [dts()],
+	packages: 'external'
 });
 
 if (!result.success) {
