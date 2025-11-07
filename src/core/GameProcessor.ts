@@ -1,5 +1,3 @@
-import { createReadStream } from 'node:fs';
-import { createInterface } from 'node:readline';
 import { EventEmitter } from 'node:events';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,6 +13,7 @@ import type {
 } from '../interfaces/index';
 import GameParser from './GameParser';
 import WorkerPool from './WorkerPool';
+import { readLinesFast } from './line-reader';
 
 const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
 const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
@@ -96,89 +95,88 @@ class GameProcessor {
 
 		const gameParser = new GameParser();
 
-		// init line reader
-		const lineReader = createInterface({
-			input: createReadStream(path),
-			crlfDelay: Infinity
-		});
-
-		// on new line
-		lineReader.on('line', (line) => {
-			if (line === '') return;
+		lineLoop: for await (const line of readLinesFast(path)) {
+			if (line === '') continue;
 
 			const isHeaderTag = line.startsWith('[');
-			// header tag
-			if (this.readInHeader && isHeaderTag) {
-				const [_, key, value] = HEADER_REGEX.exec(line);
-				game[key] = value;
+			switch (isHeaderTag) {
+				case true: {
+					if (!this.readInHeader) continue;
+					const [_, key, value] = HEADER_REGEX.exec(line);
+					game[key] = value;
+					break;
+				}
+				case false: {
+					// extract move SANs
+					const cleanedLine = line.replaceAll(COMMENT_REGEX, '');
+					const matchedMoves = cleanedLine.match(MOVE_REGEX) ?? [];
 
-				// moves
-			} else if (!isHeaderTag) {
-				// extract move SANs
-				const cleanedLine = line.replaceAll(COMMENT_REGEX, '');
-				const matchedMoves = cleanedLine.match(MOVE_REGEX) ?? [];
+					// For performance reasons, do not use spread operator if it's not necessary
+					// -> PGNs which use a single line for all moves only use one assignment instead of spreading
+					if (game.moves.length === 0) game.moves = matchedMoves;
+					else game.moves.push(...matchedMoves);
 
-				// For performance reasons, do not use spread operator if it's not necessary
-				// -> PGNs which use a single line for all moves only use one assignment instead of spreading
-				if (game.moves.length === 0) game.moves = matchedMoves;
-				else game.moves.push(...matchedMoves);
-
-				// only if the result marker is found, all moves have been read -> start analyzing
-				if (RESULT_REGEX.test(cleanedLine)) {
-					for (
-						let idxCfg = 0;
-						idxCfg < this.configs.length;
-						idxCfg += 1
-					) {
-						const cfg = this.configs[idxCfg];
-						if (
-							!cfg.isDone &&
-							(!cfg.config.hasFilter || cfg.config.filter(game))
+					// only if the result marker is found, all moves have been read -> start analyzing
+					if (RESULT_REGEX.test(cleanedLine)) {
+						for (
+							let idxCfg = 0;
+							idxCfg < this.configs.length;
+							idxCfg += 1
 						) {
-							cfg.cntReadGames += 1;
-							if (isMultithreaded) {
-								gameStore[idxCfg].push(game);
+							const cfg = this.configs[idxCfg];
+							if (
+								!cfg.isDone &&
+								(!cfg.config.hasFilter ||
+									cfg.config.filter(game))
+							) {
+								cfg.cntReadGames += 1;
+								if (isMultithreaded) {
+									gameStore[idxCfg].push(game);
 
-								// if enough games have been read in, start worker threads and let them analyze
-								if (
-									gameStore[idxCfg].length ===
-									this.multithreadConfig.batchSize
-								) {
-									workerPool.runTask(
-										{
-											games: gameStore[idxCfg],
-											trackerData:
-												this.configs[idxCfg]
-													.trackerData,
-											idxConfig: idxCfg
-										},
-										(err: Error, result: WorkerMessage) =>
-											this.addDataFromWorker(err, result)
-									);
+									// if enough games have been read in, start worker threads and let them analyze
+									if (
+										gameStore[idxCfg].length ===
+										this.multithreadConfig.batchSize
+									) {
+										workerPool.runTask(
+											{
+												games: gameStore[idxCfg],
+												trackerData:
+													this.configs[idxCfg]
+														.trackerData,
+												idxConfig: idxCfg
+											},
+											(
+												err: Error,
+												result: WorkerMessage
+											) =>
+												this.addDataFromWorker(
+													err,
+													result
+												)
+										);
 
-									gameStore[idxCfg] = [];
+										gameStore[idxCfg] = [];
+									}
+								} else {
+									gameParser.processGame(game, cfg);
 								}
-							} else {
-								gameParser.processGame(game, cfg);
-							}
-							if (cfg.cntReadGames === cfg.config.cntGames) {
-								cfg.isDone = true;
-								const allDone = this.configs.reduce(
-									(a, c) => a && c.isDone,
-									true
-								);
-								if (allDone) lineReader.close();
+								if (cfg.cntReadGames === cfg.config.cntGames) {
+									cfg.isDone = true;
+									const allDone = this.configs.reduce(
+										(a, c) => a && c.isDone,
+										true
+									);
+									if (allDone) break lineLoop;
+								}
 							}
 						}
+						game = { moves: [] };
 					}
-					game = { moves: [] };
+					break;
 				}
 			}
-		});
-
-		// since the line reader reads in lines async, we need to wait here until
-		// all lines have been read in
-		await EventEmitter.once(lineReader, 'close');
+		}
 
 		if (isMultithreaded) {
 			// if on end there are still unprocessed games, start a last worker batch
