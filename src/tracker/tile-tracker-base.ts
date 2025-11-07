@@ -1,6 +1,6 @@
-import BaseTracker from './BaseTracker';
+import BaseTracker from './base-tracker';
 import type { Move, Action } from '../interfaces/index';
-import HeatmapPresets from './heatmaps/TileHeatmaps';
+import HeatmapPresets from './heatmaps/tile-heatmaps';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];

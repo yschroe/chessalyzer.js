@@ -1,6 +1,6 @@
-import BaseTracker from './BaseTracker';
+import BaseTracker from './base-tracker';
 import type { Action } from '../interfaces/index';
-import HeatmapPresets from './heatmaps/PieceHeatmaps';
+import HeatmapPresets from './heatmaps/piece-heatmaps';
 import { PlayerColor } from '../types/index';
 
 type Piece =

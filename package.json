@@ -8,13 +8,13 @@
 	"types": "lib/chessalyzer.d.ts",
 	"exports": {
 		".": {
-			"types": "./lib/chessalyzer.d.ts",
-			"import": "./lib/chessalyzer.js"
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
 		}
 	},
 	"files": [
-		"lib/chessalyzer.js",
-		"lib/chessalyzer.d.ts",
+		"lib/index.js",
+		"lib/index.d.ts",
 		"lib/core",
 		"lib/tracker"
 	],

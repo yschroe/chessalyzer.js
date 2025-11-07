@@ -1,4 +1,4 @@
-import { BaseTracker } from '../lib/chessalyzer.js';
+import { BaseTracker } from 'chessalyzer.js';
 
 export default class CustomGameTracker extends BaseTracker {
 	constructor() {

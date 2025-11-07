@@ -11,8 +11,8 @@ import type {
 	GameProcessorAnalysisConfigFull,
 	GameProcessorConfig
 } from '../interfaces/index';
-import GameParser from './GameParser';
-import WorkerPool from './WorkerPool';
+import GameParser from './game-parser';
+import WorkerPool from './worker-pool';
 import { readLinesFast } from './line-reader';
 
 const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
@@ -84,7 +84,7 @@ class GameProcessor {
 			const __dirname = dirname(fileURLToPath(import.meta.url));
 			workerPool = new WorkerPool(
 				os.availableParallelism(),
-				`${__dirname}/ChessWorker.js`
+				`${__dirname}/chess-worker.js`
 			);
 		}
 

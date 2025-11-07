@@ -3,7 +3,7 @@ import {
 	GameTracker,
 	PieceTracker,
 	TileTracker
-} from '../lib/chessalyzer.js';
+} from 'chessalyzer.js';
 import CustomGameTracker from './CustomGameTracker.js';
 
 const a = new GameTracker();

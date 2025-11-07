@@ -1,4 +1,4 @@
-import { Chessalyzer, Tracker } from '../lib/chessalyzer.js';
+import { Chessalyzer, Tracker } from 'chessalyzer.js';
 
 // create basic tile tracker
 const tileTracker = new Tracker.Tile();

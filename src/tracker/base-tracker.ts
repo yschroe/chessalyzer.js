@@ -1,5 +1,5 @@
 import { performance } from 'node:perf_hooks';
-import Utils from '../core/Utils';
+import Utils from '../core/utils';
 import type {
 	Game,
 	Action,
