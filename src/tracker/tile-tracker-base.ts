@@ -1,5 +1,5 @@
 import BaseTracker from './base-tracker';
-import type { Move, Action } from '../interfaces/index';
+import type { Move, Action } from '../interfaces';
 import HeatmapPresets from './heatmaps/tile-heatmaps';
 
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];

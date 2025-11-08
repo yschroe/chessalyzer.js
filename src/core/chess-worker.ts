@@ -10,7 +10,7 @@ import type {
 	GameProcessorAnalysisConfig,
 	WorkerMessage,
 	WorkerTaskData
-} from '../interfaces/index';
+} from '../interfaces';
 import GameParser from './game-parser';
 
 // init GameParser
@@ -70,6 +70,6 @@ parentPort.on('message', (msg: WorkerTaskData) => {
 // handle errors
 // since above code runs inside a promise, simply catching and rethrowing
 // causes a ERR_UNHANDLED_REJECTION error
-process.on('unhandledRejection', (e: any) => {
-	throw e.message;
+process.on('unhandledRejection', (e: Error) => {
+	throw e;
 });

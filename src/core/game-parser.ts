@@ -4,8 +4,8 @@ import {
 	GameProcessorAnalysisConfig,
 	Move,
 	MoveAction
-} from '../interfaces/index';
-import { PieceToken, PlayerColor, Token } from '../types/index';
+} from '../interfaces';
+import { PieceToken, PlayerColor, Token } from '../types';
 import ChessBoard from './chess-board';
 import Utils from './utils';
 

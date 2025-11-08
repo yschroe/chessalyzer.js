@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import os from 'node:os';
+import { availableParallelism } from 'node:os';
 import type {
 	Game,
 	AnalysisConfig,
@@ -10,7 +10,7 @@ import type {
 	WorkerMessage,
 	GameProcessorAnalysisConfigFull,
 	GameProcessorConfig
-} from '../interfaces/index';
+} from '../interfaces';
 import GameParser from './game-parser';
 import WorkerPool from './worker-pool';
 import { readLinesFast } from './line-reader';
@@ -83,7 +83,7 @@ class GameProcessor {
 		if (isMultithreaded) {
 			const __dirname = dirname(fileURLToPath(import.meta.url));
 			workerPool = new WorkerPool(
-				os.availableParallelism(),
+				availableParallelism(),
 				`${__dirname}/chess-worker.js`
 			);
 		}
@@ -111,10 +111,8 @@ class GameProcessor {
 					const cleanedLine = line.replaceAll(COMMENT_REGEX, '');
 					const matchedMoves = cleanedLine.match(MOVE_REGEX) ?? [];
 
-					// For performance reasons, do not use spread operator if it's not necessary
-					// -> PGNs which use a single line for all moves only use one assignment instead of spreading
-					if (game.moves.length === 0) game.moves = matchedMoves;
-					else game.moves.push(...matchedMoves);
+					// Add moves to game
+					game.moves.push(...matchedMoves);
 
 					// only if the result marker is found, all moves have been read -> start analyzing
 					if (RESULT_REGEX.test(cleanedLine)) {
@@ -245,7 +243,7 @@ class GameProcessor {
 	private checkConfig(config: AnalysisConfig['config']): GameProcessorConfig {
 		const hasFilter = !!config.filter;
 
-		// if we need to filter the games, we need the header informations
+		// If we need to filter the games, we need the header information
 		if (hasFilter) this.readInHeader = true;
 
 		const cfg: GameProcessorConfig = {

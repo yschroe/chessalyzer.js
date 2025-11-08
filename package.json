@@ -13,13 +13,10 @@
 		}
 	},
 	"files": [
-		"lib/index.js",
-		"lib/index.d.ts",
-		"lib/core",
-		"lib/tracker"
+		"lib/**/*"
 	],
 	"engines": {
-		"node": ">=16.0.0"
+		"node": ">=22"
 	},
 	"scripts": {
 		"build": "bun ./scripts/create-bundle.ts",

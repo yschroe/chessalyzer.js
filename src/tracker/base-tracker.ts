@@ -7,7 +7,7 @@ import type {
 	TrackerConfig,
 	HeatmapAnalysisFunc,
 	HeatmapData
-} from '../interfaces/index';
+} from '../interfaces';
 
 class BaseTracker implements Tracker {
 	type: 'move' | 'game';
