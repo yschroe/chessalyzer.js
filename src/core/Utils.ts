@@ -3,7 +3,7 @@ import type {
 	HeatmapAnalysisFunc,
 	HeatmapData,
 	SquareData
-} from '../interfaces/index';
+} from '../interfaces';
 
 // const files = 'abcdefgh';
 const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];

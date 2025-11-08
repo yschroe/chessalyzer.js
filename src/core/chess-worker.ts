@@ -2,16 +2,16 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { parentPort } from 'node:worker_threads';
-import PieceTracker from '../tracker/PieceTrackerBase';
-import TileTracker from '../tracker/TileTrackerBase';
-import GameTracker from '../tracker/GameTrackerBase';
-import BaseTracker from '../tracker/BaseTracker';
+import PieceTracker from '../tracker/piece-tracker-base';
+import TileTracker from '../tracker/tile-tracker-base';
+import GameTracker from '../tracker/game-tracker-base';
+import BaseTracker from '../tracker/base-tracker';
 import type {
 	GameProcessorAnalysisConfig,
 	WorkerMessage,
 	WorkerTaskData
-} from '../interfaces/index';
-import GameParser from './GameParser';
+} from '../interfaces';
+import GameParser from './game-parser';
 
 // init GameParser
 const gameParser = new GameParser();
@@ -70,6 +70,6 @@ parentPort.on('message', (msg: WorkerTaskData) => {
 // handle errors
 // since above code runs inside a promise, simply catching and rethrowing
 // causes a ERR_UNHANDLED_REJECTION error
-process.on('unhandledRejection', (e: any) => {
-	throw e.message;
+process.on('unhandledRejection', (e: Error) => {
+	throw e;
 });

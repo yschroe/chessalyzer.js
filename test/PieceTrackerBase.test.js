@@ -1,4 +1,4 @@
-import { Chessalyzer, PieceTracker } from '../lib/chessalyzer.js';
+import { Chessalyzer, PieceTracker } from 'chessalyzer.js';
 import { describe, it, beforeAll, expect } from 'bun:test';
 
 describe('PieceTrackerBase', () => {

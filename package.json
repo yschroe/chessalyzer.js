@@ -8,18 +8,15 @@
 	"types": "lib/chessalyzer.d.ts",
 	"exports": {
 		".": {
-			"types": "./lib/chessalyzer.d.ts",
-			"import": "./lib/chessalyzer.js"
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
 		}
 	},
 	"files": [
-		"lib/chessalyzer.js",
-		"lib/chessalyzer.d.ts",
-		"lib/core",
-		"lib/tracker"
+		"lib/**/*"
 	],
 	"engines": {
-		"node": ">=16.0.0"
+		"node": ">=22"
 	},
 	"scripts": {
 		"build": "bun ./scripts/create-bundle.ts",
@@ -43,14 +40,14 @@
 	},
 	"homepage": "https://github.com/yschroe/chessalyzer.js",
 	"devDependencies": {
-		"@eslint/js": "^9.38.0",
+		"@eslint/js": "^9.39.1",
 		"@types/bun": "^1.3.1",
 		"bun-plugin-dts": "^0.3.0",
-		"eslint": "^9.38.0",
+		"eslint": "^9.39.1",
 		"typedoc": "^0.28.14",
 		"typedoc-plugin-merge-modules": "^7.0.0",
 		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.46.2"
+		"typescript-eslint": "^8.46.3"
 	},
 	"dependencies": {
 		"chalk": "^5.6.2"

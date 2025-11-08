@@ -1,5 +1,5 @@
-import TileTrackerBase from '../TileTrackerBase';
-import type { SquareData } from '../../interfaces/index';
+import TileTrackerBase from '../tile-tracker-base';
+import type { SquareData } from '../../interfaces';
 
 export default {
 	TILE_OCC_ALL: {
