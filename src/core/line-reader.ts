@@ -56,7 +56,7 @@ class FixedCircularBuffer<T> {
 	list: T[];
 	next: FixedCircularBuffer<T> | null;
 
-	constructor(kSize: number = 1024) {
+	constructor(kSize: number) {
 		this.bottom = 0;
 		this.top = 0;
 		this.list = new Array<T>(kSize);
