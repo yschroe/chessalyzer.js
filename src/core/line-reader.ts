@@ -50,7 +50,6 @@ import { createReadStream } from 'node:fs';
 // but allows much quicker checks.
 
 class FixedCircularBuffer<T> {
-	kSize: number;
 	kMask: number;
 	top: number;
 	bottom: number;
@@ -62,7 +61,6 @@ class FixedCircularBuffer<T> {
 		this.top = 0;
 		this.list = new Array<T>(kSize);
 		this.next = null;
-		this.kSize = kSize;
 		this.kMask = kSize - 1;
 	}
 
@@ -93,7 +91,7 @@ class FixedQueue<T> {
 	head: FixedCircularBuffer<T>;
 	tail: FixedCircularBuffer<T>;
 
-	constructor(kSize: number = 1024) {
+	constructor(private readonly kSize: number = 1024) {
 		this.head = this.tail = new FixedCircularBuffer(kSize);
 	}
 
@@ -101,17 +99,17 @@ class FixedQueue<T> {
 		return this.head.isEmpty();
 	}
 
-	push(data: T) {
-		if (this.head.isFull()) {
-			// Head is full: Creates a new queue, sets the old queue's `.next` to it,
-			// and sets it as the new main queue.
-			this.head = this.head.next = new FixedCircularBuffer();
+	push(...data: T[]) {
+		for (const item of data) {
+			if (this.head.isFull()) {
+				// Head is full: Creates a new queue, sets the old queue's `.next` to it,
+				// and sets it as the new main queue.
+				this.head = this.head.next = new FixedCircularBuffer(
+					this.kSize
+				);
+			}
+			this.head.push(item);
 		}
-		this.head.push(data);
-	}
-
-	pushMany(data: T[]) {
-		for (const item of data) this.push(item);
 	}
 
 	shift() {
@@ -126,7 +124,12 @@ class FixedQueue<T> {
 	}
 }
 
-/** Custom line reader that reads lines faster than the native readline module. */
+/**
+ * Custom line reader that reads lines faster than the native readline module.
+ * @param file - The file to read.
+ * @returns An async iterator that yields lines from the file.
+ * @see https://github.com/oven-sh/bun/issues/5136#issuecomment-3503523219
+ */
 export function readLinesFast(file: string) {
 	const rs = createReadStream(file, { encoding: 'utf-8' });
 	const iterator: AsyncIterator<string, string> = rs[Symbol.asyncIterator]();
@@ -155,7 +158,7 @@ export function readLinesFast(file: string) {
 				// On first iteration, the cache is empty, so we need to get the
 				// first line from the new chunk.
 				if (line === null) line = lines.shift();
-				cache.pushMany(lines);
+				cache.push(...lines);
 
 				// Check if chunk ended with a line break
 				lineBreak = value.at(-1) === '\n';
