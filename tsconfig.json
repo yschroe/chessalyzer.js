@@ -1,9 +1,8 @@
 {
     "include": ["src/**/*", "scripts/**/*", "test/**/*", "manual-tests/**/*"],
     "compilerOptions": {
-        "module": "ESNext",
-        "moduleResolution": "bundler",
         "target": "ESNext",
+        "module": "Preserve",
         "allowImportingTsExtensions": true,
         "noEmit": true,
         "outDir": "./lib",
