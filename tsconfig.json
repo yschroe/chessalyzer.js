@@ -1,15 +1,15 @@
 {
-	"include": ["src/**/*", "scripts/**/*", "test/**/*", "manual-tests/**/*"],
-	"compilerOptions": {
-		"module": "ESNext",
-		"moduleResolution": "bundler",
-		"target": "ESNext",
-		"allowImportingTsExtensions": true,
-		"noEmit": true,
-		"outDir": "./lib",
-		"skipLibCheck": true,
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true
-		// "strictNullChecks": true
-	}
+    "include": ["src/**/*", "scripts/**/*", "test/**/*", "manual-tests/**/*"],
+    "compilerOptions": {
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "target": "ESNext",
+        "allowImportingTsExtensions": true,
+        "noEmit": true,
+        "outDir": "./lib",
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true
+        // "strictNullChecks": true
+    }
 }

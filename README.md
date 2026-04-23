@@ -6,30 +6,30 @@ A JavaScript library for batch analyzing chess games.
 
 # Index
 
--   [Features](#features)
--   [Installation](#installation)
--   [How it works](#how-it-works)
--   [Examples](#examples)
-    -   [Basic Usage](#basic-usage)
-    -   [Filtering](#filtering)
-    -   [Compare Analyses](#compare-analyses)
-    -   [Multithreading](#multithreaded-analysis)
--   [Heatmap analysis functions](#heatmap-analysis-functions)
--   [Tracked statistics](#tracked-statistics)
-    -   [Built-in](#built-in)
-    -   [Custom Tracker](#custom-trackers)
--   [Heatmap presets](#heatmap-presets)
--   [Visualisation](#visualisation)
+- [Features](#features)
+- [Installation](#installation)
+- [How it works](#how-it-works)
+- [Examples](#examples)
+    - [Basic Usage](#basic-usage)
+    - [Filtering](#filtering)
+    - [Compare Analyses](#compare-analyses)
+    - [Multithreading](#multithreaded-analysis)
+- [Heatmap analysis functions](#heatmap-analysis-functions)
+- [Tracked statistics](#tracked-statistics)
+    - [Built-in](#built-in)
+    - [Custom Tracker](#custom-trackers)
+- [Heatmap presets](#heatmap-presets)
+- [Visualisation](#visualisation)
 
 # Features
 
--   Batch process PGN files and track statistics of your games
--   Filter games (e.g. only analyze games where WhiteElo > 1800)
--   Fully modular, track only the stats you need to preserve performance
--   Generate heatmaps out of the generated data
--   It's fast and highly parallelized: Processes >10M moves/s on an Apple M1, >4.900.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
--   Handles big files easily
--   Just one dependency (chalk)
+- Batch process PGN files and track statistics of your games
+- Filter games (e.g. only analyze games where WhiteElo > 1800)
+- Fully modular, track only the stats you need to preserve performance
+- Generate heatmaps out of the generated data
+- It's fast and highly parallelized: Processes >10M moves/s on an Apple M1, >4.900.000 moves/s on a Ryzen 5 2600X (PGN parsing only)
+- Handles big files easily
+- Just one dependency (chalk)
 
 # Installation
 
@@ -102,8 +102,8 @@ let fil = function (game) {
 await Chessalyzer.analyzePGN('<pathToPgnFile>', {
     trackers: [tileTracker],
     config: {
-        filter: fil
-    }
+        filter: fil,
+    },
 });
 
 // ...do something with the tileTracker data.
@@ -126,16 +126,16 @@ await Chessalyzer.analyzePGN('<pathToPgnFile>', [
         trackers: [tileT1],
         config: {
             filter: (game) => game.WhiteElo > 2000,
-            cntGames: 1000
-        }
+            cntGames: 1000,
+        },
     },
     {
         trackers: [tileT2],
         config: {
             filter: (game) => game.WhiteElo < 1200,
-            cntGames: 1000
-        }
-    }
+            cntGames: 1000,
+        },
+    },
 ]);
 
 // Create an evaluation function for the heat map.
@@ -164,10 +164,10 @@ await Chessalyzer.analyzePGN(
     {
         trackers: [tileTracker],
         config: {
-            cntGames: 10000
-        }
+            cntGames: 10000,
+        },
     },
-    { batchSize: 500 }
+    { batchSize: 500 },
 );
 
 // ...
@@ -220,36 +220,35 @@ chessalyzer.js comes with three built-in trackers, which can be directly importe
 
 `GameTracker`:
 
--   `result`
-    An object which counts the results of the tracked games. Contains the keys `white`, `draw` and `black`
+- `result`
+  An object which counts the results of the tracked games. Contains the keys `white`, `draw` and `black`
 
--   `ECO`
-    Counts the ECO keys of the processed games. `ECO` is an object that contains the different keys, for example 'A00'.
+- `ECO`
+  Counts the ECO keys of the processed games. `ECO` is an object that contains the different keys, for example 'A00'.
 
--   `cntGames`  
-    Number of games processed
+- `cntGames`  
+  Number of games processed
 
 `PieceTracker`:
 
--   `b`  
-    Blacks pieces. Tracks how often a specific black piece took a specific white piece. E.g. `b.Pa.Qd` tracks how often the black a-pawn took whites queen.
+- `b`  
+  Blacks pieces. Tracks how often a specific black piece took a specific white piece. E.g. `b.Pa.Qd` tracks how often the black a-pawn took whites queen.
 
--   `w`  
-    Same for whites pieces.
+- `w`  
+  Same for whites pieces.
 
 `TileTracker`:
 
--   `tiles[][]`  
-    Represents the tiles of the board. Has two objects (`b`, `w`) on the first layer, and then each piece inside these objects as a second layer (`Pa`, `Ra` etc.). For each piece following stats are tracked:
-
-    -   `movedTo`: How often the piece moved to this tile
-    -   `wasOn`: Amount of half-moves the piece was on this tile
-    -   `capturedOn`: How often the piece captured another piece on this tile
-    -   `wasCapturedOn`: How often the piece was captured on this tile
+- `tiles[][]`  
+  Represents the tiles of the board. Has two objects (`b`, `w`) on the first layer, and then each piece inside these objects as a second layer (`Pa`, `Ra` etc.). For each piece following stats are tracked:
+    - `movedTo`: How often the piece moved to this tile
+    - `wasOn`: Amount of half-moves the piece was on this tile
+    - `capturedOn`: How often the piece captured another piece on this tile
+    - `wasCapturedOn`: How often the piece was captured on this tile
 
     These stats are also tracked for black and white as a whole. Simply omit the piece name to get the total stats of one side for a specific tile, e.g. `tiles[0][6].b.wasOn`.
 
--   `cntMovesTotal`: Amount of moves processed in total.
+- `cntMovesTotal`: Amount of moves processed in total.
 
 ## Custom Trackers
 
@@ -257,16 +256,15 @@ If you want to have other stats tracked you can easily create a custom tracker. 
 
 Your tracker also must have the following properties:
 
--   `type`:  
-    The type of your tracker. Either move based (`this.type = 'move'`) or game based (`this.type = 'game'`).
+- `type`:  
+  The type of your tracker. Either move based (`this.type = 'move'`) or game based (`this.type = 'game'`).
 
--   `path`:
-    Variable which contains the path of the file your custom tracker is defined in. You can use `this.path = import.meta.url;` for this. Your Tracker MUST be defined in a separate file and it must be the only object that is exported from that file. Background: Since the data passed to the worker thread is serialized first, you can't pass non-primitive types to the worker. So the library dynamically imports the Custom Tracker provided in the path variable into the Worker Thread. In there the Tracker will be instantiated as normal. (If you happen to know a better way for passing classes into a worker thread, let me know. The current solution is a bit hacky but it works.)
+- `path`:
+  Variable which contains the path of the file your custom tracker is defined in. You can use `this.path = import.meta.url;` for this. Your Tracker MUST be defined in a separate file and it must be the only object that is exported from that file. Background: Since the data passed to the worker thread is serialized first, you can't pass non-primitive types to the worker. So the library dynamically imports the Custom Tracker provided in the path variable into the Worker Thread. In there the Tracker will be instantiated as normal. (If you happen to know a better way for passing classes into a worker thread, let me know. The current solution is a bit hacky but it works.)
 
--   `track(data)`:  
-     The main analysis function that is called during the PGN processing. Depending on your `type` the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The `data` object contains the following properties:
-
-    -   For move-typed trackers: An `Action` array with one or more entries of the following action types:
+- `track(data)`:  
+   The main analysis function that is called during the PGN processing. Depending on your `type` the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The `data` object contains the following properties:
+    - For move-typed trackers: An `Action` array with one or more entries of the following action types:
 
         ```typescript
         type Action = MoveAction | CaptureAction | PromoteAction;
@@ -300,11 +298,11 @@ Your tracker also must have the following properties:
 
         If e.g. a piece captures another piece this array will contain a `CaptureAction` and a `MoveAction`
 
-    -   For game-typed trackers:
-        `data` is an object that contains `{key: value}` entries, where `key` is the property in the header of the PGN (e.g. `'WhiteElo'`, case sensitive) and `value` is the respective value of the property. The property `data.moves` is an array that contains the moves of the game in standard algebraic notation.
+    - For game-typed trackers:
+      `data` is an object that contains `{key: value}` entries, where `key` is the property in the header of the PGN (e.g. `'WhiteElo'`, case sensitive) and `value` is the respective value of the property. The property `data.moves` is an array that contains the moves of the game in standard algebraic notation.
 
--   `add(tracker)`:
-    Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. For example the add(...) function for the built-in Game Tracker looks like this:
+- `add(tracker)`:
+  Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. For example the add(...) function for the built-in Game Tracker looks like this:
 
     ```javascript
     add(tracker) {
@@ -316,13 +314,13 @@ Your tracker also must have the following properties:
     }
     ```
 
--   `nextGame()` (opt.):
-    Optional method that is called for move-type trackers after the last move of every game. You can use this to do end-of-game stuff inside your tracker, like storing and resetting statistics for the current game.
+- `nextGame()` (opt.):
+  Optional method that is called for move-type trackers after the last move of every game. You can use this to do end-of-game stuff inside your tracker, like storing and resetting statistics for the current game.
 
--   `finish()` (opt.):
-    Optional method that is called when all games have been processed. Can be used for example to clean up or sort the data in the tracker.
+- `finish()` (opt.):
+  Optional method that is called when all games have been processed. Can be used for example to clean up or sort the data in the tracker.
 
--   `heatmapPresets` (opt.): If you want to predefine heatmap analysis functions for your custom tracker you can call by name instead of passing a function, `this.heatmapPresets` can be overriden with an object, in which the keys are the names of the presets.
+- `heatmapPresets` (opt.): If you want to predefine heatmap analysis functions for your custom tracker you can call by name instead of passing a function, `this.heatmapPresets` can be overriden with an object, in which the keys are the names of the presets.
     ```javascript
         this.heatmapPresets = {
             MY_FIRST_HEATMAP_FUNC: {

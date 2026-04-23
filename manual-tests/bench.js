@@ -6,10 +6,8 @@ console.time('Events');
 
 // init line reader
 const lineReader = createInterface({
-	input: createReadStream(
-		'./manualTests/lichess_db_standard_rated_2013-12.pgn'
-	),
-	crlfDelay: Infinity
+    input: createReadStream('./manualTests/lichess_db_standard_rated_2013-12.pgn'),
+    crlfDelay: Infinity,
 });
 
 lineReader.on('line', (_line) => {});
@@ -21,10 +19,8 @@ console.time('Await');
 
 // init line reader
 const lineReader2 = createInterface({
-	input: createReadStream(
-		'./manualTests/lichess_db_standard_rated_2013-12.pgn'
-	),
-	crlfDelay: Infinity
+    input: createReadStream('./manualTests/lichess_db_standard_rated_2013-12.pgn'),
+    crlfDelay: Infinity,
 });
 
 for await (const _line of lineReader2) {
