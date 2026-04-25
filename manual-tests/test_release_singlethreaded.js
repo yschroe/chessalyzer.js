@@ -11,13 +11,13 @@ import CustomGameTracker from './CustomGameTracker.js';
 // c.cfg.profilingActive = true;
 
 const header = await Chessalyzer.analyzePGN(
-	'./manualTests/lichess_db_standard_rated_2013-12.pgn',
-	{ config: { cntGames: 50000 } },
-	null
+    './manualTests/lichess_db_standard_rated_2013-12.pgn',
+    { config: { cntGames: 50000 } },
+    null,
 );
 console.log(header);
 console.log(
-	`${header.cntGames} games (${header.cntMoves} moves) processed (${header.mps} moves/s)`
+    `${header.cntGames} games (${header.cntMoves} moves) processed (${header.mps} moves/s)`,
 );
 // console.log('Game: ' + Math.round(a.time) / 1000);
 // console.log('Piece: ' + Math.round(b.time) / 1000);

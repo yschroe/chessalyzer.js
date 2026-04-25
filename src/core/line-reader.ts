@@ -50,78 +50,76 @@ import { createReadStream } from 'node:fs';
 // but allows much quicker checks.
 
 class FixedCircularBuffer<T> {
-	kMask: number;
-	top: number;
-	bottom: number;
-	list: T[];
-	next: FixedCircularBuffer<T> | null;
+    kMask: number;
+    top: number;
+    bottom: number;
+    list: T[];
+    next: FixedCircularBuffer<T> | null;
 
-	constructor(kSize: number) {
-		this.bottom = 0;
-		this.top = 0;
-		this.list = new Array<T>(kSize);
-		this.next = null;
-		this.kMask = kSize - 1;
-	}
+    constructor(kSize: number) {
+        this.bottom = 0;
+        this.top = 0;
+        this.list = new Array<T>(kSize);
+        this.next = null;
+        this.kMask = kSize - 1;
+    }
 
-	isEmpty() {
-		return this.top === this.bottom;
-	}
+    isEmpty() {
+        return this.top === this.bottom;
+    }
 
-	isFull() {
-		return ((this.top + 1) & this.kMask) === this.bottom;
-	}
+    isFull() {
+        return ((this.top + 1) & this.kMask) === this.bottom;
+    }
 
-	push(data: T) {
-		this.list[this.top] = data;
-		this.top = (this.top + 1) & this.kMask;
-	}
+    push(data: T) {
+        this.list[this.top] = data;
+        this.top = (this.top + 1) & this.kMask;
+    }
 
-	shift() {
-		const { list, bottom } = this;
-		const nextItem = list[bottom];
-		if (nextItem === undefined) return null;
-		list[bottom] = undefined;
-		this.bottom = (bottom + 1) & this.kMask;
-		return nextItem;
-	}
+    shift() {
+        const { list, bottom } = this;
+        const nextItem = list[bottom];
+        if (nextItem === undefined) return null;
+        list[bottom] = undefined;
+        this.bottom = (bottom + 1) & this.kMask;
+        return nextItem;
+    }
 }
 
 class FixedQueue<T> {
-	head: FixedCircularBuffer<T>;
-	tail: FixedCircularBuffer<T>;
+    head: FixedCircularBuffer<T>;
+    tail: FixedCircularBuffer<T>;
 
-	constructor(private readonly kSize: number = 1024) {
-		this.head = this.tail = new FixedCircularBuffer(kSize);
-	}
+    constructor(private readonly kSize: number = 1024) {
+        this.head = this.tail = new FixedCircularBuffer(kSize);
+    }
 
-	isEmpty() {
-		return this.head.isEmpty();
-	}
+    isEmpty() {
+        return this.head.isEmpty();
+    }
 
-	push(...data: T[]) {
-		for (const item of data) {
-			if (this.head.isFull()) {
-				// Head is full: Creates a new queue, sets the old queue's `.next` to it,
-				// and sets it as the new main queue.
-				this.head = this.head.next = new FixedCircularBuffer(
-					this.kSize
-				);
-			}
-			this.head.push(item);
-		}
-	}
+    push(...data: T[]) {
+        for (const item of data) {
+            if (this.head.isFull()) {
+                // Head is full: Creates a new queue, sets the old queue's `.next` to it,
+                // and sets it as the new main queue.
+                this.head = this.head.next = new FixedCircularBuffer(this.kSize);
+            }
+            this.head.push(item);
+        }
+    }
 
-	shift() {
-		const tail = this.tail;
-		const next = tail.shift();
-		if (tail.isEmpty() && tail.next !== null) {
-			// If there is another queue, it forms the new tail.
-			this.tail = tail.next;
-			tail.next = null;
-		}
-		return next;
-	}
+    shift() {
+        const tail = this.tail;
+        const next = tail.shift();
+        if (tail.isEmpty() && tail.next !== null) {
+            // If there is another queue, it forms the new tail.
+            this.tail = tail.next;
+            tail.next = null;
+        }
+        return next;
+    }
 }
 
 /**
@@ -131,49 +129,49 @@ class FixedQueue<T> {
  * @see https://github.com/oven-sh/bun/issues/5136#issuecomment-3503523219
  */
 export function readLinesFast(file: string) {
-	const rs = createReadStream(file, { encoding: 'utf-8' });
-	const iterator: AsyncIterator<string, string> = rs[Symbol.asyncIterator]();
+    const rs = createReadStream(file, { encoding: 'utf-8' });
+    const iterator: AsyncIterator<string, string> = rs[Symbol.asyncIterator]();
 
-	const cache: FixedQueue<string> = new FixedQueue();
-	let lineBreak = false;
+    const cache: FixedQueue<string> = new FixedQueue();
+    let lineBreak = false;
 
-	/** Returns the next line from the file. */
-	const next = async () => {
-		// Try to get a line from the cache
-		let line = cache.shift();
+    /** Returns the next line from the file. */
+    const next = async () => {
+        // Try to get a line from the cache
+        let line = cache.shift();
 
-		// If the cache is now empty, read in more lines
-		if (cache.isEmpty()) {
-			// Read in next chunk of size highWaterMark (default: 64 * 1024 bytes)
-			const { value, done } = await iterator.next();
+        // If the cache is now empty, read in more lines
+        if (cache.isEmpty()) {
+            // Read in next chunk of size highWaterMark (default: 64 * 1024 bytes)
+            const { value, done } = await iterator.next();
 
-			// If the iterator is not done, split the chunk into lines
-			if (!done) {
-				const lines = value.replace(/\r/g, '').split('\n');
+            // If the iterator is not done, split the chunk into lines
+            if (!done) {
+                const lines = value.replace(/\r/g, '').split('\n');
 
-				// If the cache is not empty and the line break flag is not set,
-				// it means the last line of the previous chunk was not a full line.
-				// Append the first line of the new chunk to complete the line.
-				if (line !== null && !lineBreak) line += lines.shift();
-				// On first iteration, the cache is empty, so we need to get the
-				// first line from the new chunk.
-				if (line === null) line = lines.shift();
-				cache.push(...lines);
+                // If the cache is not empty and the line break flag is not set,
+                // it means the last line of the previous chunk was not a full line.
+                // Append the first line of the new chunk to complete the line.
+                if (line !== null && !lineBreak) line += lines.shift();
+                // On first iteration, the cache is empty, so we need to get the
+                // first line from the new chunk.
+                if (line === null) line = lines.shift();
+                cache.push(...lines);
 
-				// Check if chunk ended with a line break
-				lineBreak = value.at(-1) === '\n';
-			}
-		}
+                // Check if chunk ended with a line break
+                lineBreak = value.at(-1) === '\n';
+            }
+        }
 
-		// If the cache has data, return the first line
-		if (line !== null) return { value: line, done: false };
+        // If the cache has data, return the first line
+        if (line !== null) return { value: line, done: false };
 
-		return { done: true };
-	};
+        return { done: true };
+    };
 
-	return {
-		[Symbol.asyncIterator]: () => ({
-			next
-		})
-	};
+    return {
+        [Symbol.asyncIterator]: () => ({
+            next,
+        }),
+    };
 }
