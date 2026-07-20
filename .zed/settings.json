@@ -8,7 +8,7 @@
     ],
     "languages": {
         "TypeScript": {
-            "language_servers": ["tsgo", "oxfmt", "oxlint"]
+            "language_servers": ["typescript-ls", "oxfmt", "oxlint"]
         }
     }
 }
