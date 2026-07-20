@@ -263,7 +263,7 @@ Your tracker also must have the following properties:
   Variable which contains the path of the file your custom tracker is defined in. You can use `this.path = import.meta.url;` for this. Your Tracker MUST be defined in a separate file and it must be the only object that is exported from that file. Background: Since the data passed to the worker thread is serialized first, you can't pass non-primitive types to the worker. So the library dynamically imports the Custom Tracker provided in the path variable into the Worker Thread. In there the Tracker will be instantiated as normal. (If you happen to know a better way for passing classes into a worker thread, let me know. The current solution is a bit hacky but it works.)
 
 - `track(data)`:  
-   The main analysis function that is called during the PGN processing. Depending on your `type` the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The `data` object contains the following properties:
+  The main analysis function that is called during the PGN processing. Depending on your `type` the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The `data` object contains the following properties:
     - For move-typed trackers: An `Action` array with one or more entries of the following action types:
 
         ```typescript
