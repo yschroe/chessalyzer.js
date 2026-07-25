@@ -2,8 +2,6 @@ node_modules
 
 .DS_Store
 
-*.0x
-
 # ignore pgn files except in test directory
 *.pgn
 !test/*.pgn

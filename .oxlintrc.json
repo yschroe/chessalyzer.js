@@ -10,5 +10,5 @@
         "typeAware": true
     },
     "rules": {},
-    "ignorePatterns": ["docs", "manual-tests", "scripts"]
+    "ignorePatterns": ["manual-tests", "scripts"]
 }

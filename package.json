@@ -33,7 +33,6 @@
     },
     "scripts": {
         "build": "bun ./scripts/create-bundle.ts",
-        "docs": "typedoc",
         "test": "bun test",
         "lint": "oxlint",
         "format": "oxfmt",
@@ -48,8 +47,6 @@
         "oxfmt": "^0.59.0",
         "oxlint": "^1.74.0",
         "oxlint-tsgolint": "^0.25.0",
-        "typedoc": "^0.28.20",
-        "typedoc-plugin-merge-modules": "^7.0.0",
         "typescript": "^7.0.2"
     },
     "overrides": {
