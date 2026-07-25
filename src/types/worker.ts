@@ -26,5 +26,3 @@ export interface WorkerMessage {
     /** Set when batch processing failed in the worker; main thread should abort. */
     error?: string;
 }
-
-export type { Tracker, TrackerConfig };
