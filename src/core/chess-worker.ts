@@ -1,6 +1,8 @@
 import { parentPort, workerData } from 'node:worker_threads';
 
 import GameParser from '../parsing/game-parser';
+import { parseGamesFromLines } from '../pgn/game-assembler';
+import { decodePgnChunkBytes } from '../pgn/line-reader';
 import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '../types';
 import { getCachedCfg, initWorkerTrackers, resetCfg } from './worker-tracker-registry';
 
@@ -11,14 +13,18 @@ const gameParser = new GameParser();
 
 const ready = initWorkerTrackers(initData);
 
-/** Process one batch of games and return move/game counts (+ tracker state if attached). */
+/** Parse a PGN chunk and analyze the resulting games. */
 function processBatch(msg: WorkerTaskData): WorkerMessage {
     const cfg = getCachedCfg(msg.idxConfig);
     resetCfg(cfg);
 
     const hasTrackers = cfg.trackers.game.length > 0 || cfg.trackers.move.length > 0;
+    const games = parseGamesFromLines(decodePgnChunkBytes(msg.pgnChunkBytes).split('\n'), {
+        readInHeader: msg.readInHeader,
+        maxGames: msg.maxGames,
+    });
 
-    for (const game of msg.games) {
+    for (const game of games) {
         gameParser.processGame(game, cfg);
     }
 

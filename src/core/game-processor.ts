@@ -4,13 +4,13 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import GameParser from '../parsing/game-parser';
-import { readLinesFast } from '../pgn/line-reader';
+import { GameLineParser } from '../pgn/game-assembler';
 import {
-    extractMoves,
-    isGameResultLine,
-    parseHeaderTag,
-    stripComments,
-} from '../pgn/pgn-line-parser';
+    DEFAULT_PGN_CHUNK_BYTES,
+    encodePgnChunkText,
+    readLinesFast,
+    readPgnChunks,
+} from '../pgn/line-reader';
 import type {
     Game,
     AnalysisConfig,
@@ -30,11 +30,13 @@ class GameProcessor {
     configs: GameProcessorAnalysisConfigFull[];
     readInHeader: boolean;
     multithreadConfig: MultithreadConfig | null;
+    useWorkerParse: boolean;
 
     constructor(configs: AnalysisConfig[], multithreadCfg: MultithreadConfig | null) {
         this.readInHeader = false;
         this.configs = [];
         this.multithreadConfig = multithreadCfg;
+        this.useWorkerParse = multithreadCfg !== null;
 
         // convert AnalysisConfigs to GameProcessorAnalysisConfigFull
         for (const cfg of configs) {
@@ -67,6 +69,10 @@ class GameProcessor {
                 }
             }
 
+            if (tempCfg.config.hasFilter || tempCfg.config.cntGames !== Infinity) {
+                this.useWorkerParse = false;
+            }
+
             this.configs.push(tempCfg);
         }
     }
@@ -79,112 +85,126 @@ class GameProcessor {
     async processPGN(path: string): Promise<GameAndMoveCount[]> {
         const isMultithreaded = this.multithreadConfig !== null;
 
-        let workerPool: WorkerPool;
+        if (isMultithreaded && this.useWorkerParse) {
+            return this.processPGNWithWorkerParse(path);
+        }
+
+        return this.processPGNOnMainThread(path, isMultithreaded);
+    }
+
+    private async processPGNWithWorkerParse(path: string): Promise<GameAndMoveCount[]> {
+        const __dirname = dirname(fileURLToPath(import.meta.url));
+        const workerInitData: WorkerInitData = {
+            configs: this.configs.map((cfg) => ({ trackerData: cfg.trackerData })),
+        };
+        const workerPool = new WorkerPool(
+            this.resolveWorkerCount(),
+            `${__dirname}/chess-worker.js`,
+            workerInitData,
+        );
+
+        const chunkConfig = {
+            targetBytes: this.multithreadConfig!.targetBytes ?? DEFAULT_PGN_CHUNK_BYTES,
+            maxLines: this.multithreadConfig!.maxLines,
+            minLines: this.multithreadConfig!.minLines,
+        };
+
+        chunkLoop: for await (const chunk of readPgnChunks(path, chunkConfig)) {
+            for (let idxCfg = 0; idxCfg < this.configs.length; idxCfg += 1) {
+                const cfg = this.configs[idxCfg];
+                if (cfg.isDone) continue;
+
+                workerPool.runTask(
+                    {
+                        pgnChunkBytes: chunk.bytes,
+                        idxConfig: idxCfg,
+                        readInHeader: this.readInHeader,
+                    },
+                    (err: Error, result: WorkerMessage) => this.addDataFromWorker(err, result),
+                );
+            }
+
+            if (this.configs.every((cfg) => cfg.isDone)) break chunkLoop;
+        }
+
+        workerPool.flagNotifyWhenDone = true;
+        await EventEmitter.once(workerPool, 'done');
+        await workerPool.close();
+
+        return this.finishProcessing();
+    }
+
+    private async processPGNOnMainThread(
+        path: string,
+        isMultithreaded: boolean,
+    ): Promise<GameAndMoveCount[]> {
+        let workerPool: WorkerPool | undefined;
         if (isMultithreaded) {
             const __dirname = dirname(fileURLToPath(import.meta.url));
             const workerInitData: WorkerInitData = {
                 configs: this.configs.map((cfg) => ({ trackerData: cfg.trackerData })),
             };
             workerPool = new WorkerPool(
-                availableParallelism(),
+                this.resolveWorkerCount(),
                 `${__dirname}/chess-worker.js`,
                 workerInitData,
             );
         }
 
-        // create gamestore for each config
         const gameStore: Game[][] = this.configs.map(() => [] as Game[]);
-
-        let game: Game = { moves: [] };
-
         const gameParser = new GameParser();
+        const lineParser = new GameLineParser({ readInHeader: this.readInHeader });
+        const legacyBatchSize = this.multithreadConfig?.batchSize ?? 200;
 
         lineLoop: for await (const line of readLinesFast(path)) {
-            if (line === '') continue;
+            const game = lineParser.processLine(line);
+            if (!game) continue;
 
-            const isHeaderTag = line.startsWith('[');
-            switch (isHeaderTag) {
-                case true: {
-                    if (!this.readInHeader) continue;
-                    const header = parseHeaderTag(line);
-                    if (header) {
-                        const [key, value] = header;
-                        game[key] = value;
-                    }
-                    break;
-                }
-                case false: {
-                    const cleanedLine = stripComments(line);
+            for (let idxCfg = 0; idxCfg < this.configs.length; idxCfg += 1) {
+                const cfg = this.configs[idxCfg];
+                if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
+                    cfg.cntReadGames += 1;
+                    if (isMultithreaded) {
+                        gameStore[idxCfg].push(game);
 
-                    const matchedMoves = extractMoves(cleanedLine);
-                    if (matchedMoves) {
-                        const moves = game.moves;
-                        for (let i = 0; i < matchedMoves.length; i += 1) {
-                            moves.push(matchedMoves[i]);
+                        if (gameStore[idxCfg].length === legacyBatchSize) {
+                            workerPool!.runTask(
+                                {
+                                    pgnChunkBytes: encodePgnChunkText(
+                                        this.gamesToPgnChunk(gameStore[idxCfg]),
+                                    ),
+                                    idxConfig: idxCfg,
+                                    readInHeader: this.readInHeader,
+                                },
+                                (err: Error, result: WorkerMessage) =>
+                                    this.addDataFromWorker(err, result),
+                            );
+
+                            gameStore[idxCfg] = [];
                         }
+                    } else {
+                        gameParser.processGame(game, cfg);
                     }
-
-                    // Result tokens end with "-1/2", "-0", or "-1" (e.g. "1-0", "0-1", "1/2-1/2").
-                    if (isGameResultLine(cleanedLine)) {
-                        for (let idxCfg = 0; idxCfg < this.configs.length; idxCfg += 1) {
-                            const cfg = this.configs[idxCfg];
-                            if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
-                                cfg.cntReadGames += 1;
-                                if (isMultithreaded) {
-                                    gameStore[idxCfg].push(game);
-
-                                    // if enough games have been read in, start worker threads and let them analyze
-                                    if (
-                                        gameStore[idxCfg].length ===
-                                        this.multithreadConfig.batchSize
-                                    ) {
-                                        workerPool.runTask(
-                                            {
-                                                games: gameStore[idxCfg],
-                                                idxConfig: idxCfg,
-                                            },
-                                            (err: Error, result: WorkerMessage) =>
-                                                this.addDataFromWorker(err, result),
-                                        );
-
-                                        gameStore[idxCfg] = [];
-                                    }
-                                } else {
-                                    gameParser.processGame(game, cfg);
-                                }
-                                if (cfg.cntReadGames === cfg.config.cntGames) {
-                                    cfg.isDone = true;
-                                    const allDone = this.configs.reduce(
-                                        (a, c) => a && c.isDone,
-                                        true,
-                                    );
-                                    if (allDone) break lineLoop;
-                                }
-                            }
-                        }
-                        game = { moves: [] };
+                    if (cfg.cntReadGames === cfg.config.cntGames) {
+                        cfg.isDone = true;
+                        const allDone = this.configs.reduce((a, c) => a && c.isDone, true);
+                        if (allDone) break lineLoop;
                     }
-                    break;
                 }
             }
         }
 
-        if (isMultithreaded) {
-            // if on end there are still unprocessed games, start a last worker batch
+        if (isMultithreaded && workerPool) {
             for (const [idx, games] of gameStore.entries()) {
                 if (games.length > 0) {
-                    const { batchSize } = this.multithreadConfig;
-                    const nEndForks = Math.ceil(games.length / batchSize);
-                    for (let i = 0; i < nEndForks; i += 1) {
-                        workerPool.runTask(
-                            {
-                                games: games.slice(i * batchSize, i * batchSize + batchSize),
-                                idxConfig: idx,
-                            },
-                            (err: Error, result: WorkerMessage) =>
-                                this.addDataFromWorker(err, result),
-                        );
-                    }
+                    workerPool.runTask(
+                        {
+                            pgnChunkBytes: encodePgnChunkText(this.gamesToPgnChunk(games)),
+                            idxConfig: idx,
+                            readInHeader: this.readInHeader,
+                        },
+                        (err: Error, result: WorkerMessage) => this.addDataFromWorker(err, result),
+                    );
                 }
             }
             workerPool.flagNotifyWhenDone = true;
@@ -192,18 +212,19 @@ class GameProcessor {
             await workerPool.close();
         }
 
-        // trigger finish events on trackers
+        return this.finishProcessing();
+    }
+
+    private finishProcessing(): GameAndMoveCount[] {
         for (const { trackers } of this.configs) {
             for (const tracker of trackers.game) tracker.finish?.();
             for (const tracker of trackers.move) tracker.finish?.();
         }
 
-        const returnVals: GameAndMoveCount[] = this.configs.map((cfg) => ({
+        return this.configs.map((cfg) => ({
             cntGames: cfg.processedGames,
             cntMoves: cfg.processedMoves,
         }));
-
-        return returnVals;
     }
 
     /**
@@ -229,6 +250,33 @@ class GameProcessor {
         }
         this.configs[idxConfig].processedMoves += cntMoves;
         this.configs[idxConfig].processedGames += cntGames;
+
+        const cfg = this.configs[idxConfig];
+        if (cfg.processedGames >= cfg.config.cntGames) {
+            cfg.isDone = true;
+        }
+    }
+
+    private gamesToPgnChunk(games: Game[]): string {
+        const lines: string[] = [];
+        for (const game of games) {
+            if (this.readInHeader) {
+                for (const [key, value] of Object.entries(game)) {
+                    if (key === 'moves') continue;
+                    lines.push(`[${key} "${value}"]`);
+                }
+                lines.push('');
+            }
+            const result = game.Result ?? '1-0';
+            lines.push(`${game.moves.join(' ')} ${result}`);
+        }
+        return lines.join('\n');
+    }
+
+    private resolveWorkerCount(): number {
+        const configured = this.multithreadConfig?.workerCount;
+        if (configured !== undefined) return Math.max(1, configured);
+        return availableParallelism();
     }
 
     private checkConfig(config: AnalysisConfig['config']): GameProcessorConfig {

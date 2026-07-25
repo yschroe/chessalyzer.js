@@ -13,5 +13,5 @@
         // Array.from({ length: 10 }) is slower than new Array(10)
         "unicorn/no-new-array": "off"
     },
-    "ignorePatterns": ["manual-tests", "scripts"]
+    "ignorePatterns": ["manual-tests"]
 }

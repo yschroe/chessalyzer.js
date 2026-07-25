@@ -2,6 +2,7 @@ import { performance } from 'node:perf_hooks';
 
 import chalk from 'chalk';
 
+import { DEFAULT_PGN_CHUNK_BYTES } from '../pgn/line-reader';
 import type {
     AnalysisConfig,
     GameAndMoveCountFull,
@@ -21,7 +22,7 @@ export default class Chessalyzer {
     static async analyzePGN(
         pathToPgn: string,
         configs: AnalysisConfig | AnalysisConfig[] = { trackers: [] },
-        multithreadCfg: MultithreadConfig | null = { batchSize: 200 },
+        multithreadCfg: MultithreadConfig | null = { targetBytes: DEFAULT_PGN_CHUNK_BYTES },
     ): Promise<GameAndMoveCountFull[] | GameAndMoveCountFull> {
         // handler for single config or array of configs
         let configArray: AnalysisConfig[] = [];

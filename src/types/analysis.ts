@@ -9,9 +9,20 @@ export interface AnalysisConfig {
     };
 }
 
-/** Multithread batching options. `null` disables worker threads. */
+/** Multithread chunking options. `null` disables worker threads. */
 export interface MultithreadConfig {
-    batchSize: number;
+    /** Target raw PGN chunk size in bytes before aligning to a game boundary. */
+    targetBytes?: number;
+    /** Worker thread count. Defaults to `os.availableParallelism()`. */
+    workerCount?: number;
+    /** Safety cap on lines per chunk. */
+    maxLines?: number;
+    /** Minimum lines before a byte-target chunk may be emitted. */
+    minLines?: number;
+    /**
+     * @deprecated Use `targetBytes` instead. Ignored by the worker-side parse path.
+     */
+    batchSize?: number;
 }
 
 /** Normalized per-config processor state (filter, game limit). */
