@@ -1,6 +1,6 @@
 import { performance } from 'node:perf_hooks';
 import chalk from 'chalk';
-import GameProcessor from './GameProcessor.js';
+import GameProcessor from './game-processor.js';
 import type {
 	AnalysisConfig,
 	GameAndMoveCountFull,

@@ -13,8 +13,8 @@ import type {
 	GameProcessorAnalysisConfigFull,
 	GameProcessorConfig
 } from '../interfaces/index.js';
-import GameParser from './GameParser.js';
-import WorkerPool from './WorkerPool.js';
+import GameParser from './game-parser.js';
+import WorkerPool from './worker-pool.js';
 
 const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
 const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;

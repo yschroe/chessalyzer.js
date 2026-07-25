@@ -1,4 +1,4 @@
-import PieceTrackerBase from '../PieceTrackerBase.js';
+import PieceTrackerBase from '../piece-tracker-base.js';
 import type { SquareData } from '../../interfaces/index.js';
 
 export default {

@@ -6,8 +6,8 @@ import {
 	MoveAction
 } from '../interfaces/index.js';
 import { PieceToken, PlayerColor, Token } from '../types/index.js';
-import ChessBoard from './ChessBoard.js';
-import Utils from './Utils.js';
+import ChessBoard from './chess-board.js';
+import Utils from './utils.js';
 
 // const moveCfg = {
 // 	Q: {

@@ -1,4 +1,4 @@
-import BaseTracker from './BaseTracker.js';
+import BaseTracker from './base-tracker.js';
 import type { Game } from '../interfaces/index.js';
 
 class GameTrackerBase extends BaseTracker {

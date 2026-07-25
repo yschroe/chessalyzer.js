@@ -1,4 +1,4 @@
-import TileTrackerBase from '../TileTrackerBase.js';
+import TileTrackerBase from '../tile-tracker-base.js';
 import type { SquareData } from '../../interfaces/index.js';
 
 export default {
