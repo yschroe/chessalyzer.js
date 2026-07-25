@@ -1,8 +1,14 @@
 import type { PieceToken, PlayerColor } from '../types';
 
 /**
- * Per-token live position lists. `findPiece` reads these arrays directly (no copy).
- * Entries are owned `[row, col]` arrays mutated in place on move.
+ * Maintains live position lists for each non-pawn piece type (R/N/B/Q/K) of one side.
+ *
+ * Used by {@link ChessBoard} and {@link PieceFinder} to resolve ambiguous SAN like `Nbd2`
+ * without scanning all 64 squares. Pawns are not indexed here — their origin is inferred
+ * from the target square and board state.
+ *
+ * Each list entry is a reused `[row, col]` array mutated in place on move/capture.
+ * Callers must not reassign or splice these arrays; only the numeric coordinates change.
  */
 export default class PiecePositions {
     R: number[][] = [];
@@ -12,6 +18,8 @@ export default class PiecePositions {
     K: number[][] = [];
 
     private readonly startRow: number;
+
+    /** Pre-allocated coord pairs for the 16 starting pieces — reset() rewires the lists to these. */
     private readonly ra: number[] = [0, 0];
     private readonly rh: number[] = [0, 0];
     private readonly nb: number[] = [0, 0];
@@ -22,10 +30,12 @@ export default class PiecePositions {
     private readonly ke: number[] = [0, 0];
 
     constructor(player: PlayerColor) {
+        // Internal coords: row 0 = rank 8, row 7 = rank 1 (matches board tile layout).
         this.startRow = player === 'w' ? 7 : 0;
         this.reset();
     }
 
+    /** Restore starting positions. Clears promoted-piece entries from lists via length = 0. */
     reset(): void {
         const row = this.startRow;
         this.ra[0] = row;
@@ -58,6 +68,10 @@ export default class PiecePositions {
         this.K.push(this.ke);
     }
 
+    /**
+     * Live list of squares holding this piece type. May contain 0–2 entries (more after promotion).
+     * @param token SAN piece letter (R/N/B/Q/K).
+     */
     listForToken(token: PieceToken): number[][] {
         switch (token) {
             case 'R':
@@ -75,6 +89,7 @@ export default class PiecePositions {
         }
     }
 
+    /** Map ASCII char code ('R'=82, 'N'=78, …) to the corresponding list. Returns null for pawns. */
     private listForChar(tokenChar: number): number[][] | null {
         switch (tokenChar) {
             case 82:
@@ -92,7 +107,10 @@ export default class PiecePositions {
         }
     }
 
-    /** Update piece at `from` to `to` by position (pawns/token 80 are ignored). */
+    /**
+     * Move the piece at `from` to `to` within the position list.
+     * Pawns (char code 80 / 'P') are intentionally not tracked here.
+     */
     moveByChar(tokenChar: number, from: number[], to: number[]): void {
         const list = this.listForChar(tokenChar);
         if (!list) return;
@@ -113,7 +131,9 @@ export default class PiecePositions {
         this.moveByChar(pieceName.charCodeAt(0), from, to);
     }
 
-    /** Remove piece at `on` by position. */
+    /**
+     * Remove the piece at `on` from its type list (swap-with-last for O(1) removal).
+     */
     captureByChar(tokenChar: number, on: number[]): void {
         const list = this.listForChar(tokenChar);
         if (!list) return;
@@ -135,7 +155,7 @@ export default class PiecePositions {
         this.captureByChar(takenPieceName.charCodeAt(0), on);
     }
 
-    /** Add a promoted piece on `on`. */
+    /** Register a newly promoted piece (gets a fresh `[row, col]` entry, not from the pre-allocated pool). */
     promote(pieceName: string, on: number[]): void {
         const list = this.listForChar(pieceName.charCodeAt(0));
         if (!list) return;

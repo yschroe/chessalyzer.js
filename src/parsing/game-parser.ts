@@ -11,6 +11,15 @@ import ChessBoard from '../board/chess-board';
 import Utils from '../core/utils';
 import PieceFinder from './piece-finder';
 
+/**
+ * Replays SAN moves from a pre-tokenized {@link Game} onto a {@link ChessBoard}.
+ *
+ * Two execution paths:
+ * - **Parse-only** (no move trackers): `applySan` updates the board directly — no Action objects.
+ * - **Tracker path**: `parseMove` builds Action[] for trackers, then `applyActions` updates the board.
+ *
+ * The board and reusable buffers persist across games; `processGame` calls `board.reset()` at the end.
+ */
 class GameParser {
     board: ChessBoard;
     activePlayer: PlayerColor;
@@ -41,7 +50,9 @@ class GameParser {
         to: '',
     };
     private readonly outActions: Action[] = [];
+    /** Shared coord buffer for `from` square — mutated, never allocated per move. */
     private readonly fromBuf: number[] = [0, 0];
+    /** Shared coord buffer for en-passant / capture square. */
     private readonly takenOnBuf: number[] = [0, 0];
 
     constructor() {
@@ -51,14 +62,11 @@ class GameParser {
     }
 
     /**
-     * Main function for parsing a read-in PGN game. In here the moves are transformed from algebraic notation
-     * to a list of different Actions like `MoveAction` or `CaptureAction`. This parsed data is the passed
-     * into the Trackers for generating the stats.
-     * @param game A game read-in by the GameProcessor class.
-     * @param analysisCfg Trackers into which the parsed data should be passed.
+     * Replay all moves in `game`, feed trackers, and update processed counters.
+     * @param game Game with `moves[]` already extracted by the PGN line parser.
+     * @param analysisCfg Trackers and running processed-game/move counts.
      */
     processGame(game: Game, analysisCfg: GameProcessorAnalysisConfig): void {
-        // game based trackers
         for (const tracker of analysisCfg.trackers.game) {
             tracker.analyze(game);
         }
@@ -80,7 +88,6 @@ class GameParser {
                     this.activePlayer = this.activePlayer === 'w' ? 'b' : 'w';
                 }
             } else {
-                // Parse-only path: apply directly, no Action objects.
                 for (let mi = 0; mi < moves.length; mi += 1) {
                     this.applySan(moves[mi]);
                     this.activePlayer = this.activePlayer === 'w' ? 'b' : 'w';
@@ -101,15 +108,15 @@ class GameParser {
         board.reset();
     }
 
-    /**
-     * Resets the board so a new game can be started.
-     */
     reset(): void {
         this.board.reset();
         this.activePlayer = 'w';
     }
 
-    /** Apply a SAN move to the board without allocating Action objects. */
+    /**
+     * Dispatch by first character: lowercase a–h = pawn, 'O' = castle, else piece.
+     * Char-code checks avoid string prefix allocations.
+     */
     private applySan(san: string): void {
         const c = san.charCodeAt(0);
         if (c >= 97) this.applyPawn(san);
@@ -117,6 +124,10 @@ class GameParser {
         else this.applyPiece(san);
     }
 
+    /**
+     * Apply a pawn move. SAN forms: `e4`, `exd5`, `exd6 e.p.`-style (empty target = en passant),
+     * `e8=Q` promotion. Scans at most two ranks behind the target to find the moving pawn.
+     */
     private applyPawn(san: string): void {
         const player = this.activePlayer;
         const direction = player === 'w' ? 1 : -1;
@@ -125,6 +136,7 @@ class GameParser {
         let end = san.length;
         let promotesTo = '';
         if (san.charCodeAt(end - 2) === 61) {
+            // '=' promotion suffix
             promotesTo = san.charAt(end - 1);
             end -= 2;
         }
@@ -133,10 +145,12 @@ class GameParser {
         const from = this.fromBuf;
 
         if (san.charCodeAt(1) === 120) {
+            // Capture: `fxe6` or en passant (`exd6` with empty d6)
             from[0] = to[0] + direction;
             from[1] = san.charCodeAt(0) - 97;
 
             if (board.isEmpty(to)) {
+                // En passant: captured pawn is on the adjacent square, not the target.
                 this.takenOnBuf[0] = to[0] + direction;
                 this.takenOnBuf[1] = to[1];
                 board.captureAt(player, this.takenOnBuf);
@@ -144,6 +158,7 @@ class GameParser {
                 board.captureAt(player, to);
             }
         } else {
+            // Quiet move: walk backward from target (max 2 squares for double push).
             const tarRow = to[0];
             const tarCol = to[1];
             for (let i = 1; i <= 2; i += 1) {
@@ -163,6 +178,10 @@ class GameParser {
         }
     }
 
+    /**
+     * Apply a piece move. Target square is always the last two chars of SAN.
+     * Optional `x` immediately before target; disambiguation file/rank in between.
+     */
     private applyPiece(san: string): void {
         const player = this.activePlayer;
         const board = this.board;
@@ -182,6 +201,7 @@ class GameParser {
 
         let from: number[];
         if (restLen === 2) {
+            // Fully disambiguated: `Nf3`-style with from-square in SAN (rare in practice).
             from = Utils.algebraicToCoordsAt(san, restEnd);
         } else if (restLen === 1) {
             const c = san.charCodeAt(1);
@@ -198,6 +218,7 @@ class GameParser {
         board.moveByToken(player, tokenChar, from, to);
     }
 
+    /** Apply castling: `O-O` (kingside, san.length === 3) or `O-O-O` (queenside). */
     private applyCastle(san: string): void {
         const player = this.activePlayer;
         const row = player === 'w' ? 7 : 0;
@@ -227,12 +248,12 @@ class GameParser {
     private parseMove(san: string): Action[] {
         const c = san.charCodeAt(0);
 
-        // Pawn moves start with file a-h (lowercase).
         if (c >= 97) return this.pawnMove(san);
-        if (c === 79) return this.castle(san); // 'O'
+        if (c === 79) return this.castle(san);
         return this.pieceMove(san);
     }
 
+    /** Tracker path: build Action objects for a pawn move (mirrors `applyPawn` logic). */
     private pawnMove(san: string): Action[] {
         const actions = this.outActions;
         actions.length = 0;
@@ -244,7 +265,6 @@ class GameParser {
         let end = san.length;
         let promotesTo = '';
         if (san.charCodeAt(end - 2) === 61) {
-            // '='
             promotesTo = san.charAt(end - 1);
             end -= 2;
         }
@@ -252,7 +272,6 @@ class GameParser {
         const to = Utils.algebraicToCoordsAt(san, end);
         const from = this.fromBuf;
 
-        // Capture: second char is 'x'
         if (san.charCodeAt(1) === 120) {
             from[0] = to[0] + direction;
             from[1] = san.charCodeAt(0) - 97;
@@ -307,6 +326,7 @@ class GameParser {
         return actions;
     }
 
+    /** Tracker path: build Action objects for a piece move (mirrors `applyPiece` logic). */
     private pieceMove(san: string): Action[] {
         const actions = this.outActions;
         actions.length = 0;
@@ -318,7 +338,6 @@ class GameParser {
         const end = san.length;
         const to = Utils.algebraicToCoordsAt(san, end);
 
-        // Target square is last 2 chars; optional 'x' immediately before it.
         let restEnd = end - 2;
         let capture = false;
         if (san.charCodeAt(restEnd - 1) === 120) {
@@ -332,7 +351,6 @@ class GameParser {
             from = Utils.algebraicToCoordsAt(san, restEnd);
         } else if (restLen === 1) {
             const c = san.charCodeAt(1);
-            // file 'a'-'h' -> col; rank '1'-'8' -> row (7..0)
             const mustBeInCol = c >= 97 && c <= 104 ? c - 97 : null;
             const mustBeInRow = c >= 49 && c <= 56 ? 56 - c : null;
             from = this.pieceFinder.findPiece(to, mustBeInRow, mustBeInCol, token, tokenChar, player);
@@ -363,6 +381,7 @@ class GameParser {
         return actions;
     }
 
+    /** Castling produces two move actions (king + rook). Board apply happens after tracker sees both. */
     private castle(san: string): Action[] {
         const actions = this.outActions;
         actions.length = 0;

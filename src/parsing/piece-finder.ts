@@ -1,14 +1,19 @@
 import type ChessBoard from '../board/chess-board';
 import type { PieceToken, PlayerColor } from '../types';
 
-// Indexed by piece char code for line/diag movement (N handled separately).
-const LINE = new Uint8Array(91); // enough for 'Z'
+/**
+ * Lookup tables indexed by piece char code ('Q'=81, 'R'=82, 'B'=66, …).
+ * Used to quickly test whether a piece can reach a square along a rank/file (LINE)
+ * or diagonal (DIAG). Knights bypass these and use fixed L-shape geometry.
+ */
+const LINE = new Uint8Array(91);
 const DIAG = new Uint8Array(91);
 LINE[81] = 1; // Q
 LINE[82] = 1; // R
 DIAG[81] = 1; // Q
 DIAG[66] = 1; // B
 
+/** Thrown when no candidate piece can legally reach the target square. */
 export class MoveNotFoundException extends Error {
     constructor(token: string, player: PlayerColor, tarRow: number, tarCol: number) {
         super(`${player}: No piece for move ${token} to (${tarRow},${tarCol}) found!`);
@@ -16,12 +21,27 @@ export class MoveNotFoundException extends Error {
     }
 }
 
-/** Resolve ambiguous piece moves (e.g. `Nbd2`) and filter pseudo-legal candidates. */
+/**
+ * Resolves ambiguous piece moves in SAN (e.g. `Nbd2`, `Rfe1`) to a unique `[row, col]`.
+ *
+ * Given a target square and optional file/rank disambiguator from the SAN token,
+ * filters the live piece list from {@link ChessBoard}, then:
+ * 1. Applies geometry (knight L-shape, or line/diag alignment for sliders)
+ * 2. Checks that the path is not blocked (sliders only)
+ * 3. Rejects candidates that would expose the king to a discovered check
+ */
 export default class PieceFinder {
+    /** Reused buffer for candidate filtering — avoids per-move array allocation. */
     private readonly filterBuf: number[][] = [];
 
     constructor(private readonly board: ChessBoard) {}
 
+    /**
+     * Find the `[row, col]` of the piece that should move to `toPosition`.
+     * @param mustBeInRow Board row index (0=rank 8) if SAN specifies a rank, else null.
+     * @param mustBeInCol Board col index (0=file a) if SAN specifies a file, else null.
+     * @param tokenChar ASCII code of piece letter (e.g. 'N' → 78).
+     */
     findPiece(
         toPosition: number[],
         mustBeInRow: number | null,
@@ -45,6 +65,7 @@ export default class PieceFinder {
         const filtered = this.filterBuf;
         filtered.length = 0;
 
+        // Pass 1: filter by disambiguator + coarse geometry (same rank/file/diag or knight L).
         for (let i = 0; i < len; i += 1) {
             const val = validPieces[i];
             const row = val[0];
@@ -72,6 +93,7 @@ export default class PieceFinder {
             return filtered[0];
         }
 
+        // Pass 2: path blocking + discovered-check filter among remaining candidates.
         const board = this.board;
         pieceLoop: for (let p = 0; p < filtered.length; p += 1) {
             const piece = filtered[p];
@@ -98,6 +120,14 @@ export default class PieceFinder {
         throw new MoveNotFoundException(token, player, tarRow, tarCol);
     }
 
+    /**
+     * Returns true if moving `from` → `to` would expose the king to discovered check.
+     *
+     * Only relevant when `from` lies on the same rank, file, or diagonal as our king
+     * (the direction the moving piece would "unblock"). Walks from the king toward the
+     * edge; if an enemy queen/rook/bishop can attack through the vacated `from` square,
+     * the move is rejected.
+     */
     private checkCheck(from: number[], to: number[], player: PlayerColor): boolean {
         const opColor = player === 'w' ? 'b' : 'w';
         const king = this.board.getKingPosition(player);
@@ -113,11 +143,13 @@ export default class PieceFinder {
             check0 = 81;
             check1 = 66; // B
         } else {
+            // `from` is not aligned with the king — moving it cannot discover a line check.
             return false;
         }
         const vertDir = diff0 === 0 ? 0 : diff0 > 0 ? 1 : -1;
         const horzDir = diff1 === 0 ? 0 : diff1 > 0 ? 1 : -1;
 
+        // How far we can walk from the king along this ray before hitting the board edge.
         let distanceHorizontal = 8;
         if (horzDir !== 0) {
             distanceHorizontal = horzDir === -1 ? king[1] : 7 - king[1];
@@ -128,6 +160,7 @@ export default class PieceFinder {
         }
         const distanceToEdge =
             distanceHorizontal < distanceVertical ? distanceHorizontal : distanceVertical;
+        // Need at least king → from → enemy piece; fewer squares means no discovery possible.
         if (distanceToEdge < 2) return false;
 
         const board = this.board;

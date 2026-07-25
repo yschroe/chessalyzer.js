@@ -2,8 +2,20 @@ import type { ChessPiece, Action, MoveAction, CaptureAction, PromoteAction } fro
 import type { PieceToken, PlayerColor } from '../types';
 import PiecePositions from './piece-positions';
 
+/**
+ * Mutable chess position used while replaying SAN moves from a PGN.
+ *
+ * Combines two representations:
+ * - **tiles**: dense `Uint8Array(64)` for occupancy and piece identity (hot path)
+ * - **pieces**: per-side {@link PiecePositions} index for ambiguous piece lookup
+ *
+ * Tile encoding: one byte per square — high bit = color (0=white, 1=black),
+ * low 7 bits = piece index into `pieceLookupList` (1–16 for standard pieces).
+ * Promoted pawns get indices beyond 16, with names stored in `promotedPieces`.
+ */
 class ChessBoard {
     // prettier-ignore
+    /** Starting position: rows 0–1 black, 6–7 white; 0 = empty. Indices match pieceLookupList. */
     private static defaultTiles = new Uint8Array([
         129, 130, 131, 132, 133, 134, 135, 136,
         137, 138, 139, 140, 141, 142, 143, 144,
@@ -14,6 +26,8 @@ class ChessBoard {
         9, 10, 11, 12, 13, 14, 15, 16,
         1, 2, 3, 4, 5, 6, 7, 8
     ]);
+
+    /** Index → piece name for standard pieces (index 0 unused). */
     private static pieceLookupList = [
         null,
         'Ra',
@@ -35,6 +49,7 @@ class ChessBoard {
     ];
     private tiles: Uint8Array;
     private pieces: { w: PiecePositions; b: PiecePositions };
+    /** Names for promoted pawns; indexed by (pieceIdx - pieceLookupList.length - 1). */
     private promotedPieces: {
         w: string[];
         b: string[];
@@ -104,17 +119,20 @@ class ChessBoard {
         return pieceNumber & 0b10000000 ? 'b' : 'w';
     }
 
+    /** Returns the king's live `[row, col]` reference (always exactly one king per side). */
     getKingPosition(player: PlayerColor): number[] {
         return this.pieces[player].K[0];
     }
 
     /**
-     * Live position list for a piece token. Do not mutate the array structure.
+     * Live position list for a piece token. Used by {@link PieceFinder}.
+     * Do not mutate the outer array (push/splice); coordinate values are updated in place.
      */
     getPositionsForToken(player: PlayerColor, token: PieceToken): number[][] {
         return this.pieces[player].listForToken(token);
     }
 
+    /** Apply a sequence of parsed move/capture/promote actions (tracker path). */
     applyActions(actions: Action[]): void {
         const len = actions.length;
         for (let i = 0; i < len; i += 1) {
@@ -137,7 +155,10 @@ class ChessBoard {
         this.moveByToken(player, piece.charCodeAt(0), from, to);
     }
 
-    /** Move using SAN piece token char ('N','P',...). Avoids piece-name lookups on the fast path. */
+    /**
+     * Move using SAN piece token char code ('N'=78, 'P'=80, …).
+     * Updates both the tile array and the piece position index in one step.
+     */
     moveByToken(player: PlayerColor, tokenChar: number, from: number[], to: number[]): void {
         const fromIdx = from[0] * 8 + from[1];
         const toIdx = to[0] * 8 + to[1];
@@ -151,7 +172,10 @@ class ChessBoard {
         this.tiles[on[0] * 8 + on[1]] = 0;
     }
 
-    /** Capture whatever is on `on` (reads token from the tile, then clears it). */
+    /**
+     * Capture whatever occupies `on`: clear tile, then update the opponent's piece list.
+     * Pawns are cleared from tiles only — they are not in {@link PiecePositions}.
+     */
     captureAt(player: PlayerColor, on: number[]): void {
         const onIdx = on[0] * 8 + on[1];
         const pieceNumber = this.tiles[onIdx];
@@ -160,7 +184,6 @@ class ChessBoard {
         this.tiles[onIdx] = 0;
 
         const pieceIdx = pieceNumber & 0b01111111;
-        // Pawns are not tracked in piece lists.
         if (pieceIdx >= 9 && pieceIdx <= 16) return;
 
         const color: PlayerColor = pieceNumber & 0b10000000 ? 'b' : 'w';
@@ -172,6 +195,10 @@ class ChessBoard {
         this.pieces[player === 'w' ? 'b' : 'w'].captureByChar(name.charCodeAt(0), on);
     }
 
+    /**
+     * Replace the pawn on `on` with a promoted piece.
+     * Assigns a new tile index beyond the standard lookup table and records the name.
+     */
     promotePiece(player: PlayerColor, on: number[], to: string): void {
         const pieceNumber =
             (player === 'w' ? 0b00000000 : 0b10000000) |
@@ -184,6 +211,7 @@ class ChessBoard {
         this.pieces[player].promote(piecename, on);
     }
 
+    /** Reset to starting position without allocating new arrays. */
     reset(): void {
         this.tiles.set(ChessBoard.defaultTiles);
         this.pieces.w.reset();
@@ -192,7 +220,7 @@ class ChessBoard {
         this.promotedPieces.b.length = 0;
     }
 
-    /** Prints the current board position to the console. */
+    /** Prints the current board position to the console (debug helper). */
     printPosition(): void {
         console.log(this.tiles);
         for (let row = 0; row < 8; row += 1) {
