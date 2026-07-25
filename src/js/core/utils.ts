@@ -91,6 +91,11 @@ export default class Utils {
         return fileToNumberMap.get(file) ?? null;
     }
 
+    /** File letter (`a`–`h`) for a bit index (`h1 = 0`, `a8 = 63`). */
+    static fileFromBitIndex(idx: number): string {
+        return files[7 - (idx % 8)];
+    }
+
     static getTargetRowCol(char: string): number {
         return targetColRowMap.get(char) ?? 0;
     }

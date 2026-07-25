@@ -1,5 +1,20 @@
+//! Chess board represented as bitboards (one u64 mask per piece type and color).
+//!
+//! ## Square indexing
+//! Squares use the same indexing as the JavaScript side (see `Utils.algebraicToBitIndex`):
+//! - `h1 = 0`, `g1 = 1`, …, `a1 = 7`, `h2 = 8`, …, `a8 = 63`
+//! - Rank increases with the index (`idx / 8`), file is `idx % 8` (`0 = h-file`).
+//!
+//! ## Bitboard basics
+//! A bitboard is a 64-bit integer where each bit corresponds to one square.
+//! If bit `n` is set, a piece of that type occupies square `n`.
+//! Updating the board is usually done with XOR (`^=`), which toggles bits on/off.
+
 use crate::tables;
 use wasm_bindgen::prelude::*;
+
+// --- Starting position masks (computed once at compile time) -----------------
+// White pieces sit on ranks 1–2 (low bits), black on ranks 7–8 (high bits).
 
 const W_P: u64 = 0x0000_0000_0000_ff00;
 const W_R: u64 = 0x0000_0000_0000_0081;
@@ -15,6 +30,7 @@ const B_B: u64 = 0x2400_0000_0000_0000;
 const B_Q: u64 = 0x1000_0000_0000_0000;
 const B_K: u64 = 0x0800_0000_0000_0000;
 
+/// Bitboards for all six piece types of one color.
 #[derive(Clone, Copy)]
 struct PieceSet {
     p: u64,
@@ -26,6 +42,7 @@ struct PieceSet {
 }
 
 impl PieceSet {
+    /// Returns the standard starting position for white or black.
     const fn starting(white: bool) -> Self {
         if white {
             PieceSet {
@@ -48,10 +65,14 @@ impl PieceSet {
         }
     }
 
+    /// Union of all piece types — every occupied square for this color.
+    /// Equivalent to OR-ing all six bitboards together.
     fn occupancy(&self) -> u64 {
         self.p | self.n | self.b | self.r | self.q | self.k
     }
 
+    /// Returns a mutable reference to the bitboard for `token` (`P`, `N`, …).
+    /// Rust `match` selects the correct field — no runtime string lookup.
     fn bb_mut(&mut self, token: char) -> &mut u64 {
         match token {
             'P' => &mut self.p,
@@ -77,10 +98,12 @@ impl PieceSet {
     }
 }
 
+/// Full board state exposed to JavaScript via wasm-bindgen.
 #[wasm_bindgen]
 pub struct Board {
     white: PieceSet,
     black: PieceSet,
+    /// All occupied squares (both colors). Updated incrementally on every change.
     occupancy: u64,
 }
 
@@ -95,15 +118,18 @@ impl Clone for Board {
 }
 
 impl Board {
+    /// Returns `true` if the given player's king is currently attacked.
     fn is_in_check(&self, player: char) -> bool {
         let king_sq = self.pieces(player).bb('K').trailing_zeros();
         let opponent = if player == 'w' { 'b' } else { 'w' };
         self.is_square_attacked(king_sq, opponent)
     }
 
+    /// Checks whether `sq` is attacked by any piece belonging to `by`.
     fn is_square_attacked(&self, sq: u32, by: char) -> bool {
         let pieces = self.pieces(by);
 
+        // Knights and pawns use precomputed attack tables / simple formulas.
         if tables::ATTACKS.knight[sq as usize] & pieces.n != 0 {
             return true;
         }
@@ -116,6 +142,7 @@ impl Board {
             return true;
         }
 
+        // Sliders (bishop/rook/queen) need blocker-aware ray checks.
         if attacks_from_sliders(sq, pieces.b, self.occupancy, false) {
             return true;
         }
@@ -173,22 +200,124 @@ impl Board {
         }
     }
 
+    /// Moves a piece (same-type bit toggled off `from`, on `to`).
+    /// XOR toggles bits: `(1<<from) | (1<<to)` flips both squares in one op.
     pub fn move_piece(&mut self, player: char, token: char, from: u32, to: u32) {
         let bb = self.pieces_mut(player).bb_mut(token);
         *bb ^= (1_u64 << from) | (1_u64 << to);
+        // Occupancy XOR works because `from` becomes empty and `to` becomes occupied.
         self.occupancy ^= (1_u64 << from) | (1_u64 << to);
     }
 
+    /// Removes a piece from a square (capture).
     pub fn capture_piece(&mut self, player: char, token: char, sq: u32) {
         let bb = self.pieces_mut(player).bb_mut(token);
         *bb ^= 1_u64 << sq;
         self.occupancy ^= 1_u64 << sq;
     }
 
+    /// Replaces a pawn with a promoted piece on the same square.
+    /// Clears the pawn bit and sets the new piece type bit (occupancy unchanged).
     pub fn promote_piece(&mut self, player: char, to_token: char, sq: u32) {
         let pieces = self.pieces_mut(player);
         pieces.p ^= 1_u64 << sq;
         *pieces.bb_mut(to_token) ^= 1_u64 << sq;
+    }
+
+    /// Returns what occupies a square, encoded as an integer for cheap JS↔WASM calls.
+    ///
+    /// - `-1` — empty square
+    /// - otherwise: `(color_bit) | (token as u8)` where color_bit is `0` for white, `256` for black
+    ///
+    /// JavaScript decodes with: `color = encoded & 256 ? 'b' : 'w'`, `token = String.fromCharCode(encoded & 0xff)`.
+    pub fn get_piece_at(&self, idx: u32) -> i32 {
+        let mask = 1_u64 << idx;
+        if self.occupancy & mask == 0 {
+            return -1;
+        }
+
+        for (player, color_bit) in [('w', 0i32), ('b', 256)] {
+            let pieces = self.pieces(player);
+            for token in ['P', 'N', 'B', 'R', 'Q', 'K'] {
+                if pieces.bb(token) & mask != 0 {
+                    return color_bit | (token as u8 as i32);
+                }
+            }
+        }
+
+        -1
+    }
+
+    /// Finds which pawn moves to `to_idx` (used when parsing pawn SAN like `e4` or `exd5`).
+    ///
+    /// `capture_file`:
+    /// - `-1` for a quiet pawn push (scan 1 or 2 squares back along the file)
+    /// - `0..7` for a capture, indicating the **file index** of the departing pawn
+    ///   (`0 = h-file`, `7 = a-file`, matching the JS `getFileNumber` helper)
+    pub fn find_pawn_from(&self, player: char, to_idx: u32, capture_file: i32) -> i32 {
+        let pawns = self.pieces(player).bb('P');
+        let direction: i32 = if player == 'w' { 1 } else { -1 };
+
+        if capture_file >= 0 {
+            // Capture: pawn on the given file attacks diagonally toward `to_idx`.
+            let from = to_idx as i32 - 8 * direction + (capture_file - (to_idx % 8) as i32);
+            if (0..64).contains(&from) && pawns & (1_u64 << from) != 0 {
+                return from;
+            }
+            return -1;
+        }
+
+        // Quiet move: walk backward along the file (one or two steps for a double push).
+        for steps in 1..=2 {
+            let from = to_idx as i32 - 8 * steps * direction;
+            if !(0..64).contains(&from) {
+                break;
+            }
+            if pawns & (1_u64 << from) != 0 {
+                return from;
+            }
+        }
+
+        -1
+    }
+
+    /// Finds which piece of `piece_type` moves to `target_idx` (SAN disambiguation).
+    ///
+    /// `disambiguation` indexes into `tables::MASKS.ranks_and_files`:
+    /// - `0` — no filter
+    /// - `1..8` — restrict to a rank, `9..16` — restrict to a file (see JS `getTargetRowCol`)
+    pub fn find_attacker(
+        &self,
+        player: char,
+        piece_type: char,
+        target_idx: u32,
+        disambiguation: usize,
+    ) -> i32 {
+        let pieces = self.pieces(player).bb(piece_type);
+
+        // Fast path: only one piece of this type remains on the board.
+        if pieces.count_ones() == 1 {
+            return pieces.trailing_zeros() as i32;
+        }
+
+        // Step 1: geometric reachability (precomputed attack tables + SAN hint).
+        let mut mask = attack_mask(piece_type, target_idx as usize);
+        mask &= tables::MASKS.ranks_and_files[disambiguation];
+
+        let candidates = pieces & mask;
+        if candidates == 0 {
+            return -1;
+        }
+
+        // Step 2: for sliding pieces, remove paths blocked by other pieces.
+        let candidates = if piece_type == 'N' || piece_type == 'K' {
+            candidates
+        } else {
+            filter_by_clear_path(candidates, target_idx, self.occupancy)
+        };
+
+        // Step 3: if still ambiguous, simulate each move and reject illegal king moves.
+        resolve_candidates(self, player, piece_type, target_idx, candidates)
     }
 
     fn capture_at(&mut self, sq: u32) {
@@ -207,44 +336,17 @@ impl Board {
         }
     }
 
+    /// Applies a move on a temporary copy, removing any captured piece on `to` first.
     fn simulate_move(&mut self, player: char, token: char, from: u32, to: u32) {
         if self.occupancy & (1_u64 << to) != 0 {
             self.capture_at(to);
         }
         self.move_piece(player, token, from, to);
     }
-
-    pub fn find_attacker(
-        &self,
-        player: char,
-        piece_type: char,
-        target_idx: u32,
-        disambiguation: usize,
-    ) -> i32 {
-        let pieces = self.pieces(player).bb(piece_type);
-
-        if pieces.count_ones() == 1 {
-            return pieces.trailing_zeros() as i32;
-        }
-
-        let mut mask = attack_mask(piece_type, target_idx as usize);
-        mask &= tables::MASKS.ranks_and_files[disambiguation];
-
-        let candidates = pieces & mask;
-        if candidates == 0 {
-            return -1;
-        }
-
-        let candidates = if piece_type == 'N' || piece_type == 'K' {
-            candidates
-        } else {
-            filter_by_clear_path(candidates, target_idx, self.occupancy)
-        };
-
-        resolve_candidates(self, player, piece_type, target_idx, candidates)
-    }
 }
 
+/// When multiple candidates remain, pick the one that does not leave the king in check.
+/// This handles pinned-piece situations where only one candidate is actually legal.
 fn resolve_candidates(
     board: &Board,
     player: char,
@@ -263,6 +365,8 @@ fn resolve_candidates(
     let mut remaining = candidates;
     let mut found = -1i32;
 
+    // Iterate set bits with `trailing_zeros` + `remaining & remaining - 1`
+    // (standard technique to loop over a bitboard without scanning all 64 squares).
     while remaining != 0 {
         let from = remaining.trailing_zeros();
         remaining &= remaining - 1;
@@ -282,6 +386,7 @@ fn resolve_candidates(
     found
 }
 
+/// Attack squares for `piece_type` reaching `target_idx` (ignores blockers).
 fn attack_mask(piece_type: char, target_idx: usize) -> u64 {
     match piece_type {
         'N' => tables::ATTACKS.knight[target_idx],
@@ -293,10 +398,13 @@ fn attack_mask(piece_type: char, target_idx: usize) -> u64 {
     }
 }
 
+/// Keeps only candidates whose path to `target_idx` is not obstructed.
 fn filter_by_clear_path(candidates: u64, target_idx: u32, occupancy: u64) -> u64 {
     let mut remaining = candidates;
     let mut result = 0u64;
 
+    // Iterate set bits with `trailing_zeros` + `remaining & remaining - 1`
+    // (standard technique to loop over a bitboard without scanning all 64 squares).
     while remaining != 0 {
         let sq = remaining.trailing_zeros();
         remaining &= remaining - 1;
@@ -309,6 +417,7 @@ fn filter_by_clear_path(candidates: u64, target_idx: u32, occupancy: u64) -> u64
     result
 }
 
+/// Squares attacked by enemy pawns of `by` if they stood on `sq`.
 fn pawn_attacks(sq: u32, by: char) -> u64 {
     let rank = sq / 8;
     let file = sq % 8;
@@ -326,6 +435,7 @@ fn pawn_attacks(sq: u32, by: char) -> u64 {
     attacks
 }
 
+/// All eight king-adjacent squares from `sq`.
 fn king_attacks(sq: u32) -> u64 {
     let rank = sq / 8;
     let file = sq % 8;
@@ -347,9 +457,12 @@ fn king_attacks(sq: u32) -> u64 {
     attacks
 }
 
+/// Returns `true` if any slider in `pieces` attacks `sq` along a clear ray.
 fn attacks_from_sliders(sq: u32, pieces: u64, occupancy: u64, straight: bool) -> bool {
     let mut remaining = pieces;
 
+    // Iterate set bits with `trailing_zeros` + `remaining & remaining - 1`
+    // (standard technique to loop over a bitboard without scanning all 64 squares).
     while remaining != 0 {
         let from = remaining.trailing_zeros();
         remaining &= remaining - 1;
@@ -377,6 +490,7 @@ fn aligned(from: u32, to: u32, straight: bool) -> bool {
     }
 }
 
+/// Returns `true` if no occupied square lies strictly between `from` and `to`.
 fn clear_path(from: u32, to: u32, occupancy: u64) -> bool {
     let from_rank = (from / 8) as i32;
     let from_file = (from % 8) as i32;
@@ -400,6 +514,7 @@ fn clear_path(from: u32, to: u32, occupancy: u64) -> bool {
     let mut rank = from_rank + step_rank;
     let mut file = from_file + step_file;
 
+    // Walk toward `to`, but do not examine the destination (captures may sit there).
     while rank != to_rank || file != to_file {
         let idx = (rank * 8 + file) as u32;
         if occupancy & (1_u64 << idx) != 0 {
@@ -425,6 +540,21 @@ mod tests {
         let board = Board::new();
         assert_eq!(board.white.bb('R'), W_R);
         assert_eq!(board.occupancy.count_ones(), 32);
+    }
+
+    #[test]
+    fn get_piece_at_returns_encoded_piece() {
+        let board = Board::new();
+        // White king on e1
+        let ke1 = board.get_piece_at(sq(4, 1));
+        assert_eq!(ke1, 'K' as i32);
+        assert_eq!(board.get_piece_at(sq(4, 4)), -1);
+    }
+
+    #[test]
+    fn find_pawn_from_e4_push() {
+        let board = Board::new();
+        assert_eq!(board.find_pawn_from('w', sq(4, 4), -1), sq(4, 2) as i32);
     }
 
     #[test]
@@ -473,7 +603,6 @@ mod tests {
         };
         board.recompute_occupancy();
 
-        // a4 rook blocked by pawn on b4; h4 rook reaches e4 via f4
         let e4 = sq(4, 4);
         let attacker = board.find_attacker('b', 'R', e4, 0);
         assert_eq!(attacker, sq(7, 4) as i32);
@@ -526,9 +655,7 @@ mod tests {
         board.recompute_occupancy();
 
         let e4 = sq(4, 4);
-        // 'a' file -> disambiguation index 16
         assert_eq!(board.find_attacker('b', 'R', e4, 16), sq(0, 4) as i32);
-        // 'h' file -> disambiguation index 9
         assert_eq!(board.find_attacker('b', 'R', e4, 9), sq(7, 4) as i32);
     }
 

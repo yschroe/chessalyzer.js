@@ -121,7 +121,6 @@ class GameParser {
 
         const player = this.activePlayer;
 
-        const direction = player === 'w' ? 1 : -1;
         let offset = 0;
         // const coords: Move = { from: [], to: [] };
 
@@ -142,7 +141,11 @@ class GameParser {
         // Capture
         if (tempSan.at(1) == 'x') {
             const colIdx = Utils.getFileNumber(tempSan.at(0));
-            fromIdx = toIdx - 8 * direction + (colIdx - (toIdx % 8));
+            fromIdx = this.board.findPawnFromSquare(
+                player,
+                toIdx,
+                colIdx,
+            );
 
             // en passant
             if (this.board.getPieceOnBitIdx(toIdx) === null) {
@@ -165,13 +168,7 @@ class GameParser {
         }
         // Moves
         else {
-            for (let i = 1; i <= 2; i += 1) {
-                const idx = toIdx - 8 * i * direction;
-                if (this.board.getPieceOnBitIdx(idx)?.name.startsWith('P')) {
-                    fromIdx = idx;
-                    break;
-                }
-            }
+            fromIdx = this.board.findPawnFromSquare(player, toIdx, null);
         }
 
         const piece = this.board.getPieceOnBitIdx(fromIdx)?.name;
