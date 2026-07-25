@@ -97,15 +97,19 @@ const fn generate_attacks(masks: Masks) -> Attacks {
     }
 }
 
+// Reserved for magic-bitboard sliding attacks (phase 4 optimization).
+#[allow(dead_code)]
 const fn left_ray(x: u8) -> u8 {
     x - 1_u8
 }
 
+#[allow(dead_code)]
 const fn right_ray(x: u8) -> u8 {
     !x & !(x - 1_u8)
 }
 
 // TODO
+#[allow(dead_code)]
 const fn compute_first_rank_moves() -> [[u8; 256]; 8] {
     let mut first_rank_moves: [[u8; 256]; 8] = [[0; 256]; 8];
 
@@ -138,4 +142,5 @@ const fn compute_first_rank_moves() -> [[u8; 256]; 8] {
 pub const MASKS: Masks = generate_masks();
 pub const ATTACKS: Attacks = generate_attacks(MASKS);
 
+#[allow(dead_code)]
 pub const FIRST_RANK_MOVES: [[u8; 256]; 8] = compute_first_rank_moves();

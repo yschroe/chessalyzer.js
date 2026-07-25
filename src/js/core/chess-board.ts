@@ -1,4 +1,4 @@
-import { BitBoard } from '#bitboard';
+import { Board } from '#bitboard';
 
 import type { ChessPiece, Action, MoveAction, CaptureAction, PromoteAction } from '../interfaces';
 import type { PieceToken, PlayerColor } from '../types';
@@ -49,51 +49,11 @@ class PiecePositions {
 
 class ChessBoard {
     piecePositions: PiecePositions;
-    bitboards: {
-        // common: BitBoard;
-        w: {
-            // all: BitBoard;
-            P: BitBoard;
-            R: BitBoard;
-            N: BitBoard;
-            B: BitBoard;
-            Q: BitBoard;
-            K: BitBoard;
-        };
-        b: {
-            // all: BitBoard;
-            P: BitBoard;
-            R: BitBoard;
-            N: BitBoard;
-            B: BitBoard;
-            Q: BitBoard;
-            K: BitBoard;
-        };
-    };
+    board: Board;
     promoteCounter: number;
 
     constructor() {
-        this.bitboards = {
-            // common: new BitBoard(0xffff00000000ffffn),
-            w: {
-                // all: new BitBoard(0xffffn),
-                P: new BitBoard(0xff00n),
-                R: new BitBoard(0x81n),
-                N: new BitBoard(0x42n),
-                B: new BitBoard(0x24n),
-                Q: new BitBoard(0x10n),
-                K: new BitBoard(0x8n),
-            },
-            b: {
-                // all: new BitBoard(0xffff000000000000n),
-                P: new BitBoard(0x00ff000000000000n),
-                R: new BitBoard(0x8100000000000000n),
-                N: new BitBoard(0x4200000000000000n),
-                B: new BitBoard(0x2400000000000000n),
-                Q: new BitBoard(0x1000000000000000n),
-                K: new BitBoard(0x0800000000000000n),
-            },
-        };
+        this.board = new Board();
         this.reset();
     }
 
@@ -107,32 +67,13 @@ class ChessBoard {
         };
     }
 
-    // getKingIdx(player: PlayerColor) {
-    // 	const bitboard = this.bitboards[player].K;
-    // 	const bit = bitboard.get_highest_bit_idx();
-    // 	return bit;
-    // }
-
     getPiecesThatCanMoveToSquare(
         player: PlayerColor,
         token: PieceToken,
         targetIdx: number,
         knownFromParts: number,
     ) {
-        const bitboard = this.bitboards[player][token];
-        return bitboard.get_legal_pieces(targetIdx, token, knownFromParts);
-
-        // if (legalPieceBitboard.()) {
-        // const bit = legalPieceBitboard.get_highest_bit_idx();
-        // return bit;
-        // }
-
-        // console.log('No unique piece found!');
-        // console.log(token, targetIdx, mustBeInRow, mustBeInCol);
-        // this.printPosition();
-        // legalPieceBitboard.print_board();
-
-        return -1; // this.getPositionsForToken(player, token);
+        return this.board.find_attacker(player, token, targetIdx, knownFromParts);
     }
 
     applyActions(actions: Action[]): void {
@@ -154,20 +95,7 @@ class ChessBoard {
     reset(): void {
         this.piecePositions = new PiecePositions();
         this.promoteCounter = 0;
-
-        this.bitboards.w.P.reset();
-        this.bitboards.w.N.reset();
-        this.bitboards.w.K.reset();
-        this.bitboards.w.R.reset();
-        this.bitboards.w.Q.reset();
-        this.bitboards.w.B.reset();
-
-        this.bitboards.b.P.reset();
-        this.bitboards.b.N.reset();
-        this.bitboards.b.K.reset();
-        this.bitboards.b.R.reset();
-        this.bitboards.b.Q.reset();
-        this.bitboards.b.B.reset();
+        this.board.reset();
     }
 
     /** Prints the current board position to the console. */
@@ -195,24 +123,20 @@ class ChessBoard {
     private move(action: MoveAction): void {
         const { fromIdx, toIdx, piece, player } = action;
 
-        // update piece map
         this.piecePositions.move(fromIdx, toIdx);
 
-        const token = piece.at(0) as PieceToken; // TODO: can also be pawntoken
-
-        this.bitboards[player][token].invert_bit(fromIdx);
-        this.bitboards[player][token].invert_bit(toIdx);
+        const token = piece.at(0) as PieceToken;
+        this.board.move_piece(player, token, fromIdx, toIdx);
     }
 
     private capture(action: CaptureAction): void {
         const { onIdx, player, takenPiece } = action;
 
-        // update piece map
         this.piecePositions.capture(onIdx);
 
-        const token = takenPiece.at(0) as PieceToken; // TODO: can also be pawntoken
+        const token = takenPiece.at(0) as PieceToken;
         const otherPlayer = player === 'w' ? 'b' : 'w';
-        this.bitboards[otherPlayer][token].invert_bit(onIdx);
+        this.board.capture_piece(otherPlayer, token, onIdx);
     }
 
     private promote(action: PromoteAction): void {
@@ -221,7 +145,7 @@ class ChessBoard {
         const pieceName = `${player}${to}${this.promoteCounter++}`;
         this.piecePositions.promote(pieceName, onIdx);
 
-        this.bitboards[player][to as PieceToken].invert_bit(onIdx);
+        this.board.promote_piece(player, to, onIdx);
     }
 }
 

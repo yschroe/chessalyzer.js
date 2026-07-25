@@ -1,6 +1,4 @@
-import { BitBoard } from '#bitboard';
+import { Board } from '#bitboard';
 
-const a = new BitBoard(0x2400000000000000n);
-a.print_board();
-
-console.log(a.get_legal_pieces(54, 'B', -1, -1));
+const board = new Board();
+console.log('Board loaded, find_attacker:', typeof board.find_attacker);
