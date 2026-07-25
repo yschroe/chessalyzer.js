@@ -3,6 +3,14 @@ import { availableParallelism } from 'node:os';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import GameParser from '../parsing/game-parser';
+import { readLinesFast } from '../pgn/line-reader';
+import {
+    extractMoves,
+    isGameResultLine,
+    parseHeaderTag,
+    stripComments,
+} from '../pgn/pgn-line-parser';
 import type {
     Game,
     AnalysisConfig,
@@ -11,15 +19,9 @@ import type {
     WorkerMessage,
     GameProcessorAnalysisConfigFull,
     GameProcessorConfig,
-} from '../interfaces';
-import GameParser from './game-parser';
-import { readLinesFast } from './line-reader';
+    WorkerInitData,
+} from '../types';
 import WorkerPool from './worker-pool';
-
-const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
-const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
-const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
-const RESULT_REGEX = /-(1\/2|0|1)$/;
 
 /**
  * Class that processes games.
@@ -80,7 +82,14 @@ class GameProcessor {
         let workerPool: WorkerPool;
         if (isMultithreaded) {
             const __dirname = dirname(fileURLToPath(import.meta.url));
-            workerPool = new WorkerPool(availableParallelism(), `${__dirname}/chess-worker.js`);
+            const workerInitData: WorkerInitData = {
+                configs: this.configs.map((cfg) => ({ trackerData: cfg.trackerData })),
+            };
+            workerPool = new WorkerPool(
+                availableParallelism(),
+                `${__dirname}/chess-worker.js`,
+                workerInitData,
+            );
         }
 
         // create gamestore for each config
@@ -97,20 +106,26 @@ class GameProcessor {
             switch (isHeaderTag) {
                 case true: {
                     if (!this.readInHeader) continue;
-                    const [_, key, value] = HEADER_REGEX.exec(line);
-                    game[key] = value;
+                    const header = parseHeaderTag(line);
+                    if (header) {
+                        const [key, value] = header;
+                        game[key] = value;
+                    }
                     break;
                 }
                 case false: {
-                    // extract move SANs
-                    const cleanedLine = line.replaceAll(COMMENT_REGEX, '');
-                    const matchedMoves = cleanedLine.match(MOVE_REGEX) ?? [];
+                    const cleanedLine = stripComments(line);
 
-                    // Add moves to game
-                    game.moves.push(...matchedMoves);
+                    const matchedMoves = extractMoves(cleanedLine);
+                    if (matchedMoves) {
+                        const moves = game.moves;
+                        for (let i = 0; i < matchedMoves.length; i += 1) {
+                            moves.push(matchedMoves[i]);
+                        }
+                    }
 
-                    // only if the result marker is found, all moves have been read -> start analyzing
-                    if (RESULT_REGEX.test(cleanedLine)) {
+                    // Result tokens end with "-1/2", "-0", or "-1" (e.g. "1-0", "0-1", "1/2-1/2").
+                    if (isGameResultLine(cleanedLine)) {
                         for (let idxCfg = 0; idxCfg < this.configs.length; idxCfg += 1) {
                             const cfg = this.configs[idxCfg];
                             if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
@@ -126,7 +141,6 @@ class GameProcessor {
                                         workerPool.runTask(
                                             {
                                                 games: gameStore[idxCfg],
-                                                trackerData: this.configs[idxCfg].trackerData,
                                                 idxConfig: idxCfg,
                                             },
                                             (err: Error, result: WorkerMessage) =>
@@ -165,7 +179,6 @@ class GameProcessor {
                         workerPool.runTask(
                             {
                                 games: games.slice(i * batchSize, i * batchSize + batchSize),
-                                trackerData: this.configs[idx].trackerData,
                                 idxConfig: idx,
                             },
                             (err: Error, result: WorkerMessage) =>
@@ -204,12 +217,15 @@ class GameProcessor {
 
         const { idxConfig, gameTrackers, moveTrackers, cntMoves, cntGames } = result;
 
-        // add tracker data from this worker
-        for (let i = 0; i < gameTrackers.length; i += 1) {
-            this.configs[idxConfig].trackers.game[i].add(gameTrackers[i]);
+        if (gameTrackers) {
+            for (let i = 0; i < gameTrackers.length; i += 1) {
+                this.configs[idxConfig].trackers.game[i].add(gameTrackers[i]);
+            }
         }
-        for (let i = 0; i < moveTrackers.length; i += 1) {
-            this.configs[idxConfig].trackers.move[i].add(moveTrackers[i]);
+        if (moveTrackers) {
+            for (let i = 0; i < moveTrackers.length; i += 1) {
+                this.configs[idxConfig].trackers.move[i].add(moveTrackers[i]);
+            }
         }
         this.configs[idxConfig].processedMoves += cntMoves;
         this.configs[idxConfig].processedGames += cntGames;

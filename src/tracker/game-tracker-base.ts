@@ -1,4 +1,4 @@
-import type { Game } from '../interfaces';
+import type { Game } from '../types';
 import BaseTracker from './base-tracker';
 
 class GameTrackerBase extends BaseTracker {
@@ -27,6 +27,15 @@ class GameTrackerBase extends BaseTracker {
                 this.ECO[key] = tracker.ECO[key];
             }
         }
+    }
+
+    resetWorkerBatch() {
+        this.results.white = 0;
+        this.results.black = 0;
+        this.results.draw = 0;
+        this.cntGames = 0;
+        this.time = 0;
+        this.ECO = {};
     }
 
     track(game: Game) {

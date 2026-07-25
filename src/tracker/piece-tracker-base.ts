@@ -1,5 +1,5 @@
-import type { Action } from '../interfaces';
-import { PlayerColor } from '../types';
+import type { Action } from '../types';
+import type { PlayerColor } from '../types';
 import BaseTracker from './base-tracker';
 import HeatmapPresets from './heatmaps/piece-heatmaps';
 
@@ -67,6 +67,17 @@ class PieceTrackerBase extends BaseTracker {
             for (const piece2 of pieceList) {
                 this.w[piece][piece2] += tracker.w[piece][piece2];
                 this.b[piece][piece2] += tracker.b[piece][piece2];
+            }
+        }
+    }
+
+    resetWorkerBatch() {
+        this.time = 0;
+
+        for (const piece of pieceList) {
+            for (const piece2 of pieceList) {
+                this.w[piece][piece2] = 0;
+                this.b[piece][piece2] = 0;
             }
         }
     }

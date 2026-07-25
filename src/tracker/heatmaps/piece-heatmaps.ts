@@ -1,4 +1,4 @@
-import type { SquareData } from '../../interfaces';
+import type { SquareData } from '../../types';
 import PieceTrackerBase from '../piece-tracker-base';
 
 export default {

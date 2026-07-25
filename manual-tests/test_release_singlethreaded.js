@@ -11,8 +11,8 @@ import CustomGameTracker from './CustomGameTracker.js';
 // c.cfg.profilingActive = true;
 
 const header = await Chessalyzer.analyzePGN(
-    './manualTests/lichess_db_standard_rated_2013-12.pgn',
-    { config: { cntGames: 50000 } },
+    './manual-tests/lichess_db_standard_rated_2013-12.pgn',
+    undefined,
     null,
 );
 console.log(header);
