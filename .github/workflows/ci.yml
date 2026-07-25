@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    name: '🔠 Linting check'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: 🔠 Lint project
+        run: bun run lint
+
+  knip:
+    name: '✂️ Dependency check'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Check for unused dependencies
+        run: bun run knip
+
+  typecheck:
+    name: '🔍 Typecheck'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Typecheck project
+        run: bun run typecheck
+
+  test:
+    name: '🧪 Tests'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Build library
+        run: bun run build
+      - name: Run tests
+        run: bun run test

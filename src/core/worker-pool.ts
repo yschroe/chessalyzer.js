@@ -73,10 +73,9 @@ export default class WorkerPool extends EventEmitter {
         });
 
         worker.on('message', (result: WorkerMessage) => {
-            // In case of success: Call the callback that was passed to `runTask`,
-            // remove the `TaskInfo` associated with the Worker, and mark it as free
-            // again.
-            worker[kTaskInfo]?.done(null, result);
+            // Workers report batch failures via result.error instead of throwing.
+            const err = result.error ? new Error(result.error) : null;
+            worker[kTaskInfo]?.done(err, result);
             worker[kTaskInfo] = null;
 
             this.freeWorkers.push(worker);
@@ -91,15 +90,22 @@ export default class WorkerPool extends EventEmitter {
         });
 
         worker.on('error', (err: Error) => {
-            // In case of an uncaught exception: Call the callback that was passed to
-            // `runTask` with the error.
-            if (worker[kTaskInfo]) worker[kTaskInfo].done(err, null);
-            else this.emit('error', err);
+            // Uncaught worker exception: notify the task callback, then retire the worker.
+            if (worker[kTaskInfo]) {
+                worker[kTaskInfo].done(err, null);
+                worker[kTaskInfo] = null;
+            } else {
+                this.emit('error', err);
+            }
 
-            // Remove the worker from the list and start a new Worker to replace the
-            // current one.
-            this.workers.splice(this.workers.indexOf(worker), 1);
-            this.addNewWorker(filePath, workerInitData);
+            const freeIdx = this.freeWorkers.indexOf(worker);
+            if (freeIdx !== -1) this.freeWorkers.splice(freeIdx, 1);
+
+            const workerIdx = this.workers.indexOf(worker);
+            if (workerIdx !== -1) this.workers.splice(workerIdx, 1);
+
+            // Do not spawn a replacement worker — the pool will be closed by the caller.
+            this.emit(kWorkerFreedEvent);
         });
 
         this.workers.push(worker);
@@ -128,6 +134,7 @@ export default class WorkerPool extends EventEmitter {
 
     /**
      * Closes the `WorkerPool` by terminating all workers.
+     * Required so worker threads don't keep the Node/Bun process alive after errors.
      */
     async close() {
         for (const worker of this.workers) await worker.terminate();

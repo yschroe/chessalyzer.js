@@ -1,0 +1,38 @@
+{
+    "dir": "test/corpus",
+    "files": [
+        {
+            "id": "asorted",
+            "file": "asorted-games.pgn",
+            "description": "Large Lichess export used for golden regression tests",
+            "sources": ["test/corpus/asorted-games.pgn"],
+            "expected": {
+                "cntGames": 14630,
+                "cntMoves": 959243,
+                "filters": {
+                    "whiteWins": 7515,
+                    "blackWins": 5128,
+                    "draws": 1987
+                },
+                "multiConfig": {
+                    "highRatedGames": 10000,
+                    "lowRatedGames": 4000
+                }
+            },
+            "golden": {
+                "gameTracker": {
+                    "ECO": { "A00": 1177, "B00": 632, "C00": 805 },
+                    "filterWhiteWins": 500
+                },
+                "pieceTracker": {
+                    "square": { "color": "b", "from": "Ra", "to": "Qd", "count": 631 },
+                    "heatmap": {
+                        "PIECE_CAPTURED_a8": 1514,
+                        "PIECE_CAPTURED_BY_a8": 1487,
+                        "custom_a8": 1487
+                    }
+                }
+            }
+        }
+    ]
+}
