@@ -109,29 +109,65 @@ class GameProcessor {
             minLines: this.multithreadConfig!.minLines,
         };
 
-        chunkLoop: for await (const chunk of readPgnChunks(path, chunkConfig)) {
-            for (let idxCfg = 0; idxCfg < this.configs.length; idxCfg += 1) {
-                const cfg = this.configs[idxCfg];
-                if (cfg.isDone) continue;
+        // Track the first worker failure and unblock any wait on pool completion.
+        // Without this, a thrown callback error leaves the pool waiting forever on 'done'.
+        let fatalError: Error | undefined;
+        let rejectFatal: ((err: Error) => void) | undefined;
+        const fatalPromise = new Promise<never>((_, reject) => {
+            rejectFatal = reject;
+        });
 
-                workerPool.runTask(
-                    {
-                        pgnChunkBytes: chunk.bytes,
-                        idxConfig: idxCfg,
-                        readInHeader: this.readInHeader,
-                    },
-                    (err: Error, result: WorkerMessage) => this.addDataFromWorker(err, result),
-                );
+        const handleWorkerResult = (err: Error | null, result: WorkerMessage) => {
+            if (fatalError) return;
+
+            if (err) {
+                fatalError = err;
+                rejectFatal?.(err);
+                return;
             }
 
-            if (this.configs.every((cfg) => cfg.isDone)) break chunkLoop;
+            // Worker caught a batch error and reported it via postMessage instead of throwing.
+            if (result.error) {
+                fatalError = new Error(result.error);
+                rejectFatal?.(fatalError);
+                return;
+            }
+
+            this.addDataFromWorker(null, result);
+        };
+
+        try {
+            chunkLoop: for await (const chunk of readPgnChunks(path, chunkConfig)) {
+                if (fatalError) break;
+
+                for (let idxCfg = 0; idxCfg < this.configs.length; idxCfg += 1) {
+                    const cfg = this.configs[idxCfg];
+                    if (cfg.isDone) continue;
+
+                    workerPool.runTask(
+                        {
+                            pgnChunkBytes: chunk.bytes,
+                            idxConfig: idxCfg,
+                            readInHeader: this.readInHeader,
+                        },
+                        handleWorkerResult,
+                    );
+                }
+
+                if (this.configs.every((cfg) => cfg.isDone)) break chunkLoop;
+            }
+
+            if (fatalError) throw fatalError;
+
+            workerPool.flagNotifyWhenDone = true;
+            // Race 'done' against fatalPromise so errors don't hang until all tasks finish.
+            await Promise.race([EventEmitter.once(workerPool, 'done'), fatalPromise]);
+
+            return this.finishProcessing();
+        } finally {
+            // Always terminate workers so the process can exit after success or failure.
+            await workerPool.close();
         }
-
-        workerPool.flagNotifyWhenDone = true;
-        await EventEmitter.once(workerPool, 'done');
-        await workerPool.close();
-
-        return this.finishProcessing();
     }
 
     private async processPGNOnMainThread(
@@ -156,63 +192,95 @@ class GameProcessor {
         const lineParser = new GameLineParser({ readInHeader: this.readInHeader });
         const legacyBatchSize = this.multithreadConfig?.batchSize ?? 200;
 
-        lineLoop: for await (const line of readLinesFast(path)) {
-            const game = lineParser.processLine(line);
-            if (!game) continue;
+        // Same fatal-error handling as processPGNWithWorkerParse (see above).
+        let fatalError: Error | undefined;
+        let rejectFatal: ((err: Error) => void) | undefined;
+        const fatalPromise = new Promise<never>((_, reject) => {
+            rejectFatal = reject;
+        });
 
-            for (let idxCfg = 0; idxCfg < this.configs.length; idxCfg += 1) {
-                const cfg = this.configs[idxCfg];
-                if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
-                    cfg.cntReadGames += 1;
-                    if (isMultithreaded) {
-                        gameStore[idxCfg].push(game);
+        const handleWorkerResult = (err: Error | null, result: WorkerMessage) => {
+            if (fatalError) return;
 
-                        if (gameStore[idxCfg].length === legacyBatchSize) {
-                            workerPool!.runTask(
-                                {
-                                    pgnChunkBytes: encodePgnChunkText(
-                                        this.gamesToPgnChunk(gameStore[idxCfg]),
-                                    ),
-                                    idxConfig: idxCfg,
-                                    readInHeader: this.readInHeader,
-                                },
-                                (err: Error, result: WorkerMessage) =>
-                                    this.addDataFromWorker(err, result),
-                            );
+            if (err) {
+                fatalError = err;
+                rejectFatal?.(err);
+                return;
+            }
 
-                            gameStore[idxCfg] = [];
+            if (result.error) {
+                fatalError = new Error(result.error);
+                rejectFatal?.(fatalError);
+                return;
+            }
+
+            this.addDataFromWorker(null, result);
+        };
+
+        try {
+            lineLoop: for await (const line of readLinesFast(path)) {
+                if (fatalError) break;
+
+                const game = lineParser.processLine(line);
+                if (!game) continue;
+
+                for (let idxCfg = 0; idxCfg < this.configs.length; idxCfg += 1) {
+                    const cfg = this.configs[idxCfg];
+                    if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
+                        cfg.cntReadGames += 1;
+                        if (isMultithreaded) {
+                            gameStore[idxCfg].push(game);
+
+                            if (gameStore[idxCfg].length === legacyBatchSize) {
+                                workerPool!.runTask(
+                                    {
+                                        pgnChunkBytes: encodePgnChunkText(
+                                            this.gamesToPgnChunk(gameStore[idxCfg]),
+                                        ),
+                                        idxConfig: idxCfg,
+                                        readInHeader: this.readInHeader,
+                                    },
+                                    handleWorkerResult,
+                                );
+
+                                gameStore[idxCfg] = [];
+                            }
+                        } else {
+                            gameParser.processGame(game, cfg);
                         }
-                    } else {
-                        gameParser.processGame(game, cfg);
-                    }
-                    if (cfg.cntReadGames === cfg.config.cntGames) {
-                        cfg.isDone = true;
-                        const allDone = this.configs.reduce((a, c) => a && c.isDone, true);
-                        if (allDone) break lineLoop;
+                        if (cfg.cntReadGames === cfg.config.cntGames) {
+                            cfg.isDone = true;
+                            const allDone = this.configs.reduce((a, c) => a && c.isDone, true);
+                            if (allDone) break lineLoop;
+                        }
                     }
                 }
             }
-        }
 
-        if (isMultithreaded && workerPool) {
-            for (const [idx, games] of gameStore.entries()) {
-                if (games.length > 0) {
-                    workerPool.runTask(
-                        {
-                            pgnChunkBytes: encodePgnChunkText(this.gamesToPgnChunk(games)),
-                            idxConfig: idx,
-                            readInHeader: this.readInHeader,
-                        },
-                        (err: Error, result: WorkerMessage) => this.addDataFromWorker(err, result),
-                    );
+            if (isMultithreaded && workerPool) {
+                if (fatalError) throw fatalError;
+
+                for (const [idx, games] of gameStore.entries()) {
+                    if (games.length > 0) {
+                        workerPool.runTask(
+                            {
+                                pgnChunkBytes: encodePgnChunkText(this.gamesToPgnChunk(games)),
+                                idxConfig: idx,
+                                readInHeader: this.readInHeader,
+                            },
+                            handleWorkerResult,
+                        );
+                    }
                 }
-            }
-            workerPool.flagNotifyWhenDone = true;
-            await EventEmitter.once(workerPool, 'done');
-            await workerPool.close();
-        }
 
-        return this.finishProcessing();
+                workerPool.flagNotifyWhenDone = true;
+                await Promise.race([EventEmitter.once(workerPool, 'done'), fatalPromise]);
+            }
+
+            return this.finishProcessing();
+        } finally {
+            if (workerPool) await workerPool.close();
+        }
     }
 
     private finishProcessing(): GameAndMoveCount[] {
@@ -233,8 +301,10 @@ class GameProcessor {
      * @param err Error object, if an error occured.
      * @param result The result of the PGN parsing from the worker thread.
      */
-    private addDataFromWorker(err: Error, result: WorkerMessage) {
+    private addDataFromWorker(err: Error | null, result: WorkerMessage) {
         if (err) throw err;
+        // Defensive check for callers that invoke this directly (worker callbacks handle this earlier).
+        if (result.error) throw new Error(result.error);
 
         const { idxConfig, gameTrackers, moveTrackers, cntMoves, cntGames } = result;
 

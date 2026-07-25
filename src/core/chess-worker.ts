@@ -44,14 +44,17 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
 
 parentPort!.on('message', (msg: WorkerTaskData) => {
     void ready
-        .then(() => {
-            parentPort!.postMessage(processBatch(msg));
-        })
-        .catch((e: Error) => {
-            throw e;
+        .then(() => processBatch(msg))
+        .then((result) => parentPort!.postMessage(result))
+        .catch((e: unknown) => {
+            // Return errors to the main thread instead of throwing — unhandled worker
+            // rejections would otherwise leave the pool waiting indefinitely.
+            const message = e instanceof Error ? e.message : String(e);
+            parentPort!.postMessage({
+                idxConfig: msg.idxConfig,
+                cntMoves: 0,
+                cntGames: 0,
+                error: message,
+            });
         });
-});
-
-process.on('unhandledRejection', (e: Error) => {
-    throw e;
 });

@@ -2,9 +2,11 @@ node_modules
 
 .DS_Store
 
-# ignore pgn files except in test directory
+# PGN data files — only small committed fixtures are tracked
 *.pgn
-!test/*.pgn
+!test/fixtures/*.pgn
+test/corpus/
+test/.tmp/
 
 *.csv
 

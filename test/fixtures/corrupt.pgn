@@ -1,0 +1,9 @@
+[Event "Complete game"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bxb4 5. c3 Ba5 6. d4 exd4 7. O-O dxc3 8. Qb3 1-0
+
+[Event "Incomplete game"]
+[Result "*"]
+
+1. d4 d5 2. c4 e6 3. Nc3

@@ -1,0 +1,8 @@
+[Event "Rated Blitz game"]
+[Site "https://lichess.org/example"]
+[White "WhitePlayer"]
+[Black "BlackPlayer"]
+[Result "1-0"]
+[ECO "C50"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. a3 Qf6 5. b4 Bb6 6. d3 h6 7. Nc3 Nge7 8. O-O O-O 9. Re1 a6 10. Be3 Nd4 11. Bxd4 exd4 12. e5 Qg6 13. Ne4 d5 14. exd6 cxd6 15. Bb3 Be6 16. Bxe6 fxe6 17. Nxd6 Rab8 18. Nc4 Ba7 19. Nfe5 Qe8 20. Nd6 Qd8 21. Ndc4 Qd5 22. Qg4 Rf5 23. Ng6 Nxg6 24. Qxg6 Re8 25. Qxe8+ 1-0
