@@ -1,0 +1,13 @@
+name: Setup
+description: Bun runtime and dependency installation
+
+runs:
+  using: composite
+  steps:
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+
+    - name: Install dependencies
+      shell: bash
+      run: bun ci
