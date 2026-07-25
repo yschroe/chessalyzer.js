@@ -59,7 +59,7 @@ class FixedCircularBuffer<T> {
     constructor(kSize: number) {
         this.bottom = 0;
         this.top = 0;
-        this.list = new Array<T>(kSize);
+        this.list = new Array(kSize);
         this.next = null;
         this.kMask = kSize - 1;
     }
