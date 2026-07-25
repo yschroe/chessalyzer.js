@@ -1,13 +1,7 @@
 import { BitBoard } from '#bitboard';
 
-import type {
-    ChessPiece,
-    Action,
-    MoveAction,
-    CaptureAction,
-    PromoteAction,
-} from '../interfaces/index.js';
-import type { PieceToken, PlayerColor } from '../types/index.js';
+import type { ChessPiece, Action, MoveAction, CaptureAction, PromoteAction } from '../interfaces';
+import type { PieceToken, PlayerColor } from '../types';
 
 class PiecePositions {
     private state: (string | null)[];
