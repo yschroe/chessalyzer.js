@@ -4,6 +4,8 @@
  * so existing `from '../interfaces'` imports continue to work unchanged.
  */
 
+export type { PawnToken, PieceToken, Token, PlayerColor } from './chess-types';
+
 export type { MoveAction, CaptureAction, PromoteAction, Action } from './actions';
 
 export type {

@@ -1,4 +1,4 @@
-import type { PlayerColor } from '../types';
+import type { PlayerColor } from './chess-types';
 
 interface BaseAction {
     type: 'move' | 'capture' | 'promote';

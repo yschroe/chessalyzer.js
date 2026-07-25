@@ -1,5 +1,4 @@
-import type { Action } from '../interfaces';
-import type { PieceToken } from '../types';
+import type { Action, PieceToken } from '../interfaces';
 import { algebraicToCoordsAt } from '../board/board-coords';
 import type SanContext from './san-context';
 

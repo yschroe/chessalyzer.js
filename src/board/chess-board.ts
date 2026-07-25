@@ -1,5 +1,12 @@
-import type { ChessPiece, Action, MoveAction, CaptureAction, PromoteAction } from '../interfaces';
-import type { PieceToken, PlayerColor } from '../types';
+import type {
+    ChessPiece,
+    Action,
+    MoveAction,
+    CaptureAction,
+    PromoteAction,
+    PieceToken,
+    PlayerColor,
+} from '../interfaces';
 import PiecePositions from './piece-positions';
 
 /**

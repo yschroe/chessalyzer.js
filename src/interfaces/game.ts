@@ -1,4 +1,4 @@
-import type { PlayerColor } from '../types';
+import type { PlayerColor } from './chess-types';
 
 /** Minimal game object built while streaming PGN movetext. */
 export interface Game {
