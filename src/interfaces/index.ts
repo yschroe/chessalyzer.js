@@ -39,21 +39,21 @@ interface BaseAction {
 export interface MoveAction extends BaseAction {
     type: 'move';
     piece: string;
-    fromIdx: number;
-    toIdx: number;
+    from: number[];
+    to: number[];
 }
 
 export interface CaptureAction extends BaseAction {
     type: 'capture';
     takingPiece: string;
     takenPiece: string;
-    onIdx: number;
+    on: number[];
 }
 
 export interface PromoteAction extends BaseAction {
     type: 'promote';
     to: string;
-    onIdx: number;
+    on: number[];
 }
 
 export type Action = MoveAction | CaptureAction | PromoteAction;
