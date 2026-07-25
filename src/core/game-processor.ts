@@ -11,6 +11,7 @@ import type {
     WorkerMessage,
     GameProcessorAnalysisConfigFull,
     GameProcessorConfig,
+    WorkerInitData,
 } from '../interfaces';
 import GameParser from './game-parser';
 import { readLinesFast } from './line-reader';
@@ -80,7 +81,14 @@ class GameProcessor {
         let workerPool: WorkerPool;
         if (isMultithreaded) {
             const __dirname = dirname(fileURLToPath(import.meta.url));
-            workerPool = new WorkerPool(availableParallelism(), `${__dirname}/chess-worker.js`);
+            const workerInitData: WorkerInitData = {
+                configs: this.configs.map((cfg) => ({ trackerData: cfg.trackerData })),
+            };
+            workerPool = new WorkerPool(
+                availableParallelism(),
+                `${__dirname}/chess-worker.js`,
+                workerInitData,
+            );
         }
 
         // create gamestore for each config
@@ -133,7 +141,6 @@ class GameProcessor {
                                         workerPool.runTask(
                                             {
                                                 games: gameStore[idxCfg],
-                                                trackerData: this.configs[idxCfg].trackerData,
                                                 idxConfig: idxCfg,
                                             },
                                             (err: Error, result: WorkerMessage) =>
@@ -172,7 +179,6 @@ class GameProcessor {
                         workerPool.runTask(
                             {
                                 games: games.slice(i * batchSize, i * batchSize + batchSize),
-                                trackerData: this.configs[idx].trackerData,
                                 idxConfig: idx,
                             },
                             (err: Error, result: WorkerMessage) =>
@@ -211,12 +217,15 @@ class GameProcessor {
 
         const { idxConfig, gameTrackers, moveTrackers, cntMoves, cntGames } = result;
 
-        // add tracker data from this worker
-        for (let i = 0; i < gameTrackers.length; i += 1) {
-            this.configs[idxConfig].trackers.game[i].add(gameTrackers[i]);
+        if (gameTrackers) {
+            for (let i = 0; i < gameTrackers.length; i += 1) {
+                this.configs[idxConfig].trackers.game[i].add(gameTrackers[i]);
+            }
         }
-        for (let i = 0; i < moveTrackers.length; i += 1) {
-            this.configs[idxConfig].trackers.move[i].add(moveTrackers[i]);
+        if (moveTrackers) {
+            for (let i = 0; i < moveTrackers.length; i += 1) {
+                this.configs[idxConfig].trackers.move[i].add(moveTrackers[i]);
+            }
         }
         this.configs[idxConfig].processedMoves += cntMoves;
         this.configs[idxConfig].processedGames += cntGames;

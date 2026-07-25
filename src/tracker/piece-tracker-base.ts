@@ -71,6 +71,17 @@ class PieceTrackerBase extends BaseTracker {
         }
     }
 
+    resetWorkerBatch() {
+        this.time = 0;
+
+        for (const piece of pieceList) {
+            for (const piece2 of pieceList) {
+                this.w[piece][piece2] = 0;
+                this.b[piece][piece2] = 0;
+            }
+        }
+    }
+
     track(actions: Action[]) {
         for (const action of actions) {
             if (action.type === 'capture') {

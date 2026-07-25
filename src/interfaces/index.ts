@@ -117,6 +117,8 @@ export interface Tracker {
     nextGame?: () => void;
     finish?: () => void;
     add?: (arg: this) => void;
+    /** Clear per-batch state when a worker reuses tracker instances. */
+    resetWorkerBatch?: () => void;
 }
 
 export interface GameAndMoveCount {
@@ -128,16 +130,22 @@ export interface GameAndMoveCountFull extends GameAndMoveCount {
     mps: number;
 }
 
+export interface WorkerInitData {
+    configs: {
+        trackerData: { name: string; cfg: TrackerConfig; path?: string }[];
+    }[];
+}
+
+/** Per-batch payload sent main → worker (tracker config lives in workerData). */
 export interface WorkerTaskData {
     games: Game[];
-    trackerData: { name: string; cfg: TrackerConfig; path?: string }[];
     idxConfig: number;
 }
 
 export interface WorkerMessage {
     cntMoves: number;
     cntGames: number;
-    gameTrackers: Tracker[];
-    moveTrackers: Tracker[];
     idxConfig: number;
+    gameTrackers?: Tracker[];
+    moveTrackers?: Tracker[];
 }

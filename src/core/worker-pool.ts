@@ -3,7 +3,7 @@ import { AsyncResource } from 'node:async_hooks';
 import { EventEmitter } from 'node:events';
 import { Worker } from 'node:worker_threads';
 
-import { WorkerMessage, WorkerTaskData } from '../interfaces';
+import { WorkerMessage, WorkerTaskData, WorkerInitData } from '../interfaces';
 
 const kTaskInfo = Symbol('kTaskInfo');
 const kWorkerFreedEvent = Symbol('kWorkerFreedEvent');
@@ -40,8 +40,9 @@ export default class WorkerPool extends EventEmitter {
      * Creates a new `WorkerPool`.
      * @param numThreads Count of workers that will be created for the pool.
      * @param filePath Path of the code each worker shall execute.
+     * @param workerInitData One-time init payload (e.g. tracker config), passed via workerData.
      */
-    constructor(numThreads: number, filePath: string) {
+    constructor(numThreads: number, filePath: string, workerInitData?: WorkerInitData) {
         super();
         this.numThreads = numThreads;
         this.workers = [];
@@ -50,7 +51,7 @@ export default class WorkerPool extends EventEmitter {
 
         this.flagNotifyWhenDone = false;
 
-        for (let i = 0; i < numThreads; i++) this.addNewWorker(filePath);
+        for (let i = 0; i < numThreads; i++) this.addNewWorker(filePath, workerInitData);
 
         // Any time the kWorkerFreedEvent is emitted, dispatch
         // the next task pending in the queue, if any.
@@ -66,8 +67,10 @@ export default class WorkerPool extends EventEmitter {
      * Adds a new Worker to the Workerpool and attaches the event listeners.
      * @param filePath Path to the file the Worker shall execute.
      */
-    addNewWorker(filePath: string) {
-        const worker: Worker & { [kTaskInfo]?: WorkerPoolTaskInfo } = new Worker(filePath);
+    addNewWorker(filePath: string, workerInitData?: WorkerInitData) {
+        const worker: Worker & { [kTaskInfo]?: WorkerPoolTaskInfo } = new Worker(filePath, {
+            workerData: workerInitData,
+        });
 
         worker.on('message', (result: WorkerMessage) => {
             // In case of success: Call the callback that was passed to `runTask`,
@@ -96,7 +99,7 @@ export default class WorkerPool extends EventEmitter {
             // Remove the worker from the list and start a new Worker to replace the
             // current one.
             this.workers.splice(this.workers.indexOf(worker), 1);
-            this.addNewWorker(filePath);
+            this.addNewWorker(filePath, workerInitData);
         });
 
         this.workers.push(worker);

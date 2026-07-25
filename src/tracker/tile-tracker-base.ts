@@ -141,6 +141,49 @@ class TileTrackerBase extends BaseTracker {
         }
     }
 
+    resetWorkerBatch() {
+        this.time = 0;
+        this.cntMovesGame = 0;
+        this.cntMovesTotal = 0;
+
+        for (let row = 0; row < 8; row += 1) {
+            for (let col = 0; col < 8; col += 1) {
+                const cell = this.tiles[row][col];
+                cell.b.movedTo = 0;
+                cell.b.wasOn = 0;
+                cell.b.capturedOn = 0;
+                cell.b.wasCapturedOn = 0;
+                cell.w.movedTo = 0;
+                cell.w.wasOn = 0;
+                cell.w.capturedOn = 0;
+                cell.w.wasCapturedOn = 0;
+
+                for (const piece of pawnTemplate) {
+                    cell.b[piece].movedTo = 0;
+                    cell.b[piece].wasOn = 0;
+                    cell.b[piece].capturedOn = 0;
+                    cell.b[piece].wasCapturedOn = 0;
+                    cell.w[piece].movedTo = 0;
+                    cell.w[piece].wasOn = 0;
+                    cell.w[piece].capturedOn = 0;
+                    cell.w[piece].wasCapturedOn = 0;
+                }
+                for (const piece of pieceTemplate) {
+                    cell.b[piece].movedTo = 0;
+                    cell.b[piece].wasOn = 0;
+                    cell.b[piece].capturedOn = 0;
+                    cell.b[piece].wasCapturedOn = 0;
+                    cell.w[piece].movedTo = 0;
+                    cell.w[piece].wasOn = 0;
+                    cell.w[piece].capturedOn = 0;
+                    cell.w[piece].wasCapturedOn = 0;
+                }
+
+                this.resetCurrentPiece(row, col);
+            }
+        }
+    }
+
     resetCurrentPiece(row: number, col: number) {
         let color: 'b' | 'w';
         let piece: string;
