@@ -1,16 +1,11 @@
 /**
  * Data model for {@link TileTrackerBase}: per-square stats and virtual piece tracking.
  *
- * Each board square holds aggregate stats for black/white (`TileStats`) plus per-piece-name
- * breakdowns keyed by strings like `Pa`, `Nb`, `Ke`. The `currentPiece` field tracks which
- * (virtual) piece occupies the square between moves for occupation-time statistics.
+ * Piece name templates are shared with board replay and heatmaps via {@link PAWN_TEMPLATE}
+ * and {@link PIECE_TEMPLATE} from `board/piece-names`.
  */
 
-/** Standard starting pawn names by file (a–h). Index matches board column. */
-export const PAWN_TEMPLATE = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
-
-/** Standard starting piece names by file on back rank (a–h). */
-export const PIECE_TEMPLATE = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
+export { PAWN_TEMPLATE, PIECE_TEMPLATE } from '../../board/piece-names';
 
 /** Counters for one color on one square (aggregate or per-piece-name). */
 export class TileStats {

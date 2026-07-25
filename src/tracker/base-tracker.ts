@@ -1,6 +1,6 @@
 import { performance } from 'node:perf_hooks';
 
-import Utils from '../core/utils';
+import { generateComparisonHeatmap, generateHeatmap } from './heatmap-utils';
 import type {
     Game,
     Action,
@@ -63,7 +63,7 @@ class BaseTracker implements Tracker {
             heatmapFunction = analysisFunc;
         }
 
-        return Utils.generateHeatmap(this, heatmapFunction, square, optData);
+        return generateHeatmap(this, heatmapFunction, square, optData);
     }
 
     generateComparisonHeatmap(
@@ -83,7 +83,7 @@ class BaseTracker implements Tracker {
             heatmapFunction = analysisFunc;
         }
 
-        return Utils.generateComparisonHeatmap(this, compData, heatmapFunction, square, optData);
+        return generateComparisonHeatmap(this, compData, heatmapFunction, square, optData);
     }
 }
 

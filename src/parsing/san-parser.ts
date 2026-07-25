@@ -1,6 +1,6 @@
 import type { Action } from '../interfaces';
 import type { PieceToken } from '../types';
-import Utils from '../core/utils';
+import { algebraicToCoordsAt } from '../board/board-coords';
 import type SanContext from './san-context';
 
 /**
@@ -41,7 +41,7 @@ export default class SanParser {
             end -= 2;
         }
 
-        const to = Utils.algebraicToCoordsAt(san, end);
+        const to = algebraicToCoordsAt(san, end);
         const from = this.ctx.fromBuf;
 
         if (san.charCodeAt(1) === 120) {
@@ -108,7 +108,7 @@ export default class SanParser {
         const token = san.charAt(0) as PieceToken;
 
         const end = san.length;
-        const to = Utils.algebraicToCoordsAt(san, end);
+        const to = algebraicToCoordsAt(san, end);
 
         let restEnd = end - 2;
         let capture = false;
@@ -120,7 +120,7 @@ export default class SanParser {
 
         let from: number[];
         if (restLen === 2) {
-            from = Utils.algebraicToCoordsAt(san, restEnd);
+            from = algebraicToCoordsAt(san, restEnd);
         } else if (restLen === 1) {
             const c = san.charCodeAt(1);
             const mustBeInCol = c >= 97 && c <= 104 ? c - 97 : null;

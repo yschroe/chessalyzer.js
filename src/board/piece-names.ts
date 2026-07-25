@@ -1,0 +1,41 @@
+import type { ChessPiece } from '../interfaces';
+import type { PlayerColor } from '../types';
+
+/**
+ * Canonical starting-position piece names used across board replay, tile tracking,
+ * and heatmap generation.
+ *
+ * Names encode **file** (last char a–h) not piece type — e.g. `Nb` is the knight on
+ * the b-file at game start. Index `col` matches board column (0 = a-file).
+ */
+
+/** Starting pawn names by file: Pa … Ph. */
+export const PAWN_TEMPLATE = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'] as const;
+
+/** Starting back-rank piece names by file: Ra, Nb, Bc, Qd, Ke, Bf, Ng, Rh. */
+export const PIECE_TEMPLATE = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'] as const;
+
+/**
+ * Return the standard starting piece on `coords`, or null for empty ranks.
+ * Board coords: row 0 = rank 8, row 7 = rank 1.
+ *
+ * Used by heatmaps for “starting piece on this square” context; promoted pieces
+ * are not represented here.
+ */
+export function getStartingPiece(coords: number[]): ChessPiece | null {
+    const row = coords[0];
+    const col = coords[1];
+
+    switch (row) {
+        case 0:
+            return { color: 'b' as PlayerColor, name: PIECE_TEMPLATE[col] };
+        case 1:
+            return { color: 'b' as PlayerColor, name: PAWN_TEMPLATE[col] };
+        case 6:
+            return { color: 'w' as PlayerColor, name: PAWN_TEMPLATE[col] };
+        case 7:
+            return { color: 'w' as PlayerColor, name: PIECE_TEMPLATE[col] };
+        default:
+            return null;
+    }
+}
