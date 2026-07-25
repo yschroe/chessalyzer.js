@@ -1,4 +1,4 @@
-import type { Game } from '../types';
+import type { Game } from '#types/game';
 import BaseTracker from './base-tracker';
 
 class GameTrackerBase extends BaseTracker {

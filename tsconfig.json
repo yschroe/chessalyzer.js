@@ -1,14 +1,22 @@
 {
-    "include": ["src/**/*", "scripts/**/*", "test/**/*", "manual-tests/**/*", "bench/**/*"],
+    "include": ["src/**/*", "scripts/**/*", "test/**/*", "bench/**/*"],
+    "exclude": ["manual-tests"],
     "compilerOptions": {
         "target": "ESNext",
         "module": "Preserve",
-        "allowImportingTsExtensions": true,
+        "moduleResolution": "bundler",
+        "lib": ["ESNext"],
+
         "noEmit": true,
-        "outDir": "./lib",
+        "isolatedModules": true,
+        "verbatimModuleSyntax": true,
+
+        // "strict": true,
+        "noUncheckedIndexedAccess": true,
+        // "noImplicitOverride": true,
+
         "skipLibCheck": true,
         "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true
-        // "strictNullChecks": true
+        "resolveJsonModule": true
     }
 }

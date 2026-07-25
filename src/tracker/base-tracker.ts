@@ -1,13 +1,8 @@
 import { performance } from 'node:perf_hooks';
 
-import type {
-    Game,
-    Action,
-    Tracker,
-    TrackerConfig,
-    HeatmapAnalysisFunc,
-    HeatmapData,
-} from '../types';
+import type { Action } from '#types/actions';
+import type { Game } from '#types/game';
+import type { HeatmapAnalysisFunc, HeatmapData, Tracker, TrackerConfig } from '#types/tracker';
 import { generateComparisonHeatmap, generateHeatmap } from './heatmap-utils';
 
 class BaseTracker implements Tracker {

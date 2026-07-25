@@ -1,9 +1,9 @@
 import { parentPort, workerData } from 'node:worker_threads';
 
-import GameParser from '../parsing/game-parser';
-import { parseGamesFromLines } from '../pgn/game-assembler';
-import { decodePgnChunkBytes } from '../pgn/line-reader';
-import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '../types';
+import GameParser from '#parsing/game-parser';
+import { parseGamesFromLines } from '#pgn/game-assembler';
+import { decodePgnChunkBytes } from '#pgn/line-reader';
+import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
 import { getCachedCfg, initWorkerTrackers, resetCfg } from './worker-tracker-registry';
 
 const initData = workerData as WorkerInitData | undefined;

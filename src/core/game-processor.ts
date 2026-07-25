@@ -3,24 +3,23 @@ import { availableParallelism } from 'node:os';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import GameParser from '../parsing/game-parser';
-import { GameLineParser } from '../pgn/game-assembler';
+import GameParser from '#parsing/game-parser';
+import { GameLineParser } from '#pgn/game-assembler';
 import {
     DEFAULT_PGN_CHUNK_BYTES,
     encodePgnChunkText,
     readLinesFast,
     readPgnChunks,
-} from '../pgn/line-reader';
+} from '#pgn/line-reader';
 import type {
-    Game,
     AnalysisConfig,
-    MultithreadConfig,
     GameAndMoveCount,
-    WorkerMessage,
     GameProcessorAnalysisConfigFull,
     GameProcessorConfig,
-    WorkerInitData,
-} from '../types';
+    MultithreadConfig,
+} from '#types/analysis';
+import type { Game } from '#types/game';
+import type { WorkerInitData, WorkerMessage } from '#types/worker';
 import WorkerPool from './worker-pool';
 
 /**

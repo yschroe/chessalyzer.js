@@ -1,5 +1,5 @@
-import type { Action } from '../types';
-import type { PlayerColor } from '../types';
+import type { Action } from '#types/actions';
+import type { PlayerColor } from '#types/tokens';
 import BaseTracker from './base-tracker';
 import HeatmapPresets from './heatmaps/piece-heatmaps';
 

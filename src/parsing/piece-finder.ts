@@ -1,5 +1,5 @@
-import type ChessBoard from '../board/chess-board';
-import type { PieceToken, PlayerColor } from '../types';
+import type ChessBoard from '#board/chess-board';
+import type { PieceToken, PlayerColor } from '#types/tokens';
 
 /**
  * Lookup tables indexed by piece char code ('Q'=81, 'R'=82, 'B'=66, …).

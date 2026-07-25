@@ -1,5 +1,6 @@
-import type { Game, GameProcessorAnalysisConfig } from '../types';
-import type { PlayerColor } from '../types';
+import type { GameProcessorAnalysisConfig } from '#types/analysis';
+import type { Game } from '#types/game';
+import type { PlayerColor } from '#types/tokens';
 import SanApplier from './san-applier';
 import SanContext from './san-context';
 import SanParser from './san-parser';
