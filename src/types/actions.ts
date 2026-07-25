@@ -1,4 +1,4 @@
-import type { PlayerColor } from './tokens';
+import type { PlayerColor } from '#types/tokens';
 
 interface BaseAction {
     type: 'move' | 'capture' | 'promote';

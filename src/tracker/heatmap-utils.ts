@@ -1,6 +1,7 @@
-import { algebraicToCoords, coordsToAlgebraic } from '../board/board-coords';
-import { getStartingPiece } from '../board/piece-names';
-import type { HeatmapAnalysisFunc, HeatmapData, SquareData } from '../types';
+import { algebraicToCoords, coordsToAlgebraic } from '#board/board-coords';
+import { getStartingPiece } from '#board/piece-names';
+import type { SquareData } from '#types/game';
+import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
 
 /**
  * Build 8×8 heatmap grids from tracker data and analysis functions.

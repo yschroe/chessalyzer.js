@@ -1,6 +1,6 @@
 import { createReadStream } from 'node:fs';
 
-import { isGameResultLine, stripComments } from './pgn-line-parser';
+import { isGameResultLine, stripComments } from '#pgn/pgn-line-parser';
 
 /** Default chunk size (~4 MB) for worker-side PGN dispatch. */
 export const DEFAULT_PGN_CHUNK_BYTES = 4 * 1024 * 1024;
@@ -32,7 +32,7 @@ export function decodePgnChunkBytes(bytes: Uint8Array): string {
 }
 
 /** Index of the last movetext line that completes a game, or -1 if none. */
-export function findLastCompleteGameLineIndex(lines: string[]): number {
+function findLastCompleteGameLineIndex(lines: string[]): number {
     for (let i = lines.length - 1; i >= 0; i -= 1) {
         const line = lines[i];
         if (line === '') continue;
@@ -55,13 +55,6 @@ export function chunkEndsWithCompleteGame(lines: string[]): boolean {
     }
 
     return true;
-}
-
-/** Keep lines up to and including the last completed game. */
-export function truncateToLastCompleteGame(lines: string[]): string[] {
-    const lastResultIdx = findLastCompleteGameLineIndex(lines);
-    if (lastResultIdx === -1) return [];
-    return lines.slice(0, lastResultIdx + 1);
 }
 
 function chunkByteSize(lines: string[]): number {

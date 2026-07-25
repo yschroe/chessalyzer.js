@@ -1,7 +1,5 @@
-import Chessalyzer from './core/chessalyzer';
-import BaseTracker from './tracker/base-tracker';
-import GameTracker from './tracker/game-tracker-base';
-import PieceTracker from './tracker/piece-tracker-base';
-import TileTracker from './tracker/tile/tile-tracker-base';
-
-export { Chessalyzer, PieceTracker, GameTracker, TileTracker, BaseTracker };
+export { default as Chessalyzer } from '#core/chessalyzer';
+export { default as PieceTracker } from '#tracker/piece-tracker-base';
+export { default as GameTracker } from '#tracker/game-tracker-base';
+export { default as TileTracker } from '#tracker/tile/tile-tracker-base';
+export { default as BaseTracker } from '#tracker/base-tracker';

@@ -1,6 +1,7 @@
-import ChessBoard from '../board/chess-board';
-import type { Action, CaptureAction, MoveAction, PromoteAction, PlayerColor } from '../types';
-import PieceFinder from './piece-finder';
+import ChessBoard from '#board/chess-board';
+import PieceFinder from '#parsing/piece-finder';
+import type { Action, CaptureAction, MoveAction, PromoteAction } from '#types/actions';
+import type { PlayerColor } from '#types/tokens';
 
 /**
  * Shared mutable state for replaying one game's SAN moves.

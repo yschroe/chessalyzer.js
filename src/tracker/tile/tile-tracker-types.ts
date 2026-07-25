@@ -5,7 +5,7 @@
  * and {@link PIECE_TEMPLATE} from `board/piece-names`.
  */
 
-export { PAWN_TEMPLATE, PIECE_TEMPLATE } from '../../board/piece-names';
+export { PAWN_TEMPLATE, PIECE_TEMPLATE } from '#board/piece-names';
 
 /** Counters for one color on one square (aggregate or per-piece-name). */
 export class TileStats {

@@ -1,5 +1,5 @@
 {
     "$schema": "./node_modules/knip/schema.json",
-    "entry": ["src/core/chess-worker.ts"],
-    "tags": ["-lintignore"]
+    "entry": ["src/index.ts", "src/core/chess-worker.ts"],
+    "ignore": ["bench/**", "manual-tests/**"]
 }

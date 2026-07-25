@@ -1,8 +1,14 @@
-import type { Move, Action } from '../../types';
-import BaseTracker from '../base-tracker';
-import HeatmapPresets from '../heatmaps/tile-heatmaps';
-import { createTileGrid, mergeCellStats, resetTileGrid, setStartingPiece } from './tile-grid';
-import type { StatsField } from './tile-tracker-types';
+import BaseTracker from '#tracker/base-tracker';
+import HeatmapPresets from '#tracker/heatmaps/tile-heatmaps';
+import {
+    createTileGrid,
+    mergeCellStats,
+    resetTileGrid,
+    setStartingPiece,
+} from '#tracker/tile/tile-grid';
+import type { StatsField } from '#tracker/tile/tile-tracker-types';
+import type { Action } from '#types/actions';
+import type { Move } from '#types/game';
 
 /**
  * Tracks per-square statistics: moves to, time occupied, captures on, pieces captured on.

@@ -1,4 +1,4 @@
-import type { PlayerColor } from './tokens';
+import type { PlayerColor } from '#types/tokens';
 
 /** Minimal game object built while streaming PGN movetext. */
 export interface Game {

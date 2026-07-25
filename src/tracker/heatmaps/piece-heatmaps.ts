@@ -1,5 +1,5 @@
-import type { SquareData } from '../../types';
-import PieceTrackerBase from '../piece-tracker-base';
+import type { SquareData } from '#types/game';
+import PieceTrackerBase from '#tracker/piece-tracker-base';
 
 export default {
     PIECE_CAPTURED_BY: {

@@ -54,17 +54,6 @@ export async function corpusPath(id: string = 'asorted'): Promise<string | null>
     return null;
 }
 
-/** Like corpusPath but throws with setup instructions when the file is missing. */
-export async function requireCorpus(id: string = 'asorted'): Promise<string> {
-    const path = await corpusPath(id);
-    if (!path) {
-        throw new Error(
-            `Corpus "${id}" not found. Run: bun run test:fetch-corpus (or place the file in test/corpus/)`,
-        );
-    }
-    return path;
-}
-
 /** Manifest entry for a corpus file (expected counts, golden tracker values). */
 export function getCorpusEntry(id: string = 'asorted') {
     const entry = corpusManifest.files.find((f) => f.id === id);

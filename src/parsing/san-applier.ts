@@ -1,6 +1,6 @@
-import { algebraicToCoordsAt } from '../board/board-coords';
-import type { PieceToken } from '../types';
-import type SanContext from './san-context';
+import { algebraicToCoordsAt } from '#board/board-coords';
+import type SanContext from '#parsing/san-context';
+import type { PieceToken } from '#types/tokens';
 
 /**
  * Applies SAN moves directly to the board without building {@link Action} objects.

@@ -1,4 +1,4 @@
-import type { Tracker, TrackerConfig } from './tracker';
+import type { Tracker, TrackerConfig } from '#types/tracker';
 
 /** One-time worker bootstrap: tracker class names, cfg, optional module paths. */
 export interface WorkerInitData {
@@ -26,5 +26,3 @@ export interface WorkerMessage {
     /** Set when batch processing failed in the worker; main thread should abort. */
     error?: string;
 }
-
-export type { Tracker, TrackerConfig };

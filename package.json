@@ -31,6 +31,14 @@
             "import": "./lib/index.js"
         }
     },
+    "imports": {
+        "#core/*": "./src/core/*.ts",
+        "#parsing/*": "./src/parsing/*.ts",
+        "#board/*": "./src/board/*.ts",
+        "#tracker/*": "./src/tracker/*.ts",
+        "#pgn/*": "./src/pgn/*.ts",
+        "#types/*": "./src/types/*.ts"
+    },
     "scripts": {
         "build": "bun ./scripts/create-bundle.ts",
         "test": "bun test",

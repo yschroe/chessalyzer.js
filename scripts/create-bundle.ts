@@ -11,7 +11,7 @@ const result = await Bun.build({
     splitting: true,
     naming: '[name].[ext]',
     plugins: [dts()],
-    packages: 'external',
+    external: ['chalk'],
 });
 
 if (!result.success) {

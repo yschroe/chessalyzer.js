@@ -1,8 +1,9 @@
-import type { Game, GameProcessorAnalysisConfig } from '../types';
-import type { PlayerColor } from '../types';
-import SanApplier from './san-applier';
-import SanContext from './san-context';
-import SanParser from './san-parser';
+import SanApplier from '#parsing/san-applier';
+import SanContext from '#parsing/san-context';
+import SanParser from '#parsing/san-parser';
+import type { GameProcessorAnalysisConfig } from '#types/analysis';
+import type { Game } from '#types/game';
+import type { PlayerColor } from '#types/tokens';
 
 /**
  * Orchestrates SAN replay for one game at a time.
