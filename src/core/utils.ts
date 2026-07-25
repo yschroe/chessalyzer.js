@@ -1,51 +1,46 @@
 import type { ChessPiece, HeatmapAnalysisFunc, HeatmapData, SquareData } from '../interfaces';
 
-// const files = 'abcdefgh';
 const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-const ranks = [1, 2, 3, 4, 5, 6, 7, 8];
 
-const algebraicToCoordsMap = new Map<string, number[]>();
-for (const [fileIdx, file] of files.entries()) {
-    for (const rank of ranks) {
-        algebraicToCoordsMap.set(`${file}${rank}`, [8 - rank, fileIdx]);
+// Indexed by file*8 + rankIndex (rank '1'..'8' -> 0..7). Values are shared immutable coords.
+const algebraicToCoordsTable: number[][] = Array.from({ length: 64 });
+for (let file = 0; file < 8; file += 1) {
+    for (let rank = 0; rank < 8; rank += 1) {
+        algebraicToCoordsTable[file * 8 + rank] = [7 - rank, file];
     }
 }
 
-const tokenToRowColMap = new Map([
-    ['a', [null, 0]],
-    ['b', [null, 1]],
-    ['c', [null, 2]],
-    ['d', [null, 3]],
-    ['e', [null, 4]],
-    ['f', [null, 5]],
-    ['g', [null, 6]],
-    ['h', [null, 7]],
-    ['1', [7, null]],
-    ['2', [6, null]],
-    ['3', [5, null]],
-    ['4', [4, null]],
-    ['5', [3, null]],
-    ['6', [2, null]],
-    ['7', [1, null]],
-    ['8', [0, null]],
-]);
+const rowColNone: (number | null)[] = [null, null];
+const rowColByFile: (number | null)[][] = [];
+const rowColByRank: (number | null)[][] = [];
+for (let i = 0; i < 8; i += 1) {
+    rowColByFile[i] = [null, i];
+    rowColByRank[i] = [7 - i, null];
+}
 
-const fileToNumberMap = new Map([
-    ['a', 0],
-    ['b', 1],
-    ['c', 2],
-    ['d', 3],
-    ['e', 4],
-    ['f', 5],
-    ['g', 6],
-    ['h', 7],
-]);
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 
 export default class Utils {
+    /**
+     * Convert algebraic square (e.g. 'e4') to board coords.
+     * Returns a shared array — do not mutate.
+     */
     static algebraicToCoords(square: string): number[] | undefined {
-        return algebraicToCoordsMap.get(square);
+        const file = square.charCodeAt(0) - 97; // 'a' -> 0
+        const rank = square.charCodeAt(1) - 49; // '1' -> 0
+        if ((file | rank) >>> 3) return undefined;
+        return algebraicToCoordsTable[file * 8 + rank];
+    }
+
+    /**
+     * Read an algebraic square from `san` ending at `end` (exclusive), without slicing.
+     * Returns a shared array — do not mutate.
+     */
+    static algebraicToCoordsAt(san: string, end: number): number[] {
+        const file = san.charCodeAt(end - 2) - 97;
+        const rank = san.charCodeAt(end - 1) - 49;
+        return algebraicToCoordsTable[file * 8 + rank];
     }
 
     static coordsToAlgebraic(coords: number[]): string {
@@ -53,11 +48,16 @@ export default class Utils {
     }
 
     static getRowCol(file: string): (number | null)[] {
-        return tokenToRowColMap.get(file) ?? [null, null];
+        if (file.length === 0) return rowColNone;
+        const c = file.charCodeAt(0);
+        if (c >= 97 && c <= 104) return rowColByFile[c - 97];
+        if (c >= 49 && c <= 56) return rowColByRank[c - 49];
+        return rowColNone;
     }
 
     static getFileNumber(file: string): number | null {
-        return fileToNumberMap.get(file) ?? null;
+        const n = file.charCodeAt(0) - 97;
+        return n >= 0 && n < 8 ? n : null;
     }
 
     static getStartingPiece(sqr: number[]): ChessPiece | null {
