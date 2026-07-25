@@ -93,9 +93,9 @@ class PiecePositions {
         }
     }
 
-    /** Update piece at `from` to `to` by position (pawns are ignored). */
-    move(pieceName: string, from: number[], to: number[]): void {
-        const list = this.listForChar(pieceName.charCodeAt(0));
+    /** Update piece at `from` to `to` by position (pawns/token 80 are ignored). */
+    moveByChar(tokenChar: number, from: number[], to: number[]): void {
+        const list = this.listForChar(tokenChar);
         if (!list) return;
 
         const fromRow = from[0];
@@ -110,9 +110,13 @@ class PiecePositions {
         }
     }
 
+    move(pieceName: string, from: number[], to: number[]): void {
+        this.moveByChar(pieceName.charCodeAt(0), from, to);
+    }
+
     /** Remove piece at `on` by position. */
-    capture(takenPieceName: string, on: number[]): void {
-        const list = this.listForChar(takenPieceName.charCodeAt(0));
+    captureByChar(tokenChar: number, on: number[]): void {
+        const list = this.listForChar(tokenChar);
         if (!list) return;
 
         const row = on[0];
@@ -126,6 +130,10 @@ class PiecePositions {
                 return;
             }
         }
+    }
+
+    capture(takenPieceName: string, on: number[]): void {
+        this.captureByChar(takenPieceName.charCodeAt(0), on);
     }
 
     /** Add a promoted piece on `on`. */
@@ -212,6 +220,12 @@ class ChessBoard {
         return this.tiles[row * 8 + col] === 0;
     }
 
+    /** True if square holds a pawn (standard piece indices 9–16). */
+    isPawnAt(row: number, col: number): boolean {
+        const idx = this.tiles[row * 8 + col] & 0b01111111;
+        return idx >= 9 && idx <= 16;
+    }
+
     getPieceNameAt(row: number, col: number): string | null {
         const pieceNumber = this.tiles[row * 8 + col];
         if (pieceNumber === 0) return null;
@@ -262,16 +276,42 @@ class ChessBoard {
     }
 
     movePiece(player: PlayerColor, piece: string, from: number[], to: number[]): void {
+        this.moveByToken(player, piece.charCodeAt(0), from, to);
+    }
+
+    /** Move using SAN piece token char ('N','P',...). Avoids piece-name lookups on the fast path. */
+    moveByToken(player: PlayerColor, tokenChar: number, from: number[], to: number[]): void {
         const fromIdx = from[0] * 8 + from[1];
         const toIdx = to[0] * 8 + to[1];
         this.tiles[toIdx] = this.tiles[fromIdx];
         this.tiles[fromIdx] = 0;
-        this.pieces[player].move(piece, from, to);
+        this.pieces[player].moveByChar(tokenChar, from, to);
     }
 
     capturePiece(player: PlayerColor, takenPiece: string, on: number[]): void {
         this.pieces[player === 'w' ? 'b' : 'w'].capture(takenPiece, on);
         this.tiles[on[0] * 8 + on[1]] = 0;
+    }
+
+    /** Capture whatever is on `on` (reads token from the tile, then clears it). */
+    captureAt(player: PlayerColor, on: number[]): void {
+        const onIdx = on[0] * 8 + on[1];
+        const pieceNumber = this.tiles[onIdx];
+        if (pieceNumber === 0) return;
+
+        this.tiles[onIdx] = 0;
+
+        const pieceIdx = pieceNumber & 0b01111111;
+        // Pawns are not tracked in piece lists.
+        if (pieceIdx >= 9 && pieceIdx <= 16) return;
+
+        const color: PlayerColor = pieceNumber & 0b10000000 ? 'b' : 'w';
+        const name =
+            ChessBoard.pieceLookupList[pieceIdx] ??
+            this.promotedPieces[color][pieceIdx - ChessBoard.pieceLookupList.length - 1];
+        if (!name) return;
+
+        this.pieces[player === 'w' ? 'b' : 'w'].captureByChar(name.charCodeAt(0), on);
     }
 
     promotePiece(player: PlayerColor, on: number[], to: string): void {
