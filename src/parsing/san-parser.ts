@@ -1,7 +1,7 @@
 import { algebraicToCoordsAt } from '#board/board-coords';
+import type SanContext from '#parsing/san-context';
 import type { Action } from '#types/actions';
 import type { PieceToken } from '#types/tokens';
-import type SanContext from './san-context';
 
 /**
  * Parses SAN into reusable {@link Action} objects for move trackers.

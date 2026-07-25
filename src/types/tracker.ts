@@ -1,5 +1,5 @@
-import type { Action } from './actions';
-import type { Game, SquareData } from './game';
+import type { Action } from '#types/actions';
+import type { Game, SquareData } from '#types/game';
 
 /** Optional runtime flags attached to tracker instances. */
 export interface TrackerConfig {

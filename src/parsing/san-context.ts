@@ -1,7 +1,7 @@
 import ChessBoard from '#board/chess-board';
+import PieceFinder from '#parsing/piece-finder';
 import type { Action, CaptureAction, MoveAction, PromoteAction } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
-import PieceFinder from './piece-finder';
 
 /**
  * Shared mutable state for replaying one game's SAN moves.

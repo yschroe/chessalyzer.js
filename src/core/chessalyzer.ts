@@ -2,10 +2,10 @@ import { performance } from 'node:perf_hooks';
 
 import chalk from 'chalk';
 
+import GameProcessor from '#core/game-processor';
 import { DEFAULT_PGN_CHUNK_BYTES } from '#pgn/line-reader';
 import type { AnalysisConfig, GameAndMoveCountFull, MultithreadConfig } from '#types/analysis';
 import type { HeatmapData } from '#types/tracker';
-import GameProcessor from './game-processor';
 
 export default class Chessalyzer {
     /**

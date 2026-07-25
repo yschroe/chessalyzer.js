@@ -1,5 +1,10 @@
+import {
+    extractMoves,
+    isGameResultLine,
+    parseHeaderTag,
+    stripComments,
+} from '#pgn/pgn-line-parser';
 import type { Game } from '#types/game';
-import { extractMoves, isGameResultLine, parseHeaderTag, stripComments } from './pgn-line-parser';
 
 export interface ParseGamesOptions {
     readInHeader: boolean;

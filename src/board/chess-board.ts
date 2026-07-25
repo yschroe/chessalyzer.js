@@ -1,7 +1,7 @@
-import type { ChessPiece } from '#types/game';
+import PiecePositions from '#board/piece-positions';
 import type { Action, MoveAction, CaptureAction, PromoteAction } from '#types/actions';
+import type { ChessPiece } from '#types/game';
 import type { PieceToken, PlayerColor } from '#types/tokens';
-import PiecePositions from './piece-positions';
 
 /**
  * Mutable chess position used while replaying SAN moves from a PGN.

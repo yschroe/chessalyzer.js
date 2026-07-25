@@ -3,6 +3,7 @@ import { availableParallelism } from 'node:os';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import WorkerPool from '#core/worker-pool';
 import GameParser from '#parsing/game-parser';
 import { GameLineParser } from '#pgn/game-assembler';
 import {
@@ -20,7 +21,6 @@ import type {
 } from '#types/analysis';
 import type { Game } from '#types/game';
 import type { WorkerInitData, WorkerMessage } from '#types/worker';
-import WorkerPool from './worker-pool';
 
 /**
  * Class that processes games.

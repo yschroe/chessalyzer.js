@@ -1,4 +1,4 @@
-import type { Tracker, TrackerConfig } from './tracker';
+import type { Tracker, TrackerConfig } from '#types/tracker';
 
 /** User-facing analysis configuration passed to {@link Chessalyzer.analyzePGN}. */
 export interface AnalysisConfig {
