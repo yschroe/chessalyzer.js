@@ -11,6 +11,32 @@ for (const [fileIdx, file] of files.entries()) {
     }
 }
 
+const algebraicToBitIdxMap = new Map<string, number>();
+for (const [fileIdx, file] of files.entries()) {
+    for (const rank of ranks) {
+        algebraicToBitIdxMap.set(`${file}${rank}`, 7 - fileIdx + 8 * (rank - 1));
+    }
+}
+
+const targetColRowMap = new Map([
+    ['a', 16],
+    ['b', 15],
+    ['c', 14],
+    ['d', 13],
+    ['e', 12],
+    ['f', 11],
+    ['g', 10],
+    ['h', 9],
+    ['1', 1],
+    ['2', 2],
+    ['3', 3],
+    ['4', 4],
+    ['5', 5],
+    ['6', 6],
+    ['7', 7],
+    ['8', 8],
+]);
+
 const tokenToRowColMap = new Map([
     ['a', [null, 0]],
     ['b', [null, 1]],
@@ -31,14 +57,14 @@ const tokenToRowColMap = new Map([
 ]);
 
 const fileToNumberMap = new Map([
-    ['a', 0],
-    ['b', 1],
-    ['c', 2],
-    ['d', 3],
-    ['e', 4],
-    ['f', 5],
-    ['g', 6],
-    ['h', 7],
+    ['a', 7],
+    ['b', 6],
+    ['c', 5],
+    ['d', 4],
+    ['e', 3],
+    ['f', 2],
+    ['g', 1],
+    ['h', 0],
 ]);
 const pawnTemplate = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'];
 const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
@@ -46,6 +72,11 @@ const pieceTemplate = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'];
 export default class Utils {
     static algebraicToCoords(square: string): number[] | undefined {
         return algebraicToCoordsMap.get(square);
+    }
+
+    // h1 = 0, a8 = 63
+    static algebraicToBitIndex(square: string) {
+        return algebraicToBitIdxMap.get(square);
     }
 
     static coordsToAlgebraic(coords: number[]): string {
@@ -58,6 +89,15 @@ export default class Utils {
 
     static getFileNumber(file: string): number | null {
         return fileToNumberMap.get(file) ?? null;
+    }
+
+    /** File letter (`a`–`h`) for a bit index (`h1 = 0`, `a8 = 63`). */
+    static fileFromBitIndex(idx: number): string {
+        return files[7 - (idx % 8)];
+    }
+
+    static getTargetRowCol(char: string): number {
+        return targetColRowMap.get(char) ?? 0;
     }
 
     static getStartingPiece(sqr: number[]): ChessPiece | null {

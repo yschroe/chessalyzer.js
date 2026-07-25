@@ -25,6 +25,9 @@
     "type": "module",
     "main": "lib/chessalyzer.js",
     "types": "lib/chessalyzer.d.ts",
+    "imports": {
+        "#bitboard": "./pkg/bitboard.js"
+    },
     "exports": {
         ".": {
             "types": "./lib/index.d.ts",
@@ -32,7 +35,7 @@
         }
     },
     "scripts": {
-        "build": "bun ./scripts/create-bundle.ts",
+        "build": "wasm-pack build --target nodejs && bun ./scripts/create-bundle.ts",
         "test": "bun test",
         "lint": "oxlint",
         "format": "oxfmt",
