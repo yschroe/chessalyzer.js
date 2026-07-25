@@ -111,18 +111,18 @@ async function main() {
     const tokH = await stageTokenize(true);
     console.log(`4 Tokenize + hdr     ${fmt(tokH.ms)}  | ${mps(tokH.moves, tokH.ms)} moves/s`);
 
-    const multi = await api({ trackers: [] }, { batchSize: 200 });
+    const multi = await api({ trackers: [] }, { targetBytes: 4 * 1024 * 1024 });
     console.log(`5 API multi none     ${fmt(multi.ms)}  | ${multi.mps.toLocaleString()} moves/s`);
 
     const single = await api({ trackers: [] }, null);
     console.log(`6 API single none    ${fmt(single.ms)}  | ${single.mps.toLocaleString()} moves/s`);
 
-    const tile = await api({ trackers: [new TileTracker()] }, { batchSize: 200 });
+    const tile = await api({ trackers: [new TileTracker()] }, { targetBytes: 4 * 1024 * 1024 });
     console.log(`7 API multi Tile     ${fmt(tile.ms)}  | ${tile.mps.toLocaleString()} moves/s`);
 
     const all = await api(
         { trackers: [new TileTracker(), new GameTracker(), new PieceTracker()] },
-        { batchSize: 200 },
+        { targetBytes: 4 * 1024 * 1024 },
     );
     console.log(`8 API multi all      ${fmt(all.ms)}  | ${all.mps.toLocaleString()} moves/s`);
 

@@ -62,7 +62,12 @@ console.log(`${batchGroups.length} batches × ${BATCH} games (~${movesPerBatch} 
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const workerPath = join(__dirname, '../lib/chess-worker.js');
-const trackerData = [];
+
+function gamesToChunk(games) {
+    return games.map((game) => `${game.moves.join(' ')} 1-0`).join('\n');
+}
+
+const chunkGroups = batchGroups.map(gamesToChunk);
 
 async function bench(nWorkers, label, makeMsg) {
     const workers = Array.from({ length: nWorkers }, () => new Worker(workerPath));
@@ -96,20 +101,14 @@ async function bench(nWorkers, label, makeMsg) {
 
 {
     const t0 = performance.now();
-    for (const g of batchGroups) structuredClone(g);
+    for (const chunk of chunkGroups) structuredClone(chunk);
     console.log(
-        `${'structuredClone (in only)'.padEnd(32)} ${((performance.now() - t0) / 1000).toFixed(3)}s`,
+        `${'structuredClone (chunk only)'.padEnd(32)} ${((performance.now() - t0) / 1000).toFixed(3)}s`,
     );
 }
 
-await bench(8, 'worker RT (full payload)', (games) => ({
-    games,
-    trackerData,
+await bench(8, 'worker RT (pgn chunk)', (games) => ({
+    pgnChunk: gamesToChunk(games),
     idxConfig: 0,
-}));
-
-// games-only payload (simulated slim task)
-await bench(8, 'worker RT (games only)', (games) => ({
-    games,
-    idxConfig: 0,
+    readInHeader: false,
 }));

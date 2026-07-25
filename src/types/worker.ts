@@ -1,4 +1,3 @@
-import type { Game } from './game';
 import type { Tracker, TrackerConfig } from './tracker';
 
 /** One-time worker bootstrap: tracker class names, cfg, optional module paths. */
@@ -10,8 +9,10 @@ export interface WorkerInitData {
 
 /** Per-batch payload sent main → worker (tracker config lives in workerData). */
 export interface WorkerTaskData {
-    games: Game[];
+    pgnChunk: string;
     idxConfig: number;
+    readInHeader: boolean;
+    maxGames?: number;
 }
 
 /** Worker → main result: counts and optional tracker state to merge. */
