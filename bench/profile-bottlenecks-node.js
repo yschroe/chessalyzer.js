@@ -24,7 +24,6 @@ function readLinesFast(file) {
     const iterator = rs[Symbol.asyncIterator]();
     const cache = [];
     let lineBreak = false;
-    let pending = null;
 
     const next = async () => {
         let line = cache.shift() ?? null;

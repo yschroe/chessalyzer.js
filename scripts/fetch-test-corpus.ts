@@ -6,7 +6,7 @@
  *
  * Run once after clone: bun run test:fetch-corpus
  */
-import { copyFile, mkdir, access } from 'node:fs/promises';
+import { copyFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import corpusManifest from '../test/corpus/manifest.json';
@@ -22,8 +22,6 @@ async function exists(path: string) {
         return false;
     }
 }
-
-// await mkdir(CORPUS_DIR, { recursive: true });
 
 let missing = 0;
 
