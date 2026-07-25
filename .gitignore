@@ -10,8 +10,3 @@ node_modules
 
 # built library
 lib
-
-# Added by cargo
-/target
-/pkg
-/wasm-pack.log
