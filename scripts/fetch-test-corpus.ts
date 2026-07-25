@@ -2,14 +2,14 @@
  * Copies large PGN corpus files into test/corpus/ for optional regression tests.
  *
  * Corpus files are gitignored; this script tries each path listed in
- * test/corpus.manifest.json (e.g. an existing local copy or manual-tests/).
+ * test/corpus/manifest.json (e.g. an existing local copy or manual-tests/).
  *
  * Run once after clone: bun run test:fetch-corpus
  */
 import { copyFile, mkdir, access } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import corpusManifest from '../test/corpus.manifest.json';
+import corpusManifest from '../test/corpus/manifest.json';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const CORPUS_DIR = join(ROOT, corpusManifest.dir);
@@ -23,7 +23,7 @@ async function exists(path: string) {
     }
 }
 
-await mkdir(CORPUS_DIR, { recursive: true });
+// await mkdir(CORPUS_DIR, { recursive: true });
 
 let missing = 0;
 

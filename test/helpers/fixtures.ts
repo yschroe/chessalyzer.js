@@ -2,12 +2,12 @@
  * Helpers for resolving committed test fixtures and optional corpus files.
  *
  * Fixtures (test/fixtures/) are small PGNs tracked in git.
- * Corpus files (test/corpus/) are large PGNs listed in corpus.manifest.json and gitignored.
+ * Corpus files (test/corpus/) are large PGNs listed in corpus/manifest.json and gitignored.
  */
 import { access, mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import corpusManifest from '../corpus.manifest.json';
+import corpusManifest from '../corpus/manifest.json';
 import manifest from '../fixtures/manifest.json';
 
 const TEST_DIR = new URL('..', import.meta.url).pathname;
