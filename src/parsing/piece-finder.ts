@@ -14,7 +14,7 @@ DIAG[81] = 1; // Q
 DIAG[66] = 1; // B
 
 /** Thrown when no candidate piece can legally reach the target square. */
-export class MoveNotFoundException extends Error {
+class MoveNotFoundException extends Error {
     constructor(token: string, player: PlayerColor, tarRow: number, tarCol: number) {
         super(`${player}: No piece for move ${token} to (${tarRow},${tarCol}) found!`);
         this.name = 'MoveNotFoundError';

@@ -10,22 +10,22 @@
  */
 
 /** Matches `[Key "Value"]` header tags. */
-export const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
+const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
 
 /** Matches `{brace}` and `(paren)` comments (non-greedy). */
-export const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
+const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
 
 /**
  * Matches one SAN move token. Starts with a piece letter or pawn file (a–h),
  * then non-whitespace excluding move suffixes `?`, `!`, `#`, `+`.
  */
-export const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
+const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
 
 /**
  * Matches a game result suffix: `-1/2` (draw), `-0` (black wins), `-1` (white wins).
  * Used on cleaned movetext lines, e.g. `... Qh7+ 1-0`.
  */
-export const RESULT_REGEX = /-(1\/2|0|1)$/;
+const RESULT_REGEX = /-(1\/2|0|1)$/;
 
 /**
  * Parse a PGN header tag line into `[key, value]`, or null if not a valid tag.

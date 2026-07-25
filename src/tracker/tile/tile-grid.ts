@@ -87,7 +87,7 @@ export function setStartingPiece(tiles: StatsField[][], row: number, col: number
 }
 
 /** Zero all counters on one cell (aggregate + per-piece). Does not touch `currentPiece`. */
-export function zeroCellStats(cell: StatsField): void {
+function zeroCellStats(cell: StatsField): void {
     cell.b.movedTo = 0;
     cell.b.wasOn = 0;
     cell.b.capturedOn = 0;

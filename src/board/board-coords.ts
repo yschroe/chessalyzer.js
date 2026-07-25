@@ -15,9 +15,6 @@ for (let file = 0; file < 8; file += 1) {
     }
 }
 
-/** Sentinel returned by {@link getRowCol} when disambiguator char is invalid. */
-const rowColNone: (number | null)[] = [null, null];
-
 /** `[null, col]` for file letters `'a'`…`'h'`. */
 const rowColByFile: (number | null)[][] = [];
 /** `[row, null]` for rank digits `'1'`…`'8'`. */
@@ -51,22 +48,4 @@ export function algebraicToCoordsAt(san: string, end: number): number[] {
 /** Convert internal `[row, col]` to algebraic notation (e.g. `[6, 4]` → `'e2'`). */
 export function coordsToAlgebraic(coords: number[]): string {
     return `${FILES[coords[1]]}${8 - coords[0]}`;
-}
-
-/**
- * Parse a one-char SAN disambiguator into `[row, col]` partial coords.
- * File letter → `[null, col]`; rank digit → `[row, null]`; invalid → `[null, null]`.
- */
-export function getRowCol(file: string): (number | null)[] {
-    if (file.length === 0) return rowColNone;
-    const c = file.charCodeAt(0);
-    if (c >= 97 && c <= 104) return rowColByFile[c - 97];
-    if (c >= 49 && c <= 56) return rowColByRank[c - 49];
-    return rowColNone;
-}
-
-/** Map file letter `'a'`…`'h'` to column index 0…7, or null if invalid. */
-export function getFileNumber(file: string): number | null {
-    const n = file.charCodeAt(0) - 97;
-    return n >= 0 && n < 8 ? n : null;
 }
