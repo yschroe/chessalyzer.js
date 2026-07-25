@@ -46,5 +46,3 @@ export interface GameAndMoveCount {
 export interface GameAndMoveCountFull extends GameAndMoveCount {
     mps: number;
 }
-
-export type { Tracker, TrackerConfig };
