@@ -1,32 +1,32 @@
 {
     "dir": "test/fixtures",
     "fixtures": {
-        "basic_normal": {
-            "file": "basic_normal.pgn",
+        "basic-normal": {
+            "file": "basic-normal.pgn",
             "description": "Standard complete game, single-line movetext",
             "expected": {
                 "cntGames": 1,
                 "cntMoves": 25
             }
         },
-        "black_wins": {
-            "file": "black_wins.pgn",
+        "black-wins": {
+            "file": "black-wins.pgn",
             "description": "Short game ending 0-1",
             "expected": {
                 "cntGames": 1,
                 "cntMoves": 4
             }
         },
-        "comments_multiline": {
-            "file": "comments_multiline.pgn",
+        "comments-multiline": {
+            "file": "comments-multiline.pgn",
             "description": "One game with comments, multi-line movetext",
             "expected": {
                 "cntGames": 1,
                 "cntMoves": 26
             }
         },
-        "comments_singleline": {
-            "file": "comments_singleline.pgn",
+        "comments-singleline": {
+            "file": "comments-singleline.pgn",
             "description": "One game with comments, single-line movetext",
             "expected": {
                 "cntGames": 1,
@@ -49,24 +49,24 @@
                 "cntMoves": 7
             }
         },
-        "en_passant": {
-            "file": "en_passant.pgn",
+        "en-passant": {
+            "file": "en-passant.pgn",
             "description": "Game containing an en passant capture",
             "expected": {
                 "cntGames": 1,
                 "cntMoves": 49
             }
         },
-        "lichess_headers": {
-            "file": "lichess_headers.pgn",
+        "lichess-headers": {
+            "file": "lichess-headers.pgn",
             "description": "Lichess-style headers with a complete game",
             "expected": {
                 "cntGames": 1,
                 "cntMoves": 7
             }
         },
-        "multiple_promotions": {
-            "file": "multiple_promotions.pgn",
+        "multiple-promotions": {
+            "file": "multiple-promotions.pgn",
             "description": "Game with multiple pawn promotions",
             "expected": {
                 "cntGames": 1,
@@ -81,16 +81,16 @@
                 "cntMoves": 69
             }
         },
-        "results_mix": {
-            "file": "results_mix.pgn",
+        "results-mix": {
+            "file": "results-mix.pgn",
             "description": "Multiple games with mixed results and Elo headers for filter tests",
             "expected": {
                 "cntGames": 6,
                 "cntMoves": 92
             }
         },
-        "white_wins": {
-            "file": "white_wins.pgn",
+        "white-wins": {
+            "file": "white-wins.pgn",
             "description": "Short game ending 1-0",
             "expected": {
                 "cntGames": 1,

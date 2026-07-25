@@ -13,18 +13,18 @@ import { Chessalyzer } from '../lib/index.js';
 const FIXTURES_DIR = new URL('../test/fixtures/', import.meta.url).pathname;
 
 const descriptions: Record<string, string> = {
-    basic_normal: 'Standard complete game, single-line movetext',
-    en_passant: 'Game containing an en passant capture',
+    'basic-normal': 'Standard complete game, single-line movetext',
+    'en-passant': 'Game containing an en passant capture',
     promotion: 'Game with a pawn promotion',
-    multiple_promotions: 'Game with multiple pawn promotions',
+    'multiple-promotions': 'Game with multiple pawn promotions',
     corrupt: 'One complete game plus one truncated game at EOF',
-    white_wins: 'Short game ending 1-0',
-    black_wins: 'Short game ending 0-1',
+    'white-wins': 'Short game ending 1-0',
+    'black-wins': 'Short game ending 0-1',
     draw: 'Short game ending 1/2-1/2',
-    lichess_headers: 'Lichess-style headers with a complete game',
-    comments_singleline: 'One game with comments, single-line movetext',
-    comments_multiline: 'One game with comments, multi-line movetext',
-    results_mix: 'Multiple games with mixed results and Elo headers for filter tests',
+    'lichess-headers': 'Lichess-style headers with a complete game',
+    'comments-singleline': 'One game with comments, single-line movetext',
+    'comments-multiline': 'One game with comments, multi-line movetext',
+    'results-mix': 'Multiple games with mixed results and Elo headers for filter tests',
 };
 
 const files = (await readdir(FIXTURES_DIR)).filter((f) => f.endsWith('.pgn')).sort();

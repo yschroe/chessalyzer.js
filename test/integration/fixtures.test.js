@@ -1,6 +1,5 @@
 import { describe, it, beforeAll, afterAll, expect } from 'bun:test';
 
-// Fast tests against small committed PGN fixtures (test/fixtures/).
 import { Chessalyzer, GameTracker, PieceTracker } from 'chessalyzer.js';
 
 import {
@@ -9,8 +8,9 @@ import {
     fixtureExpected,
     fixturePath,
     repeatPgn,
-} from './helpers/fixtures.ts';
+} from '../helpers/fixtures.ts';
 
+// Integration tests against small committed PGN fixtures (test/fixtures/).
 describe('Fixtures', () => {
     afterAll(async () => {
         await cleanupTmpPgns();
@@ -43,10 +43,10 @@ describe('Fixtures', () => {
         });
     });
 
-    describe('results_mix filtering', () => {
+    describe('results-mix filtering', () => {
         it('limits by cntGames', async () => {
             const data = await Chessalyzer.analyzePGN(
-                fixturePath('results_mix'),
+                fixturePath('results-mix'),
                 { config: { cntGames: 3 } },
                 null,
             );
@@ -55,7 +55,7 @@ describe('Fixtures', () => {
 
         it('filters by result', async () => {
             const data = await Chessalyzer.analyzePGN(
-                fixturePath('results_mix'),
+                fixturePath('results-mix'),
                 { config: { filter: (game) => game.Result === '1-0' } },
                 null,
             );
@@ -64,7 +64,7 @@ describe('Fixtures', () => {
 
         it('combines filter and count', async () => {
             const data = await Chessalyzer.analyzePGN(
-                fixturePath('results_mix'),
+                fixturePath('results-mix'),
                 {
                     config: {
                         cntGames: 2,
@@ -79,13 +79,13 @@ describe('Fixtures', () => {
 
     describe('volume via repeated fixtures', () => {
         it('processes many games from a repeated small fixture', async () => {
-            const path = await repeatPgn('results_mix', 20);
+            const path = await repeatPgn('results-mix', 20);
             const data = await Chessalyzer.analyzePGN(path, { trackers: [] }, null);
-            expect(data.cntGames).toBe(fixtureExpected('results_mix').cntGames * 20);
+            expect(data.cntGames).toBe(fixtureExpected('results-mix').cntGames * 20);
         });
 
         it('keeps tracker counts consistent at scale', async () => {
-            const path = await repeatPgn('results_mix', 50);
+            const path = await repeatPgn('results-mix', 50);
             const gameTracker = new GameTracker();
             const data = await Chessalyzer.analyzePGN(path, { trackers: [gameTracker] }, null);
             expect(data.cntGames).toBe(gameTracker.cntGames);
@@ -95,9 +95,9 @@ describe('Fixtures', () => {
     });
 
     describe('trackers on fixtures', () => {
-        it('runs GameTracker on lichess_headers', async () => {
+        it('runs GameTracker on lichess-headers', async () => {
             const gameTracker = new GameTracker();
-            const data = await Chessalyzer.analyzePGN(fixturePath('lichess_headers'), {
+            const data = await Chessalyzer.analyzePGN(fixturePath('lichess-headers'), {
                 trackers: [gameTracker],
             });
             expect(data.cntGames).toBe(1);

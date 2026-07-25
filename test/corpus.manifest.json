@@ -3,9 +3,10 @@
     "files": [
         {
             "id": "asorted",
-            "file": "asorted_games.pgn",
+            "file": "asorted-games.pgn",
             "description": "Large Lichess export used for golden regression tests",
             "sources": [
+                "test/corpus/asorted-games.pgn",
                 "test/corpus/asorted_games.pgn",
                 "test/asorted_games.pgn",
                 "manual-tests/asorted_games.pgn"

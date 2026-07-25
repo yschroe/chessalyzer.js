@@ -34,7 +34,7 @@
     "scripts": {
         "build": "bun ./scripts/create-bundle.ts",
         "test": "bun test",
-        "test:corpus": "bun test test/Corpus.test.js",
+        "test:corpus": "bun test test/integration/corpus.test.js",
         "test:fetch-corpus": "bun ./scripts/fetch-test-corpus.ts",
         "test:build-fixtures": "bun run build && bun ./scripts/build-fixture-manifest.ts",
         "lint": "oxlint",

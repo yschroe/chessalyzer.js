@@ -4,7 +4,7 @@ import { describe, it, beforeAll, expect } from 'bun:test';
 // Skipped automatically when corpus files are not present locally.
 import { Chessalyzer, GameTracker, PieceTracker } from 'chessalyzer.js';
 
-import { corpusPath, getCorpusEntry } from './helpers/fixtures.ts';
+import { corpusPath, getCorpusEntry } from '../helpers/fixtures.ts';
 
 const pgnPath = await corpusPath('asorted');
 const corpusAvailable = pgnPath !== null;
@@ -224,6 +224,6 @@ describeCorpus('Corpus regression (asorted)', () => {
 
 if (!corpusAvailable) {
     console.warn(
-        'Skipping corpus tests: asorted_games.pgn not found. Run: bun run test:fetch-corpus',
+        'Skipping corpus tests: asorted-games.pgn not found. Run: bun run test:fetch-corpus',
     );
 }

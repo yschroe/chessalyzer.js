@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 
-import { parseGamesFromLines } from '../src/pgn/game-assembler';
-import { chunkEndsWithCompleteGame, readLinesFast, readPgnChunks } from '../src/pgn/line-reader';
-import { fixturePath, repeatPgn, cleanupTmpPgns } from './helpers/fixtures.ts';
+import { parseGamesFromLines } from '../game-assembler';
+import { chunkEndsWithCompleteGame, readLinesFast, readPgnChunks } from '../line-reader';
+import { fixturePath, repeatPgn, cleanupTmpPgns } from '../../../test/helpers/fixtures.ts';
 
 async function collectChunks(path, config) {
     const chunks = [];
@@ -14,7 +14,7 @@ async function collectChunks(path, config) {
 
 describe('readPgnChunks', () => {
     it('aligns byte-target chunks to complete games', async () => {
-        const volumePath = await repeatPgn('results_mix', 100);
+        const volumePath = await repeatPgn('results-mix', 100);
         const chunks = await collectChunks(volumePath, { targetBytes: 32_768 });
 
         expect(chunks.length).toBeGreaterThan(1);
@@ -25,7 +25,7 @@ describe('readPgnChunks', () => {
     });
 
     it('parses the same games as the line reader when chunks are combined', async () => {
-        const path = fixturePath('comments_singleline');
+        const path = fixturePath('comments-singleline');
         const lineGames = [];
         let game = { moves: [] };
         for await (const line of readLinesFast(path)) {
@@ -51,7 +51,7 @@ describe('readPgnChunks', () => {
     });
 
     it('extends past the byte target until the current game finishes', async () => {
-        const volumePath = await repeatPgn('basic_normal', 50);
+        const volumePath = await repeatPgn('basic-normal', 50);
         const chunks = await collectChunks(volumePath, { targetBytes: 100, minLines: 0 });
         const chunk = chunks[0];
 
