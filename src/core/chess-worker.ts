@@ -3,16 +3,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { parentPort } from 'node:worker_threads';
 
-import type {
-    GameProcessorAnalysisConfig,
-    WorkerMessage,
-    WorkerTaskData,
-} from '../interfaces/index.js';
-import BaseTracker from '../tracker/base-tracker.js';
-import GameTracker from '../tracker/game-tracker-base.js';
-import PieceTracker from '../tracker/piece-tracker-base.js';
-import TileTracker from '../tracker/tile-tracker-base.js';
-import GameParser from './game-parser.js';
+import type { GameProcessorAnalysisConfig, WorkerMessage, WorkerTaskData } from '../interfaces';
+import BaseTracker from '../tracker/base-tracker';
+import GameTracker from '../tracker/game-tracker-base';
+import PieceTracker from '../tracker/piece-tracker-base';
+import TileTracker from '../tracker/tile-tracker-base';
+import GameParser from './game-parser';
 
 // init GameParser
 const gameParser = new GameParser();
