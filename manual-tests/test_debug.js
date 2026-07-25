@@ -60,150 +60,148 @@ const kMask = kSize - 1;
 // but allows much quicker checks.
 
 class FixedCircularBuffer {
-	top;
-	bottom;
-	list;
-	next;
+    top;
+    bottom;
+    list;
+    next;
 
-	constructor() {
-		this.bottom = 0;
-		this.top = 0;
-		this.list = new Array(kSize);
-		this.next = null;
-	}
+    constructor() {
+        this.bottom = 0;
+        this.top = 0;
+        this.list = new Array(kSize);
+        this.next = null;
+    }
 
-	isEmpty() {
-		return this.top === this.bottom;
-	}
+    isEmpty() {
+        return this.top === this.bottom;
+    }
 
-	isFull() {
-		return ((this.top + 1) & kMask) === this.bottom;
-	}
+    isFull() {
+        return ((this.top + 1) & kMask) === this.bottom;
+    }
 
-	push(data) {
-		this.list[this.top] = data;
-		this.top = (this.top + 1) & kMask;
-	}
+    push(data) {
+        this.list[this.top] = data;
+        this.top = (this.top + 1) & kMask;
+    }
 
-	shift() {
-		const { list, bottom } = this;
-		const nextItem = list[bottom];
-		if (nextItem === undefined) return null;
-		list[bottom] = undefined;
-		this.bottom = (bottom + 1) & kMask;
-		return nextItem;
-	}
+    shift() {
+        const { list, bottom } = this;
+        const nextItem = list[bottom];
+        if (nextItem === undefined) return null;
+        list[bottom] = undefined;
+        this.bottom = (bottom + 1) & kMask;
+        return nextItem;
+    }
 }
 
 class FixedQueue {
-	head;
-	tail;
+    head;
+    tail;
 
-	constructor() {
-		this.head = this.tail = new FixedCircularBuffer();
-	}
+    constructor() {
+        this.head = this.tail = new FixedCircularBuffer();
+    }
 
-	isEmpty() {
-		return this.head.isEmpty();
-	}
+    isEmpty() {
+        return this.head.isEmpty();
+    }
 
-	push(data) {
-		if (this.head.isFull()) {
-			// Head is full: Creates a new queue, sets the old queue's `.next` to it,
-			// and sets it as the new main queue.
-			this.head = this.head.next = new FixedCircularBuffer();
-		}
-		this.head.push(data);
-	}
+    push(data) {
+        if (this.head.isFull()) {
+            // Head is full: Creates a new queue, sets the old queue's `.next` to it,
+            // and sets it as the new main queue.
+            this.head = this.head.next = new FixedCircularBuffer();
+        }
+        this.head.push(data);
+    }
 
-	shift() {
-		const tail = this.tail;
-		const next = tail.shift();
-		if (tail.isEmpty() && tail.next !== null) {
-			// If there is another queue, it forms the new tail.
-			this.tail = tail.next;
-			tail.next = null;
-		}
-		return next;
-	}
+    shift() {
+        const tail = this.tail;
+        const next = tail.shift();
+        if (tail.isEmpty() && tail.next !== null) {
+            // If there is another queue, it forms the new tail.
+            this.tail = tail.next;
+            tail.next = null;
+        }
+        return next;
+    }
 }
 
 function getYielder() {
-	// init line reader
-	const lineReader = createInterface({
-		input: createReadStream(
-			'./manualTests/lichess_db_standard_rated_2013-12.pgn'
-		),
-		crlfDelay: Infinity
-	});
+    // init line reader
+    const lineReader = createInterface({
+        input: createReadStream('./manualTests/lichess_db_standard_rated_2013-12.pgn'),
+        crlfDelay: Infinity,
+    });
 
-	const unconsumedPromises = new FixedQueue();
-	const unconsumedGames = new FixedQueue();
-	let done = false;
+    const unconsumedPromises = new FixedQueue();
+    const unconsumedGames = new FixedQueue();
+    let done = false;
 
-	let game = { moves: [] };
-	// on new line
-	lineReader.on('line', (line) => {
-		if (line === '') return;
+    let game = { moves: [] };
+    // on new line
+    lineReader.on('line', (line) => {
+        if (line === '') return;
 
-		const isHeaderTag = line.startsWith('[');
-		// header tag
-		if (isHeaderTag) {
-			const [_, key, value] = HEADER_REGEX.exec(line);
-			game[key] = value;
+        const isHeaderTag = line.startsWith('[');
+        // header tag
+        if (isHeaderTag) {
+            const [_, key, value] = HEADER_REGEX.exec(line);
+            game[key] = value;
 
-			// moves
-		} else if (!isHeaderTag) {
-			// extract move SANs
-			const cleanedLine = line.replaceAll(COMMENT_REGEX, '');
-			const matchedMoves = cleanedLine.match(MOVE_REGEX) ?? [];
+            // moves
+        } else if (!isHeaderTag) {
+            // extract move SANs
+            const cleanedLine = line.replaceAll(COMMENT_REGEX, '');
+            const matchedMoves = cleanedLine.match(MOVE_REGEX) ?? [];
 
-			// For performance reasons, do not use spread operator if it's not necessary
-			// -> PGNs which use a single line for all moves only use one assignment instead of spreading
-			if (game.moves.length === 0) game.moves = matchedMoves;
-			else game.moves.push(...matchedMoves);
+            // For performance reasons, do not use spread operator if it's not necessary
+            // -> PGNs which use a single line for all moves only use one assignment instead of spreading
+            if (game.moves.length === 0) game.moves = matchedMoves;
+            else game.moves.push(...matchedMoves);
 
-			// only if the result marker is found, all moves have been read -> start analyzing
-			if (RESULT_REGEX.test(cleanedLine)) {
-				if (!unconsumedPromises.isEmpty()) {
-					const { resolver } = unconsumedPromises.shift();
-					resolver(game);
-					game = { moves: [] };
-					return;
-				}
-				// Else: Add event value to queue so it can be consumed by a future Promise.
-				unconsumedGames.push(game);
-			}
-		}
-	});
-	lineReader.on('close', () => {
-		done = true;
-		if (!unconsumedPromises.isEmpty()) {
-			const { resolver } = unconsumedPromises.shift();
-			resolver('END');
-			return;
-		}
-	});
+            // only if the result marker is found, all moves have been read -> start analyzing
+            if (RESULT_REGEX.test(cleanedLine)) {
+                if (!unconsumedPromises.isEmpty()) {
+                    const { resolver } = unconsumedPromises.shift();
+                    resolver(game);
+                    game = { moves: [] };
+                    return;
+                }
+                // Else: Add event value to queue so it can be consumed by a future Promise.
+                unconsumedGames.push(game);
+            }
+        }
+    });
+    lineReader.on('close', () => {
+        done = true;
+        if (!unconsumedPromises.isEmpty()) {
+            const { resolver } = unconsumedPromises.shift();
+            resolver('END');
+            return;
+        }
+    });
 
-	// Create AsyncGeneratorFunction which handles the Iterator logic
-	const iterator = async function* () {
-		while (!done || !unconsumedGames.isEmpty()) {
-			if (!unconsumedGames.isEmpty()) {
-				yield Promise.resolve(unconsumedGames.shift());
-			} else {
-				let resolver = null;
-				const promise = new Promise((resolve) => {
-					resolver = resolve;
-				});
-				unconsumedPromises.push({ resolver });
+    // Create AsyncGeneratorFunction which handles the Iterator logic
+    const iterator = async function* () {
+        while (!done || !unconsumedGames.isEmpty()) {
+            if (!unconsumedGames.isEmpty()) {
+                yield Promise.resolve(unconsumedGames.shift());
+            } else {
+                let resolver = null;
+                const promise = new Promise((resolve) => {
+                    resolver = resolve;
+                });
+                unconsumedPromises.push({ resolver });
 
-				yield promise;
-			}
-		}
-	};
+                yield promise;
+            }
+        }
+    };
 
-	// Return AsyncGenerator
-	return iterator();
+    // Return AsyncGenerator
+    return iterator();
 }
 
 const myYielder = getYielder();

@@ -1,61 +1,61 @@
 {
-	"name": "chessalyzer.js",
-	"version": "3.0.6",
-	"description": "A JavaScript library for batch analyzing chess games.",
-	"author": "Yannik Schröder",
-	"type": "module",
-	"main": "lib/chessalyzer.js",
-	"types": "lib/chessalyzer.d.ts",
-	"exports": {
-		".": {
-			"types": "./lib/chessalyzer.d.ts",
-			"import": "./lib/chessalyzer.js"
-		}
-	},
-	"imports": {
-		"#bitboard": "./pkg/bitboard.js"
-	},
-	"files": [
-		"lib/chessalyzer.js",
-		"lib/chessalyzer.d.ts",
-		"lib/core",
-		"lib/tracker"
-	],
-	"engines": {
-		"node": ">=16.0.0"
-	},
-	"scripts": {
-		"build": "wasm-pack build --target nodejs && bun ./scripts/create-bundle.ts",
-		"docs": "typedoc",
-		"test": "bun test"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/yschroe/chessalyzer.js"
-	},
-	"keywords": [
-		"chess",
-		"pgn",
-		"heatmap",
-		"batch",
-		"analysis"
-	],
-	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/yschroe/chessalyzer.js/issues"
-	},
-	"homepage": "https://github.com/yschroe/chessalyzer.js",
-	"devDependencies": {
-		"@eslint/js": "^9.27.0",
-		"@types/bun": "^1.2.15",
-		"bun-plugin-dts": "^0.3.0",
-		"eslint": "^9.27.0",
-		"typedoc": "^0.28.5",
-		"typedoc-plugin-merge-modules": "^7.0.0",
-		"typescript": "^5.8.3",
-		"typescript-eslint": "^8.33.0"
-	},
-	"dependencies": {
-		"chalk": "^5.4.1"
-	}
+    "name": "chessalyzer.js",
+    "version": "3.0.6",
+    "description": "A JavaScript library for batch analyzing chess games.",
+    "keywords": [
+        "analysis",
+        "batch",
+        "chess",
+        "heatmap",
+        "pgn"
+    ],
+    "homepage": "https://github.com/yschroe/chessalyzer.js",
+    "bugs": {
+        "url": "https://github.com/yschroe/chessalyzer.js/issues"
+    },
+    "license": "MIT",
+    "author": "Yannik Schröder",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yschroe/chessalyzer.js"
+    },
+    "files": [
+        "lib/chessalyzer.js",
+        "lib/chessalyzer.d.ts",
+        "lib/core",
+        "lib/tracker"
+    ],
+    "type": "module",
+    "main": "lib/chessalyzer.js",
+    "types": "lib/chessalyzer.d.ts",
+    "imports": {
+        "#bitboard": "./pkg/bitboard.js"
+    },
+    "exports": {
+        ".": {
+            "types": "./lib/chessalyzer.d.ts",
+            "import": "./lib/chessalyzer.js"
+        }
+    },
+    "scripts": {
+        "build": "wasm-pack build --target nodejs && bun ./scripts/create-bundle.ts",
+        "docs": "typedoc",
+        "test": "bun test"
+    },
+    "dependencies": {
+        "chalk": "^5.4.1"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.27.0",
+        "@types/bun": "^1.2.15",
+        "bun-plugin-dts": "^0.3.0",
+        "eslint": "^9.27.0",
+        "typedoc": "^0.28.5",
+        "typedoc-plugin-merge-modules": "^7.0.0",
+        "typescript": "^5.8.3",
+        "typescript-eslint": "^8.33.0"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    }
 }
