@@ -21,7 +21,7 @@ import PiecePositions from './piece-positions';
  * Promoted pawns get indices beyond 16, with names stored in `promotedPieces`.
  */
 class ChessBoard {
-    // prettier-ignore
+    // oxfmt-ignore
     /** Starting position: rows 0–1 black, 6–7 white; 0 = empty. Indices match pieceLookupList. */
     private static defaultTiles = new Uint8Array([
         129, 130, 131, 132, 133, 134, 135, 136,
