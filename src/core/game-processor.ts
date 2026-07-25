@@ -3,6 +3,14 @@ import { availableParallelism } from 'node:os';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import GameParser from '../parsing/game-parser';
+import { readLinesFast } from '../pgn/line-reader';
+import {
+    extractMoves,
+    isGameResultLine,
+    parseHeaderTag,
+    stripComments,
+} from '../pgn/pgn-line-parser';
 import type {
     Game,
     AnalysisConfig,
@@ -12,15 +20,7 @@ import type {
     GameProcessorAnalysisConfigFull,
     GameProcessorConfig,
     WorkerInitData,
-} from '../interfaces';
-import GameParser from '../parsing/game-parser';
-import {
-    extractMoves,
-    isGameResultLine,
-    parseHeaderTag,
-    stripComments,
-} from '../pgn/pgn-line-parser';
-import { readLinesFast } from '../pgn/line-reader';
+} from '../types';
 import WorkerPool from './worker-pool';
 
 /**

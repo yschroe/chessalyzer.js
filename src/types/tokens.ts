@@ -1,7 +1,7 @@
 /**
  * Low-level chess domain literals used across board, parsing, and tracker code.
  *
- * Kept separate from action/game interfaces because these are pure type aliases
+ * Kept separate from action/game types because these are pure type aliases
  * with no structural shape — they annotate SAN tokens and side-to-move fields.
  */
 

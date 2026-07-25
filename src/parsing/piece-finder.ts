@@ -1,5 +1,5 @@
 import type ChessBoard from '../board/chess-board';
-import type { PieceToken, PlayerColor } from '../interfaces';
+import type { PieceToken, PlayerColor } from '../types';
 
 /**
  * Lookup tables indexed by piece char code ('Q'=81, 'R'=82, 'B'=66, …).
@@ -84,7 +84,10 @@ export default class PieceFinder {
                 continue;
             }
 
-            if ((allowLine && (rowDiff === 0 || colDiff === 0)) || (allowDiag && rowDiff === colDiff)) {
+            if (
+                (allowLine && (rowDiff === 0 || colDiff === 0)) ||
+                (allowDiag && rowDiff === colDiff)
+            ) {
                 filtered.push(val);
             }
         }

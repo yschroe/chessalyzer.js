@@ -3,8 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { parentPort, workerData } from 'node:worker_threads';
 
-import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '../interfaces';
 import GameParser from '../parsing/game-parser';
+import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '../types';
 import { getCachedCfg, initWorkerTrackers, resetCfg } from './worker-tracker-registry';
 
 const initData = workerData as WorkerInitData | undefined;

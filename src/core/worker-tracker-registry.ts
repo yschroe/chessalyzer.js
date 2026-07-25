@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import type { GameProcessorAnalysisConfig, WorkerInitData } from '../interfaces';
 import BaseTracker from '../tracker/base-tracker';
 import GameTracker from '../tracker/game-tracker-base';
 import PieceTracker from '../tracker/piece-tracker-base';
 import TileTracker from '../tracker/tile/tile-tracker-base';
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import type { GameProcessorAnalysisConfig, WorkerInitData } from '../types';
 
 /**
  * Worker-thread tracker registry and per-config analysis state cache.
@@ -30,9 +30,7 @@ const cfgCache: GameProcessorAnalysisConfig[] = [];
  * @param initData One-time config from main thread (tracker names, cfg, optional paths).
  * @returns Promise that resolves when custom modules are loaded and cfg cache is warm.
  */
-export async function initWorkerTrackers(
-    initData: WorkerInitData | undefined,
-): Promise<void> {
+export async function initWorkerTrackers(initData: WorkerInitData | undefined): Promise<void> {
     await loadCustomTrackers(initData);
     const configCount = initData?.configs.length ?? 1;
     for (let i = 0; i < configCount; i += 1) {

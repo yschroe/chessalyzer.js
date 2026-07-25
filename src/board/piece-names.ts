@@ -1,4 +1,4 @@
-import type { ChessPiece, PlayerColor } from '../interfaces';
+import type { ChessPiece, PlayerColor } from '../types';
 
 /**
  * Canonical starting-position piece names used across board replay, tile tracking,

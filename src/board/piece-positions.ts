@@ -1,4 +1,4 @@
-import type { PieceToken, PlayerColor } from '../interfaces';
+import type { PieceToken, PlayerColor } from '../types';
 
 /**
  * Maintains live position lists for each non-pawn piece type (R/N/B/Q/K) of one side.

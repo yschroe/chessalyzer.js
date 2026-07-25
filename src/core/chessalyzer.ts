@@ -7,7 +7,7 @@ import type {
     GameAndMoveCountFull,
     HeatmapData,
     MultithreadConfig,
-} from '../interfaces';
+} from '../types';
 import GameProcessor from './game-processor';
 
 export default class Chessalyzer {

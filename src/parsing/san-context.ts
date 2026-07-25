@@ -1,5 +1,5 @@
-import type { Action, CaptureAction, MoveAction, PromoteAction, PlayerColor } from '../interfaces';
 import ChessBoard from '../board/chess-board';
+import type { Action, CaptureAction, MoveAction, PromoteAction, PlayerColor } from '../types';
 import PieceFinder from './piece-finder';
 
 /**

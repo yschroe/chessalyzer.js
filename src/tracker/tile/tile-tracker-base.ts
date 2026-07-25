@@ -1,4 +1,4 @@
-import type { Move, Action } from '../../interfaces';
+import type { Move, Action } from '../../types';
 import BaseTracker from '../base-tracker';
 import HeatmapPresets from '../heatmaps/tile-heatmaps';
 import { createTileGrid, mergeCellStats, resetTileGrid, setStartingPiece } from './tile-grid';

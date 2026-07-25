@@ -1,4 +1,4 @@
-import type { SquareData } from '../../interfaces';
+import type { SquareData } from '../../types';
 import TileTrackerBase from '../tile/tile-tracker-base';
 
 export default {

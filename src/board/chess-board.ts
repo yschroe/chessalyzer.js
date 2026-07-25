@@ -6,7 +6,7 @@ import type {
     PromoteAction,
     PieceToken,
     PlayerColor,
-} from '../interfaces';
+} from '../types';
 import PiecePositions from './piece-positions';
 
 /**

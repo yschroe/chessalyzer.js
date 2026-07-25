@@ -1,7 +1,7 @@
 /**
  * Public type surface for chessalyzer.js.
  * Domain-specific definitions live in sibling modules; this file re-exports all of them
- * so existing `from '../interfaces'` imports continue to work unchanged.
+ * so existing `from '../types'` imports continue to work unchanged.
  */
 
 export type { PawnToken, PieceToken, Token, PlayerColor } from './tokens';

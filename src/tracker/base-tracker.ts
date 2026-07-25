@@ -1,6 +1,5 @@
 import { performance } from 'node:perf_hooks';
 
-import { generateComparisonHeatmap, generateHeatmap } from './heatmap-utils';
 import type {
     Game,
     Action,
@@ -8,7 +7,8 @@ import type {
     TrackerConfig,
     HeatmapAnalysisFunc,
     HeatmapData,
-} from '../interfaces';
+} from '../types';
+import { generateComparisonHeatmap, generateHeatmap } from './heatmap-utils';
 
 class BaseTracker implements Tracker {
     type: 'move' | 'game';
