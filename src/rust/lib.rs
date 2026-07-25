@@ -14,6 +14,8 @@
 //! crossing the WASM boundary cheap.
 
 mod board;
+mod san;
 mod tables;
 
 pub use board::Board;
+pub use san::ProcessedGame;

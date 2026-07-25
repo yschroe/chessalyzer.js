@@ -105,6 +105,11 @@ pub struct Board {
     black: PieceSet,
     /// All occupied squares (both colors). Updated incrementally on every change.
     occupancy: u64,
+    /// Stable piece identifiers for tracker statistics (mirrors JS `pieceNames`).
+    #[wasm_bindgen(skip)]
+    pub(crate) piece_names: Vec<Option<String>>,
+    #[wasm_bindgen(skip)]
+    pub(crate) promote_counter: u32,
 }
 
 impl Clone for Board {
@@ -113,6 +118,8 @@ impl Clone for Board {
             white: self.white,
             black: self.black,
             occupancy: self.occupancy,
+            piece_names: self.piece_names.clone(),
+            promote_counter: self.promote_counter,
         }
     }
 }
@@ -169,8 +176,11 @@ impl Board {
             white: PieceSet::starting(true),
             black: PieceSet::starting(false),
             occupancy: 0,
+            piece_names: Vec::new(),
+            promote_counter: 0,
         };
         board.recompute_occupancy();
+        board.init_piece_names();
         board
     }
 
@@ -178,6 +188,17 @@ impl Board {
         self.white = PieceSet::starting(true);
         self.black = PieceSet::starting(false);
         self.recompute_occupancy();
+        self.init_piece_names();
+    }
+
+    /// Parses and applies all SAN moves in one WASM call (no action data returned).
+    pub fn process_game_quiet(&mut self, moves: Vec<String>) {
+        self.process_game_quiet_moves(&moves);
+    }
+
+    /// Parses all SAN moves in one WASM call and returns compact action data for trackers.
+    pub fn process_game(&mut self, moves: Vec<String>) -> crate::san::ProcessedGame {
+        self.process_game_moves(&moves)
     }
 
     fn recompute_occupancy(&mut self) {

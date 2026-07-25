@@ -2,6 +2,7 @@ import { Board } from '#bitboard';
 
 import type { ChessPiece, Action, MoveAction, CaptureAction, PromoteAction } from '../interfaces';
 import type { PieceToken, PlayerColor } from '../types';
+import { decodeProcessedGame } from './processed-game';
 import Utils from './utils';
 
 /** Stable piece identifiers used by trackers (e.g. `Ra`, `Pe`).
@@ -52,6 +53,16 @@ class ChessBoard {
 
     findPawnFromSquare(player: PlayerColor, toIdx: number, captureFile: number | null) {
         return this.board.find_pawn_from(player, toIdx, captureFile ?? -1);
+    }
+
+    /** Parses and applies all SAN moves in one WASM call; returns action groups per move. */
+    processGame(moves: string[]): Action[][] {
+        return decodeProcessedGame(this.board.process_game(moves));
+    }
+
+    /** Parses and applies all SAN moves without building action objects (fast path). */
+    processGameQuiet(moves: string[]): void {
+        this.board.process_game_quiet(moves);
     }
 
     applyActions(actions: Action[]): void {
