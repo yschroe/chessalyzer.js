@@ -121,9 +121,9 @@ export default class WorkerPool extends EventEmitter {
             return;
         }
 
-        const worker = this.freeWorkers.pop();
+        const worker = this.freeWorkers.pop()!;
         worker[kTaskInfo] = new WorkerPoolTaskInfo(callback);
-        worker.postMessage(task);
+        worker.postMessage(task, [task.pgnChunkBytes.buffer as ArrayBuffer]);
     }
 
     /**

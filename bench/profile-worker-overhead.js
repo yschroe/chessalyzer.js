@@ -1,14 +1,11 @@
 import { createReadStream } from 'node:fs';
 import { dirname, join } from 'node:path';
-/**
- * Profile worker postMessage / structured-clone overhead.
- * Run: node manual-tests/profile-worker-overhead.js
- */
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 
-const PGN = './manual-tests/lichess_db_standard_rated_2013-12.pgn';
+const PGN = new URL('../manual-tests/lichess_db_standard_rated_2013-12.pgn', import.meta.url)
+    .pathname;
 const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
 const RESULT_REGEX = /-(1\/2|0|1)$/;
 const BATCH = 200;
@@ -61,7 +58,7 @@ const movesPerBatch = batchGroups[0].reduce((a, g) => a + g.moves.length, 0);
 console.log(`${batchGroups.length} batches × ${BATCH} games (~${movesPerBatch} moves/batch)\n`);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const workerPath = join(__dirname, '../lib/chess-worker.js');
+const workerPath = join(__dirname, '../../lib/chess-worker.js');
 
 function gamesToChunk(games) {
     return games.map((game) => `${game.moves.join(' ')} 1-0`).join('\n');
@@ -69,7 +66,11 @@ function gamesToChunk(games) {
 
 const chunkGroups = batchGroups.map(gamesToChunk);
 
-async function bench(nWorkers, label, makeMsg) {
+function gamesToChunkBytes(games) {
+    return new TextEncoder().encode(games.map((game) => `${game.moves.join(' ')} 1-0`).join('\n'));
+}
+
+async function bench(nWorkers, label, makeMsg, transfer = false) {
     const workers = Array.from({ length: nWorkers }, () => new Worker(workerPath));
     let wi = 0;
     const t0 = performance.now();
@@ -84,7 +85,12 @@ async function bench(nWorkers, label, makeMsg) {
                     };
                     w.on('message', onMsg);
                     w.on('error', reject);
-                    w.postMessage(makeMsg(games));
+                    const msg = makeMsg(games);
+                    if (transfer) {
+                        w.postMessage(msg, [msg.pgnChunkBytes.buffer]);
+                    } else {
+                        w.postMessage(msg);
+                    }
                 }),
         ),
     );
@@ -107,8 +113,19 @@ async function bench(nWorkers, label, makeMsg) {
     );
 }
 
-await bench(8, 'worker RT (pgn chunk)', (games) => ({
-    pgnChunk: gamesToChunk(games),
+await bench(8, 'worker RT (string clone)', (games) => ({
+    pgnChunkBytes: gamesToChunkBytes(games),
     idxConfig: 0,
     readInHeader: false,
 }));
+
+await bench(
+    8,
+    'worker RT (transfer)',
+    (games) => ({
+        pgnChunkBytes: gamesToChunkBytes(games),
+        idxConfig: 0,
+        readInHeader: false,
+    }),
+    true,
+);

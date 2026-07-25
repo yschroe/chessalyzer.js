@@ -5,7 +5,12 @@ import { fileURLToPath } from 'node:url';
 
 import GameParser from '../parsing/game-parser';
 import { GameLineParser } from '../pgn/game-assembler';
-import { DEFAULT_PGN_CHUNK_BYTES, readLinesFast, readPgnChunks } from '../pgn/line-reader';
+import {
+    DEFAULT_PGN_CHUNK_BYTES,
+    encodePgnChunkText,
+    readLinesFast,
+    readPgnChunks,
+} from '../pgn/line-reader';
 import type {
     Game,
     AnalysisConfig,
@@ -93,7 +98,7 @@ class GameProcessor {
             configs: this.configs.map((cfg) => ({ trackerData: cfg.trackerData })),
         };
         const workerPool = new WorkerPool(
-            availableParallelism(),
+            this.resolveWorkerCount(),
             `${__dirname}/chess-worker.js`,
             workerInitData,
         );
@@ -111,7 +116,7 @@ class GameProcessor {
 
                 workerPool.runTask(
                     {
-                        pgnChunk: chunk.text,
+                        pgnChunkBytes: chunk.bytes,
                         idxConfig: idxCfg,
                         readInHeader: this.readInHeader,
                     },
@@ -140,7 +145,7 @@ class GameProcessor {
                 configs: this.configs.map((cfg) => ({ trackerData: cfg.trackerData })),
             };
             workerPool = new WorkerPool(
-                availableParallelism(),
+                this.resolveWorkerCount(),
                 `${__dirname}/chess-worker.js`,
                 workerInitData,
             );
@@ -165,7 +170,9 @@ class GameProcessor {
                         if (gameStore[idxCfg].length === legacyBatchSize) {
                             workerPool!.runTask(
                                 {
-                                    pgnChunk: this.gamesToPgnChunk(gameStore[idxCfg]),
+                                    pgnChunkBytes: encodePgnChunkText(
+                                        this.gamesToPgnChunk(gameStore[idxCfg]),
+                                    ),
                                     idxConfig: idxCfg,
                                     readInHeader: this.readInHeader,
                                 },
@@ -192,7 +199,7 @@ class GameProcessor {
                 if (games.length > 0) {
                     workerPool.runTask(
                         {
-                            pgnChunk: this.gamesToPgnChunk(games),
+                            pgnChunkBytes: encodePgnChunkText(this.gamesToPgnChunk(games)),
                             idxConfig: idx,
                             readInHeader: this.readInHeader,
                         },
@@ -264,6 +271,12 @@ class GameProcessor {
             lines.push(`${game.moves.join(' ')} ${result}`);
         }
         return lines.join('\n');
+    }
+
+    private resolveWorkerCount(): number {
+        const configured = this.multithreadConfig?.workerCount;
+        if (configured !== undefined) return Math.max(1, configured);
+        return availableParallelism();
     }
 
     private checkConfig(config: AnalysisConfig['config']): GameProcessorConfig {

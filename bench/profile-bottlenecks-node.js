@@ -1,6 +1,5 @@
 /**
  * Lean Node-only staged profile.
- * Run: node manual-tests/profile-bottlenecks-node.js
  */
 import { createReadStream } from 'node:fs';
 import { availableParallelism } from 'node:os';
@@ -8,7 +7,8 @@ import { performance } from 'node:perf_hooks';
 
 import { Chessalyzer, TileTracker, GameTracker, PieceTracker } from '../lib/index.js';
 
-const PGN = './manual-tests/lichess_db_standard_rated_2013-12.pgn';
+const PGN = new URL('../manual-tests/lichess_db_standard_rated_2013-12.pgn', import.meta.url)
+    .pathname;
 const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
 const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
 const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
@@ -18,7 +18,7 @@ const fmt = (ms) => `${(ms / 1000).toFixed(3)}s`;
 const mps = (moves, ms) => Math.round(moves / (ms / 1000)).toLocaleString();
 const pct = (part, total) => `${((part / total) * 100).toFixed(1)}%`;
 
-/** Minimal copy of readLinesFast (same algorithm as src/core/line-reader.ts). */
+/** Minimal copy of readLinesFast (same algorithm as src/pgn/line-reader.ts). */
 function readLinesFast(file) {
     const rs = createReadStream(file, { encoding: 'utf-8' });
     const iterator = rs[Symbol.asyncIterator]();
@@ -142,8 +142,6 @@ async function main() {
         console.log(`${name.padEnd(20)} ${fmt(ms).padStart(8)}  ${pct(ms, base).padStart(6)}`);
     }
 
-    // Approximate exclusive costs for single-thread parse-only:
-    // line I/O ⊆ tokenize ⊆ full parse
     const io = lines.ms;
     const tokenizeOnly = Math.max(0, tok.ms - lines.ms);
     const parseBoard = Math.max(0, single.ms - tok.ms);

@@ -2,6 +2,7 @@ import { parentPort, workerData } from 'node:worker_threads';
 
 import GameParser from '../parsing/game-parser';
 import { parseGamesFromLines } from '../pgn/game-assembler';
+import { decodePgnChunkBytes } from '../pgn/line-reader';
 import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '../types';
 import { getCachedCfg, initWorkerTrackers, resetCfg } from './worker-tracker-registry';
 
@@ -18,7 +19,7 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
     resetCfg(cfg);
 
     const hasTrackers = cfg.trackers.game.length > 0 || cfg.trackers.move.length > 0;
-    const games = parseGamesFromLines(msg.pgnChunk.split('\n'), {
+    const games = parseGamesFromLines(decodePgnChunkBytes(msg.pgnChunkBytes).split('\n'), {
         readInHeader: msg.readInHeader,
         maxGames: msg.maxGames,
     });

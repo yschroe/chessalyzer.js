@@ -1,12 +1,17 @@
+/**
+ * Compare readline event mode vs async iteration on a large PGN file.
+ */
 import EventEmitter from 'events';
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
 
+const PGN = new URL('../manual-tests/lichess_db_standard_rated_2013-12.pgn', import.meta.url)
+    .pathname;
+
 console.time('Events');
 
-// init line reader
 const lineReader = createInterface({
-    input: createReadStream('./manualTests/lichess_db_standard_rated_2013-12.pgn'),
+    input: createReadStream(PGN),
     crlfDelay: Infinity,
 });
 
@@ -17,9 +22,8 @@ console.timeEnd('Events');
 
 console.time('Await');
 
-// init line reader
 const lineReader2 = createInterface({
-    input: createReadStream('./manualTests/lichess_db_standard_rated_2013-12.pgn'),
+    input: createReadStream(PGN),
     crlfDelay: Infinity,
 });
 

@@ -13,6 +13,8 @@ export interface AnalysisConfig {
 export interface MultithreadConfig {
     /** Target raw PGN chunk size in bytes before aligning to a game boundary. */
     targetBytes?: number;
+    /** Worker thread count. Defaults to `os.availableParallelism()`. */
+    workerCount?: number;
     /** Safety cap on lines per chunk. */
     maxLines?: number;
     /** Minimum lines before a byte-target chunk may be emitted. */

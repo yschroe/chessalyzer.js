@@ -9,7 +9,8 @@ export interface WorkerInitData {
 
 /** Per-batch payload sent main → worker (tracker config lives in workerData). */
 export interface WorkerTaskData {
-    pgnChunk: string;
+    /** UTF-8 PGN chunk; transferred zero-copy from main to worker. */
+    pgnChunkBytes: Uint8Array;
     idxConfig: number;
     readInHeader: boolean;
     maxGames?: number;

@@ -16,7 +16,19 @@ export interface PgnChunkConfig {
 
 export interface PgnChunk {
     text: string;
+    /** UTF-8 bytes for zero-copy transfer to workers via `postMessage` transfer list. */
+    bytes: Uint8Array;
     lineCount: number;
+}
+
+/** Encode PGN chunk text as UTF-8 bytes for worker transfer. */
+export function encodePgnChunkText(text: string): Uint8Array {
+    return new TextEncoder().encode(text);
+}
+
+/** Decode UTF-8 PGN chunk bytes received from the main thread. */
+export function decodePgnChunkBytes(bytes: Uint8Array): string {
+    return new TextDecoder().decode(bytes);
 }
 
 /** Index of the last movetext line that completes a game, or -1 if none. */
@@ -116,8 +128,11 @@ export async function* readPgnChunks(
         const completeLines = accumulator.slice(0, lastResultIdx + 1);
         const remainder = accumulator.slice(lastResultIdx + 1);
 
+        const text = completeLines.join('\n');
+
         yield {
-            text: completeLines.join('\n'),
+            text,
+            bytes: encodePgnChunkText(text),
             lineCount: completeLines.length,
         };
 
