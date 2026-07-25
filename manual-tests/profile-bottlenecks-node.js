@@ -3,8 +3,8 @@
  * Run: node manual-tests/profile-bottlenecks-node.js
  */
 import { createReadStream } from 'node:fs';
-import { performance } from 'node:perf_hooks';
 import { availableParallelism } from 'node:os';
+import { performance } from 'node:perf_hooks';
 
 import { Chessalyzer, TileTracker, GameTracker, PieceTracker } from '../lib/index.js';
 
@@ -100,45 +100,31 @@ async function main() {
     console.log(`PGN: ${PGN}\n`);
 
     const raw = await stageRawBytes();
-    console.log(
-        `1 Raw bytes          ${fmt(raw.ms)}  (${(raw.bytes / 1e6).toFixed(0)} MB)`,
-    );
+    console.log(`1 Raw bytes          ${fmt(raw.ms)}  (${(raw.bytes / 1e6).toFixed(0)} MB)`);
 
     const lines = await stageLineReader();
     console.log(`2 Line reader        ${fmt(lines.ms)}  (${lines.lines.toLocaleString()} lines)`);
 
     const tok = await stageTokenize(false);
-    console.log(
-        `3 Tokenize no hdr    ${fmt(tok.ms)}  | ${mps(tok.moves, tok.ms)} moves/s`,
-    );
+    console.log(`3 Tokenize no hdr    ${fmt(tok.ms)}  | ${mps(tok.moves, tok.ms)} moves/s`);
 
     const tokH = await stageTokenize(true);
-    console.log(
-        `4 Tokenize + hdr     ${fmt(tokH.ms)}  | ${mps(tokH.moves, tokH.ms)} moves/s`,
-    );
+    console.log(`4 Tokenize + hdr     ${fmt(tokH.ms)}  | ${mps(tokH.moves, tokH.ms)} moves/s`);
 
     const multi = await api({ trackers: [] }, { batchSize: 200 });
-    console.log(
-        `5 API multi none     ${fmt(multi.ms)}  | ${multi.mps.toLocaleString()} moves/s`,
-    );
+    console.log(`5 API multi none     ${fmt(multi.ms)}  | ${multi.mps.toLocaleString()} moves/s`);
 
     const single = await api({ trackers: [] }, null);
-    console.log(
-        `6 API single none    ${fmt(single.ms)}  | ${single.mps.toLocaleString()} moves/s`,
-    );
+    console.log(`6 API single none    ${fmt(single.ms)}  | ${single.mps.toLocaleString()} moves/s`);
 
     const tile = await api({ trackers: [new TileTracker()] }, { batchSize: 200 });
-    console.log(
-        `7 API multi Tile     ${fmt(tile.ms)}  | ${tile.mps.toLocaleString()} moves/s`,
-    );
+    console.log(`7 API multi Tile     ${fmt(tile.ms)}  | ${tile.mps.toLocaleString()} moves/s`);
 
     const all = await api(
         { trackers: [new TileTracker(), new GameTracker(), new PieceTracker()] },
         { batchSize: 200 },
     );
-    console.log(
-        `8 API multi all      ${fmt(all.ms)}  | ${all.mps.toLocaleString()} moves/s`,
-    );
+    console.log(`8 API multi all      ${fmt(all.ms)}  | ${all.mps.toLocaleString()} moves/s`);
 
     console.log('\n--- Share of single-thread parse-only wall ---');
     const base = single.ms;

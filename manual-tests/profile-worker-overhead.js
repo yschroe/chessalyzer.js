@@ -1,12 +1,12 @@
+import { createReadStream } from 'node:fs';
+import { dirname, join } from 'node:path';
 /**
  * Profile worker postMessage / structured-clone overhead.
  * Run: node manual-tests/profile-worker-overhead.js
  */
 import { performance } from 'node:perf_hooks';
-import { Worker } from 'node:worker_threads';
-import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createReadStream } from 'node:fs';
+import { Worker } from 'node:worker_threads';
 
 const PGN = './manual-tests/lichess_db_standard_rated_2013-12.pgn';
 const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
@@ -58,9 +58,7 @@ for (let i = 0; i < batches.length; i += BATCH) {
 }
 
 const movesPerBatch = batchGroups[0].reduce((a, g) => a + g.moves.length, 0);
-console.log(
-    `${batchGroups.length} batches × ${BATCH} games (~${movesPerBatch} moves/batch)\n`,
-);
+console.log(`${batchGroups.length} batches × ${BATCH} games (~${movesPerBatch} moves/batch)\n`);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const workerPath = join(__dirname, '../lib/chess-worker.js');
