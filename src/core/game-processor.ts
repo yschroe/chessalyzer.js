@@ -102,14 +102,21 @@ class GameProcessor {
                     break;
                 }
                 case false: {
-                    // extract move SANs
-                    const cleanedLine = line.replaceAll(COMMENT_REGEX, '');
-                    const matchedMoves = cleanedLine.match(MOVE_REGEX) ?? [];
+                    // Skip comment stripping when the line has no comment/rav markers (common in bulk dumps).
+                    const cleanedLine =
+                        line.includes('{') || line.includes('(')
+                            ? line.replaceAll(COMMENT_REGEX, '')
+                            : line;
 
-                    // Add moves to game
-                    game.moves.push(...matchedMoves);
+                    const matchedMoves = cleanedLine.match(MOVE_REGEX);
+                    if (matchedMoves) {
+                        const moves = game.moves;
+                        for (let i = 0; i < matchedMoves.length; i += 1) {
+                            moves.push(matchedMoves[i]);
+                        }
+                    }
 
-                    // only if the result marker is found, all moves have been read -> start analyzing
+                    // Result tokens end with "-1/2", "-0", or "-1" (e.g. "1-0", "0-1", "1/2-1/2").
                     if (RESULT_REGEX.test(cleanedLine)) {
                         for (let idxCfg = 0; idxCfg < this.configs.length; idxCfg += 1) {
                             const cfg = this.configs[idxCfg];

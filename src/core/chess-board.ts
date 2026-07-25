@@ -1,12 +1,16 @@
 import type { ChessPiece, Action, MoveAction, CaptureAction, PromoteAction } from '../interfaces';
 import type { PieceToken, PlayerColor } from '../types';
 
+/**
+ * Per-token live position lists. `findPiece` reads these arrays directly (no copy).
+ * Entries are owned `[row, col]` arrays mutated in place on move.
+ */
 class PiecePositions {
-    R: Map<string, number[]>;
-    N: Map<string, number[]>;
-    B: Map<string, number[]>;
-    Q: Map<string, number[]>;
-    K: Map<string, number[]>;
+    R: number[][] = [];
+    N: number[][] = [];
+    B: number[][] = [];
+    Q: number[][] = [];
+    K: number[][] = [];
 
     private readonly startRow: number;
     private readonly ra: number[] = [0, 0];
@@ -20,11 +24,6 @@ class PiecePositions {
 
     constructor(player: PlayerColor) {
         this.startRow = player === 'w' ? 7 : 0;
-        this.R = new Map();
-        this.N = new Map();
-        this.B = new Map();
-        this.Q = new Map();
-        this.K = new Map();
         this.reset();
     }
 
@@ -47,24 +46,38 @@ class PiecePositions {
         this.ke[0] = row;
         this.ke[1] = 4;
 
-        this.R.clear();
-        this.N.clear();
-        this.B.clear();
-        this.Q.clear();
-        this.K.clear();
+        this.R.length = 0;
+        this.N.length = 0;
+        this.B.length = 0;
+        this.Q.length = 0;
+        this.K.length = 0;
 
-        this.R.set('Ra', this.ra);
-        this.R.set('Rh', this.rh);
-        this.N.set('Nb', this.nb);
-        this.N.set('Ng', this.ng);
-        this.B.set('Bc', this.bc);
-        this.B.set('Bf', this.bf);
-        this.Q.set('Qd', this.qd);
-        this.K.set('Ke', this.ke);
+        this.R.push(this.ra, this.rh);
+        this.N.push(this.nb, this.ng);
+        this.B.push(this.bc, this.bf);
+        this.Q.push(this.qd);
+        this.K.push(this.ke);
     }
 
-    private mapFor(piece: string): Map<string, number[]> | null {
-        switch (piece.charCodeAt(0)) {
+    listForToken(token: PieceToken): number[][] {
+        switch (token) {
+            case 'R':
+                return this.R;
+            case 'N':
+                return this.N;
+            case 'B':
+                return this.B;
+            case 'Q':
+                return this.Q;
+            case 'K':
+                return this.K;
+            default:
+                return this.K;
+        }
+    }
+
+    private listForChar(tokenChar: number): number[][] | null {
+        switch (tokenChar) {
             case 82:
                 return this.R;
             case 78:
@@ -80,26 +93,46 @@ class PiecePositions {
         }
     }
 
-    capture(piece: string): void {
-        this.mapFor(piece)?.delete(piece);
-    }
+    /** Update piece at `from` to `to` by position (pawns are ignored). */
+    move(pieceName: string, from: number[], to: number[]): void {
+        const list = this.listForChar(pieceName.charCodeAt(0));
+        if (!list) return;
 
-    /** Store destination by copying into an owned coords array (safe with pooled caller buffers). */
-    move(piece: string, destinationSquare: number[]): void {
-        const map = this.mapFor(piece);
-        if (!map) return;
-
-        let pos = map.get(piece);
-        if (pos) {
-            pos[0] = destinationSquare[0];
-            pos[1] = destinationSquare[1];
-        } else {
-            map.set(piece, [destinationSquare[0], destinationSquare[1]]);
+        const fromRow = from[0];
+        const fromCol = from[1];
+        for (let i = 0; i < list.length; i += 1) {
+            const p = list[i];
+            if (p[0] === fromRow && p[1] === fromCol) {
+                p[0] = to[0];
+                p[1] = to[1];
+                return;
+            }
         }
     }
 
-    promote(piece: string, onSquare: number[]): void {
-        this.move(piece, onSquare);
+    /** Remove piece at `on` by position. */
+    capture(takenPieceName: string, on: number[]): void {
+        const list = this.listForChar(takenPieceName.charCodeAt(0));
+        if (!list) return;
+
+        const row = on[0];
+        const col = on[1];
+        for (let i = 0; i < list.length; i += 1) {
+            const p = list[i];
+            if (p[0] === row && p[1] === col) {
+                const last = list.length - 1;
+                list[i] = list[last];
+                list.pop();
+                return;
+            }
+        }
+    }
+
+    /** Add a promoted piece on `on`. */
+    promote(pieceName: string, on: number[]): void {
+        const list = this.listForChar(pieceName.charCodeAt(0));
+        if (!list) return;
+        list.push([on[0], on[1]]);
     }
 }
 
@@ -140,7 +173,6 @@ class ChessBoard {
         w: string[];
         b: string[];
     };
-    private readonly posBuf: number[][] = [];
 
     constructor() {
         this.tiles = ChessBoard.defaultTiles.slice();
@@ -200,27 +232,20 @@ class ChessBoard {
         return pieceNumber & 0b10000000 ? 'b' : 'w';
     }
 
-    getPiecePosition(player: PlayerColor, piece: string) {
-        const token = piece.charAt(0) as PieceToken;
-        return this.pieces[player][token].get(piece);
+    getKingPosition(player: PlayerColor): number[] {
+        return this.pieces[player].K[0];
     }
 
     /**
-     * Returns positions for a piece token. Reuses an internal buffer — valid until the next call.
+     * Live position list for a piece token. Do not mutate the array structure.
      */
     getPositionsForToken(player: PlayerColor, token: PieceToken): number[][] {
-        const map = this.pieces[player][token];
-        const buf = this.posBuf;
-        let i = 0;
-        for (const pos of map.values()) {
-            buf[i++] = pos;
-        }
-        buf.length = i;
-        return buf;
+        return this.pieces[player].listForToken(token);
     }
 
     applyActions(actions: Action[]): void {
-        for (let i = 0; i < actions.length; i += 1) {
+        const len = actions.length;
+        for (let i = 0; i < len; i += 1) {
             const action = actions[i];
             switch (action.type) {
                 case 'move':
@@ -237,17 +262,15 @@ class ChessBoard {
     }
 
     movePiece(player: PlayerColor, piece: string, from: number[], to: number[]): void {
-        // Read indices before updating piece maps — `from` may be the owned
-        // position array that move() mutates in place.
         const fromIdx = from[0] * 8 + from[1];
         const toIdx = to[0] * 8 + to[1];
         this.tiles[toIdx] = this.tiles[fromIdx];
         this.tiles[fromIdx] = 0;
-        this.pieces[player].move(piece, to);
+        this.pieces[player].move(piece, from, to);
     }
 
     capturePiece(player: PlayerColor, takenPiece: string, on: number[]): void {
-        this.pieces[player === 'w' ? 'b' : 'w'].capture(takenPiece);
+        this.pieces[player === 'w' ? 'b' : 'w'].capture(takenPiece, on);
         this.tiles[on[0] * 8 + on[1]] = 0;
     }
 

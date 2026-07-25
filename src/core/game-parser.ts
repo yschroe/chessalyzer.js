@@ -10,24 +10,13 @@ import { PieceToken, PlayerColor } from '../types';
 import ChessBoard from './chess-board';
 import Utils from './utils';
 
-const moveCfg = {
-    Q: {
-        line: true,
-        diag: true,
-    },
-    R: {
-        line: true,
-        diag: false,
-    },
-    B: {
-        line: false,
-        diag: true,
-    },
-    N: {
-        line: false,
-        diag: false,
-    },
-};
+// Indexed by piece char code for line/diag movement (N handled separately).
+const LINE = new Uint8Array(91); // enough for 'Z'
+const DIAG = new Uint8Array(91);
+LINE[81] = 1; // Q
+LINE[82] = 1; // R
+DIAG[81] = 1; // Q
+DIAG[66] = 1; // B
 
 class MoveNotFoundException extends Error {
     constructor(token: string, player: PlayerColor, tarRow: number, tarCol: number) {
@@ -90,35 +79,35 @@ class GameParser {
         const { moves } = game;
         const moveTrackers = analysisCfg.trackers.move;
         const hasMoveTrackers = moveTrackers.length > 0;
+        const board = this.board;
 
         this.activePlayer = 'w';
         try {
-            for (const move of moves) {
-                const currentMoveActions = this.parseMove(move);
+            for (let mi = 0; mi < moves.length; mi += 1) {
+                const currentMoveActions = this.parseMove(moves[mi]);
 
                 if (hasMoveTrackers) {
-                    for (const tracker of moveTrackers) {
-                        tracker.analyze(currentMoveActions);
+                    for (let ti = 0; ti < moveTrackers.length; ti += 1) {
+                        moveTrackers[ti].analyze(currentMoveActions);
                     }
                 }
 
-                this.board.applyActions(currentMoveActions);
+                board.applyActions(currentMoveActions);
                 this.activePlayer = this.activePlayer === 'w' ? 'b' : 'w';
             }
         } catch (err) {
             console.log(game);
-            this.board.printPosition();
+            board.printPosition();
             throw err;
         }
 
-        // notify move trackers that the current game is done
-        for (const tracker of moveTrackers) {
-            tracker.nextGame?.();
+        for (let ti = 0; ti < moveTrackers.length; ti += 1) {
+            moveTrackers[ti].nextGame?.();
         }
 
         analysisCfg.processedMoves += moves.length;
         analysisCfg.processedGames += 1;
-        this.board.reset();
+        board.reset();
     }
 
     /**
@@ -129,11 +118,6 @@ class GameParser {
         this.activePlayer = 'w';
     }
 
-    /**
-     * Main function to parse a single move from algebraic notation to a list of `Action`s.
-     * @param rawMove The move in standard algebraic notation.
-     * @returns A list of `Action`s to perform on the board.
-     */
     private parseMove(san: string): Action[] {
         const c = san.charCodeAt(0);
 
@@ -143,17 +127,13 @@ class GameParser {
         return this.pieceMove(san);
     }
 
-    /**
-     * Parses a single pawn move from algebraic notation to a list of `Action`s.
-     * @param san The move in standard algebraic notation.
-     * @returns A list of `Action`s to perform on the board.
-     */
     private pawnMove(san: string): Action[] {
         const actions = this.outActions;
         actions.length = 0;
 
         const player = this.activePlayer;
         const direction = player === 'w' ? 1 : -1;
+        const board = this.board;
 
         let end = san.length;
         let promotesTo = '';
@@ -172,8 +152,7 @@ class GameParser {
             from[1] = san.charCodeAt(0) - 97;
 
             let offset = 0;
-            // en passant
-            if (this.board.isEmpty(to)) {
+            if (board.isEmpty(to)) {
                 offset = direction;
             }
 
@@ -181,15 +160,12 @@ class GameParser {
             takenOn[0] = to[0] + offset;
             takenOn[1] = to[1];
 
-            const takingPiece = this.board.getPieceNameOnCoords(from);
-            const takenPiece = this.board.getPieceNameOnCoords(takenOn);
-
             const cap = this.captureAction;
             cap.san = san;
             cap.player = player;
             cap.on = takenOn;
-            cap.takingPiece = takingPiece;
-            cap.takenPiece = takenPiece;
+            cap.takingPiece = board.getPieceNameOnCoords(from);
+            cap.takenPiece = board.getPieceNameOnCoords(takenOn);
             actions.push(cap);
         } else {
             const tarRow = to[0];
@@ -197,9 +173,8 @@ class GameParser {
 
             for (let i = 1; i <= 2; i += 1) {
                 const row = tarRow + i * direction;
-                const name = this.board.getPieceNameAt(row, tarCol);
+                const name = board.getPieceNameAt(row, tarCol);
                 if (name !== null && name.charCodeAt(0) === 80) {
-                    // 'P'
                     from[0] = row;
                     from[1] = tarCol;
                     break;
@@ -207,12 +182,10 @@ class GameParser {
             }
         }
 
-        const piece = this.board.getPieceNameOnCoords(from);
-
         const mov = this.moveAction;
         mov.san = san;
         mov.player = player;
-        mov.piece = piece;
+        mov.piece = board.getPieceNameOnCoords(from);
         mov.from = from;
         mov.to = to;
         actions.push(mov);
@@ -229,56 +202,48 @@ class GameParser {
         return actions;
     }
 
-    /**
-     * Parses a single piece move (KQBNR) from algebraic notation to a list of `Action`s.
-     * @param san The move in standard algebraic notation.
-     * @returns A list of `Action`s to perform on the board.
-     */
     private pieceMove(san: string): Action[] {
         const actions = this.outActions;
         actions.length = 0;
         const player = this.activePlayer;
+        const board = this.board;
+        const tokenChar = san.charCodeAt(0);
         const token = san.charAt(0) as PieceToken;
 
-        const xIdx = san.indexOf('x');
-        const capture = xIdx !== -1;
-
-        // Target square is always last two characters (tokens like !?+# already stripped).
         const end = san.length;
         const to = Utils.algebraicToCoordsAt(san, end);
 
-        // Rest between piece token and target square, excluding 'x'.
-        // san: token + disambiguation? + x? + target
-        let restStart = 1;
+        // Target square is last 2 chars; optional 'x' immediately before it.
         let restEnd = end - 2;
-        if (capture) {
-            // 'x' sits just before the target square in legal SAN
-            restEnd = xIdx;
+        let capture = false;
+        if (san.charCodeAt(restEnd - 1) === 120) {
+            capture = true;
+            restEnd -= 1;
         }
-        const restLen = restEnd - restStart;
+        const restLen = restEnd - 1;
 
         let from: number[];
         if (restLen === 2) {
             from = Utils.algebraicToCoordsAt(san, restEnd);
         } else if (restLen === 1) {
-            const c = san.charCodeAt(restStart);
-            const mustBeInRow = c >= 49 && c <= 56 ? 7 - (c - 49) : null;
+            const c = san.charCodeAt(1);
+            // file 'a'-'h' -> col; rank '1'-'8' -> row (7..0)
             const mustBeInCol = c >= 97 && c <= 104 ? c - 97 : null;
-            from = this.findPiece(to, mustBeInRow, mustBeInCol, token, player);
+            const mustBeInRow = c >= 49 && c <= 56 ? 56 - c : null;
+            from = this.findPiece(to, mustBeInRow, mustBeInCol, token, tokenChar, player);
         } else {
-            from = this.findPiece(to, null, null, token, player);
+            from = this.findPiece(to, null, null, token, tokenChar, player);
         }
 
-        const piece = this.board.getPieceNameOnCoords(from);
+        const piece = board.getPieceNameOnCoords(from);
 
         if (capture) {
-            const takenPiece = this.board.getPieceNameOnCoords(to);
             const cap = this.captureAction;
             cap.san = san;
             cap.player = player;
             cap.on = to;
             cap.takingPiece = piece;
-            cap.takenPiece = takenPiece;
+            cap.takenPiece = board.getPieceNameOnCoords(to);
             actions.push(cap);
         }
 
@@ -293,11 +258,6 @@ class GameParser {
         return actions;
     }
 
-    /**
-     * Parses a castle move ('O-O' or 'O-O-O') from algebraic notation to a list of `MoveAction`s.
-     * @param san The move in standard algebraic notation.
-     * @returns A list of `MoveAction`s to perform on the board.
-     */
     private castle(san: string): Action[] {
         const actions = this.outActions;
         actions.length = 0;
@@ -305,7 +265,6 @@ class GameParser {
         const player = this.activePlayer;
         const row = player === 'w' ? 7 : 0;
 
-        // Castling is rare; allocate fresh actions to keep the pooled single-move path simple.
         if (san.length === 3) {
             actions.push(
                 { type: 'move', san, player, piece: 'Ke', from: [row, 4], to: [row, 6] },
@@ -321,14 +280,12 @@ class GameParser {
         return actions;
     }
 
-    /**
-     * Search the current position for a piece that could perform the move.
-     */
     private findPiece(
         toPosition: number[],
         mustBeInRow: number | null,
         mustBeInCol: number | null,
         token: PieceToken,
+        tokenChar: number,
         player: PlayerColor,
     ): number[] {
         const tarRow = toPosition[0];
@@ -340,7 +297,9 @@ class GameParser {
             return validPieces[0];
         }
 
-        const allowedDirections = moveCfg[token as Exclude<PieceToken, 'K'>];
+        const isKnight = tokenChar === 78;
+        const allowLine = LINE[tokenChar];
+        const allowDiag = DIAG[tokenChar];
         const filtered = this.filterBuf;
         filtered.length = 0;
 
@@ -355,17 +314,14 @@ class GameParser {
             const rowDiff = row > tarRow ? row - tarRow : tarRow - row;
             const colDiff = col > tarCol ? col - tarCol : tarCol - col;
 
-            if (token === 'N') {
+            if (isKnight) {
                 if ((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2)) {
                     filtered.push(val);
                 }
                 continue;
             }
 
-            if (
-                (allowedDirections.line && (rowDiff === 0 || colDiff === 0)) ||
-                (allowedDirections.diag && rowDiff === colDiff)
-            ) {
+            if ((allowLine && (rowDiff === 0 || colDiff === 0)) || (allowDiag && rowDiff === colDiff)) {
                 filtered.push(val);
             }
         }
@@ -374,11 +330,10 @@ class GameParser {
             return filtered[0];
         }
 
-        // else: one of the remaining pieces cannot move because of obstruction or it
-        // would result in the king being in check. Find the allowed piece.
+        const board = this.board;
         pieceLoop: for (let p = 0; p < filtered.length; p += 1) {
             const piece = filtered[p];
-            if (token !== 'N') {
+            if (!isKnight) {
                 const dRow = tarRow - piece[0];
                 const dCol = tarCol - piece[1];
                 const absRow = dRow < 0 ? -dRow : dRow;
@@ -387,7 +342,7 @@ class GameParser {
                 const dirRow = dRow === 0 ? 0 : dRow > 0 ? 1 : -1;
                 const dirCol = dCol === 0 ? 0 : dCol > 0 ? 1 : -1;
                 for (let i = 1; i < steps; i += 1) {
-                    if (!this.board.isEmptyAt(piece[0] + i * dirRow, piece[1] + i * dirCol)) {
+                    if (!board.isEmptyAt(piece[0] + i * dirRow, piece[1] + i * dirCol)) {
                         continue pieceLoop;
                     }
                 }
@@ -401,23 +356,20 @@ class GameParser {
         throw new MoveNotFoundException(token, player, tarRow, tarCol);
     }
 
-    /**
-     * Checks if performing the move would result in the king being in check.
-     */
     private checkCheck(from: number[], to: number[], player: PlayerColor): boolean {
         const opColor = player === 'w' ? 'b' : 'w';
-        const king = this.board.getPiecePosition(player, 'Ke');
+        const king = this.board.getKingPosition(player);
 
         const diff0 = from[0] - king[0];
         const diff1 = from[1] - king[1];
         let check0: number;
         let check1: number;
         if (diff0 === 0 || diff1 === 0) {
-            check0 = 81; // 'Q'
-            check1 = 82; // 'R'
+            check0 = 81; // Q
+            check1 = 82; // R
         } else if ((diff0 < 0 ? -diff0 : diff0) === (diff1 < 0 ? -diff1 : diff1)) {
-            check0 = 81; // 'Q'
-            check1 = 66; // 'B'
+            check0 = 81;
+            check1 = 66; // B
         } else {
             return false;
         }
@@ -436,17 +388,17 @@ class GameParser {
             distanceHorizontal < distanceVertical ? distanceHorizontal : distanceVertical;
         if (distanceToEdge < 2) return false;
 
+        const board = this.board;
         for (let i = 1; i <= distanceToEdge; i += 1) {
             const row = king[0] + i * vertDir;
             const col = king[1] + i * horzDir;
 
             if (row === to[0] && col === to[1]) break;
-
             if (row === from[0] && col === from[1]) continue;
 
-            const name = this.board.getPieceNameAt(row, col);
+            const name = board.getPieceNameAt(row, col);
             if (name) {
-                if (this.board.getPieceColorAt(row, col) !== opColor) return false;
+                if (board.getPieceColorAt(row, col) !== opColor) return false;
                 const t = name.charCodeAt(0);
                 return t === check0 || t === check1;
             }
