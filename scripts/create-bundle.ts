@@ -5,14 +5,13 @@ await Bun.$`rm -rf lib`;
 
 // Create a bundle
 const result = await Bun.build({
-	entrypoints: ['./src/js/chessalyzer.ts', './src/js/core/chess-worker.ts'],
-	outdir: './lib/',
-	target: 'node',
-	splitting: true,
-	naming: '[name].[ext]',
-	minify: true,
-	plugins: [dts()],
-	packages: 'external'
+    entrypoints: ['./src/js/index.ts', './src/js/core/chess-worker.ts'],
+    outdir: './lib/',
+    target: 'node',
+    splitting: true,
+    naming: '[name].[ext]',
+    plugins: [dts()],
+    packages: 'external',
 });
 
 if (!result.success) {
