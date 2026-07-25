@@ -11,7 +11,8 @@ const result = await Bun.build({
 	splitting: true,
 	naming: '[name].[ext]',
 	minify: true,
-	plugins: [dts()]
+	plugins: [dts()],
+	packages: 'external'
 });
 
 if (!result.success) {
