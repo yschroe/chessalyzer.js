@@ -490,6 +490,46 @@ fn aligned(from: u32, to: u32, straight: bool) -> bool {
     }
 }
 
+/// 8-bit occupancy for one rank (`bit 0` = h-file … `bit 7` = a-file).
+fn rank_occupancy(occupancy: u64, rank: u32) -> u8 {
+    ((occupancy >> (rank * 8)) & 0xFF) as u8
+}
+
+/// 8-bit occupancy for one file (`bit 0` = rank 1 … `bit 7` = rank 8).
+fn file_occupancy(occupancy: u64, file: u32) -> u8 {
+    let mut occ = 0u8;
+    for rank in 0..8u32 {
+        if occupancy & (1_u64 << (rank * 8 + file)) != 0 {
+            occ |= 1_u8 << rank;
+        }
+    }
+    occ
+}
+
+/// Fast rank/file clear-path check using precomputed `FIRST_RANK_MOVES` tables.
+/// Returns `true` if `to` is reachable from `from` along the rank or file (inclusive
+/// of a capture on `to`, but blocked by any piece strictly between).
+fn clear_path_straight(from: u32, to: u32, occupancy: u64) -> bool {
+    let from_rank = from / 8;
+    let from_file = from % 8;
+    let to_rank = to / 8;
+    let to_file = to % 8;
+
+    if from_rank == to_rank {
+        // Same rank — one table lookup instead of a per-square loop.
+        let rank_occ = rank_occupancy(occupancy, from_rank);
+        let occ = rank_occ & !(1_u8 << from_file);
+        let attacks = tables::FIRST_RANK_MOVES[from_file as usize][occ as usize];
+        return (attacks >> to_file) & 1 != 0;
+    }
+
+    // Same file — extract file as an 8-bit line and reuse the same table.
+    let file_occ = file_occupancy(occupancy, from_file);
+    let occ = file_occ & !(1_u8 << from_rank);
+    let attacks = tables::FIRST_RANK_MOVES[from_rank as usize][occ as usize];
+    (attacks >> to_rank) & 1 != 0
+}
+
 /// Returns `true` if no occupied square lies strictly between `from` and `to`.
 fn clear_path(from: u32, to: u32, occupancy: u64) -> bool {
     let from_rank = (from / 8) as i32;
@@ -508,6 +548,12 @@ fn clear_path(from: u32, to: u32, occupancy: u64) -> bool {
         return false;
     }
 
+    // Rank or file — O(1) lookup via FIRST_RANK_MOVES.
+    if dr == 0 || df == 0 {
+        return clear_path_straight(from, to, occupancy);
+    }
+
+    // Diagonal — still walk square-by-square (no table yet).
     let step_rank = dr.signum();
     let step_file = df.signum();
 
@@ -685,5 +731,38 @@ mod tests {
         let occ = 1_u64 << sq(3, 2);
         assert!(!clear_path(from, to, occ));
         assert!(clear_path(from, to, 0));
+    }
+
+    #[test]
+    fn clear_path_rank_uses_first_rank_moves() {
+        // a4 to h4, blocker on e4 — blocked
+        let from = sq(7, 4);
+        let to = sq(0, 4);
+        let blocked = (1_u64 << sq(4, 4)) | (1_u64 << from);
+        assert!(!clear_path(from, to, blocked));
+
+        // g4 to a4, blocker on e4 — g4 is beyond the blocker, so blocked
+        let from = sq(6, 4);
+        let occ = (1_u64 << sq(4, 4)) | (1_u64 << from);
+        assert!(!clear_path(from, to, occ));
+
+        // h4 to e4, blocker on e4 only — clear (capture on e4)
+        let from = sq(0, 4);
+        let to = sq(4, 4);
+        let occ = (1_u64 << sq(4, 4)) | (1_u64 << from);
+        assert!(clear_path(from, to, occ));
+    }
+
+    #[test]
+    fn clear_path_file_uses_first_rank_moves() {
+        // e1 to e8, blocker on e4
+        let from = sq(4, 1);
+        let to = sq(4, 8);
+        let blocked = (1_u64 << sq(4, 4)) | (1_u64 << from);
+        assert!(!clear_path(from, to, blocked));
+
+        // e5 to e8 with blocker below on e4
+        let from = sq(4, 5);
+        assert!(clear_path(from, to, blocked));
     }
 }

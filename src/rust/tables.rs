@@ -114,55 +114,57 @@ const fn generate_attacks(masks: Masks) -> Attacks {
     }
 }
 
-// --- First-rank move tables (reserved for future magic-bitboard optimization) ---
-// These precompute how a rook/bishop moves along a single rank given 8-bit
-// occupancy. A future optimization could use these instead of walking rays
-// square-by-square in `clear_path` (Phase 4 perf work).
+// --- First-rank move tables (used for O(1) rank/file clear-path checks) ---
+// These precompute which squares are reachable along an 8-square line for every
+// possible occupancy pattern. `board.rs` uses them for straight `clear_path`
+// checks; diagonals still use square-by-square ray walking.
 
-/// All squares to the left of `x` on the first rank (as a bit mask).
-#[allow(dead_code)]
-const fn left_ray(x: u8) -> u8 {
-    x - 1_u8
+/// All squares reachable from `from_file` on one rank, given `occupancy`
+/// (bit `0` = h-file … bit `7` = a-file). Includes the first blocker square
+/// (for captures) but nothing beyond it.
+const fn rank_attacks(from_file: u8, occupancy: u8) -> u8 {
+    let mut attacks = 0u8;
+
+    // Toward h-file (decreasing file index).
+    let mut f = from_file as i32 - 1;
+    while f >= 0 {
+        attacks |= 1u8 << f;
+        if occupancy & (1u8 << f) != 0 {
+            break;
+        }
+        f -= 1;
+    }
+
+    // Toward a-file (increasing file index).
+    f = from_file as i32 + 1;
+    while f < 8 {
+        attacks |= 1u8 << f;
+        if occupancy & (1u8 << f) != 0 {
+            break;
+        }
+        f += 1;
+    }
+
+    attacks
 }
 
-#[allow(dead_code)]
-const fn right_ray(x: u8) -> u8 {
-    !x & !(x - 1_u8)
-}
-
-#[allow(dead_code)]
 const fn compute_first_rank_moves() -> [[u8; 256]; 8] {
     let mut first_rank_moves: [[u8; 256]; 8] = [[0; 256]; 8];
 
-    const_for!(i in 0..8 => {
-        let x = 1_u8 << i;
+    const_for!(from_file in 0..8 => {
         const_for!(occ in 0..256_u16 => {
-            let mut left_attacks = left_ray(x);
-            let left_blockers = left_attacks & occ as u8;
-            if left_blockers != 0 {
-                let leftmost = 1_u8 << left_blockers.leading_zeros();
-                let left_garbage = left_ray(leftmost);
-                left_attacks ^= left_garbage;
-            }
-
-            let mut right_attacks = right_ray(x);
-            let right_blockers = right_attacks & occ as u8;
-            if right_blockers != 0 {
-                let rightmost = 1 << right_blockers.trailing_zeros();
-                let right_garbage = right_ray(rightmost);
-                right_attacks ^= right_garbage
-            }
-
-            first_rank_moves[i][occ as usize] = left_attacks ^ right_attacks
+            first_rank_moves[from_file][occ as usize] =
+                rank_attacks(from_file as u8, occ as u8);
         });
-
     });
+
     first_rank_moves
 }
 
 pub const MASKS: Masks = generate_masks();
 pub const ATTACKS: Attacks = generate_attacks(MASKS);
 
-/// Per-square, per-occupancy rook attack tables for rank 1 (for future use).
-#[allow(dead_code)]
+/// Per-square, per-occupancy attack masks along a single rank (8-bit occupancy).
+/// `FIRST_RANK_MOVES[square][occ]` returns which squares are reachable from `square`
+/// on a rank when `occ` is the 8-bit occupancy (bit 0 = h-file, bit 7 = a-file).
 pub const FIRST_RANK_MOVES: [[u8; 256]; 8] = compute_first_rank_moves();
