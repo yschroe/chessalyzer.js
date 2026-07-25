@@ -13,14 +13,15 @@ import type {
     GameProcessorConfig,
     WorkerInitData,
 } from '../interfaces';
-import GameParser from './game-parser';
-import { readLinesFast } from './line-reader';
+import GameParser from '../parsing/game-parser';
+import {
+    extractMoves,
+    isGameResultLine,
+    parseHeaderTag,
+    stripComments,
+} from '../pgn/pgn-line-parser';
+import { readLinesFast } from '../pgn/line-reader';
 import WorkerPool from './worker-pool';
-
-const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
-const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
-const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
-const RESULT_REGEX = /-(1\/2|0|1)$/;
 
 /**
  * Class that processes games.
@@ -105,18 +106,17 @@ class GameProcessor {
             switch (isHeaderTag) {
                 case true: {
                     if (!this.readInHeader) continue;
-                    const [_, key, value] = HEADER_REGEX.exec(line);
-                    game[key] = value;
+                    const header = parseHeaderTag(line);
+                    if (header) {
+                        const [key, value] = header;
+                        game[key] = value;
+                    }
                     break;
                 }
                 case false: {
-                    // Skip comment stripping when the line has no comment/rav markers (common in bulk dumps).
-                    const cleanedLine =
-                        line.includes('{') || line.includes('(')
-                            ? line.replaceAll(COMMENT_REGEX, '')
-                            : line;
+                    const cleanedLine = stripComments(line);
 
-                    const matchedMoves = cleanedLine.match(MOVE_REGEX);
+                    const matchedMoves = extractMoves(cleanedLine);
                     if (matchedMoves) {
                         const moves = game.moves;
                         for (let i = 0; i < matchedMoves.length; i += 1) {
@@ -125,7 +125,7 @@ class GameProcessor {
                     }
 
                     // Result tokens end with "-1/2", "-0", or "-1" (e.g. "1-0", "0-1", "1/2-1/2").
-                    if (RESULT_REGEX.test(cleanedLine)) {
+                    if (isGameResultLine(cleanedLine)) {
                         for (let idxCfg = 0; idxCfg < this.configs.length; idxCfg += 1) {
                             const cfg = this.configs[idxCfg];
                             if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {

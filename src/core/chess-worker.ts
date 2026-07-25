@@ -13,7 +13,7 @@ import BaseTracker from '../tracker/base-tracker';
 import GameTracker from '../tracker/game-tracker-base';
 import PieceTracker from '../tracker/piece-tracker-base';
 import TileTracker from '../tracker/tile-tracker-base';
-import GameParser from './game-parser';
+import GameParser from '../parsing/game-parser';
 
 const initData = workerData as WorkerInitData | undefined;
 
