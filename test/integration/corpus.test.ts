@@ -4,7 +4,7 @@ import { describe, it, beforeAll, expect } from 'bun:test';
 // Skipped automatically when corpus files are not present locally.
 import { Chessalyzer, GameTracker, PieceTracker } from 'chessalyzer.js';
 
-import { corpusPath, getCorpusEntry } from '../helpers/fixtures.ts';
+import { corpusPath, getCorpusEntry } from '../helpers/fixtures';
 
 const pgnPath = await corpusPath('asorted');
 const corpusAvailable = pgnPath !== null;

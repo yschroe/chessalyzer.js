@@ -8,7 +8,7 @@ import {
     fixtureExpected,
     fixturePath,
     repeatPgn,
-} from '../helpers/fixtures.ts';
+} from '../helpers/fixtures';
 
 // Integration tests against small committed PGN fixtures (test/fixtures/).
 describe('Fixtures', () => {
