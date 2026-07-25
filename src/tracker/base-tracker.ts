@@ -1,6 +1,6 @@
 import { performance } from 'node:perf_hooks';
 
-import Utils from '../core/utils.js';
+import Utils from '../core/utils';
 import type {
     Game,
     Action,
@@ -8,7 +8,7 @@ import type {
     TrackerConfig,
     HeatmapAnalysisFunc,
     HeatmapData,
-} from '../interfaces/index.js';
+} from '../interfaces';
 
 class BaseTracker implements Tracker {
     type: 'move' | 'game';

@@ -1,5 +1,5 @@
-import type { SquareData } from '../../interfaces/index.js';
-import PieceTrackerBase from '../piece-tracker-base.js';
+import type { SquareData } from '../../interfaces';
+import PieceTrackerBase from '../piece-tracker-base';
 
 export default {
     PIECE_CAPTURED_BY: {

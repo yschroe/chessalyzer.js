@@ -3,7 +3,7 @@ import { AsyncResource } from 'node:async_hooks';
 import { EventEmitter } from 'node:events';
 import { Worker } from 'node:worker_threads';
 
-import { WorkerMessage, WorkerTaskData } from '../interfaces/index.js';
+import { WorkerMessage, WorkerTaskData } from '../interfaces';
 
 const kTaskInfo = Symbol('kTaskInfo');
 const kWorkerFreedEvent = Symbol('kWorkerFreedEvent');
