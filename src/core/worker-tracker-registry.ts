@@ -2,9 +2,6 @@ import BaseTracker from '../tracker/base-tracker';
 import GameTracker from '../tracker/game-tracker-base';
 import PieceTracker from '../tracker/piece-tracker-base';
 import TileTracker from '../tracker/tile/tile-tracker-base';
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type { GameProcessorAnalysisConfig, WorkerInitData } from '../types';
 
 /**
