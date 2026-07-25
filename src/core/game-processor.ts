@@ -196,8 +196,7 @@ class GameProcessor {
                             idxConfig: idx,
                             readInHeader: this.readInHeader,
                         },
-                        (err: Error, result: WorkerMessage) =>
-                            this.addDataFromWorker(err, result),
+                        (err: Error, result: WorkerMessage) => this.addDataFromWorker(err, result),
                     );
                 }
             }

@@ -1,10 +1,5 @@
 import type { Game } from '../types';
-import {
-    extractMoves,
-    isGameResultLine,
-    parseHeaderTag,
-    stripComments,
-} from './pgn-line-parser';
+import { extractMoves, isGameResultLine, parseHeaderTag, stripComments } from './pgn-line-parser';
 
 export interface ParseGamesOptions {
     readInHeader: boolean;
@@ -57,10 +52,7 @@ export class GameLineParser {
 }
 
 /** Parse a sequence of PGN lines into complete games (for worker-side batch parsing). */
-export function parseGamesFromLines(
-    lines: Iterable<string>,
-    options: ParseGamesOptions,
-): Game[] {
+export function parseGamesFromLines(lines: Iterable<string>, options: ParseGamesOptions): Game[] {
     const parser = new GameLineParser(options);
     const games: Game[] = [];
     const maxGames = options.maxGames ?? Infinity;

@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 
 import { parseGamesFromLines } from '../src/pgn/game-assembler';
-import {
-    chunkEndsWithCompleteGame,
-    readLinesFast,
-    readPgnChunks,
-} from '../src/pgn/line-reader';
+import { chunkEndsWithCompleteGame, readLinesFast, readPgnChunks } from '../src/pgn/line-reader';
 
 const SINGLE_GAME_PGN = './test/comments_singleline.pgn';
 const MULTI_GAME_PGN = './test/asorted_games.pgn';
