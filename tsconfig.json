@@ -1,5 +1,5 @@
 {
-    "include": ["src/js/**/*", "scripts/**/*", "test/**/*", "manual-tests/**/*"],
+    "include": ["src/**/*", "scripts/**/*", "test/**/*", "manual-tests/**/*"],
     "compilerOptions": {
         "target": "ESNext",
         "module": "Preserve",
