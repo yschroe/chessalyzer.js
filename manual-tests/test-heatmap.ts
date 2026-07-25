@@ -1,12 +1,12 @@
-import { Chessalyzer, Tracker } from 'chessalyzer.js';
+import { Chessalyzer, TileTracker } from 'chessalyzer.js';
 
 // create basic tile tracker
-const tileTracker = new Tracker.Tile();
-const tileTracker2 = new Tracker.Tile();
+const tileTracker = new TileTracker();
+const tileTracker2 = new TileTracker();
 
 // start a batch analysis for the PGN file at <pathToPgnFile>
 // the analysis is saved directly in the 'tileTracker' object
-const data = await Chessalyzer.analyzePGN('./test/lichess_db_standard_rated_2013-12.pgn', [
+const data = await Chessalyzer.analyzePGN('./test/corpus/asorted-games.pgn', [
     {
         trackers: [tileTracker],
         config: { cntGames: 2000, filter: (val) => val.Result === '0-1' },

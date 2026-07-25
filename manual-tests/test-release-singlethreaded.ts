@@ -1,5 +1,6 @@
-import { Chessalyzer } from '../lib/index.js';
-import CustomGameTracker from './CustomGameTracker.js';
+import { Chessalyzer } from 'chessalyzer.js';
+
+import CustomGameTracker from './custom-game-tracker.ts';
 
 // const a = new Tracker.Game();
 // const b = new Tracker.Piece();
