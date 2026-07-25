@@ -4,23 +4,13 @@
  * so existing `from '../interfaces'` imports continue to work unchanged.
  */
 
-export type { PawnToken, PieceToken, Token, PlayerColor } from './chess-types';
+export type { PawnToken, PieceToken, Token, PlayerColor } from './tokens';
 
 export type { MoveAction, CaptureAction, PromoteAction, Action } from './actions';
 
-export type {
-    Game,
-    Move,
-    ChessPiece,
-    SquareData,
-} from './game';
+export type { Game, Move, ChessPiece, SquareData } from './game';
 
-export type {
-    Tracker,
-    TrackerConfig,
-    HeatmapData,
-    HeatmapAnalysisFunc,
-} from './tracker';
+export type { Tracker, TrackerConfig, HeatmapData, HeatmapAnalysisFunc } from './tracker';
 
 export type {
     AnalysisConfig,
