@@ -20,12 +20,12 @@ Tests that run the full `Chessalyzer` pipeline stay in `test/integration/` becau
 
 ### Fixtures vs corpus
 
-| | Fixtures | Corpus |
-|---|----------|--------|
-| Location | `test/fixtures/` | `test/corpus/` |
-| In git | yes | no |
-| CI | always runs | skipped without local file |
-| Purpose | format/edge-case coverage | golden regression at scale |
+|          | Fixtures                  | Corpus                     |
+| -------- | ------------------------- | -------------------------- |
+| Location | `test/fixtures/`          | `test/corpus/`             |
+| In git   | yes                       | no                         |
+| CI       | always runs               | skipped without local file |
+| Purpose  | format/edge-case coverage | golden regression at scale |
 
 ## Commands
 
