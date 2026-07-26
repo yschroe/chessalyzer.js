@@ -25,12 +25,6 @@
     "type": "module",
     "main": "lib/chessalyzer.js",
     "types": "lib/chessalyzer.d.ts",
-    "exports": {
-        ".": {
-            "types": "./lib/index.d.ts",
-            "import": "./lib/index.js"
-        }
-    },
     "imports": {
         "#core/*": "./src/core/*.ts",
         "#parsing/*": "./src/parsing/*.ts",
@@ -38,6 +32,12 @@
         "#tracker/*": "./src/tracker/*.ts",
         "#pgn/*": "./src/pgn/*.ts",
         "#types/*": "./src/types/*.ts"
+    },
+    "exports": {
+        ".": {
+            "types": "./lib/index.d.ts",
+            "import": "./lib/index.js"
+        }
     },
     "scripts": {
         "build": "bun ./scripts/create-bundle.ts",
@@ -48,7 +48,11 @@
         "lint": "oxlint",
         "format": "oxfmt",
         "typecheck": "tsc --noEmit",
-        "knip": "knip"
+        "knip": "knip",
+        "bench": "node bench/run.ts",
+        "bench:bun": "bun bench/run.ts",
+        "bench:atomic:array": "node bench/atomic/array.ts",
+        "bench:atomic:array:bun": "bun bench/atomic/array.ts"
     },
     "dependencies": {
         "chalk": "^5.6.2"
@@ -61,6 +65,7 @@
         "oxfmt": "^0.60.0",
         "oxlint": "^1.75.0",
         "oxlint-tsgolint": "^7.0.2001",
+        "tinybench": "^6.1.2",
         "typescript": "^7.0.2"
     },
     "overrides": {
