@@ -269,7 +269,7 @@ class FixedQueue<T> {
  * @see https://github.com/oven-sh/bun/issues/5136#issuecomment-3503523219
  */
 export function readLinesFast(file: string) {
-    const rs = createReadStream(file, { encoding: 'utf-8' });
+    const rs = createReadStream(file, 'utf-8');
     const iterator: AsyncIterator<string, string> = rs[Symbol.asyncIterator]();
 
     const cache: FixedQueue<string> = new FixedQueue();

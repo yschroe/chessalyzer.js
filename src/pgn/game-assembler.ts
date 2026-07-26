@@ -38,10 +38,7 @@ export class GameLineParser {
 
         const matchedMoves = extractMoves(cleanedLine);
         if (matchedMoves) {
-            const moves = this.game.moves;
-            for (let i = 0; i < matchedMoves.length; i += 1) {
-                moves.push(matchedMoves[i]);
-            }
+            this.game.moves = this.game.moves.concat(matchedMoves);
         }
 
         if (isGameResultLine(cleanedLine)) {
