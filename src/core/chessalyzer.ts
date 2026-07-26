@@ -3,7 +3,6 @@ import { performance } from 'node:perf_hooks';
 import chalk from 'chalk';
 
 import GameProcessor from '#core/game-processor';
-import { DEFAULT_PGN_CHUNK_BYTES } from '#pgn/line-reader';
 import type { AnalysisConfig, GameAndMoveCountFull, MultithreadConfig } from '#types/analysis';
 import type { HeatmapData } from '#types/tracker';
 
@@ -28,7 +27,7 @@ export default class Chessalyzer {
     static async analyzePGN(
         pathToPgn: string,
         configs?: AnalysisConfig | AnalysisConfig[],
-        multithreadCfg: MultithreadConfig | null = { targetBytes: DEFAULT_PGN_CHUNK_BYTES },
+        multithreadCfg: MultithreadConfig | null = {},
     ): Promise<GameAndMoveCountFull[] | GameAndMoveCountFull> {
         // handler for single config or array of configs
         const configArray: AnalysisConfig[] = Array.isArray(configs)

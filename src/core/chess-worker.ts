@@ -3,7 +3,7 @@ import { parentPort, workerData } from 'node:worker_threads';
 import { getCachedCfg, initWorkerTrackers, resetCfg } from '#core/worker-tracker-registry';
 import GameParser from '#parsing/game-parser';
 import { parseGamesFromLines } from '#pgn/game-assembler';
-import { decodePgnChunkBytes } from '#pgn/line-reader';
+import { decodePgnChunkBytes } from '#pgn/pgn-chunks';
 import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
 
 const initData = workerData as WorkerInitData | undefined;

@@ -1,13 +1,10 @@
 import { describe, it, expect } from 'bun:test';
 
+import { parseGamesFromLines } from '#pgn/game-assembler';
+import { readLinesFast } from '#pgn/line-reader';
+import { chunkEndsWithCompleteGame, readPgnChunks, type PgnChunkConfig } from '#pgn/pgn-chunks';
+
 import { fixturePath, repeatPgn, cleanupTmpPgns } from '../../../test/helpers/fixtures';
-import { parseGamesFromLines } from '../game-assembler';
-import {
-    chunkEndsWithCompleteGame,
-    readLinesFast,
-    readPgnChunks,
-    type PgnChunkConfig,
-} from '../line-reader';
 
 async function collectChunks(path: string, config: PgnChunkConfig) {
     const chunks = [];

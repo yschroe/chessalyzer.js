@@ -5,12 +5,8 @@ import { join } from 'node:path';
 import WorkerPool from '#core/worker-pool';
 import GameParser from '#parsing/game-parser';
 import { GameLineParser } from '#pgn/game-assembler';
-import {
-    DEFAULT_PGN_CHUNK_BYTES,
-    encodePgnChunkText,
-    readLinesFast,
-    readPgnChunks,
-} from '#pgn/line-reader';
+import { readLinesFast } from '#pgn/line-reader';
+import { encodePgnChunkText, readPgnChunks } from '#pgn/pgn-chunks';
 import type {
     AnalysisConfig,
     GameAndMoveCount,
@@ -100,7 +96,7 @@ class GameProcessor {
         const workerPool = new WorkerPool(this.resolveWorkerCount(), WORKER_PATH, workerInitData);
 
         const chunkConfig = {
-            targetBytes: this.multithreadConfig!.targetBytes ?? DEFAULT_PGN_CHUNK_BYTES,
+            targetBytes: this.multithreadConfig!.targetBytes,
             maxLines: this.multithreadConfig!.maxLines,
             minLines: this.multithreadConfig!.minLines,
         };
