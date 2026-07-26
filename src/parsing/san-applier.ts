@@ -48,8 +48,8 @@ export default class SanApplier {
 
         const to = algebraicToCoordsAt(san, end);
         const from = this.ctx.fromBuf;
-        const toRow = to[0] as number;
-        const toCol = to[1] as number;
+        const toRow = to[0];
+        const toCol = to[1];
 
         if (san.charCodeAt(1) === 120) {
             from[0] = toRow + direction;
