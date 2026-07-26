@@ -48,29 +48,3 @@ export function coordsToAlgebraic(coords: number[]): string {
     if (col === undefined || row === undefined || !isBoardIndex(col)) return '';
     return `${FILES[col]}${8 - row}`;
 }
-
-/** Dense tile index for an on-board square. */
-export function tileOffset(row: number, col: number): number {
-    return row * 8 + col;
-}
-
-/** Parse row/col into fixed board indices, or null when out of range. */
-export function parseBoardCoords(
-    row: number | undefined,
-    col: number | undefined,
-): [BoardIndex, BoardIndex] | null {
-    if (row === undefined || col === undefined || !isBoardIndex(row) || !isBoardIndex(col)) {
-        return null;
-    }
-    return [row, col];
-}
-
-export function isOnBoard(row: number | undefined, col: number | undefined): boolean {
-    return parseBoardCoords(row, col) !== null;
-}
-
-/** Copy lookup-table coords into a reusable mutable buffer. */
-export function copyCoordsTo(target: number[], coords: readonly [number, number]): void {
-    target[0] = coords[0];
-    target[1] = coords[1];
-}

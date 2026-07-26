@@ -14,4 +14,4 @@ runs:
 
     - name: Build
       shell: bash
-      run: bun build
+      run: bun run build
