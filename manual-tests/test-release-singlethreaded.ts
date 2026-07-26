@@ -12,7 +12,7 @@ import CustomGameTracker from './custom-game-tracker.ts';
 // c.cfg.profilingActive = true;
 
 const header = await Chessalyzer.analyzePGN(
-    './manual-tests/lichess_db_standard_rated_2013-12.pgn',
+    './pgn/lichess_db_standard_rated_2013-12.pgn',
     undefined,
     null,
 );

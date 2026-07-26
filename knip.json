@@ -1,5 +1,10 @@
 {
     "$schema": "./node_modules/knip/schema.json",
-    "entry": ["src/index.ts", "src/core/chess-worker.ts"],
-    "ignore": ["bench/**", "manual-tests/**"]
+    "entry": [
+        "src/index.ts",
+        "src/core/chess-worker.ts",
+        "bench/*.ts",
+        "bench/{atomic,exploratory}/*.ts"
+    ],
+    "ignore": ["manual-tests/**"]
 }

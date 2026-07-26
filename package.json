@@ -25,12 +25,6 @@
     "type": "module",
     "main": "lib/chessalyzer.js",
     "types": "lib/chessalyzer.d.ts",
-    "exports": {
-        ".": {
-            "types": "./lib/index.d.ts",
-            "import": "./lib/index.js"
-        }
-    },
     "imports": {
         "#core/*": "./src/core/*.ts",
         "#parsing/*": "./src/parsing/*.ts",
@@ -39,16 +33,26 @@
         "#pgn/*": "./src/pgn/*.ts",
         "#types/*": "./src/types/*.ts"
     },
+    "exports": {
+        ".": {
+            "types": "./lib/index.d.ts",
+            "import": "./lib/index.js"
+        }
+    },
     "scripts": {
-        "build": "bun ./scripts/create-bundle.ts",
+        "build": "bun scripts/create-bundle.ts",
         "test": "bun test",
         "test:corpus": "bun test test/integration/corpus.test.js",
-        "test:fetch-corpus": "bun ./scripts/fetch-test-corpus.ts",
-        "test:build-fixtures": "bun run build && bun ./scripts/build-fixture-manifest.ts",
+        "test:fetch-corpus": "bun scripts/fetch-test-corpus.ts",
+        "test:build-fixtures": "bun run build && bun scripts/build-fixture-manifest.ts",
         "lint": "oxlint",
         "format": "oxfmt",
         "typecheck": "tsc --noEmit",
-        "knip": "knip"
+        "knip": "knip",
+        "bench:perf": "tsx bench/bench-perf.ts",
+        "bench:perf:bun": "bun bench/bench-perf.ts",
+        "bench:atomic": "tsx bench/bench-atomic.ts",
+        "bench:atomic:bun": "bun bench/bench-atomic.ts"
     },
     "dependencies": {
         "chalk": "^5.6.2"
@@ -61,6 +65,8 @@
         "oxfmt": "^0.60.0",
         "oxlint": "^1.75.0",
         "oxlint-tsgolint": "^7.0.2001",
+        "tinybench": "^6.1.2",
+        "tsx": "^4.23.1",
         "typescript": "^7.0.2"
     },
     "overrides": {
