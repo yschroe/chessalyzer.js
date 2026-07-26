@@ -8,6 +8,7 @@ import { getRuntimeLabel, printResults } from '../lib/report';
 const moveTokens = makeMoveTokens(SINGLE);
 const pgnLines = makePgnLines(BULK);
 
+/** Benchmark: Append single items to an array. */
 function appendSingleCases(): BenchCase[] {
     const ctx = { arr: [] as string[] };
 
@@ -49,6 +50,7 @@ function appendSingleCases(): BenchCase[] {
     ];
 }
 
+/** Benchmark: Append multiple items to an array at once. */
 function appendBulkCases(reuse: boolean): BenchCase[] {
     const ctx = { arr: [] as string[] };
     if (reuse) ctx.arr = [];
@@ -136,6 +138,34 @@ function appendBulkCases(reuse: boolean): BenchCase[] {
     return cases;
 }
 
+/** Benchmark: Append multiple items to an array at once. */
+function newArrayCases(length: number): BenchCase[] {
+    const cases: BenchCase[] = [
+        {
+            name: 'new_array',
+            fn: () => {
+                return new Array(length);
+            },
+        },
+        {
+            name: 'fill_loop',
+            fn: () => {
+                const arr = new Array(length);
+                for (let i = 0; i < length; i += 1) arr[i] = i;
+                return arr.length;
+            },
+        },
+        {
+            name: 'array_from',
+            fn: () => {
+                return Array.from({ length });
+            },
+        },
+    ];
+
+    return cases;
+}
+
 export default async function runArrayBench(): Promise<void> {
     const t0 = Date.now();
     console.log(`Array append benchmarks (${getRuntimeLabel()})`);
@@ -158,6 +188,12 @@ export default async function runArrayBench(): Promise<void> {
         `appendBulk_reuse (${BULK} items, length = 0 reset)`,
         await runScenario('appendBulk_reuse', appendBulkCases(true)),
     );
+
+    printResults(`newArray (10 items)`, await runScenario('newArray', newArrayCases(10)));
+
+    printResults(`newArray (100 items)`, await runScenario('newArray', newArrayCases(100)));
+
+    printResults(`newArray (1000 items)`, await runScenario('newArray', newArrayCases(1000)));
 
     console.log(`\nDone in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 }
