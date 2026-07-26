@@ -1,5 +1,4 @@
 node_modules
-
 .DS_Store
 
 # PGN data files — only small committed fixtures are tracked
@@ -7,7 +6,5 @@ node_modules
 !test/fixtures/*.pgn
 test/.tmp/
 
-*.csv
-
 # built library
-lib
+/lib
