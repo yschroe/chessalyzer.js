@@ -1,5 +1,7 @@
 import { createReadStream } from 'node:fs';
 
+const DEFAULT_QUEUE_SIZE = 1024;
+
 /* https://github.com/nodejs/node/blob/bae03c4e30f927676203f61ff5a34fe0a0c0bbc9/lib/internal/fixed_queue.js
  * The FixedQueue is implemented as a singly-linked list of fixed-size
  * circular buffers. It looks something like this:
@@ -92,7 +94,7 @@ class FixedQueue<T> {
     head: FixedCircularBuffer<T>;
     tail: FixedCircularBuffer<T>;
 
-    constructor(private readonly kSize: number = 1024) {
+    constructor(private readonly kSize = DEFAULT_QUEUE_SIZE) {
         this.head = this.tail = new FixedCircularBuffer(kSize);
     }
 
