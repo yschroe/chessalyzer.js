@@ -2,6 +2,8 @@ import { describe, it, beforeAll, afterAll, expect } from 'bun:test';
 
 import { Chessalyzer, GameTracker, PieceTracker } from 'chessalyzer.js';
 
+import type { GameAndMoveCountFull } from '../../src/types/analysis';
+import type { Game } from '../../src/types/game';
 import {
     allFixtureIds,
     cleanupTmpPgns,
@@ -9,6 +11,8 @@ import {
     fixturePath,
     repeatPgn,
 } from '../helpers/fixtures';
+
+type FilterGame = Game & { [key: string]: unknown };
 
 // Integration tests against small committed PGN fixtures (test/fixtures/).
 describe('Fixtures', () => {
@@ -18,7 +22,7 @@ describe('Fixtures', () => {
 
     for (const id of allFixtureIds) {
         describe(id, () => {
-            let data;
+            let data: GameAndMoveCountFull;
 
             beforeAll(async () => {
                 data = await Chessalyzer.analyzePGN(fixturePath(id), { trackers: [] }, null);
@@ -56,7 +60,7 @@ describe('Fixtures', () => {
         it('filters by result', async () => {
             const data = await Chessalyzer.analyzePGN(
                 fixturePath('results-mix'),
-                { config: { filter: (game) => game.Result === '1-0' } },
+                { config: { filter: (game: object) => (game as FilterGame).Result === '1-0' } },
                 null,
             );
             expect(data.cntGames).toBe(3);
@@ -68,7 +72,7 @@ describe('Fixtures', () => {
                 {
                     config: {
                         cntGames: 2,
-                        filter: (game) => game.Result === '0-1',
+                        filter: (game: object) => (game as FilterGame).Result === '0-1',
                     },
                 },
                 null,

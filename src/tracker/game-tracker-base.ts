@@ -1,5 +1,11 @@
 import BaseTracker from '#tracker/base-tracker';
+import type { Action } from '#types/actions';
 import type { Game } from '#types/game';
+import type { Tracker } from '#types/tracker';
+
+function isGameTracker(tracker: Tracker): tracker is GameTrackerBase {
+    return 'results' in tracker && 'ECO' in tracker;
+}
 
 class GameTrackerBase extends BaseTracker {
     results: { white: number; black: number; draw: number };
@@ -13,7 +19,9 @@ class GameTrackerBase extends BaseTracker {
         this.ECO = {};
     }
 
-    add(tracker: GameTrackerBase) {
+    add(tracker: Tracker) {
+        if (!isGameTracker(tracker)) return;
+
         this.results.white += tracker.results.white;
         this.results.black += tracker.results.black;
         this.results.draw += tracker.results.draw;
@@ -21,10 +29,12 @@ class GameTrackerBase extends BaseTracker {
         this.time += tracker.time;
 
         for (const key of Object.keys(tracker.ECO)) {
+            const ecoCount = tracker.ECO[key];
+            if (ecoCount === undefined) continue;
             if (this.ECO[key] !== undefined) {
-                this.ECO[key] += tracker.ECO[key];
+                this.ECO[key] += ecoCount;
             } else {
-                this.ECO[key] = tracker.ECO[key];
+                this.ECO[key] = ecoCount;
             }
         }
     }
@@ -38,7 +48,8 @@ class GameTrackerBase extends BaseTracker {
         this.ECO = {};
     }
 
-    track(game: Game) {
+    track(game: Game | Action[]) {
+        if (Array.isArray(game)) return;
         this.cntGames += 1;
         switch (game.Result) {
             case '1-0':
@@ -56,10 +67,13 @@ class GameTrackerBase extends BaseTracker {
             default:
                 break;
         }
-        if (this.ECO[game.ECO] !== undefined) {
-            this.ECO[game.ECO] += 1;
-        } else {
-            this.ECO[game.ECO] = 1;
+        const eco = game.ECO;
+        if (eco !== undefined) {
+            if (this.ECO[eco] !== undefined) {
+                this.ECO[eco] += 1;
+            } else {
+                this.ECO[eco] = 1;
+            }
         }
     }
 
@@ -67,8 +81,8 @@ class GameTrackerBase extends BaseTracker {
         // sort keys
         this.ECO = Object.keys(this.ECO)
             .sort()
-            .reduce((a, c) => {
-                a[c] = this.ECO[c];
+            .reduce<Record<string, number>>((a, c) => {
+                a[c] = this.ECO[c] ?? 0;
                 return a;
             }, {});
     }

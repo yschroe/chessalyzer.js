@@ -63,7 +63,7 @@ class GameProcessor {
                     tempCfg.trackerData.push({
                         name: tracker.constructor.name,
                         cfg: tracker.cfg,
-                        path: tracker.path,
+                        path: tracker.path ?? '',
                     });
                 }
             }
@@ -116,7 +116,7 @@ class GameProcessor {
             rejectFatal = reject;
         });
 
-        const handleWorkerResult = (err: Error | null, result: WorkerMessage) => {
+        const handleWorkerResult = (err: Error | null, result: WorkerMessage | null) => {
             if (fatalError) return;
 
             if (err) {
@@ -124,6 +124,8 @@ class GameProcessor {
                 rejectFatal?.(err);
                 return;
             }
+
+            if (!result) return;
 
             // Worker caught a batch error and reported it via postMessage instead of throwing.
             if (result.error) {
@@ -139,8 +141,7 @@ class GameProcessor {
             chunkLoop: for await (const chunk of readPgnChunks(path, chunkConfig)) {
                 if (fatalError) break;
 
-                for (let idxCfg = 0; idxCfg < this.configs.length; idxCfg += 1) {
-                    const cfg = this.configs[idxCfg];
+                for (const [idxCfg, cfg] of this.configs.entries()) {
                     if (cfg.isDone) continue;
 
                     workerPool.runTask(
@@ -198,7 +199,7 @@ class GameProcessor {
             rejectFatal = reject;
         });
 
-        const handleWorkerResult = (err: Error | null, result: WorkerMessage) => {
+        const handleWorkerResult = (err: Error | null, result: WorkerMessage | null) => {
             if (fatalError) return;
 
             if (err) {
@@ -206,6 +207,8 @@ class GameProcessor {
                 rejectFatal?.(err);
                 return;
             }
+
+            if (!result) return;
 
             if (result.error) {
                 fatalError = new Error(result.error);
@@ -223,18 +226,18 @@ class GameProcessor {
                 const game = lineParser.processLine(line);
                 if (!game) continue;
 
-                for (let idxCfg = 0; idxCfg < this.configs.length; idxCfg += 1) {
-                    const cfg = this.configs[idxCfg];
+                for (const [idxCfg, cfg] of this.configs.entries()) {
                     if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
                         cfg.cntReadGames += 1;
-                        if (isMultithreaded) {
-                            gameStore[idxCfg].push(game);
+                        const gamesForCfg = gameStore[idxCfg];
+                        if (isMultithreaded && gamesForCfg) {
+                            gamesForCfg.push(game);
 
-                            if (gameStore[idxCfg].length === legacyBatchSize) {
+                            if (gamesForCfg.length === legacyBatchSize) {
                                 workerPool!.runTask(
                                     {
                                         pgnChunkBytes: encodePgnChunkText(
-                                            this.gamesToPgnChunk(gameStore[idxCfg]),
+                                            this.gamesToPgnChunk(gamesForCfg),
                                         ),
                                         idxConfig: idxCfg,
                                         readInHeader: this.readInHeader,
@@ -244,7 +247,7 @@ class GameProcessor {
 
                                 gameStore[idxCfg] = [];
                             }
-                        } else {
+                        } else if (!isMultithreaded) {
                             gameParser.processGame(game, cfg);
                         }
                         if (cfg.cntReadGames === cfg.config.cntGames) {
@@ -307,20 +310,26 @@ class GameProcessor {
 
         const { idxConfig, gameTrackers, moveTrackers, cntMoves, cntGames } = result;
 
+        const cfg = this.configs[idxConfig];
+        if (!cfg) return;
+
         if (gameTrackers) {
             for (let i = 0; i < gameTrackers.length; i += 1) {
-                this.configs[idxConfig].trackers.game[i].add(gameTrackers[i]);
+                const tracker = cfg.trackers.game[i];
+                const data = gameTrackers[i];
+                if (tracker && data) tracker.add?.(data);
             }
         }
         if (moveTrackers) {
             for (let i = 0; i < moveTrackers.length; i += 1) {
-                this.configs[idxConfig].trackers.move[i].add(moveTrackers[i]);
+                const tracker = cfg.trackers.move[i];
+                const data = moveTrackers[i];
+                if (tracker && data) tracker.add?.(data);
             }
         }
-        this.configs[idxConfig].processedMoves += cntMoves;
-        this.configs[idxConfig].processedGames += cntGames;
+        cfg.processedMoves += cntMoves;
+        cfg.processedGames += cntGames;
 
-        const cfg = this.configs[idxConfig];
         if (cfg.processedGames >= cfg.config.cntGames) {
             cfg.isDone = true;
         }
@@ -349,15 +358,17 @@ class GameProcessor {
     }
 
     private checkConfig(config: AnalysisConfig['config']): GameProcessorConfig {
-        const hasFilter = !!config.filter;
+        const c = config ?? {};
+        const filterFn = c.filter;
+        const hasFilter = filterFn !== undefined;
 
         // If we need to filter the games, we need the header information
         if (hasFilter) this.readInHeader = true;
 
         const cfg: GameProcessorConfig = {
             hasFilter,
-            filter: hasFilter ? config.filter : () => true,
-            cntGames: config.cntGames ?? Infinity,
+            filter: hasFilter ? filterFn : () => true,
+            cntGames: c.cntGames ?? Infinity,
         };
         return cfg;
     }

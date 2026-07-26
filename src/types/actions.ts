@@ -8,15 +8,15 @@ interface BaseAction {
 
 export interface MoveAction extends BaseAction {
     type: 'move';
-    piece: string;
+    piece: string | null;
     from: number[];
     to: number[];
 }
 
 export interface CaptureAction extends BaseAction {
     type: 'capture';
-    takingPiece: string;
-    takenPiece: string;
+    takingPiece: string | null;
+    takenPiece: string | null;
     on: number[];
 }
 

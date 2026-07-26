@@ -1,5 +1,6 @@
 import type { ChessPiece } from '#types/game';
-import type { PlayerColor } from '#types/tokens';
+
+import type { BoardIndex } from './board-coords';
 
 /**
  * Canonical starting-position piece names used across board replay, tile tracking,
@@ -15,6 +16,10 @@ export const PAWN_TEMPLATE = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'] as
 /** Starting back-rank piece names by file: Ra, Nb, Bc, Qd, Ke, Bf, Ng, Rh. */
 export const PIECE_TEMPLATE = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'] as const;
 
+function isBoardIndex(n: number | undefined): n is BoardIndex {
+    return n !== undefined && (n | 0) === n && n >= 0 && n <= 7;
+}
+
 /**
  * Return the standard starting piece on `coords`, or null for empty ranks.
  * Board coords: row 0 = rank 8, row 7 = rank 1.
@@ -25,16 +30,17 @@ export const PIECE_TEMPLATE = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'] a
 export function getStartingPiece(coords: number[]): ChessPiece | null {
     const row = coords[0];
     const col = coords[1];
+    if (!isBoardIndex(row) || !isBoardIndex(col)) return null;
 
     switch (row) {
         case 0:
-            return { color: 'b' as PlayerColor, name: PIECE_TEMPLATE[col] };
+            return { color: 'b', name: PIECE_TEMPLATE[col] };
         case 1:
-            return { color: 'b' as PlayerColor, name: PAWN_TEMPLATE[col] };
+            return { color: 'b', name: PAWN_TEMPLATE[col] };
         case 6:
-            return { color: 'w' as PlayerColor, name: PAWN_TEMPLATE[col] };
+            return { color: 'w', name: PAWN_TEMPLATE[col] };
         case 7:
-            return { color: 'w' as PlayerColor, name: PIECE_TEMPLATE[col] };
+            return { color: 'w', name: PIECE_TEMPLATE[col] };
         default:
             return null;
     }

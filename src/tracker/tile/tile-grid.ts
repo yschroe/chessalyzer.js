@@ -1,11 +1,33 @@
 import {
+    BOARD_INDICES,
     PAWN_TEMPLATE,
     PIECE_TEMPLATE,
     TileStats,
     TilePiece,
+    type BoardIndex,
     type ColorBucket,
     type StatsField,
+    type TileGrid,
+    type TileRow,
 } from './tile-tracker-types';
+
+function namedStats(cell: StatsField, color: 'b' | 'w', name: string): TileStats {
+    const bucket = cell[color][name];
+    if (bucket) return bucket;
+    const created = new TileStats();
+    cell[color][name] = created;
+    return created;
+}
+
+function addNamedStats(dst: StatsField, src: StatsField, color: 'b' | 'w', name: string): void {
+    const srcStats = src[color][name];
+    const dstStats = dst[color][name];
+    if (!srcStats || !dstStats) return;
+    dstStats.movedTo += srcStats.movedTo;
+    dstStats.wasOn += srcStats.wasOn;
+    dstStats.capturedOn += srcStats.capturedOn;
+    dstStats.wasCapturedOn += srcStats.wasCapturedOn;
+}
 
 /**
  * Grid lifecycle helpers for {@link TileTrackerBase}: allocation, reset, merge.
@@ -16,20 +38,33 @@ import {
  */
 
 /** Allocate a fresh 8×8 grid with zeroed stats and starting-position virtual pieces. */
-export function createTileGrid(): StatsField[][] {
-    const tiles: StatsField[][] = [];
-
-    for (let row = 0; row < 8; row += 1) {
-        const currRow: StatsField[] = [];
-
-        for (let col = 0; col < 8; col += 1) {
-            currRow.push(createEmptyCell());
-        }
-        tiles.push(currRow);
+export function createTileGrid(): TileGrid {
+    function makeRow(): TileRow {
+        return [
+            createEmptyCell(),
+            createEmptyCell(),
+            createEmptyCell(),
+            createEmptyCell(),
+            createEmptyCell(),
+            createEmptyCell(),
+            createEmptyCell(),
+            createEmptyCell(),
+        ];
     }
 
-    for (let row = 0; row < 8; row += 1) {
-        for (let col = 0; col < 8; col += 1) {
+    const tiles: TileGrid = [
+        makeRow(),
+        makeRow(),
+        makeRow(),
+        makeRow(),
+        makeRow(),
+        makeRow(),
+        makeRow(),
+        makeRow(),
+    ];
+
+    for (const row of BOARD_INDICES) {
+        for (const col of BOARD_INDICES) {
             setStartingPiece(tiles, row, col);
         }
     }
@@ -61,7 +96,7 @@ function createEmptyCell(): StatsField {
  * Place the standard starting virtual piece on `(row, col)`, or clear the cell.
  * Board coords: row 0 = rank 8, row 7 = rank 1.
  */
-export function setStartingPiece(tiles: StatsField[][], row: number, col: number): void {
+export function setStartingPiece(tiles: TileGrid, row: BoardIndex, col: BoardIndex): void {
     let color: 'b' | 'w' | undefined;
     let piece: string | undefined;
 
@@ -98,24 +133,28 @@ function zeroCellStats(cell: StatsField): void {
     cell.w.wasCapturedOn = 0;
 
     for (const name of PAWN_TEMPLATE) {
-        cell.b[name].movedTo = 0;
-        cell.b[name].wasOn = 0;
-        cell.b[name].capturedOn = 0;
-        cell.b[name].wasCapturedOn = 0;
-        cell.w[name].movedTo = 0;
-        cell.w[name].wasOn = 0;
-        cell.w[name].capturedOn = 0;
-        cell.w[name].wasCapturedOn = 0;
+        const bStats = namedStats(cell, 'b', name);
+        const wStats = namedStats(cell, 'w', name);
+        bStats.movedTo = 0;
+        bStats.wasOn = 0;
+        bStats.capturedOn = 0;
+        bStats.wasCapturedOn = 0;
+        wStats.movedTo = 0;
+        wStats.wasOn = 0;
+        wStats.capturedOn = 0;
+        wStats.wasCapturedOn = 0;
     }
     for (const name of PIECE_TEMPLATE) {
-        cell.b[name].movedTo = 0;
-        cell.b[name].wasOn = 0;
-        cell.b[name].capturedOn = 0;
-        cell.b[name].wasCapturedOn = 0;
-        cell.w[name].movedTo = 0;
-        cell.w[name].wasOn = 0;
-        cell.w[name].capturedOn = 0;
-        cell.w[name].wasCapturedOn = 0;
+        const bStats = namedStats(cell, 'b', name);
+        const wStats = namedStats(cell, 'w', name);
+        bStats.movedTo = 0;
+        bStats.wasOn = 0;
+        bStats.capturedOn = 0;
+        bStats.wasCapturedOn = 0;
+        wStats.movedTo = 0;
+        wStats.wasOn = 0;
+        wStats.capturedOn = 0;
+        wStats.wasCapturedOn = 0;
     }
 }
 
@@ -134,33 +173,35 @@ export function mergeCellStats(dst: StatsField, src: StatsField): void {
     dst.w.wasCapturedOn += src.w.wasCapturedOn;
 
     for (const name of PAWN_TEMPLATE) {
-        dst.b[name].movedTo += src.b[name].movedTo;
-        dst.w[name].movedTo += src.w[name].movedTo;
-        dst.b[name].wasOn += src.b[name].wasOn;
-        dst.w[name].wasOn += src.w[name].wasOn;
-        dst.b[name].capturedOn += src.b[name].capturedOn;
-        dst.w[name].capturedOn += src.w[name].capturedOn;
-        dst.b[name].wasCapturedOn += src.b[name].wasCapturedOn;
-        dst.w[name].wasCapturedOn += src.w[name].wasCapturedOn;
+        addNamedStats(dst, src, 'b', name);
+        addNamedStats(dst, src, 'w', name);
     }
     for (const name of PIECE_TEMPLATE) {
-        dst.b[name].movedTo += src.b[name].movedTo;
-        dst.w[name].movedTo += src.w[name].movedTo;
-        dst.b[name].wasOn += src.b[name].wasOn;
-        dst.w[name].wasOn += src.w[name].wasOn;
-        dst.b[name].capturedOn += src.b[name].capturedOn;
-        dst.w[name].capturedOn += src.w[name].capturedOn;
-        dst.b[name].wasCapturedOn += src.b[name].wasCapturedOn;
-        dst.w[name].wasCapturedOn += src.w[name].wasCapturedOn;
+        addNamedStats(dst, src, 'b', name);
+        addNamedStats(dst, src, 'w', name);
     }
 }
 
 /** Zero every cell and restore starting virtual pieces (worker batch reuse). */
-export function resetTileGrid(tiles: StatsField[][]): void {
-    for (let row = 0; row < 8; row += 1) {
-        for (let col = 0; col < 8; col += 1) {
+export function resetTileGrid(tiles: TileGrid): void {
+    for (const row of BOARD_INDICES) {
+        for (const col of BOARD_INDICES) {
             zeroCellStats(tiles[row][col]);
             setStartingPiece(tiles, row, col);
         }
     }
+}
+
+/** Resolve dynamic board coords to a grid cell when indices are in range. */
+export function tileCellAt(tiles: TileGrid, coords: number[]): StatsField | undefined {
+    const row = coords[0];
+    const col = coords[1];
+    if (row === undefined || col === undefined || !isBoardIndex(row) || !isBoardIndex(col)) {
+        return undefined;
+    }
+    return tiles[row][col];
+}
+
+function isBoardIndex(n: number): n is BoardIndex {
+    return (n | 0) === n && n >= 0 && n <= 7;
 }

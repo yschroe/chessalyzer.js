@@ -3,6 +3,14 @@ import type SanContext from '#parsing/san-context';
 import type { Action } from '#types/actions';
 import type { PieceToken } from '#types/tokens';
 
+const PIECE_TOKEN_BY_CHAR: Record<number, PieceToken | undefined> = {
+    82: 'R',
+    78: 'N',
+    66: 'B',
+    81: 'Q',
+    75: 'K',
+};
+
 /**
  * Parses SAN into reusable {@link Action} objects for move trackers.
  *
@@ -43,9 +51,11 @@ export default class SanParser {
 
         const to = algebraicToCoordsAt(san, end);
         const from = this.ctx.fromBuf;
+        const toRow = to[0] as number;
+        const toCol = to[1] as number;
 
         if (san.charCodeAt(1) === 120) {
-            from[0] = to[0] + direction;
+            from[0] = toRow + direction;
             from[1] = san.charCodeAt(0) - 97;
 
             let offset = 0;
@@ -54,8 +64,8 @@ export default class SanParser {
             }
 
             const takenOn = this.ctx.takenOnBuf;
-            takenOn[0] = to[0] + offset;
-            takenOn[1] = to[1];
+            takenOn[0] = toRow + offset;
+            takenOn[1] = toCol;
 
             const cap = this.ctx.captureAction;
             cap.san = san;
@@ -65,14 +75,11 @@ export default class SanParser {
             cap.takenPiece = board.getPieceNameOnCoords(takenOn);
             actions.push(cap);
         } else {
-            const tarRow = to[0];
-            const tarCol = to[1];
-
             for (let i = 1; i <= 2; i += 1) {
-                const row = tarRow + i * direction;
-                if (board.isPawnAt(row, tarCol)) {
+                const row = toRow + i * direction;
+                if (board.isPawnAt(row, toCol)) {
                     from[0] = row;
-                    from[1] = tarCol;
+                    from[1] = toCol;
                     break;
                 }
             }
@@ -83,14 +90,16 @@ export default class SanParser {
         mov.player = player;
         mov.piece = board.getPieceNameOnCoords(from);
         mov.from = from;
-        mov.to = to;
+        mov.to[0] = toRow;
+        mov.to[1] = toCol;
         actions.push(mov);
 
         if (promotesTo) {
             const promo = this.ctx.promoteAction;
             promo.san = san;
             promo.player = player;
-            promo.on = to;
+            promo.on[0] = toRow;
+            promo.on[1] = toCol;
             promo.to = promotesTo;
             actions.push(promo);
         }
@@ -105,7 +114,8 @@ export default class SanParser {
         const player = this.ctx.activePlayer;
         const board = this.ctx.board;
         const tokenChar = san.charCodeAt(0);
-        const token = san.charAt(0) as PieceToken;
+        const token = PIECE_TOKEN_BY_CHAR[tokenChar];
+        if (!token) return actions;
 
         const end = san.length;
         const to = algebraicToCoordsAt(san, end);
@@ -143,7 +153,8 @@ export default class SanParser {
             const cap = this.ctx.captureAction;
             cap.san = san;
             cap.player = player;
-            cap.on = to;
+            cap.on[0] = to[0] as number;
+            cap.on[1] = to[1] as number;
             cap.takingPiece = piece;
             cap.takenPiece = board.getPieceNameOnCoords(to);
             actions.push(cap);
@@ -154,7 +165,8 @@ export default class SanParser {
         mov.player = player;
         mov.piece = piece;
         mov.from = from;
-        mov.to = to;
+        mov.to[0] = to[0] as number;
+        mov.to[1] = to[1] as number;
         actions.push(mov);
 
         return actions;

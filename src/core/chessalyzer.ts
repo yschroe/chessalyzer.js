@@ -15,14 +15,25 @@ export default class Chessalyzer {
      * @param multithreadCfg Configuration for multithreaded analysis. Here the size per batch that shall be analyzed on a separate thread can be set.
      * @returns Meta information about the analysis like the amount of processed games/moves and the time it took.
      */
+    static analyzePGN(
+        pathToPgn: string,
+        configs?: AnalysisConfig,
+        multithreadCfg?: MultithreadConfig | null,
+    ): Promise<GameAndMoveCountFull>;
+    static analyzePGN(
+        pathToPgn: string,
+        configs: AnalysisConfig[],
+        multithreadCfg?: MultithreadConfig | null,
+    ): Promise<GameAndMoveCountFull[]>;
     static async analyzePGN(
         pathToPgn: string,
-        configs: AnalysisConfig | AnalysisConfig[] = { trackers: [] },
+        configs?: AnalysisConfig | AnalysisConfig[],
         multithreadCfg: MultithreadConfig | null = { targetBytes: DEFAULT_PGN_CHUNK_BYTES },
     ): Promise<GameAndMoveCountFull[] | GameAndMoveCountFull> {
         // handler for single config or array of configs
-        let configArray: AnalysisConfig[] = [];
-        configArray = configArray.concat(configs);
+        const configArray: AnalysisConfig[] = Array.isArray(configs)
+            ? configs
+            : [configs ?? { trackers: [] }];
 
         const gameProcessor = new GameProcessor(configArray, multithreadCfg);
 
@@ -37,13 +48,17 @@ export default class Chessalyzer {
             const returnVals: GameAndMoveCountFull[] = [];
             for (const h of header) returnVals.push({ ...h, mps: Math.round(h.cntMoves / tdiff) });
 
-            return Array.isArray(configs) && configs.length > 1 ? returnVals : returnVals[0];
+            const first = returnVals[0];
+            if (first === undefined) {
+                return Array.isArray(configs) ? returnVals : { cntGames: 0, cntMoves: 0, mps: 0 };
+            }
+            return Array.isArray(configs) ? returnVals : first;
         } catch (err) {
             console.error(
                 'Error occurred during processing. This is probably a bug in the library or you are using an unkown PGN format. Aborting...',
             );
             console.error(err);
-            return [];
+            throw err;
         }
     }
 
@@ -70,15 +85,20 @@ export default class Chessalyzer {
                     }
 
                     const alpha = data.max === 0 ? 0 : Math.sqrt(val / largestVal);
+                    const c0 = color[0] ?? 0;
+                    const c1 = color[1] ?? 0;
+                    const c2 = color[2] ?? 0;
+                    const bg0 = bgColor[0] ?? 255;
+                    const bg1 = bgColor[1] ?? 255;
+                    const bg2 = bgColor[2] ?? 255;
                     const colorOut = [
-                        Math.round(color[0] * alpha + (1 - alpha) * bgColor[0]),
-                        Math.round(color[1] * alpha + (1 - alpha) * bgColor[1]),
-                        Math.round(color[2] * alpha + (1 - alpha) * bgColor[2]),
+                        Math.round(c0 * alpha + (1 - alpha) * bg0),
+                        Math.round(c1 * alpha + (1 - alpha) * bg1),
+                        Math.round(c2 * alpha + (1 - alpha) * bg2),
                     ];
 
-                    process.stdout.write(
-                        chalk.black.bgRgb(colorOut[0], colorOut[1], colorOut[2])(`    `),
-                    );
+                    const [outR = 0, outG = 0, outB = 0] = colorOut;
+                    process.stdout.write(chalk.black.bgRgb(outR, outG, outB)(`    `));
                 }
 
                 process.stdout.write('\n');

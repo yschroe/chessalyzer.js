@@ -35,7 +35,7 @@ export function decodePgnChunkBytes(bytes: Uint8Array): string {
 function findLastCompleteGameLineIndex(lines: string[]): number {
     for (let i = lines.length - 1; i >= 0; i -= 1) {
         const line = lines[i];
-        if (line === '') continue;
+        if (line === undefined || line === '') continue;
         if (line.startsWith('[')) continue;
         return isGameResultLine(stripComments(line)) ? i : -1;
     }
@@ -49,7 +49,7 @@ export function chunkEndsWithCompleteGame(lines: string[]): boolean {
 
     for (let i = lastResultIdx + 1; i < lines.length; i += 1) {
         const line = lines[i];
-        if (line === '') continue;
+        if (line === undefined || line === '') continue;
         if (line.startsWith('[')) continue;
         return false;
     }
@@ -86,7 +86,7 @@ export function readPgnChunks(file: string, config: PgnChunkConfig = {}) {
             inputDone = true;
             return null;
         }
-        return result.value ?? null;
+        return result.value;
     };
 
     const pushLine = (line: string) => {
@@ -197,7 +197,7 @@ class FixedCircularBuffer<T> {
     kMask: number;
     top: number;
     bottom: number;
-    list: T[];
+    list: (T | undefined)[];
     next: FixedCircularBuffer<T> | null;
 
     constructor(kSize: number) {
@@ -272,34 +272,36 @@ class FixedQueue<T> {
  * @returns An async iterator that yields lines from the file.
  * @see https://github.com/oven-sh/bun/issues/5136#issuecomment-3503523219
  */
-export function readLinesFast(file: string) {
+export function readLinesFast(file: string): AsyncIterable<string> {
     const rs = createReadStream(file, 'utf-8');
-    const iterator: AsyncIterator<string, string> = rs[Symbol.asyncIterator]();
+    const sourceIterator = rs[Symbol.asyncIterator]();
 
     const cache: FixedQueue<string> = new FixedQueue();
     let lineBreak = false;
 
     /** Returns the next line from the file. */
-    const next = async () => {
+    const next = async (): Promise<IteratorResult<string>> => {
         // Try to get a line from the cache
-        let line = cache.shift();
+        let line: string | null = cache.shift();
 
         // If the cache is now empty, read in more lines
         if (cache.isEmpty()) {
             // Read in next chunk of size highWaterMark (default: 64 * 1024 bytes)
-            const { value, done } = await iterator.next();
+            const result = await sourceIterator.next();
 
             // If the iterator is not done, split the chunk into lines
-            if (!done) {
+            if (!result.done) {
+                const value = result.value;
                 const lines = value.replace(/\r/g, '').split('\n');
 
                 // If the cache is not empty and the line break flag is not set,
                 // it means the last line of the previous chunk was not a full line.
                 // Append the first line of the new chunk to complete the line.
-                if (line !== null && !lineBreak) line += lines.shift();
+                const firstLine = lines.shift();
+                if (line !== null && !lineBreak && firstLine !== undefined) line += firstLine;
                 // On first iteration, the cache is empty, so we need to get the
                 // first line from the new chunk.
-                if (line === null) line = lines.shift();
+                if (line === null) line = firstLine ?? null;
                 cache.push(...lines);
 
                 // Check if chunk ended with a line break
@@ -310,7 +312,7 @@ export function readLinesFast(file: string) {
         // If the cache has data, return the first line
         if (line !== null) return { value: line, done: false };
 
-        return { done: true };
+        return { done: true, value: undefined };
     };
 
     return {

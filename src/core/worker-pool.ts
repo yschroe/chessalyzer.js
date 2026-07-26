@@ -8,15 +8,19 @@ import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worke
 const kTaskInfo = Symbol('kTaskInfo');
 const kWorkerFreedEvent = Symbol('kWorkerFreedEvent');
 
-class WorkerPoolTaskInfo extends AsyncResource {
-    callback: (err: Error, result: WorkerMessage) => void;
+type WorkerCallback = (err: Error | null, result: WorkerMessage | null) => void;
 
-    constructor(callback: (err: Error, result: WorkerMessage) => void) {
+type WorkerWithTaskInfo = Worker & { [kTaskInfo]?: WorkerPoolTaskInfo };
+
+class WorkerPoolTaskInfo extends AsyncResource {
+    callback: WorkerCallback;
+
+    constructor(callback: WorkerCallback) {
         super('WorkerPoolTaskInfo');
         this.callback = callback;
     }
 
-    done(err: Error, result: WorkerMessage) {
+    done(err: Error | null, result: WorkerMessage | null) {
         this.runInAsyncScope(this.callback, null, err, result);
         this.emitDestroy(); // `TaskInfo`s are used only once.
     }
@@ -29,11 +33,11 @@ class WorkerPoolTaskInfo extends AsyncResource {
 export default class WorkerPool extends EventEmitter {
     flagNotifyWhenDone: boolean;
     numThreads: number;
-    workers: Worker[];
-    freeWorkers: Worker[];
+    workers: WorkerWithTaskInfo[];
+    freeWorkers: WorkerWithTaskInfo[];
     tasks: {
         task: WorkerTaskData;
-        callback: (err: Error, result: WorkerMessage) => void;
+        callback: WorkerCallback;
     }[];
 
     /**
@@ -57,7 +61,9 @@ export default class WorkerPool extends EventEmitter {
         // the next task pending in the queue, if any.
         this.on(kWorkerFreedEvent, () => {
             if (this.tasks.length > 0) {
-                const { task, callback } = this.tasks.shift();
+                const item = this.tasks.shift();
+                if (!item) return;
+                const { task, callback } = item;
                 this.runTask(task, callback);
             }
         });
@@ -68,7 +74,7 @@ export default class WorkerPool extends EventEmitter {
      * @param filePath Path to the file the Worker shall execute.
      */
     addNewWorker(filePath: string, workerInitData?: WorkerInitData) {
-        const worker: Worker & { [kTaskInfo]?: WorkerPoolTaskInfo } = new Worker(filePath, {
+        const worker: WorkerWithTaskInfo = new Worker(filePath, {
             workerData: workerInitData,
         });
 
@@ -76,7 +82,7 @@ export default class WorkerPool extends EventEmitter {
             // Workers report batch failures via result.error instead of throwing.
             const err = result.error ? new Error(result.error) : null;
             worker[kTaskInfo]?.done(err, result);
-            worker[kTaskInfo] = null;
+            delete worker[kTaskInfo];
 
             this.freeWorkers.push(worker);
             this.emit(kWorkerFreedEvent);
@@ -93,7 +99,7 @@ export default class WorkerPool extends EventEmitter {
             // Uncaught worker exception: notify the task callback, then retire the worker.
             if (worker[kTaskInfo]) {
                 worker[kTaskInfo].done(err, null);
-                worker[kTaskInfo] = null;
+                delete worker[kTaskInfo];
             } else {
                 this.emit('error', err);
             }
@@ -120,14 +126,16 @@ export default class WorkerPool extends EventEmitter {
      * @param task Data the worker shall process.
      * @param callback The callback function which is called when the task is done or on error.
      */
-    runTask(task: WorkerTaskData, callback: (err: Error, result: WorkerMessage) => void) {
+    runTask(task: WorkerTaskData, callback: WorkerCallback) {
         // No free threads, wait until a worker thread becomes free.
         if (this.freeWorkers.length === 0) {
             this.tasks.push({ task, callback });
             return;
         }
 
-        const worker = this.freeWorkers.pop()!;
+        const worker = this.freeWorkers.pop();
+        if (!worker) return;
+
         worker[kTaskInfo] = new WorkerPoolTaskInfo(callback);
         worker.postMessage(task, [task.pgnChunkBytes.buffer as ArrayBuffer]);
     }

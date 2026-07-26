@@ -3,6 +3,9 @@ import type { Action, MoveAction, CaptureAction, PromoteAction } from '#types/ac
 import type { ChessPiece } from '#types/game';
 import type { PieceToken, PlayerColor } from '#types/tokens';
 
+/** Dense 64-byte board; index invariant 0..63 from on-board row/col. */
+type TileBytes = Uint8Array & { [index: number]: number };
+
 /**
  * Mutable chess position used while replaying SAN moves from a PGN.
  *
@@ -29,7 +32,7 @@ class ChessBoard {
     ]);
 
     /** Index → piece name for standard pieces (index 0 unused). */
-    private static pieceLookupList = [
+    private static pieceLookupList: ReadonlyArray<string | null> = [
         null,
         'Ra',
         'Nb',
@@ -48,7 +51,7 @@ class ChessBoard {
         'Pg',
         'Ph',
     ];
-    private tiles: Uint8Array;
+    private tiles: TileBytes;
     private pieces: { w: PiecePositions; b: PiecePositions };
     /** Names for promoted pawns; indexed by (pieceIdx - pieceLookupList.length - 1). */
     private promotedPieces: {
@@ -57,7 +60,7 @@ class ChessBoard {
     };
 
     constructor() {
-        this.tiles = ChessBoard.defaultTiles.slice();
+        this.tiles = ChessBoard.defaultTiles.slice() as TileBytes;
         this.pieces = {
             w: new PiecePositions('w'),
             b: new PiecePositions('b'),
@@ -69,7 +72,11 @@ class ChessBoard {
     }
 
     getPieceOnCoords(coords: number[]): ChessPiece | null {
-        const pieceNumber = this.tiles[coords[0] * 8 + coords[1]];
+        const row = coords[0];
+        const col = coords[1];
+        if (row === undefined || col === undefined) return null;
+
+        const pieceNumber = this.tiles[row * 8 + col] as number;
         if (pieceNumber === 0) return null;
 
         const color: PlayerColor = pieceNumber & 0b10000000 ? 'b' : 'w';
@@ -78,30 +85,31 @@ class ChessBoard {
             ChessBoard.pieceLookupList[pieceIdx] ??
             this.promotedPieces[color][pieceIdx - ChessBoard.pieceLookupList.length - 1];
 
+        if (!name) return null;
         return { name, color };
     }
 
     /** Hot-path helper: piece name only, no object allocation. */
-    getPieceNameOnCoords(coords: number[]): string | null {
-        return this.getPieceNameAt(coords[0], coords[1]);
+    getPieceNameOnCoords(coords: readonly number[]): string | null {
+        return this.getPieceNameAt(coords[0] as number, coords[1] as number);
     }
 
-    isEmpty(coords: number[]): boolean {
-        return this.tiles[coords[0] * 8 + coords[1]] === 0;
+    isEmpty(coords: readonly number[]): boolean {
+        return (this.tiles[(coords[0] as number) * 8 + (coords[1] as number)] as number) === 0;
     }
 
     isEmptyAt(row: number, col: number): boolean {
-        return this.tiles[row * 8 + col] === 0;
+        return (this.tiles[row * 8 + col] as number) === 0;
     }
 
     /** True if square holds a pawn (standard piece indices 9–16). */
     isPawnAt(row: number, col: number): boolean {
-        const idx = this.tiles[row * 8 + col] & 0b01111111;
+        const idx = (this.tiles[row * 8 + col] as number) & 0b01111111;
         return idx >= 9 && idx <= 16;
     }
 
     getPieceNameAt(row: number, col: number): string | null {
-        const pieceNumber = this.tiles[row * 8 + col];
+        const pieceNumber = this.tiles[row * 8 + col] as number;
         if (pieceNumber === 0) return null;
 
         const color: PlayerColor = pieceNumber & 0b10000000 ? 'b' : 'w';
@@ -114,15 +122,23 @@ class ChessBoard {
         );
     }
 
+    getPieceAt(row: number, col: number): ChessPiece | null {
+        const name = this.getPieceNameAt(row, col);
+        if (name === null) return null;
+        const color = this.getPieceColorAt(row, col);
+        if (color === null) return null;
+        return { name, color };
+    }
+
     getPieceColorAt(row: number, col: number): PlayerColor | null {
-        const pieceNumber = this.tiles[row * 8 + col];
+        const pieceNumber = this.tiles[row * 8 + col] as number;
         if (pieceNumber === 0) return null;
         return pieceNumber & 0b10000000 ? 'b' : 'w';
     }
 
     /** Returns the king's live `[row, col]` reference (always exactly one king per side). */
     getKingPosition(player: PlayerColor): number[] {
-        return this.pieces[player].K[0];
+        return this.pieces[player].K[0] ?? [0, 0];
     }
 
     /**
@@ -138,6 +154,7 @@ class ChessBoard {
         const len = actions.length;
         for (let i = 0; i < len; i += 1) {
             const action = actions[i];
+            if (!action) continue;
             switch (action.type) {
                 case 'move':
                     this.move(action);
@@ -160,26 +177,31 @@ class ChessBoard {
      * Move using SAN piece token char code ('N'=78, 'P'=80, …).
      * Updates both the tile array and the piece position index in one step.
      */
-    moveByToken(player: PlayerColor, tokenChar: number, from: number[], to: number[]): void {
-        const fromIdx = from[0] * 8 + from[1];
-        const toIdx = to[0] * 8 + to[1];
-        this.tiles[toIdx] = this.tiles[fromIdx];
+    moveByToken(
+        player: PlayerColor,
+        tokenChar: number,
+        from: readonly number[],
+        to: readonly number[],
+    ): void {
+        const fromIdx = (from[0] as number) * 8 + (from[1] as number);
+        const toIdx = (to[0] as number) * 8 + (to[1] as number);
+        this.tiles[toIdx] = this.tiles[fromIdx] as number;
         this.tiles[fromIdx] = 0;
         this.pieces[player].moveByChar(tokenChar, from, to);
     }
 
-    capturePiece(player: PlayerColor, takenPiece: string, on: number[]): void {
+    capturePiece(player: PlayerColor, takenPiece: string, on: readonly number[]): void {
         this.pieces[player === 'w' ? 'b' : 'w'].capture(takenPiece, on);
-        this.tiles[on[0] * 8 + on[1]] = 0;
+        this.tiles[(on[0] as number) * 8 + (on[1] as number)] = 0;
     }
 
     /**
      * Capture whatever occupies `on`: clear tile, then update the opponent's piece list.
      * Pawns are cleared from tiles only — they are not in {@link PiecePositions}.
      */
-    captureAt(player: PlayerColor, on: number[]): void {
-        const onIdx = on[0] * 8 + on[1];
-        const pieceNumber = this.tiles[onIdx];
+    captureAt(player: PlayerColor, on: readonly number[]): void {
+        const onIdx = (on[0] as number) * 8 + (on[1] as number);
+        const pieceNumber = this.tiles[onIdx] as number;
         if (pieceNumber === 0) return;
 
         this.tiles[onIdx] = 0;
@@ -200,7 +222,9 @@ class ChessBoard {
      * Replace the pawn on `on` with a promoted piece.
      * Assigns a new tile index beyond the standard lookup table and records the name.
      */
-    promotePiece(player: PlayerColor, on: number[], to: string): void {
+    promotePiece(player: PlayerColor, on: readonly number[], to: string): void {
+        const onIdx = (on[0] as number) * 8 + (on[1] as number);
+
         const pieceNumber =
             (player === 'w' ? 0b00000000 : 0b10000000) |
             (this.promotedPieces[player].length + ChessBoard.pieceLookupList.length + 1);
@@ -208,7 +232,7 @@ class ChessBoard {
         const piecename = `${to}${pieceNumber}`;
 
         this.promotedPieces[player].push(piecename);
-        this.tiles[on[0] * 8 + on[1]] = pieceNumber;
+        this.tiles[onIdx] = pieceNumber;
         this.pieces[player].promote(piecename, on);
     }
 
@@ -228,7 +252,7 @@ class ChessBoard {
             process.stdout.write(`${8 - row} `);
 
             for (let col = 0; col < 8; col += 1) {
-                const piece = this.getPieceOnCoords([row, col]);
+                const piece = this.getPieceAt(row, col);
                 if (piece !== null) {
                     process.stdout.write(`|${piece.color}${piece.name}|`);
                 } else {
@@ -242,10 +266,12 @@ class ChessBoard {
     }
 
     private move(action: MoveAction): void {
+        if (!action.piece) return;
         this.movePiece(action.player, action.piece, action.from, action.to);
     }
 
     private capture(action: CaptureAction): void {
+        if (!action.takenPiece) return;
         this.capturePiece(action.player, action.takenPiece, action.on);
     }
 

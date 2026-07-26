@@ -3,14 +3,20 @@ import { performance } from 'node:perf_hooks';
 import { generateComparisonHeatmap, generateHeatmap } from '#tracker/heatmap-utils';
 import type { Action } from '#types/actions';
 import type { Game } from '#types/game';
-import type { HeatmapAnalysisFunc, HeatmapData, Tracker, TrackerConfig } from '#types/tracker';
+import type {
+    HeatmapAnalysisFunc,
+    HeatmapData,
+    HeatmapPresetEntry,
+    Tracker,
+    TrackerConfig,
+} from '#types/tracker';
 
 class BaseTracker implements Tracker {
     type: 'move' | 'game';
     cfg: TrackerConfig;
     time: number;
     t0: number;
-    heatmapPresets: { [name: string]: { calc: HeatmapAnalysisFunc } };
+    heatmapPresets: Record<string, HeatmapPresetEntry> | null;
 
     constructor(type: 'move' | 'game') {
         this.type = type;
@@ -36,7 +42,7 @@ class BaseTracker implements Tracker {
         throw new Error('Your tracker must implement a track(...) method!');
     }
 
-    add(_data: this) {
+    add(_data: Tracker) {
         throw new Error(
             'Your tracker must implement an add(...) method if you are using multihread mode!',
         );
@@ -50,10 +56,11 @@ class BaseTracker implements Tracker {
         let heatmapFunction: HeatmapAnalysisFunc;
 
         if (typeof analysisFunc === 'string') {
-            if (Object.keys(this.heatmapPresets).length === 0)
+            if (!this.heatmapPresets || Object.keys(this.heatmapPresets).length === 0)
                 throw new Error('Your tracker does not define any heatmap presets!');
-            heatmapFunction = this.heatmapPresets[analysisFunc]?.calc;
-            if (!heatmapFunction) throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
+            const preset = this.heatmapPresets[analysisFunc];
+            if (!preset) throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
+            heatmapFunction = preset.calc;
         } else {
             heatmapFunction = analysisFunc;
         }
@@ -62,7 +69,7 @@ class BaseTracker implements Tracker {
     }
 
     generateComparisonHeatmap(
-        compData: this,
+        compData: Tracker,
         analysisFunc: string | HeatmapAnalysisFunc,
         square?: string | number[],
         optData?: unknown,
@@ -70,10 +77,11 @@ class BaseTracker implements Tracker {
         let heatmapFunction: HeatmapAnalysisFunc;
 
         if (typeof analysisFunc === 'string') {
-            if (Object.keys(this.heatmapPresets).length === 0)
+            if (!this.heatmapPresets || Object.keys(this.heatmapPresets).length === 0)
                 throw new Error('Your tracker does not define any heatmap presets!');
-            heatmapFunction = this.heatmapPresets[analysisFunc]?.calc;
-            if (!heatmapFunction) throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
+            const preset = this.heatmapPresets[analysisFunc];
+            if (!preset) throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
+            heatmapFunction = preset.calc;
         } else {
             heatmapFunction = analysisFunc;
         }
