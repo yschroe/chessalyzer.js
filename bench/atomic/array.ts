@@ -24,17 +24,6 @@ function appendSingleCases(): BenchCase[] {
             },
         },
         {
-            name: 'push_spread_each',
-            setup: () => {
-                ctx.arr = [];
-            },
-            fn: () => {
-                const arr = ctx.arr;
-                for (let i = 0; i < moveTokens.length; i += 1) arr.push(...[moveTokens[i]!]);
-                return arr.length;
-            },
-        },
-        {
             name: 'index_assign',
             setup: () => {
                 ctx.arr = [];

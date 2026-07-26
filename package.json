@@ -40,19 +40,19 @@
         }
     },
     "scripts": {
-        "build": "bun ./scripts/create-bundle.ts",
+        "build": "bun scripts/create-bundle.ts",
         "test": "bun test",
         "test:corpus": "bun test test/integration/corpus.test.js",
-        "test:fetch-corpus": "bun ./scripts/fetch-test-corpus.ts",
-        "test:build-fixtures": "bun run build && bun ./scripts/build-fixture-manifest.ts",
+        "test:fetch-corpus": "bun scripts/fetch-test-corpus.ts",
+        "test:build-fixtures": "bun run build && bun scripts/build-fixture-manifest.ts",
         "lint": "oxlint",
         "format": "oxfmt",
         "typecheck": "tsc --noEmit",
         "knip": "knip",
-        "bench": "node bench/run.ts",
+        "bench": "tsx bench/run.ts",
         "bench:bun": "bun bench/run.ts",
-        "bench:atomic:array": "node bench/atomic/array.ts",
-        "bench:atomic:array:bun": "bun bench/atomic/array.ts"
+        "bench:atomic:array": "bun run bench -- array",
+        "bench:atomic:array:bun": "bun run bench:bun -- array"
     },
     "dependencies": {
         "chalk": "^5.6.2"
@@ -66,6 +66,7 @@
         "oxlint": "^1.75.0",
         "oxlint-tsgolint": "^7.0.2001",
         "tinybench": "^6.1.2",
+        "tsx": "^4.23.1",
         "typescript": "^7.0.2"
     },
     "overrides": {

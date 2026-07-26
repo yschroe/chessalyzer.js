@@ -2,8 +2,9 @@
  * Atomic micro-benchmark dispatcher.
  *
  * Usage:
- *   node bench/run.ts
- *   node bench/run.ts array
+ *   npm run bench              # list benches (Node via tsx)
+ *   npm run bench -- array     # run array bench on Node
+ *   npm run bench:bun -- array # run array bench on Bun
  */
 
 export {};
@@ -19,7 +20,7 @@ if (!target) {
     for (const name of Object.keys(benches).sort()) {
         console.log(`  ${name}`);
     }
-    console.log('\nRun: node bench/run.ts <name>');
+    console.log('\nRun: npm run bench -- <name>  (Node)  |  npm run bench:bun -- <name>  (Bun)');
     process.exit(0);
 }
 
