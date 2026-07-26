@@ -6,7 +6,6 @@
  */
 import { performance } from 'node:perf_hooks';
 
-import { isGameResultLine, stripComments } from '#pgn/pgn-line-parser';
 import {
     DEFAULT_PGN_CHUNK_BYTES,
     encodePgnChunkText,
@@ -15,6 +14,7 @@ import {
     type PgnChunk,
     type PgnChunkConfig,
 } from '#pgn/line-reader';
+import { isGameResultLine, stripComments } from '#pgn/pgn-line-parser';
 
 const PGN = new URL('../manual-tests/lichess_db_standard_rated_2013-12.pgn', import.meta.url)
     .pathname;
@@ -158,7 +158,9 @@ const fastest = results.reduce((best, result) => (result.meanMs < best.meanMs ? 
 
 const nameWidth = Math.max(...results.map((result) => result.label.length));
 
-console.log(`${'Method'.padEnd(nameWidth)}  ${'mean (s)'.padStart(9)}  ${'min (s)'.padStart(9)}  ${'relative'.padStart(10)}`);
+console.log(
+    `${'Method'.padEnd(nameWidth)}  ${'mean (s)'.padStart(9)}  ${'min (s)'.padStart(9)}  ${'relative'.padStart(10)}`,
+);
 console.log(`${'-'.repeat(nameWidth + 33)}`);
 
 for (const result of results) {

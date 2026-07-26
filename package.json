@@ -51,6 +51,8 @@
         "knip": "knip",
         "bench": "tsx bench/run.ts",
         "bench:bun": "bun bench/run.ts",
+        "bench:perf": "tsx bench/bench-perf.ts",
+        "bench:perf:bun": "bun bench/bench-perf.ts",
         "bench:atomic:array": "bun run bench -- array",
         "bench:atomic:array:bun": "bun run bench:bun -- array"
     },

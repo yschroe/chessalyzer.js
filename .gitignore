@@ -5,6 +5,7 @@ node_modules
 *.pgn
 !test/fixtures/*.pgn
 test/.tmp/
+bench/.cache/
 
 # built library
 /lib
