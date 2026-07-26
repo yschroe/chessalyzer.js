@@ -47,7 +47,7 @@ class TileTrackerBase extends BaseTracker {
     }
 
     /** Merge stats from a worker batch tracker into this (main-thread) instance. */
-    add(tracker: Tracker) {
+    override add(tracker: Tracker) {
         if (!isTileTracker(tracker)) return;
 
         this.time += tracker.time;
@@ -69,7 +69,7 @@ class TileTrackerBase extends BaseTracker {
         resetTileGrid(this.tiles);
     }
 
-    track(data: Game | Action[]) {
+    override track(data: Game | Action[]) {
         if (!Array.isArray(data)) return;
         for (const action of data) {
             switch (action.type) {

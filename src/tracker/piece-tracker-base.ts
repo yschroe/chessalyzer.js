@@ -68,7 +68,7 @@ class PieceTrackerBase extends BaseTracker {
         ) as PieceStatsMap;
     }
 
-    add(tracker: Tracker) {
+    override add(tracker: Tracker) {
         if (!isPieceTracker(tracker)) return;
 
         this.time += tracker.time;
@@ -92,7 +92,7 @@ class PieceTrackerBase extends BaseTracker {
         }
     }
 
-    track(data: Game | Action[]) {
+    override track(data: Game | Action[]) {
         if (!Array.isArray(data)) return;
         for (const action of data) {
             if (action.type === 'capture') {

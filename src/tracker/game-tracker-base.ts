@@ -19,7 +19,7 @@ class GameTrackerBase extends BaseTracker {
         this.ECO = {};
     }
 
-    add(tracker: Tracker) {
+    override add(tracker: Tracker) {
         if (!isGameTracker(tracker)) return;
 
         this.results.white += tracker.results.white;
@@ -48,7 +48,7 @@ class GameTrackerBase extends BaseTracker {
         this.ECO = {};
     }
 
-    track(game: Game | Action[]) {
+    override track(game: Game | Action[]) {
         if (Array.isArray(game)) return;
         this.cntGames += 1;
         switch (game.Result) {
