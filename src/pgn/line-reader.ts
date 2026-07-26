@@ -132,43 +132,49 @@ class FixedQueue<T> {
  * @see https://github.com/oven-sh/bun/issues/5136#issuecomment-3503523219
  */
 export function readLinesFast(file: string): AsyncIterable<string> {
-    const rs = createReadStream(file, 'utf-8');
-    const sourceIterator = rs.iterator();
+    const rs = createReadStream(file, { encoding: 'utf-8' });
+    const sourceIterator: AsyncIterator<string> = rs.iterator();
 
     const cache: FixedQueue<string> = new FixedQueue();
-    let lineBreak = false;
+    let leftover = '';
 
     /** Returns the next line from the file. */
     const next = async (): Promise<IteratorResult<string>> => {
-        // Try to get a line from the cache
+        // Try to get a line from the cache.
         let line: string | null = cache.shift();
 
-        // If the cache is now empty, read in more lines
-        if (cache.isEmpty()) {
-            // Read in next chunk of size highWaterMark (default: 64 * 1024 bytes)
+        // If the cache is empty, read the next chunk from the stream.
+        while (line === null) {
+            // oxlint-disable-next-line no-await-in-loop
             const result = await sourceIterator.next();
 
-            // If the iterator is not done, split the chunk into lines
-            if (!result.done) {
-                const value = result.value;
-                const lines = value.replace(/\r/g, '').split('\n');
-
-                // If the cache is not empty and the line break flag is not set,
-                // it means the last line of the previous chunk was not a full line.
-                // Append the first line of the new chunk to complete the line.
-                const firstLine = lines.shift();
-                if (line !== null && !lineBreak && firstLine !== undefined) line += firstLine;
-                // On first iteration, the cache is empty, so we need to get the
-                // first line from the new chunk.
-                if (line === null) line = firstLine ?? null;
-                cache.push(...lines);
-
-                // Check if chunk ended with a line break
-                lineBreak = value.at(-1) === '\n';
+            // If the file was fully read, return the leftover line.
+            if (result.done) {
+                if (leftover !== '') {
+                    line = leftover;
+                    leftover = '';
+                }
+                break;
             }
+
+            // Combine the leftover line from the previous chunk with the new chunk.
+            const combined = leftover + result.value;
+            leftover = '';
+
+            // Split the combined line into parts.
+            const parts = combined.split('\n');
+
+            // If the line does not end with a newline, save the last part as the leftover.
+            const endsWithNewline = result.value.charCodeAt(result.value.length - 1) === 10;
+            if (!endsWithNewline) leftover = parts.pop() ?? '';
+
+            // Add the parts to the cache.
+            cache.push(...parts);
+
+            // Try to get a line from the cache again.
+            line = cache.shift();
         }
 
-        // If the cache has data, return the first line
         if (line !== null) return { value: line, done: false };
 
         return { done: true, value: undefined };
