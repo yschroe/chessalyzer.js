@@ -53,7 +53,7 @@ export async function runTimedIterations(
     return { label, ...computeTimingStats(times) };
 }
 
-export function relativeSpeedLabel(meanMs: number, fastestMeanMs: number): string {
+function relativeSpeedLabel(meanMs: number, fastestMeanMs: number): string {
     if (meanMs === fastestMeanMs) return '1.00x';
     return `${(meanMs / fastestMeanMs).toFixed(2)}x slower`;
 }
