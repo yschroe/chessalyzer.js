@@ -1,7 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { availableParallelism } from 'node:os';
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 
 import WorkerPool from '#core/worker-pool';
 import GameParser from '#parsing/game-parser';
@@ -21,6 +20,9 @@ import type {
 } from '#types/analysis';
 import type { Game } from '#types/game';
 import type { WorkerInitData, WorkerMessage } from '#types/worker';
+
+/** Path to the worker file. */
+const WORKER_PATH = join(import.meta.dirname, 'chess-worker.js');
 
 /**
  * Class that processes games.
@@ -92,15 +94,10 @@ class GameProcessor {
     }
 
     private async processPGNWithWorkerParse(path: string): Promise<GameAndMoveCount[]> {
-        const __dirname = dirname(fileURLToPath(import.meta.url));
         const workerInitData: WorkerInitData = {
             configs: this.configs.map((cfg) => ({ trackerData: cfg.trackerData })),
         };
-        const workerPool = new WorkerPool(
-            this.resolveWorkerCount(),
-            `${__dirname}/chess-worker.js`,
-            workerInitData,
-        );
+        const workerPool = new WorkerPool(this.resolveWorkerCount(), WORKER_PATH, workerInitData);
 
         const chunkConfig = {
             targetBytes: this.multithreadConfig!.targetBytes ?? DEFAULT_PGN_CHUNK_BYTES,
@@ -176,15 +173,10 @@ class GameProcessor {
     ): Promise<GameAndMoveCount[]> {
         let workerPool: WorkerPool | undefined;
         if (isMultithreaded) {
-            const __dirname = dirname(fileURLToPath(import.meta.url));
             const workerInitData: WorkerInitData = {
                 configs: this.configs.map((cfg) => ({ trackerData: cfg.trackerData })),
             };
-            workerPool = new WorkerPool(
-                this.resolveWorkerCount(),
-                `${__dirname}/chess-worker.js`,
-                workerInitData,
-            );
+            workerPool = new WorkerPool(this.resolveWorkerCount(), WORKER_PATH, workerInitData);
         }
 
         const gameStore: Game[][] = this.configs.map(() => [] as Game[]);
