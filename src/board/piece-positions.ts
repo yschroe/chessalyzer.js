@@ -115,8 +115,7 @@ export default class PiecePositions {
         const list = this.listForChar(tokenChar);
         if (!list) return;
 
-        const fromRow = from[0];
-        const fromCol = from[1];
+        const [fromRow, fromCol] = from;
 
         for (let i = 0; i < list.length; i += 1) {
             const p = list[i];

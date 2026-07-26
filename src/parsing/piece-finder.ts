@@ -157,12 +157,9 @@ export default class PieceFinder {
     ): boolean {
         const opColor = player === 'w' ? 'b' : 'w';
         const king = this.board.getKingPosition(player);
-        const kingRow = king[0];
-        const kingCol = king[1];
-        const fromRow = from[0];
-        const fromCol = from[1];
-        const toRow = to[0];
-        const toCol = to[1];
+        const [kingRow, kingCol] = king;
+        const [fromRow, fromCol] = from;
+        const [toRow, toCol] = to;
         if (
             kingRow === undefined ||
             kingCol === undefined ||
