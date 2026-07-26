@@ -68,12 +68,9 @@ async function stageTokenize(readHeader: boolean) {
     return { ms: performance.now() - t0, games, moves };
 }
 
-async function api(
-    configs: Parameters<typeof Chessalyzer.analyzePGN>[1],
-    mt: Parameters<typeof Chessalyzer.analyzePGN>[2],
-) {
+async function api(config: AnalysisConfig, mt: Parameters<typeof Chessalyzer.analyzePGN>[2]) {
     const t0 = performance.now();
-    const result = await Chessalyzer.analyzePGN(pgn.path, configs, mt);
+    const result = await Chessalyzer.analyzePGN(pgn.path, config, mt);
     const ms = performance.now() - t0;
     const r = Array.isArray(result) ? result[0]! : result;
     return { ms, ...r };
@@ -113,9 +110,12 @@ console.log(
     `6 API single none    ${formatSeconds(single.ms).padStart(9)}s  | ${single.mps.toLocaleString()} moves/s`,
 );
 
-const tile = await api({ trackers: [new TileTracker()] } as unknown as AnalysisConfig, {
-    targetBytes: 4 * 1024 * 1024,
-});
+const tile = await api(
+    { trackers: [new TileTracker()] },
+    {
+        targetBytes: 4 * 1024 * 1024,
+    },
+);
 console.log(
     `7 API multi Tile     ${formatSeconds(tile.ms).padStart(9)}s  | ${tile.mps.toLocaleString()} moves/s`,
 );
@@ -123,7 +123,7 @@ console.log(
 const all = await api(
     {
         trackers: [new TileTracker(), new GameTracker(), new PieceTracker()],
-    } as unknown as AnalysisConfig,
+    },
     { targetBytes: 4 * 1024 * 1024 },
 );
 console.log(
