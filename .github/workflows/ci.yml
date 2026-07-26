@@ -12,6 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+
       - name: 🔠 Lint project
         run: bun run lint
 
@@ -21,6 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+
       - name: Check for unused dependencies
         run: bun run knip
 
@@ -30,6 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+
       - name: Typecheck project
         run: bun run typecheck
 
@@ -39,7 +42,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - name: Build library
-        run: bun run build
+
       - name: Run tests
         run: bun run test

@@ -11,3 +11,7 @@ runs:
     - name: Install dependencies
       shell: bash
       run: bun ci
+
+    - name: Build
+      shell: bash
+      run: bun build
