@@ -6,8 +6,7 @@ import { performance } from 'node:perf_hooks';
 
 import { Chessalyzer } from '../lib/index.js';
 
-const PGN = new URL('../manual-tests/lichess_db_standard_rated_2013-12.pgn', import.meta.url)
-    .pathname;
+const PGN = new URL('../pgn/lichess_db_standard_rated_2013-12.pgn', import.meta.url).pathname;
 const MB = 1024 * 1024;
 const chunkSizes = [2 * MB, 4 * MB, 8 * MB, 16 * MB];
 const workerCounts = [Math.max(1, availableParallelism() - 1), availableParallelism()];

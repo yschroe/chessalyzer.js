@@ -4,7 +4,7 @@ import { basename, join } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 
-const MANUAL_TESTS_DIR = fileURLToPath(new URL('../../manual-tests', import.meta.url));
+const PGN_DIR = fileURLToPath(new URL('../../pgn', import.meta.url));
 const CACHE_DIR = fileURLToPath(new URL('../.cache', import.meta.url));
 
 export interface PerfPgnFixture {
@@ -31,20 +31,18 @@ function tryStat(path: string) {
     }
 }
 
-/** Pick the largest `.pgn` file under manual-tests/. */
-export function findLargestManualTestPgn(): { path: string; name: string; bytes: number } {
-    const names = readdirSync(MANUAL_TESTS_DIR).filter((name) => name.endsWith('.pgn'));
+/** Pick the largest `.pgn` file under pgn/. */
+export function findLargestPgn(): { path: string; name: string; bytes: number } {
+    const names = readdirSync(PGN_DIR).filter((name) => name.endsWith('.pgn'));
     if (names.length === 0) {
-        throw new Error(
-            `No PGN files found in ${MANUAL_TESTS_DIR}. Add a Lichess export under manual-tests/.`,
-        );
+        throw new Error(`No PGN files found in ${PGN_DIR}. Add a Lichess export under pgn/.`);
     }
 
     let largest = names[0]!;
     let largestBytes = 0;
 
     for (const name of names) {
-        const bytes = statSync(join(MANUAL_TESTS_DIR, name)).size;
+        const bytes = statSync(join(PGN_DIR, name)).size;
         if (bytes > largestBytes) {
             largest = name;
             largestBytes = bytes;
@@ -52,7 +50,7 @@ export function findLargestManualTestPgn(): { path: string; name: string; bytes:
     }
 
     return {
-        path: join(MANUAL_TESTS_DIR, largest),
+        path: join(PGN_DIR, largest),
         name: largest,
         bytes: largestBytes,
     };
@@ -84,14 +82,14 @@ async function concatPgn(sourcePath: string, destPath: string, repeats: number):
 /**
  * Resolve a PGN path suitable for end-to-end performance benchmarking.
  *
- * Uses the largest file in manual-tests/ and, by default, concatenates it
+ * Uses the largest file in pgn/ and, by default, concatenates it
  * several times into bench/.cache/ so startup overhead is a smaller share of
  * total runtime.
  */
 export async function resolvePerfPgn(
     repeats = Number(process.env.BENCH_PGN_REPEATS ?? 2),
 ): Promise<PerfPgnFixture> {
-    const source = findLargestManualTestPgn();
+    const source = findLargestPgn();
     const sourceStat = statSync(source.path);
 
     if (repeats <= 1) {

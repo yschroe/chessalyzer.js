@@ -5,8 +5,7 @@ import EventEmitter from 'events';
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
 
-const PGN = new URL('../manual-tests/lichess_db_standard_rated_2013-12.pgn', import.meta.url)
-    .pathname;
+const PGN = new URL('../pgn/lichess_db_standard_rated_2013-12.pgn', import.meta.url).pathname;
 
 console.time('Events');
 

@@ -6,7 +6,7 @@ const tileTracker2 = new TileTracker();
 
 // start a batch analysis for the PGN file at <pathToPgnFile>
 // the analysis is saved directly in the 'tileTracker' object
-const data = await Chessalyzer.analyzePGN('./test/corpus/asorted-games.pgn', [
+const data = await Chessalyzer.analyzePGN('./pgn/asorted-games.pgn', [
     {
         trackers: [tileTracker],
         config: { cntGames: 2000, filter: (val) => val.Result === '0-1' },

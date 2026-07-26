@@ -7,8 +7,7 @@ import { performance } from 'node:perf_hooks';
 
 import { Chessalyzer, TileTracker, GameTracker, PieceTracker } from '../lib/index.js';
 
-const PGN = new URL('../manual-tests/lichess_db_standard_rated_2013-12.pgn', import.meta.url)
-    .pathname;
+const PGN = new URL('../pgn/lichess_db_standard_rated_2013-12.pgn', import.meta.url).pathname;
 const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
 const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
 const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;

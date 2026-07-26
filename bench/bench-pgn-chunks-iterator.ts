@@ -16,8 +16,7 @@ import {
 } from '#pgn/line-reader';
 import { isGameResultLine, stripComments } from '#pgn/pgn-line-parser';
 
-const PGN = new URL('../manual-tests/lichess_db_standard_rated_2013-12.pgn', import.meta.url)
-    .pathname;
+const PGN = new URL('../pgn/lichess_db_standard_rated_2013-12.pgn', import.meta.url).pathname;
 const RUNS = Number(process.env.BENCH_RUNS ?? 5);
 
 function findLastCompleteGameLineIndex(lines: string[]): number {

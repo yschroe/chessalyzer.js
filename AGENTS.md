@@ -62,7 +62,7 @@ Examples of deliberate choices:
 **Perf bench env vars:**
 
 - `BENCH_RUNS` — timed iterations per scenario (default `5`)
-- `BENCH_PGN_REPEATS` — concatenate the largest `manual-tests/*.pgn` N times (default `3`; cached under `bench/.cache/`)
+- `BENCH_PGN_REPEATS` — concatenate the largest `pgn/*.pgn` N times (default `3`; cached under `bench/.cache/`)
 - `BENCH_WARMUP=0` — skip warmup iteration
 
 **Manual release smoke tests** (built package, smaller file):

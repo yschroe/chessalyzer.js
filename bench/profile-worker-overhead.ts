@@ -4,8 +4,7 @@ import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 
-const PGN = new URL('../manual-tests/lichess_db_standard_rated_2013-12.pgn', import.meta.url)
-    .pathname;
+const PGN = new URL('../pgn/lichess_db_standard_rated_2013-12.pgn', import.meta.url).pathname;
 const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
 const RESULT_REGEX = /-(1\/2|0|1)$/;
 const BATCH = 200;
