@@ -138,14 +138,12 @@ function appendBulkCases(reuse: boolean): BenchCase[] {
     return cases;
 }
 
-/** Benchmark: Append multiple items to an array at once. */
+/** Benchmark: Array allocation strategies. */
 function newArrayCases(length: number): BenchCase[] {
-    const cases: BenchCase[] = [
+    return [
         {
             name: 'new_array',
-            fn: () => {
-                return new Array(length);
-            },
+            fn: () => new Array(length),
         },
         {
             name: 'fill_loop',
@@ -157,13 +155,9 @@ function newArrayCases(length: number): BenchCase[] {
         },
         {
             name: 'array_from',
-            fn: () => {
-                return Array.from({ length });
-            },
+            fn: () => Array.from({ length }),
         },
     ];
-
-    return cases;
 }
 
 export default async function runArrayBench(): Promise<void> {
@@ -190,15 +184,8 @@ export default async function runArrayBench(): Promise<void> {
     );
 
     printResults(`newArray (10 items)`, await runScenario('newArray', newArrayCases(10)));
-
     printResults(`newArray (100 items)`, await runScenario('newArray', newArrayCases(100)));
-
     printResults(`newArray (1000 items)`, await runScenario('newArray', newArrayCases(1000)));
 
     console.log(`\nDone in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
-}
-
-if (import.meta.main) {
-    await runArrayBench();
-    process.exit(0);
 }

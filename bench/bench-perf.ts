@@ -9,10 +9,12 @@
  *   npm run bench:perf
  *   npm run bench:perf:bun
  *
+ * Pass `single-threaded` to benchmark only the single-threaded path.
+ *
  * Env:
- *   BENCH_RUNS=3           Number of timed iterations per scenario (default 3)
+ *   BENCH_RUNS=3           Number of timed iterations (default 3)
  *   BENCH_WARMUP=0         Skip the warmup run
- *   BENCH_PGN_REPEATS=2    Concatenate the largest manual-tests PGN this many times
+ *   BENCH_PGN_REPEATS=2    Concatenate the largest pgn/*.pgn this many times
  */
 import { performance } from 'node:perf_hooks';
 
@@ -20,22 +22,22 @@ import Chessalyzer from '#core/chessalyzer';
 
 import { resolvePerfPgn } from './lib/pgn-fixture';
 import { getRuntimeLabel } from './lib/report';
+import {
+    computeTimingStats,
+    formatSeconds,
+    printTimedResults,
+    type TimedRunResult,
+} from './lib/timing';
 
 const RUNS = Number(process.env.BENCH_RUNS ?? 3);
 const WARMUP = process.env.BENCH_WARMUP !== '0';
+const isSingleThreaded = process.argv.includes('single-threaded');
 
-interface ScenarioResult {
-    label: string;
-    meanMs: number;
-    stddevMs: number;
-    minMs: number;
-    cvPct: number;
+interface ScenarioResult extends TimedRunResult {
     games: number;
     moves: number;
     meanMps: number;
 }
-
-const isSingleThreaded = process.argv.includes('single-threaded');
 
 async function runScenario(
     label: string,
@@ -49,12 +51,13 @@ async function runScenario(
             undefined,
             singlethreaded ? null : undefined,
         );
+        const result = Array.isArray(header) ? header[0]! : header;
         const ms = performance.now() - t0;
         return {
             ms,
-            games: header.cntGames,
-            moves: header.cntMoves,
-            mps: Math.round(header.cntMoves / (ms / 1000)),
+            games: result.cntGames,
+            moves: result.cntMoves,
+            mps: Math.round(result.cntMoves / (ms / 1000)),
         };
     };
 
@@ -74,41 +77,13 @@ async function runScenario(
         mpsTotal += result.mps;
     }
 
-    const meanMs = times.reduce((sum, ms) => sum + ms, 0) / times.length;
-    const variance =
-        times.reduce((sum, ms) => sum + (ms - meanMs) ** 2, 0) / Math.max(times.length - 1, 1);
-    const stddevMs = Math.sqrt(variance);
-    const minMs = Math.min(...times);
-
     return {
         label,
-        meanMs,
-        stddevMs,
-        minMs,
-        cvPct: meanMs === 0 ? 0 : (stddevMs / meanMs) * 100,
+        ...computeTimingStats(times),
         games,
         moves,
         meanMps: Math.round(mpsTotal / RUNS),
     };
-}
-
-function formatMs(ms: number): string {
-    return (ms / 1000).toFixed(3);
-}
-
-function printResults(results: ScenarioResult[]): void {
-    const nameWidth = Math.max(...results.map((result) => result.label.length), 6);
-
-    console.log(
-        `\n${'Scenario'.padEnd(nameWidth)}  ${'mean (s)'.padStart(9)}  ${'± (s)'.padStart(9)}  ${'min (s)'.padStart(9)}  ${'CV %'.padStart(7)}  ${'moves/s'.padStart(12)}`,
-    );
-    console.log(`${'-'.repeat(nameWidth + 55)}`);
-
-    for (const result of results) {
-        console.log(
-            `${result.label.padEnd(nameWidth)}  ${formatMs(result.meanMs).padStart(9)}  ${formatMs(result.stddevMs).padStart(9)}  ${formatMs(result.minMs).padStart(9)}  ${result.cvPct.toFixed(1).padStart(7)}  ${result.meanMps.toLocaleString().padStart(12)}`,
-        );
-    }
 }
 
 const fixture = await resolvePerfPgn();
@@ -130,9 +105,9 @@ const results = [
     ),
 ];
 
-printResults(results);
+printTimedResults(results, { stddev: true, cv: true, movesPerSec: results.map((r) => r.meanMps) });
 
 const sample = results[0]!;
 console.log(
-    `\nOutput: ${sample.games.toLocaleString()} games, ${sample.moves.toLocaleString()} moves`,
+    `\nOutput: ${sample.games.toLocaleString()} games, ${sample.moves.toLocaleString()} moves (${formatSeconds(sample.meanMs)} mean)`,
 );

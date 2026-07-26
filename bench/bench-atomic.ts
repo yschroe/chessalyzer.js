@@ -1,10 +1,10 @@
 /**
- * Atomic micro-benchmark dispatcher.
+ * Dispatch atomic micro-benchmarks under bench/atomic/.
  *
  * Usage:
- *   npm run bench              # list benches (Node via tsx)
- *   npm run bench -- array     # run array bench on Node
- *   npm run bench:bun -- array # run array bench on Bun
+ *   npm run bench:atomic -- array
+ *   npm run bench:atomic:bun -- array
+ *   tsx bench/bench-atomic.ts array
  */
 
 export {};
@@ -20,13 +20,13 @@ if (!target) {
     for (const name of Object.keys(benches).sort()) {
         console.log(`  ${name}`);
     }
-    console.log('\nRun: npm run bench -- <name>  (Node)  |  npm run bench:bun -- <name>  (Bun)');
+    console.log('\nRun: npm run bench:atomic -- <name>');
     process.exit(0);
 }
 
 const load = benches[target];
 if (!load) {
-    console.error(`Unknown benchmark: ${target}`);
+    console.error(`Unknown atomic benchmark: ${target}`);
     console.error(`Available: ${Object.keys(benches).join(', ')}`);
     process.exit(1);
 }

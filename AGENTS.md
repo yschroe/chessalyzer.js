@@ -17,15 +17,19 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 **Key directories:**
 
-| Path            | Purpose                                                       |
-| --------------- | ------------------------------------------------------------- |
-| `src/core/`     | Orchestration (`GameProcessor`, worker pool)                  |
-| `src/pgn/`      | PGN I/O, chunking, game assembly                              |
-| `src/parsing/`  | Move/game parsing                                             |
-| `src/tracker/`  | Built-in and base tracker implementations                     |
-| `bench/`        | Performance benchmarks and micro-benches                      |
-| `test/`         | Unit and integration tests                                    |
-| `manual-tests/` | Local-only large PGN files (gitignored) for manual/bench runs |
+| Path                 | Purpose                                                   |
+| -------------------- | --------------------------------------------------------- |
+| `src/core/`          | Orchestration (`GameProcessor`, worker pool)              |
+| `src/pgn/`           | PGN I/O, chunking, game assembly                          |
+| `src/parsing/`       | Move/game parsing                                         |
+| `src/tracker/`       | Built-in and base tracker implementations                 |
+| `bench/`             | Callable performance benchmarks (`bench-*.ts`)            |
+| `bench/atomic/`      | Atomic micro-benchmark implementations                    |
+| `bench/lib/`         | Shared bench utilities (fixtures, timing, PGN resolution) |
+| `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)               |
+| `test/`              | Unit and integration tests                                |
+| `pgn/`               | Local large PGN files for manual/bench runs (gitignored)  |
+| `manual-tests/`      | Release smoke tests against the built package             |
 
 **Runtime:** Node ≥ 22 or Bun. Tests and benches are typically run with Bun.
 
@@ -35,8 +39,8 @@ This library has been **carefully tuned for performance**. Some code may look un
 
 Examples of deliberate choices:
 
-- **Manual `Symbol.asyncIterator` instead of `async function*`** in `readPgnChunks` (~7–10% faster than async generators on large files). See `bench/bench-pgn-chunks-iterator.ts`.
-- **`Array.concat` vs `push`** in specific hot loops where benchmarks showed a win. Check nearby bench comments or run `bench/atomic/array.ts` before changing append patterns.
+- **Manual `Symbol.asyncIterator` instead of `async function*`** in `readPgnChunks` (~7–10% faster than async generators on large files). See `bench/exploratory/bench-pgn-chunks-iterator.ts`.
+- **`Array.concat` vs `push`** in specific hot loops where benchmarks showed a win. Run `npm run bench:atomic -- array` before changing append patterns.
 - **Fixed-size circular-buffer queue** in `readLinesFast` (Node-style `FixedQueue`) to avoid shift-from-array costs.
 - **Worker-side parsing** with transferable UTF-8 chunk bytes to minimize main-thread work and copying.
 - **Minimal dependencies** — only `chalk` in production.
@@ -45,32 +49,39 @@ Examples of deliberate choices:
 
 1. **Measure before and after** any change that touches parsing, I/O, chunking, worker dispatch, or tracker hot paths.
 2. **Prefer existing benchmarks.** Run the relevant script and compare mean/min and coefficient of variation (CV).
-3. **Add a bench when introducing a non-obvious optimization** so the rationale is reproducible (see `bench/bench-pgn-chunks-iterator.ts` as a template).
+3. **Add a bench when introducing a non-obvious optimization** so the rationale is reproducible (see `bench/exploratory/bench-pgn-chunks-iterator.ts` as a template).
 4. **Do not regress throughput for readability alone.** If a refactor is needed, preserve behavior and verify performance.
 5. **Use a large fixture for end-to-end checks.** Short runs (~3 s) have high variance because startup dominates. Use the perf bench below.
 
 ### Benchmarks
 
-| Command                                  | Purpose                                                                                                |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `npm run bench:perf`                     | **Primary regression check** — full `analyzePGN` multithreaded + single-threaded on a large cached PGN |
-| `npm run bench:perf:bun`                 | Same, on Bun                                                                                           |
-| `bun bench/bench-pgn-chunks-iterator.ts` | Iterator implementation comparison                                                                     |
-| `npm run bench -- array`                 | Array append micro-benchmarks                                                                          |
-| `bun bench/bench-chunk-sizes.ts`         | Chunk size × worker count sweep                                                                        |
+| Command                         | Purpose                                                                |
+| ------------------------------- | ---------------------------------------------------------------------- |
+| `npm run bench:perf`            | **Primary regression check** — full `analyzePGN` on a large cached PGN |
+| `npm run bench:perf:bun`        | Same, on Bun                                                           |
+| `npm run bench:atomic -- array` | Array append micro-benchmarks                                          |
+
+**Exploratory scripts** (run directly with `bun bench/exploratory/<name>.ts`):
+
+- `bench-pgn-chunks-iterator.ts` — async generator vs manual iterator
+- `bench-chunk-sizes.ts` — chunk size × worker count sweep
+- `profile-bottlenecks-node.ts` — staged pipeline profile
+- `line-reader-readline.ts` — readline vs `readLinesFast`
 
 **Perf bench env vars:**
 
-- `BENCH_RUNS` — timed iterations per scenario (default `5`)
-- `BENCH_PGN_REPEATS` — concatenate the largest `pgn/*.pgn` N times (default `3`; cached under `bench/.cache/`)
+- `BENCH_RUNS` — timed iterations (default `3`)
+- `BENCH_PGN_REPEATS` — concatenate the largest `pgn/*.pgn` N times (default `2`; cached under `bench/.cache/`)
 - `BENCH_WARMUP=0` — skip warmup iteration
+
+Pass `single-threaded` to `bench-perf` to benchmark only the single-threaded path.
 
 **Manual release smoke tests** (built package, smaller file):
 
 - `manual-tests/test-release.ts` — multithreaded
 - `manual-tests/test-release-singlethreaded.ts` — single-threaded (`multithreadCfg: null`)
 
-Place large Lichess exports in `manual-tests/` (gitignored). The perf bench automatically picks the largest file available.
+Place large Lichess exports in `pgn/` (gitignored). The perf bench automatically picks the largest file available.
 
 ### Tests
 

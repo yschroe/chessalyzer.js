@@ -49,12 +49,10 @@
         "format": "oxfmt",
         "typecheck": "tsc --noEmit",
         "knip": "knip",
-        "bench": "tsx bench/run.ts",
-        "bench:bun": "bun bench/run.ts",
         "bench:perf": "tsx bench/bench-perf.ts",
         "bench:perf:bun": "bun bench/bench-perf.ts",
-        "bench:atomic:array": "bun run bench -- array",
-        "bench:atomic:array:bun": "bun run bench:bun -- array"
+        "bench:atomic": "tsx bench/bench-atomic.ts",
+        "bench:atomic:bun": "bun bench/bench-atomic.ts"
     },
     "dependencies": {
         "chalk": "^5.6.2"
