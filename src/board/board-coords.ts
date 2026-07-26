@@ -38,7 +38,7 @@ export function algebraicToCoords(square: string): number[] | undefined {
 export function algebraicToCoordsAt(san: string, end: number): number[] {
     const file = san.charCodeAt(end - 2) - 97;
     const rank = san.charCodeAt(end - 1) - 49;
-    return algebraicToCoordsTable[file * 8 + rank] as number[];
+    return algebraicToCoordsTable[file * 8 + rank];
 }
 
 /** Convert internal `[row, col]` to algebraic notation (e.g. `[6, 4]` → `'e2'`). */

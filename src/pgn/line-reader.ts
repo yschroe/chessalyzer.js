@@ -1,197 +1,56 @@
 import { createReadStream } from 'node:fs';
 
-import { isGameResultLine, stripComments } from '#pgn/pgn-line-parser';
+const DEFAULT_QUEUE_SIZE = 1024;
 
-/** Default chunk size (~4 MB) for worker-side PGN dispatch. */
-export const DEFAULT_PGN_CHUNK_BYTES = 4 * 1024 * 1024;
-
-export interface PgnChunkConfig {
-    /** Target chunk size in bytes before extending to the next game boundary. */
-    targetBytes?: number;
-    /** Safety cap on lines per chunk. */
-    maxLines?: number;
-    /** Minimum lines before a byte-target chunk may be emitted. */
-    minLines?: number;
-}
-
-export interface PgnChunk {
-    text: string;
-    /** UTF-8 bytes for zero-copy transfer to workers via `postMessage` transfer list. */
-    bytes: Uint8Array;
-    lineCount: number;
-}
-
-/** Encode PGN chunk text as UTF-8 bytes for worker transfer. */
-export function encodePgnChunkText(text: string): Uint8Array {
-    return new TextEncoder().encode(text);
-}
-
-/** Decode UTF-8 PGN chunk bytes received from the main thread. */
-export function decodePgnChunkBytes(bytes: Uint8Array): string {
-    return new TextDecoder().decode(bytes);
-}
-
-/** Index of the last movetext line that completes a game, or -1 if none. */
-function findLastCompleteGameLineIndex(lines: string[]): number {
-    for (let i = lines.length - 1; i >= 0; i -= 1) {
-        const line = lines[i];
-        if (line === undefined || line === '') continue;
-        if (line.startsWith('[')) continue;
-        return isGameResultLine(stripComments(line)) ? i : -1;
-    }
-    return -1;
-}
-
-/** True when the last movetext line in the chunk completes a game. */
-export function chunkEndsWithCompleteGame(lines: string[]): boolean {
-    const lastResultIdx = findLastCompleteGameLineIndex(lines);
-    if (lastResultIdx === -1) return false;
-
-    for (let i = lastResultIdx + 1; i < lines.length; i += 1) {
-        const line = lines[i];
-        if (line === undefined || line === '') continue;
-        if (line.startsWith('[')) continue;
-        return false;
-    }
-
-    return true;
-}
-
-function chunkByteSize(lines: string[]): number {
-    let size = 0;
-    for (const line of lines) {
-        size += line.length + 1;
-    }
-    return size;
-}
-
-/**
- * Stream a PGN file as raw text chunks aligned to complete games.
- * The main thread only splits lines and checks result boundaries — no move tokenization.
+/* https://github.com/nodejs/node/blob/bae03c4e30f927676203f61ff5a34fe0a0c0bbc9/lib/internal/fixed_queue.js
+ * The FixedQueue is implemented as a singly-linked list of fixed-size
+ * circular buffers. It looks something like this:
+ *
+ *  head                                                       tail
+ *    |                                                          |
+ *    v                                                          v
+ * +-----------+ <-----\       +-----------+ <------\         +-----------+
+ * |  [null]   |        \----- |   next    |         \------- |   next    |
+ * +-----------+               +-----------+                  +-----------+
+ * |   item    | <-- bottom    |   item    | <-- bottom       |  [empty]  |
+ * |   item    |               |   item    |                  |  [empty]  |
+ * |   item    |               |   item    |                  |  [empty]  |
+ * |   item    |               |   item    |                  |  [empty]  |
+ * |   item    |               |   item    |       bottom --> |   item    |
+ * |   item    |               |   item    |                  |   item    |
+ * |    ...    |               |    ...    |                  |    ...    |
+ * |   item    |               |   item    |                  |   item    |
+ * |   item    |               |   item    |                  |   item    |
+ * |  [empty]  | <-- top       |   item    |                  |   item    |
+ * |  [empty]  |               |   item    |                  |   item    |
+ * |  [empty]  |               |  [empty]  | <-- top  top --> |  [empty]  |
+ * +-----------+               +-----------+                  +-----------+
+ *
+ * Or, if there is only one circular buffer, it looks something
+ * like either of these:
+ *
+ *  head   tail                                 head   tail
+ *    |     |                                     |     |
+ *    v     v                                     v     v
+ * +-----------+                               +-----------+
+ * |  [null]   |                               |  [null]   |
+ * +-----------+                               +-----------+
+ * |  [empty]  |                               |   item    |
+ * |  [empty]  |                               |   item    |
+ * |   item    | <-- bottom            top --> |  [empty]  |
+ * |   item    |                               |  [empty]  |
+ * |  [empty]  | <-- top            bottom --> |   item    |
+ * |  [empty]  |                               |   item    |
+ * +-----------+                               +-----------+
+ *
+ * Adding a value means moving `top` forward by one, removing means
+ * moving `bottom` forward by one. After reaching the end, the queue
+ * wraps around.
+ *
+ * When `top === bottom` the current queue is empty and when
+ * `top + 1 === bottom` it's full. This wastes a single space of storage
+ * but allows much quicker checks.
  */
-export function readPgnChunks(file: string, config: PgnChunkConfig = {}) {
-    const targetBytes = config.targetBytes ?? DEFAULT_PGN_CHUNK_BYTES;
-    const maxLines = config.maxLines ?? 50_000;
-    const minLines = config.minLines ?? 0;
-
-    const iter = readLinesFast(file)[Symbol.asyncIterator]();
-    const accumulator: string[] = [];
-    let byteSize = 0;
-    let inputDone = false;
-
-    const readLine = async (): Promise<string | null> => {
-        if (inputDone) return null;
-        const result = await iter.next();
-        if (result.done) {
-            inputDone = true;
-            return null;
-        }
-        return result.value;
-    };
-
-    const pushLine = (line: string) => {
-        accumulator.push(line);
-        byteSize += line.length + 1;
-    };
-
-    const next = async (): Promise<IteratorResult<PgnChunk>> => {
-        let line = await readLine();
-        while (line !== null) {
-            pushLine(line);
-            const hitByteTarget = byteSize >= targetBytes && accumulator.length >= minLines;
-            const hitLineCap = accumulator.length >= maxLines;
-            if (hitByteTarget || hitLineCap) break;
-            line = await readLine();
-        }
-
-        if (accumulator.length === 0) return { done: true, value: undefined };
-
-        while (findLastCompleteGameLineIndex(accumulator) === -1) {
-            const nextLine = await readLine();
-            if (nextLine === null) break;
-            pushLine(nextLine);
-        }
-
-        const lastResultIdx = findLastCompleteGameLineIndex(accumulator);
-        if (lastResultIdx === -1) return { done: true, value: undefined };
-
-        const completeLines = accumulator.slice(0, lastResultIdx + 1);
-        const remainder = accumulator.slice(lastResultIdx + 1);
-
-        const text = completeLines.join('\n');
-
-        accumulator.length = 0;
-        byteSize = 0;
-        if (remainder.length > 0) {
-            accumulator.push(...remainder);
-            byteSize = chunkByteSize(accumulator);
-        }
-
-        return {
-            value: {
-                text,
-                bytes: encodePgnChunkText(text),
-                lineCount: completeLines.length,
-            },
-            done: false,
-        };
-    };
-
-    return {
-        [Symbol.asyncIterator]: () => ({
-            next,
-        }),
-    };
-}
-
-// https://github.com/nodejs/node/blob/bae03c4e30f927676203f61ff5a34fe0a0c0bbc9/lib/internal/fixed_queue.js
-// The FixedQueue is implemented as a singly-linked list of fixed-size
-// circular buffers. It looks something like this:
-//
-//  head                                                       tail
-//    |                                                          |
-//    v                                                          v
-// +-----------+ <-----\       +-----------+ <------\         +-----------+
-// |  [null]   |        \----- |   next    |         \------- |   next    |
-// +-----------+               +-----------+                  +-----------+
-// |   item    | <-- bottom    |   item    | <-- bottom       |  [empty]  |
-// |   item    |               |   item    |                  |  [empty]  |
-// |   item    |               |   item    |                  |  [empty]  |
-// |   item    |               |   item    |                  |  [empty]  |
-// |   item    |               |   item    |       bottom --> |   item    |
-// |   item    |               |   item    |                  |   item    |
-// |    ...    |               |    ...    |                  |    ...    |
-// |   item    |               |   item    |                  |   item    |
-// |   item    |               |   item    |                  |   item    |
-// |  [empty]  | <-- top       |   item    |                  |   item    |
-// |  [empty]  |               |   item    |                  |   item    |
-// |  [empty]  |               |  [empty]  | <-- top  top --> |  [empty]  |
-// +-----------+               +-----------+                  +-----------+
-//
-// Or, if there is only one circular buffer, it looks something
-// like either of these:
-//
-//  head   tail                                 head   tail
-//    |     |                                     |     |
-//    v     v                                     v     v
-// +-----------+                               +-----------+
-// |  [null]   |                               |  [null]   |
-// +-----------+                               +-----------+
-// |  [empty]  |                               |   item    |
-// |  [empty]  |                               |   item    |
-// |   item    | <-- bottom            top --> |  [empty]  |
-// |   item    |                               |  [empty]  |
-// |  [empty]  | <-- top            bottom --> |   item    |
-// |  [empty]  |                               |   item    |
-// +-----------+                               +-----------+
-//
-// Adding a value means moving `top` forward by one, removing means
-// moving `bottom` forward by one. After reaching the end, the queue
-// wraps around.
-//
-// When `top === bottom` the current queue is empty and when
-// `top + 1 === bottom` it's full. This wastes a single space of storage
-// but allows much quicker checks.
 
 class FixedCircularBuffer<T> {
     kMask: number;
@@ -235,7 +94,7 @@ class FixedQueue<T> {
     head: FixedCircularBuffer<T>;
     tail: FixedCircularBuffer<T>;
 
-    constructor(private readonly kSize: number = 1024) {
+    constructor(private readonly kSize = DEFAULT_QUEUE_SIZE) {
         this.head = this.tail = new FixedCircularBuffer(kSize);
     }
 
@@ -273,51 +132,55 @@ class FixedQueue<T> {
  * @see https://github.com/oven-sh/bun/issues/5136#issuecomment-3503523219
  */
 export function readLinesFast(file: string): AsyncIterable<string> {
-    const rs = createReadStream(file, 'utf-8');
-    const sourceIterator = rs[Symbol.asyncIterator]();
+    const rs = createReadStream(file, { encoding: 'utf-8' });
+    const sourceIterator: AsyncIterator<string> = rs.iterator();
 
     const cache: FixedQueue<string> = new FixedQueue();
-    let lineBreak = false;
+    let leftover = '';
 
     /** Returns the next line from the file. */
     const next = async (): Promise<IteratorResult<string>> => {
-        // Try to get a line from the cache
+        // Try to get a line from the cache.
         let line: string | null = cache.shift();
 
-        // If the cache is now empty, read in more lines
-        if (cache.isEmpty()) {
-            // Read in next chunk of size highWaterMark (default: 64 * 1024 bytes)
+        // If the cache is empty, read the next chunk from the stream.
+        while (line === null) {
+            // oxlint-disable-next-line no-await-in-loop
             const result = await sourceIterator.next();
 
-            // If the iterator is not done, split the chunk into lines
-            if (!result.done) {
-                const value = result.value;
-                const lines = value.replace(/\r/g, '').split('\n');
-
-                // If the cache is not empty and the line break flag is not set,
-                // it means the last line of the previous chunk was not a full line.
-                // Append the first line of the new chunk to complete the line.
-                const firstLine = lines.shift();
-                if (line !== null && !lineBreak && firstLine !== undefined) line += firstLine;
-                // On first iteration, the cache is empty, so we need to get the
-                // first line from the new chunk.
-                if (line === null) line = firstLine ?? null;
-                cache.push(...lines);
-
-                // Check if chunk ended with a line break
-                lineBreak = value.at(-1) === '\n';
+            // If the file was fully read, return the leftover line.
+            if (result.done) {
+                if (leftover !== '') {
+                    line = leftover;
+                    leftover = '';
+                }
+                break;
             }
+
+            // Combine the leftover line from the previous chunk with the new chunk.
+            const combined = leftover + result.value;
+            leftover = '';
+
+            // Split the combined line into parts.
+            const parts = combined.split('\n');
+
+            // If the line does not end with a newline, save the last part as the leftover.
+            const endsWithNewline = result.value.charCodeAt(result.value.length - 1) === 10;
+            if (!endsWithNewline) leftover = parts.pop() ?? '';
+
+            // Add the parts to the cache.
+            cache.push(...parts);
+
+            // Try to get a line from the cache again.
+            line = cache.shift();
         }
 
-        // If the cache has data, return the first line
         if (line !== null) return { value: line, done: false };
 
         return { done: true, value: undefined };
     };
 
     return {
-        [Symbol.asyncIterator]: () => ({
-            next,
-        }),
+        [Symbol.asyncIterator]: () => ({ next }),
     };
 }

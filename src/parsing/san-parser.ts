@@ -51,8 +51,7 @@ export default class SanParser {
 
         const to = algebraicToCoordsAt(san, end);
         const from = this.ctx.fromBuf;
-        const toRow = to[0] as number;
-        const toCol = to[1] as number;
+        const [toRow, toCol] = to;
 
         if (san.charCodeAt(1) === 120) {
             from[0] = toRow + direction;
@@ -153,8 +152,8 @@ export default class SanParser {
             const cap = this.ctx.captureAction;
             cap.san = san;
             cap.player = player;
-            cap.on[0] = to[0] as number;
-            cap.on[1] = to[1] as number;
+            cap.on[0] = to[0];
+            cap.on[1] = to[1];
             cap.takingPiece = piece;
             cap.takenPiece = board.getPieceNameOnCoords(to);
             actions.push(cap);
@@ -165,8 +164,8 @@ export default class SanParser {
         mov.player = player;
         mov.piece = piece;
         mov.from = from;
-        mov.to[0] = to[0] as number;
-        mov.to[1] = to[1] as number;
+        mov.to[0] = to[0];
+        mov.to[1] = to[1];
         actions.push(mov);
 
         return actions;

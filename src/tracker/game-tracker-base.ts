@@ -80,7 +80,7 @@ class GameTrackerBase extends BaseTracker {
     finish() {
         // sort keys
         this.ECO = Object.keys(this.ECO)
-            .sort()
+            .toSorted()
             .reduce<Record<string, number>>((a, c) => {
                 a[c] = this.ECO[c] ?? 0;
                 return a;

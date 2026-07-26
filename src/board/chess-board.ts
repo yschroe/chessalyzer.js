@@ -60,7 +60,7 @@ class ChessBoard {
     };
 
     constructor() {
-        this.tiles = ChessBoard.defaultTiles.slice() as TileBytes;
+        this.tiles = ChessBoard.defaultTiles.slice();
         this.pieces = {
             w: new PiecePositions('w'),
             b: new PiecePositions('b'),
@@ -76,7 +76,7 @@ class ChessBoard {
         const col = coords[1];
         if (row === undefined || col === undefined) return null;
 
-        const pieceNumber = this.tiles[row * 8 + col] as number;
+        const pieceNumber = this.tiles[row * 8 + col];
         if (pieceNumber === 0) return null;
 
         const color: PlayerColor = pieceNumber & 0b10000000 ? 'b' : 'w';
@@ -91,25 +91,25 @@ class ChessBoard {
 
     /** Hot-path helper: piece name only, no object allocation. */
     getPieceNameOnCoords(coords: readonly number[]): string | null {
-        return this.getPieceNameAt(coords[0] as number, coords[1] as number);
+        return this.getPieceNameAt(coords[0], coords[1]);
     }
 
     isEmpty(coords: readonly number[]): boolean {
-        return (this.tiles[(coords[0] as number) * 8 + (coords[1] as number)] as number) === 0;
+        return this.tiles[coords[0] * 8 + coords[1]] === 0;
     }
 
     isEmptyAt(row: number, col: number): boolean {
-        return (this.tiles[row * 8 + col] as number) === 0;
+        return this.tiles[row * 8 + col] === 0;
     }
 
     /** True if square holds a pawn (standard piece indices 9–16). */
     isPawnAt(row: number, col: number): boolean {
-        const idx = (this.tiles[row * 8 + col] as number) & 0b01111111;
+        const idx = this.tiles[row * 8 + col] & 0b01111111;
         return idx >= 9 && idx <= 16;
     }
 
     getPieceNameAt(row: number, col: number): string | null {
-        const pieceNumber = this.tiles[row * 8 + col] as number;
+        const pieceNumber = this.tiles[row * 8 + col];
         if (pieceNumber === 0) return null;
 
         const color: PlayerColor = pieceNumber & 0b10000000 ? 'b' : 'w';
@@ -131,7 +131,7 @@ class ChessBoard {
     }
 
     getPieceColorAt(row: number, col: number): PlayerColor | null {
-        const pieceNumber = this.tiles[row * 8 + col] as number;
+        const pieceNumber = this.tiles[row * 8 + col];
         if (pieceNumber === 0) return null;
         return pieceNumber & 0b10000000 ? 'b' : 'w';
     }
@@ -183,16 +183,16 @@ class ChessBoard {
         from: readonly number[],
         to: readonly number[],
     ): void {
-        const fromIdx = (from[0] as number) * 8 + (from[1] as number);
-        const toIdx = (to[0] as number) * 8 + (to[1] as number);
-        this.tiles[toIdx] = this.tiles[fromIdx] as number;
+        const fromIdx = from[0] * 8 + from[1];
+        const toIdx = to[0] * 8 + to[1];
+        this.tiles[toIdx] = this.tiles[fromIdx];
         this.tiles[fromIdx] = 0;
         this.pieces[player].moveByChar(tokenChar, from, to);
     }
 
     capturePiece(player: PlayerColor, takenPiece: string, on: readonly number[]): void {
         this.pieces[player === 'w' ? 'b' : 'w'].capture(takenPiece, on);
-        this.tiles[(on[0] as number) * 8 + (on[1] as number)] = 0;
+        this.tiles[on[0] * 8 + on[1]] = 0;
     }
 
     /**
@@ -200,8 +200,8 @@ class ChessBoard {
      * Pawns are cleared from tiles only — they are not in {@link PiecePositions}.
      */
     captureAt(player: PlayerColor, on: readonly number[]): void {
-        const onIdx = (on[0] as number) * 8 + (on[1] as number);
-        const pieceNumber = this.tiles[onIdx] as number;
+        const onIdx = on[0] * 8 + on[1];
+        const pieceNumber = this.tiles[onIdx];
         if (pieceNumber === 0) return;
 
         this.tiles[onIdx] = 0;
@@ -223,7 +223,7 @@ class ChessBoard {
      * Assigns a new tile index beyond the standard lookup table and records the name.
      */
     promotePiece(player: PlayerColor, on: readonly number[], to: string): void {
-        const onIdx = (on[0] as number) * 8 + (on[1] as number);
+        const onIdx = on[0] * 8 + on[1];
 
         const pieceNumber =
             (player === 'w' ? 0b00000000 : 0b10000000) |

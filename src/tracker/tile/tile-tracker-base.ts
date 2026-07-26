@@ -119,10 +119,8 @@ class TileTrackerBase extends BaseTracker {
      * increment movedTo counters. Skips promoted pawns (names containing digits).
      */
     processMove(move: Move, player: string, piece: string) {
-        const fromRow = move.from[0];
-        const fromCol = move.from[1];
-        const toRow = move.to[0];
-        const toCol = move.to[1];
+        const [fromRow, fromCol] = move.from;
+        const [toRow, toCol] = move.to;
         const bucket = playerBucket(player);
         if (
             !bucket ||

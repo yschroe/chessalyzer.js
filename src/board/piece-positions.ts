@@ -115,15 +115,14 @@ export default class PiecePositions {
         const list = this.listForChar(tokenChar);
         if (!list) return;
 
-        const fromRow = from[0] as number;
-        const fromCol = from[1] as number;
+        const [fromRow, fromCol] = from;
 
         for (let i = 0; i < list.length; i += 1) {
             const p = list[i];
             if (!p) continue;
             if (p[0] === fromRow && p[1] === fromCol) {
-                p[0] = to[0] as number;
-                p[1] = to[1] as number;
+                p[0] = to[0];
+                p[1] = to[1];
                 return;
             }
         }
@@ -140,15 +139,15 @@ export default class PiecePositions {
         const list = this.listForChar(tokenChar);
         if (!list) return;
 
-        const row = on[0] as number;
-        const col = on[1] as number;
+        const row = on[0];
+        const col = on[1];
 
         for (let i = 0; i < list.length; i += 1) {
             const p = list[i];
             if (!p) continue;
             if (p[0] === row && p[1] === col) {
                 const last = list.length - 1;
-                list[i] = list[last] as number[];
+                list[i] = list[last];
                 list.pop();
                 return;
             }

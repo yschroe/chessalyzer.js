@@ -41,17 +41,9 @@ export async function corpusPath(id: string = 'asorted'): Promise<string | null>
         await access(path);
         return path;
     } catch {
-        for (const source of entry.sources) {
-            const fallback = join(new URL('../..', import.meta.url).pathname, source);
-            try {
-                await access(fallback);
-                return fallback;
-            } catch {
-                // try next source
-            }
-        }
+        /* File does not exist */
+        return null;
     }
-    return null;
 }
 
 /** Manifest entry for a corpus file (expected counts, golden tracker values). */

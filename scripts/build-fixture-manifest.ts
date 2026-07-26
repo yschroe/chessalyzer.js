@@ -1,9 +1,10 @@
 /**
  * Analyzes committed test/fixtures/*.pgn and writes test/fixtures/manifest.json.
+ * Use a tested version of Chessalyzer for the generation of correct expected values.
  *
  * Run after adding or changing fixture PGNs: bun run test:build-fixtures
  *
- * Uses single-threaded mode (multithreadCfg: null) for deterministic, fast analysis.
+ * Uses single-threaded mode (multithreadCfg: null) for deterministic analysis.
  */
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -28,13 +29,19 @@ const descriptions: Record<string, string> = {
     'results-mix': 'Multiple games with mixed results and Elo headers for filter tests',
 };
 
-const files = (await readdir(FIXTURES_DIR)).filter((f) => f.endsWith('.pgn')).sort();
-const fixtures: Record<string, object> = {};
+/* Get all PGN files in the fixtures directory and sort them */
+const files = (await readdir(FIXTURES_DIR)).filter((f) => f.endsWith('.pgn')).toSorted();
 
+/* Analyze each PGN file and store the results in a dictionary */
+const fixtures: Record<string, object> = {};
 for (const file of files) {
     const id = file.replace(/\.pgn$/, '');
     const path = join(FIXTURES_DIR, file);
+
+    /* Analyze the PGN file */
     const result: GameAndMoveCountFull = await Chessalyzer.analyzePGN(path, { trackers: [] }, null);
+
+    /* Store the results in the fixtures dictionary */
     fixtures[id] = {
         file,
         description: descriptions[id] ?? id,
@@ -43,6 +50,7 @@ for (const file of files) {
     console.log(`${id}: ${result.cntGames} games, ${result.cntMoves} moves`);
 }
 
+/* Write the manifest to the fixtures directory */
 const manifest = { dir: 'test/fixtures', fixtures };
 await Bun.write(join(FIXTURES_DIR, 'manifest.json'), JSON.stringify(manifest, null, 4) + '\n');
 console.log('\nWrote test/fixtures/manifest.json');
