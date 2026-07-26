@@ -69,10 +69,7 @@ function chunkByteSize(lines: string[]): number {
  * Stream a PGN file as raw text chunks aligned to complete games.
  * The main thread only splits lines and checks result boundaries — no move tokenization.
  */
-export async function* readPgnChunks(
-    file: string,
-    config: PgnChunkConfig = {},
-): AsyncGenerator<PgnChunk> {
+export function readPgnChunks(file: string, config: PgnChunkConfig = {}) {
     const targetBytes = config.targetBytes ?? DEFAULT_PGN_CHUNK_BYTES;
     const maxLines = config.maxLines ?? 50_000;
     const minLines = config.minLines ?? 0;
@@ -97,7 +94,7 @@ export async function* readPgnChunks(
         byteSize += line.length + 1;
     };
 
-    while (true) {
+    const next = async (): Promise<IteratorResult<PgnChunk>> => {
         let line = await readLine();
         while (line !== null) {
             pushLine(line);
@@ -107,7 +104,7 @@ export async function* readPgnChunks(
             line = await readLine();
         }
 
-        if (accumulator.length === 0) return;
+        if (accumulator.length === 0) return { done: true, value: undefined };
 
         while (findLastCompleteGameLineIndex(accumulator) === -1) {
             const nextLine = await readLine();
@@ -116,18 +113,12 @@ export async function* readPgnChunks(
         }
 
         const lastResultIdx = findLastCompleteGameLineIndex(accumulator);
-        if (lastResultIdx === -1) return;
+        if (lastResultIdx === -1) return { done: true, value: undefined };
 
         const completeLines = accumulator.slice(0, lastResultIdx + 1);
         const remainder = accumulator.slice(lastResultIdx + 1);
 
         const text = completeLines.join('\n');
-
-        yield {
-            text,
-            bytes: encodePgnChunkText(text),
-            lineCount: completeLines.length,
-        };
 
         accumulator.length = 0;
         byteSize = 0;
@@ -136,8 +127,21 @@ export async function* readPgnChunks(
             byteSize = chunkByteSize(accumulator);
         }
 
-        if (inputDone && accumulator.length === 0) return;
-    }
+        return {
+            value: {
+                text,
+                bytes: encodePgnChunkText(text),
+                lineCount: completeLines.length,
+            },
+            done: false,
+        };
+    };
+
+    return {
+        [Symbol.asyncIterator]: () => ({
+            next,
+        }),
+    };
 }
 
 // https://github.com/nodejs/node/blob/bae03c4e30f927676203f61ff5a34fe0a0c0bbc9/lib/internal/fixed_queue.js
