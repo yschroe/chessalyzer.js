@@ -5,7 +5,6 @@
             "id": "asorted",
             "file": "asorted-games.pgn",
             "description": "Large Lichess export used for golden regression tests",
-            "sources": ["pgn/asorted-games.pgn"],
             "expected": {
                 "cntGames": 14630,
                 "cntMoves": 959243,
