@@ -111,17 +111,19 @@ export default class PiecePositions {
      * Move the piece at `from` to `to` within the position list.
      * Pawns (char code 80 / 'P') are intentionally not tracked here.
      */
-    moveByChar(tokenChar: number, from: number[], to: number[]): void {
+    moveByChar(tokenChar: number, from: readonly number[], to: readonly number[]): void {
         const list = this.listForChar(tokenChar);
         if (!list) return;
 
-        const fromRow = from[0];
-        const fromCol = from[1];
+        const fromRow = from[0] as number;
+        const fromCol = from[1] as number;
+
         for (let i = 0; i < list.length; i += 1) {
             const p = list[i];
+            if (!p) continue;
             if (p[0] === fromRow && p[1] === fromCol) {
-                p[0] = to[0];
-                p[1] = to[1];
+                p[0] = to[0] as number;
+                p[1] = to[1] as number;
                 return;
             }
         }
@@ -134,31 +136,35 @@ export default class PiecePositions {
     /**
      * Remove the piece at `on` from its type list (swap-with-last for O(1) removal).
      */
-    captureByChar(tokenChar: number, on: number[]): void {
+    captureByChar(tokenChar: number, on: readonly number[]): void {
         const list = this.listForChar(tokenChar);
         if (!list) return;
 
-        const row = on[0];
-        const col = on[1];
+        const row = on[0] as number;
+        const col = on[1] as number;
+
         for (let i = 0; i < list.length; i += 1) {
             const p = list[i];
+            if (!p) continue;
             if (p[0] === row && p[1] === col) {
                 const last = list.length - 1;
-                list[i] = list[last];
+                list[i] = list[last] as number[];
                 list.pop();
                 return;
             }
         }
     }
 
-    capture(takenPieceName: string, on: number[]): void {
+    capture(takenPieceName: string, on: readonly number[]): void {
         this.captureByChar(takenPieceName.charCodeAt(0), on);
     }
 
     /** Register a newly promoted piece (gets a fresh `[row, col]` entry, not from the pre-allocated pool). */
-    promote(pieceName: string, on: number[]): void {
+    promote(pieceName: string, on: readonly number[]): void {
         const list = this.listForChar(pieceName.charCodeAt(0));
-        if (!list) return;
-        list.push([on[0], on[1]]);
+        const row = on[0];
+        const col = on[1];
+        if (!list || row === undefined || col === undefined) return;
+        list.push([row, col]);
     }
 }

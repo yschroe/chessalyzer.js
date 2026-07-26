@@ -50,17 +50,17 @@ class GameParser {
         this.ctx.activePlayer = 'w';
         try {
             if (hasMoveTrackers) {
-                for (let mi = 0; mi < moves.length; mi += 1) {
-                    const currentMoveActions = this.parser.parse(moves[mi]);
-                    for (let ti = 0; ti < moveTrackers.length; ti += 1) {
-                        moveTrackers[ti].analyze(currentMoveActions);
+                for (const san of moves) {
+                    const currentMoveActions = this.parser.parse(san);
+                    for (const tracker of moveTrackers) {
+                        tracker.analyze(currentMoveActions);
                     }
                     board.applyActions(currentMoveActions);
                     this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
                 }
             } else {
-                for (let mi = 0; mi < moves.length; mi += 1) {
-                    this.applier.apply(moves[mi]);
+                for (const san of moves) {
+                    this.applier.apply(san);
                     this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
                 }
             }
@@ -70,8 +70,8 @@ class GameParser {
             throw err;
         }
 
-        for (let ti = 0; ti < moveTrackers.length; ti += 1) {
-            moveTrackers[ti].nextGame?.();
+        for (const tracker of moveTrackers) {
+            tracker.nextGame?.();
         }
 
         analysisCfg.processedMoves += moves.length;

@@ -1,15 +1,21 @@
+import { tileCellAt } from '#tracker/tile/tile-grid';
 import TileTrackerBase from '#tracker/tile/tile-tracker-base';
 import type { SquareData } from '#types/game';
+
+function isTileTracker(data: unknown): data is TileTrackerBase {
+    return typeof data === 'object' && data !== null && 'tiles' in data && 'cntMovesTotal' in data;
+}
 
 export default {
     TILE_OCC_ALL: {
         scope: 'global',
         unit: '%',
         description: 'Tile <loopSqrData> had a piece on it for X% of all moves.',
-        calc: (data: TileTrackerBase, loopSqrData: SquareData) => {
-            const { coords } = loopSqrData;
-            let val =
-                data.tiles[coords[0]][coords[1]].w.wasOn + data.tiles[coords[0]][coords[1]].b.wasOn;
+        calc: (data: unknown, loopSqrData: SquareData) => {
+            if (!isTileTracker(data)) return 0;
+            const cell = tileCellAt(data.tiles, loopSqrData.coords);
+            if (!cell) return 0;
+            let val = cell.w.wasOn + cell.b.wasOn;
             val = (val * 100) / data.cntMovesTotal;
             return val;
         },
@@ -18,9 +24,11 @@ export default {
         scope: 'global',
         unit: '%',
         description: 'Tile <loopSqrData> had a white piece on it for X% of all moves.',
-        calc: (data: TileTrackerBase, loopSqrData: SquareData) => {
-            const { coords } = loopSqrData;
-            let val = data.tiles[coords[0]][coords[1]].w.wasOn;
+        calc: (data: unknown, loopSqrData: SquareData) => {
+            if (!isTileTracker(data)) return 0;
+            const cell = tileCellAt(data.tiles, loopSqrData.coords);
+            if (!cell) return 0;
+            let val = cell.w.wasOn;
             val = (val * 100) / data.cntMovesTotal;
             return val;
         },
@@ -29,9 +37,11 @@ export default {
         scope: 'global',
         unit: '%',
         description: 'Tile X had a black piece on it for Y% of all moves.',
-        calc: (data: TileTrackerBase, loopSqrData: SquareData) => {
-            const { coords } = loopSqrData;
-            let val = data.tiles[coords[0]][coords[1]].b.wasOn;
+        calc: (data: unknown, loopSqrData: SquareData) => {
+            if (!isTileTracker(data)) return 0;
+            const cell = tileCellAt(data.tiles, loopSqrData.coords);
+            if (!cell) return 0;
+            let val = cell.b.wasOn;
             val = (val * 100) / data.cntMovesTotal;
             return val;
         },
@@ -40,13 +50,15 @@ export default {
         scope: 'specific',
         unit: '%',
         description: 'Selected tile was occupated by piece X during Y% of all moves.',
-        calc: (data: TileTrackerBase, loopSqrData: SquareData, sqrData: SquareData) => {
-            const sqrCoords = sqrData.coords;
+        calc: (data: unknown, loopSqrData: SquareData, sqrData?: SquareData) => {
+            if (!isTileTracker(data) || !sqrData) return 0;
             const { piece } = loopSqrData;
 
             let val = 0;
-            if (piece) {
-                val = data.tiles[sqrCoords[0]][sqrCoords[1]][piece.color][piece.name].wasOn;
+            const cell = tileCellAt(data.tiles, sqrData.coords);
+            if (piece && cell) {
+                const pieceStats = cell[piece.color][piece.name];
+                val = pieceStats?.wasOn ?? 0;
             }
             val = (val * 100) / data.cntMovesTotal;
             return val;
@@ -56,11 +68,11 @@ export default {
         scope: 'global',
         unit: '',
         description: 'Count of Pieces that were taken on each tile.',
-        calc: (data: TileTrackerBase, loopSqrData: SquareData) => {
-            const { coords } = loopSqrData;
-            const val =
-                data.tiles[coords[0]][coords[1]].b.wasCapturedOn +
-                data.tiles[coords[0]][coords[1]].w.wasCapturedOn;
+        calc: (data: unknown, loopSqrData: SquareData) => {
+            if (!isTileTracker(data)) return 0;
+            const cell = tileCellAt(data.tiles, loopSqrData.coords);
+            if (!cell) return 0;
+            const val = cell.b.wasCapturedOn + cell.w.wasCapturedOn;
             return val;
         },
     },
@@ -68,12 +80,15 @@ export default {
         scope: 'specific',
         unit: '',
         description: 'Selected piece had tile X as a move target Y times.',
-        calc: (data: TileTrackerBase, loopSqrData: SquareData, sqrData: SquareData) => {
+        calc: (data: unknown, loopSqrData: SquareData, sqrData?: SquareData) => {
+            if (!isTileTracker(data) || !sqrData) return 0;
             const { piece } = sqrData;
             const { coords } = loopSqrData;
             let val = 0;
-            if (piece) {
-                val = data.tiles[coords[0]][coords[1]][piece.color][piece.name].movedTo;
+            const cell = tileCellAt(data.tiles, coords);
+            if (piece && cell) {
+                const pieceStats = cell[piece.color][piece.name];
+                val = pieceStats?.movedTo ?? 0;
             }
             return val;
         },

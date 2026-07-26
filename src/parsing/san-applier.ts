@@ -2,6 +2,14 @@ import { algebraicToCoordsAt } from '#board/board-coords';
 import type SanContext from '#parsing/san-context';
 import type { PieceToken } from '#types/tokens';
 
+const PIECE_TOKEN_BY_CHAR: Record<number, PieceToken | undefined> = {
+    82: 'R',
+    78: 'N',
+    66: 'B',
+    81: 'Q',
+    75: 'K',
+};
+
 /**
  * Applies SAN moves directly to the board without building {@link Action} objects.
  *
@@ -40,26 +48,26 @@ export default class SanApplier {
 
         const to = algebraicToCoordsAt(san, end);
         const from = this.ctx.fromBuf;
+        const toRow = to[0] as number;
+        const toCol = to[1] as number;
 
         if (san.charCodeAt(1) === 120) {
-            from[0] = to[0] + direction;
+            from[0] = toRow + direction;
             from[1] = san.charCodeAt(0) - 97;
 
             if (board.isEmpty(to)) {
-                this.ctx.takenOnBuf[0] = to[0] + direction;
-                this.ctx.takenOnBuf[1] = to[1];
+                this.ctx.takenOnBuf[0] = toRow + direction;
+                this.ctx.takenOnBuf[1] = toCol;
                 board.captureAt(player, this.ctx.takenOnBuf);
             } else {
                 board.captureAt(player, to);
             }
         } else {
-            const tarRow = to[0];
-            const tarCol = to[1];
             for (let i = 1; i <= 2; i += 1) {
-                const row = tarRow + i * direction;
-                if (board.isPawnAt(row, tarCol)) {
+                const row = toRow + i * direction;
+                if (board.isPawnAt(row, toCol)) {
                     from[0] = row;
-                    from[1] = tarCol;
+                    from[1] = toCol;
                     break;
                 }
             }
@@ -80,7 +88,8 @@ export default class SanApplier {
         const player = this.ctx.activePlayer;
         const board = this.ctx.board;
         const tokenChar = san.charCodeAt(0);
-        const token = san.charAt(0) as PieceToken;
+        const token = PIECE_TOKEN_BY_CHAR[tokenChar];
+        if (!token) return;
 
         const end = san.length;
         const to = algebraicToCoordsAt(san, end);

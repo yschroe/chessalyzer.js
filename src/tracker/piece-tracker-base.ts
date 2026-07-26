@@ -1,7 +1,9 @@
 import BaseTracker from '#tracker/base-tracker';
 import HeatmapPresets from '#tracker/heatmaps/piece-heatmaps';
 import type { Action } from '#types/actions';
+import type { Game } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
+import type { Tracker } from '#types/tracker';
 
 type Piece =
     | 'Pa'
@@ -43,6 +45,12 @@ const pieceList: Piece[] = [
     'Rh',
 ];
 
+const trackedPieceSet = new Set<string>(pieceList);
+
+export function isTrackedPiece(name: string): name is Piece {
+    return trackedPieceSet.has(name);
+}
+
 class PieceTrackerBase extends BaseTracker {
     b: PieceStatsMap;
     w: PieceStatsMap;
@@ -60,7 +68,9 @@ class PieceTrackerBase extends BaseTracker {
         ) as PieceStatsMap;
     }
 
-    add(tracker: PieceTrackerBase) {
+    override add(tracker: Tracker) {
+        if (!isPieceTracker(tracker)) return;
+
         this.time += tracker.time;
 
         for (const piece of pieceList) {
@@ -82,10 +92,12 @@ class PieceTrackerBase extends BaseTracker {
         }
     }
 
-    track(actions: Action[]) {
-        for (const action of actions) {
+    override track(data: Game | Action[]) {
+        if (!Array.isArray(data)) return;
+        for (const action of data) {
             if (action.type === 'capture') {
                 const { takingPiece, takenPiece, player } = action;
+                if (!takingPiece || !takenPiece) continue;
                 // exlude promoted pawns from tracking
                 if (
                     takingPiece.length > 1 &&
@@ -103,4 +115,9 @@ class PieceTrackerBase extends BaseTracker {
         this[player][takingPiece][takenPiece] += 1;
     }
 }
+
+function isPieceTracker(tracker: Tracker): tracker is PieceTrackerBase {
+    return 'b' in tracker && 'w' in tracker;
+}
+
 export default PieceTrackerBase;

@@ -1,7 +1,19 @@
 import { algebraicToCoords, coordsToAlgebraic } from '#board/board-coords';
 import { getStartingPiece } from '#board/piece-names';
 import type { SquareData } from '#types/game';
+import type { PlayerColor } from '#types/tokens';
 import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
+
+const EMPTY_SQUARE_PIECE = { color: 'w' as PlayerColor, name: '' };
+
+function squareData(row: number, col: number, _refCoords: number[], _refAlg: string): SquareData {
+    const loopSqrCoords = [row, col];
+    return {
+        alg: coordsToAlgebraic(loopSqrCoords),
+        coords: loopSqrCoords,
+        piece: getStartingPiece(loopSqrCoords) ?? EMPTY_SQUARE_PIECE,
+    };
+}
 
 /**
  * Build 8×8 heatmap grids from tracker data and analysis functions.
@@ -27,7 +39,7 @@ export function generateHeatmap(
     let sqrAlg = '';
 
     if (typeof square === 'string') {
-        sqrCoords = algebraicToCoords(square) ?? [];
+        sqrCoords = [...(algebraicToCoords(square) ?? [])];
         sqrAlg = square;
     } else if (Array.isArray(square)) {
         sqrCoords = square;
@@ -37,7 +49,7 @@ export function generateHeatmap(
     const sqrData: SquareData = {
         alg: sqrAlg,
         coords: sqrCoords,
-        piece: getStartingPiece(sqrCoords)!,
+        piece: getStartingPiece(sqrCoords) ?? EMPTY_SQUARE_PIECE,
     };
 
     const map: number[][] = [];
@@ -47,13 +59,7 @@ export function generateHeatmap(
     for (let i = 0; i < 8; i += 1) {
         const dataRow: number[] = [];
         for (let j = 0; j < 8; j += 1) {
-            const loopSqrCoords = [i, j];
-
-            const loopSqrData: SquareData = {
-                alg: coordsToAlgebraic(loopSqrCoords),
-                coords: loopSqrCoords,
-                piece: getStartingPiece(loopSqrCoords)!,
-            };
+            const loopSqrData = squareData(i, j, sqrCoords, sqrAlg);
             const heatVal = fun(data, loopSqrData, sqrData, optData);
             dataRow.push(heatVal);
             max = Math.max(max, heatVal);
@@ -85,9 +91,13 @@ export function generateComparisonHeatmap(
 
     for (let i = 0; i < 8; i += 1) {
         const dataRow: number[] = [];
+        const row0 = map0.map[i];
+        const row1 = map1.map[i];
+        if (!row0 || !row1) continue;
         for (let j = 0; j < 8; j += 1) {
-            const a = map0.map[i][j];
-            const b = map1.map[i][j];
+            const a = row0[j];
+            const b = row1[j];
+            if (a === undefined || b === undefined) continue;
 
             let heatVal = (a >= b ? a / b - 1 : -b / a + 1) * 100;
             if (a === 0 || b === 0) heatVal = 0;

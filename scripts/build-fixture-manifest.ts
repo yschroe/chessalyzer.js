@@ -8,7 +8,8 @@
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { Chessalyzer } from '../lib/index.js';
+import { Chessalyzer } from '../src/index';
+import type { GameAndMoveCountFull } from '../src/types/analysis';
 
 const FIXTURES_DIR = new URL('../test/fixtures/', import.meta.url).pathname;
 
@@ -33,7 +34,7 @@ const fixtures: Record<string, object> = {};
 for (const file of files) {
     const id = file.replace(/\.pgn$/, '');
     const path = join(FIXTURES_DIR, file);
-    const result = await Chessalyzer.analyzePGN(path, { trackers: [] }, null);
+    const result: GameAndMoveCountFull = await Chessalyzer.analyzePGN(path, { trackers: [] }, null);
     fixtures[id] = {
         file,
         description: descriptions[id] ?? id,

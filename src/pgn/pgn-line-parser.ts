@@ -34,7 +34,10 @@ const RESULT_REGEX = /-(1\/2|0|1)$/;
 export function parseHeaderTag(line: string): [string, string] | null {
     const match = HEADER_REGEX.exec(line);
     if (!match) return null;
-    return [match[1], match[2]];
+    const key = match[1];
+    const value = match[2];
+    if (key === undefined || value === undefined) return null;
+    return [key, value];
 }
 
 /**

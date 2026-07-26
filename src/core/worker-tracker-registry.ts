@@ -96,5 +96,13 @@ export function resetCfg(cfg: GameProcessorAnalysisConfig): void {
 
 /** Cached config for the given analysis index (falls back to index 0). */
 export function getCachedCfg(idxConfig: number): GameProcessorAnalysisConfig {
-    return cfgCache[idxConfig] ?? cfgCache[0];
+    const cfg = cfgCache[idxConfig] ?? cfgCache[0];
+    if (!cfg) {
+        return {
+            trackers: { move: [], game: [] },
+            processedMoves: 0,
+            processedGames: 0,
+        };
+    }
+    return cfg;
 }

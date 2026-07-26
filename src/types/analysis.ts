@@ -5,7 +5,7 @@ export interface AnalysisConfig {
     trackers?: Tracker[];
     config?: {
         cntGames?: number;
-        filter?: (data: unknown) => boolean;
+        filter?: (game: object) => boolean;
     };
 }
 

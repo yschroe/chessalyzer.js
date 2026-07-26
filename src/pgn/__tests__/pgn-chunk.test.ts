@@ -31,8 +31,8 @@ describe('readPgnChunks', () => {
 
     it('parses the same games as the line reader when chunks are combined', async () => {
         const path = fixturePath('comments-singleline');
-        const lineGames = [];
-        let game = { moves: [] };
+        const lineGames: { moves: string[] }[] = [];
+        let game: { moves: string[] } = { moves: [] };
         for await (const line of readLinesFast(path)) {
             if (!line.length || line.startsWith('[')) continue;
             const cleaned = line.replace(/\{.*?\}|\(.*?\)/g, '');
@@ -52,13 +52,19 @@ describe('readPgnChunks', () => {
         }
 
         expect(chunkGames).toHaveLength(lineGames.length);
-        expect(chunkGames[0].moves).toEqual(lineGames[0].moves);
+        const firstLineGame = lineGames[0];
+        const firstChunkGame = chunkGames[0];
+        expect(firstLineGame).toBeDefined();
+        expect(firstChunkGame).toBeDefined();
+        expect(firstChunkGame?.moves).toEqual(firstLineGame?.moves);
     });
 
     it('extends past the byte target until the current game finishes', async () => {
         const volumePath = await repeatPgn('basic-normal', 50);
         const chunks = await collectChunks(volumePath, { targetBytes: 100, minLines: 0 });
         const chunk = chunks[0];
+        expect(chunk).toBeDefined();
+        if (!chunk) return;
 
         expect(chunk.lineCount).toBeGreaterThan(0);
         expect(chunkEndsWithCompleteGame(chunk.text.split('\n'))).toBe(true);
@@ -68,7 +74,10 @@ describe('readPgnChunks', () => {
     it('drops an incomplete trailing game at EOF', async () => {
         const chunks = await collectChunks(fixturePath('corrupt'), { targetBytes: 1 });
         expect(chunks).toHaveLength(1);
-        expect(chunkEndsWithCompleteGame(chunks[0].text.split('\n'))).toBe(true);
+        const chunk = chunks[0];
+        expect(chunk).toBeDefined();
+        if (!chunk) return;
+        expect(chunkEndsWithCompleteGame(chunk.text.split('\n'))).toBe(true);
     });
 });
 

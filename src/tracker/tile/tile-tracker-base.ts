@@ -5,10 +5,26 @@ import {
     mergeCellStats,
     resetTileGrid,
     setStartingPiece,
+    tileCellAt,
 } from '#tracker/tile/tile-grid';
-import type { StatsField } from '#tracker/tile/tile-tracker-types';
+import { BOARD_INDICES, type BoardIndex, type TileGrid } from '#tracker/tile/tile-tracker-types';
 import type { Action } from '#types/actions';
-import type { Move } from '#types/game';
+import type { Game, Move } from '#types/game';
+import type { PlayerColor } from '#types/tokens';
+import type { Tracker } from '#types/tracker';
+
+function isTileTracker(tracker: Tracker): tracker is TileTrackerBase {
+    return 'tiles' in tracker && 'cntMovesTotal' in tracker;
+}
+
+function isBoardIndex(n: number | undefined): n is BoardIndex {
+    return n !== undefined && (n | 0) === n && n >= 0 && n <= 7;
+}
+
+function playerBucket(player: string): PlayerColor | undefined {
+    if (player === 'b' || player === 'w') return player;
+    return undefined;
+}
 
 /**
  * Tracks per-square statistics: moves to, time occupied, captures on, pieces captured on.
@@ -20,7 +36,7 @@ import type { Move } from '#types/game';
 class TileTrackerBase extends BaseTracker {
     cntMovesGame: number;
     cntMovesTotal: number;
-    tiles: StatsField[][];
+    tiles: TileGrid;
 
     constructor() {
         super('move');
@@ -31,13 +47,15 @@ class TileTrackerBase extends BaseTracker {
     }
 
     /** Merge stats from a worker batch tracker into this (main-thread) instance. */
-    add(tracker: TileTrackerBase) {
+    override add(tracker: Tracker) {
+        if (!isTileTracker(tracker)) return;
+
         this.time += tracker.time;
         this.cntMovesGame += tracker.cntMovesGame;
         this.cntMovesTotal += tracker.cntMovesTotal;
 
-        for (let row = 0; row < 8; row += 1) {
-            for (let col = 0; col < 8; col += 1) {
+        for (const row of BOARD_INDICES) {
+            for (const col of BOARD_INDICES) {
                 mergeCellStats(this.tiles[row][col], tracker.tiles[row][col]);
             }
         }
@@ -51,8 +69,9 @@ class TileTrackerBase extends BaseTracker {
         resetTileGrid(this.tiles);
     }
 
-    track(actions: Action[]) {
-        for (const action of actions) {
+    override track(data: Game | Action[]) {
+        if (!Array.isArray(data)) return;
+        for (const action of data) {
             switch (action.type) {
                 case 'move':
                     // TODO: castle is counted as two moves. fix
@@ -60,15 +79,15 @@ class TileTrackerBase extends BaseTracker {
                     this.processMove(
                         { from: action.from, to: action.to },
                         action.player,
-                        action.piece,
+                        action.piece ?? '',
                     );
                     break;
                 case 'capture':
                     this.processCapture(
                         action.on,
                         action.player,
-                        action.takingPiece,
-                        action.takenPiece,
+                        action.takingPiece ?? '',
+                        action.takenPiece ?? '',
                     );
                     break;
                 default:
@@ -82,8 +101,8 @@ class TileTrackerBase extends BaseTracker {
      * then reset virtual pieces to the next game's starting layout.
      */
     nextGame() {
-        for (let row = 0; row < 8; row += 1) {
-            for (let col = 0; col < 8; col += 1) {
+        for (const row of BOARD_INDICES) {
+            for (const col of BOARD_INDICES) {
                 const { currentPiece } = this.tiles[row][col];
                 if (currentPiece !== null) {
                     this.addOccupation([row, col]);
@@ -100,19 +119,37 @@ class TileTrackerBase extends BaseTracker {
      * increment movedTo counters. Skips promoted pawns (names containing digits).
      */
     processMove(move: Move, player: string, piece: string) {
-        if (piece.length > 1 && !piece.match(/\d/g)) {
-            this.addOccupation(move.from);
-
-            this.tiles[move.to[0]][move.to[1]].currentPiece =
-                this.tiles[move.from[0]][move.from[1]].currentPiece;
-            this.tiles[move.to[0]][move.to[1]].currentPiece!.lastMovedOn = this.cntMovesGame;
-
-            this.tiles[move.from[0]][move.from[1]].currentPiece = null;
-
-            const toCell = this.tiles[move.to[0]][move.to[1]];
-            toCell[player as 'b' | 'w'].movedTo += 1;
-            toCell[player as 'b' | 'w'][piece].movedTo += 1;
+        const fromRow = move.from[0];
+        const fromCol = move.from[1];
+        const toRow = move.to[0];
+        const toCol = move.to[1];
+        const bucket = playerBucket(player);
+        if (
+            !bucket ||
+            !(piece.length > 1 && !piece.match(/\d/g)) ||
+            !isBoardIndex(fromRow) ||
+            !isBoardIndex(fromCol) ||
+            !isBoardIndex(toRow) ||
+            !isBoardIndex(toCol)
+        ) {
+            return;
         }
+
+        this.addOccupation(move.from);
+
+        const fromCell = this.tiles[fromRow][fromCol];
+        const toCell = this.tiles[toRow][toCol];
+        const movingPiece = fromCell.currentPiece;
+
+        toCell.currentPiece = movingPiece;
+        if (movingPiece !== null) {
+            movingPiece.lastMovedOn = this.cntMovesGame;
+        }
+        fromCell.currentPiece = null;
+
+        toCell[bucket].movedTo += 1;
+        const pieceBucket = toCell[bucket][piece];
+        if (pieceBucket) pieceBucket.movedTo += 1;
     }
 
     /**
@@ -120,20 +157,24 @@ class TileTrackerBase extends BaseTracker {
      * Taken piece occupation is flushed before clearing the square.
      */
     processCapture(pos: number[], player: string, takingPiece: string, takenPiece: string): void {
-        const cell = this.tiles[pos[0]][pos[1]];
+        const cell = tileCellAt(this.tiles, pos);
+        const bucket = playerBucket(player);
+        if (!cell || !bucket) return;
 
         if (takenPiece.length > 1 && !takenPiece.match(/\d/g)) {
-            const opPlayer = player === 'w' ? 'b' : 'w';
+            const opPlayer: PlayerColor = bucket === 'w' ? 'b' : 'w';
             cell[opPlayer].wasCapturedOn += 1;
-            cell[opPlayer][takenPiece].wasCapturedOn += 1;
+            const takenBucket = cell[opPlayer][takenPiece];
+            if (takenBucket) takenBucket.wasCapturedOn += 1;
 
             this.addOccupation(pos);
             cell.currentPiece = null;
         }
 
         if (takingPiece.length > 1 && !takingPiece.match(/\d/g)) {
-            cell[player as 'b' | 'w'].capturedOn += 1;
-            cell[player as 'b' | 'w'][takingPiece].capturedOn += 1;
+            cell[bucket].capturedOn += 1;
+            const takingBucket = cell[bucket][takingPiece];
+            if (takingBucket) takingBucket.capturedOn += 1;
         }
     }
 
@@ -142,11 +183,16 @@ class TileTrackerBase extends BaseTracker {
      * Measures how many half-moves the piece occupied the square since it arrived.
      */
     addOccupation(pos: number[]): void {
-        const cell = this.tiles[pos[0]][pos[1]];
+        const cell = tileCellAt(this.tiles, pos);
+        if (!cell) return;
+
         const { currentPiece } = cell;
-        const toAdd = this.cntMovesGame - currentPiece!.lastMovedOn;
-        cell[currentPiece!.color].wasOn += toAdd;
-        cell[currentPiece!.color][currentPiece!.piece].wasOn += toAdd;
+        if (currentPiece === null) return;
+
+        const toAdd = this.cntMovesGame - currentPiece.lastMovedOn;
+        cell[currentPiece.color].wasOn += toAdd;
+        const pieceBucket = cell[currentPiece.color][currentPiece.piece];
+        if (pieceBucket) pieceBucket.wasOn += toAdd;
     }
 }
 

@@ -11,9 +11,9 @@
         "isolatedModules": true,
         "verbatimModuleSyntax": true,
 
-        // "strict": true,
+        "strict": true,
         "noUncheckedIndexedAccess": true,
-        // "noImplicitOverride": true,
+        "noImplicitOverride": true,
 
         "skipLibCheck": true,
         "esModuleInterop": true,

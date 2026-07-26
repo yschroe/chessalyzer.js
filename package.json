@@ -23,8 +23,8 @@
         "lib/**/*"
     ],
     "type": "module",
-    "main": "lib/chessalyzer.js",
-    "types": "lib/chessalyzer.d.ts",
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
     "imports": {
         "#core/*": "./src/core/*.ts",
         "#parsing/*": "./src/parsing/*.ts",
