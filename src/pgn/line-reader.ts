@@ -21,14 +21,17 @@ export interface PgnChunk {
     lineCount: number;
 }
 
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
+
 /** Encode PGN chunk text as UTF-8 bytes for worker transfer. */
 export function encodePgnChunkText(text: string): Uint8Array {
-    return new TextEncoder().encode(text);
+    return textEncoder.encode(text);
 }
 
 /** Decode UTF-8 PGN chunk bytes received from the main thread. */
 export function decodePgnChunkBytes(bytes: Uint8Array): string {
-    return new TextDecoder().decode(bytes);
+    return textDecoder.decode(bytes);
 }
 
 /** Index of the last movetext line that completes a game, or -1 if none. */
@@ -101,12 +104,14 @@ export function readPgnChunks(file: string, config: PgnChunkConfig = {}) {
             const hitByteTarget = byteSize >= targetBytes && accumulator.length >= minLines;
             const hitLineCap = accumulator.length >= maxLines;
             if (hitByteTarget || hitLineCap) break;
+            // oxlint-disable-next-line no-await-in-loop
             line = await readLine();
         }
 
         if (accumulator.length === 0) return { done: true, value: undefined };
 
         while (findLastCompleteGameLineIndex(accumulator) === -1) {
+            // oxlint-disable-next-line no-await-in-loop
             const nextLine = await readLine();
             if (nextLine === null) break;
             pushLine(nextLine);
@@ -138,9 +143,7 @@ export function readPgnChunks(file: string, config: PgnChunkConfig = {}) {
     };
 
     return {
-        [Symbol.asyncIterator]: () => ({
-            next,
-        }),
+        [Symbol.asyncIterator]: () => ({ next }),
     };
 }
 
@@ -274,7 +277,7 @@ class FixedQueue<T> {
  */
 export function readLinesFast(file: string): AsyncIterable<string> {
     const rs = createReadStream(file, 'utf-8');
-    const sourceIterator = rs[Symbol.asyncIterator]();
+    const sourceIterator = rs.iterator();
 
     const cache: FixedQueue<string> = new FixedQueue();
     let lineBreak = false;
@@ -316,8 +319,6 @@ export function readLinesFast(file: string): AsyncIterable<string> {
     };
 
     return {
-        [Symbol.asyncIterator]: () => ({
-            next,
-        }),
+        [Symbol.asyncIterator]: () => ({ next }),
     };
 }
