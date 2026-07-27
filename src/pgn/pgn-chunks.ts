@@ -52,7 +52,7 @@ function findLastCompleteGameLineIndex(lines: string[]): number {
         const line = lines[i];
         if (line === undefined || line === '') continue;
         if (line.startsWith('[')) continue;
-        return isGameResultLine(stripComments(line)) ? i : -1;
+        if (isGameResultLine(stripComments(line))) return i;
     }
     return -1;
 }

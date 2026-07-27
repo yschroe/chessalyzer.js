@@ -76,6 +76,14 @@ describe('readPgnChunks', () => {
         if (!chunk) return;
         expect(chunkEndsWithCompleteGame(chunk.text.split('\n'))).toBe(true);
     });
+
+    it('emits a complete game before an incomplete trailing game with default chunk size', async () => {
+        const chunks = await collectChunks(fixturePath('corrupt'), {});
+        expect(chunks).toHaveLength(1);
+        const games = parseGamesFromLines(chunks[0]!.text.split('\n'), { readInHeader: true });
+        expect(games).toHaveLength(1);
+        expect(games[0]?.Result).toBe('1-0');
+    });
 });
 
 describe('chunkEndsWithCompleteGame', () => {
@@ -85,5 +93,18 @@ describe('chunkEndsWithCompleteGame', () => {
 
     it('returns false when the chunk ends mid-game', () => {
         expect(chunkEndsWithCompleteGame(['[Event "x"]', '', '1. e4 e5'])).toBe(false);
+    });
+
+    it('finds the last complete game when a trailing game is incomplete', () => {
+        const lines = [
+            '[Event "Complete"]',
+            '',
+            '1. e4 1-0',
+            '',
+            '[Event "Incomplete"]',
+            '',
+            '1. d4 d5',
+        ];
+        expect(chunkEndsWithCompleteGame(lines)).toBe(false);
     });
 });

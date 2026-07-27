@@ -14,3 +14,8 @@ trim_trailing_whitespace = false
 
 [*.yml]
 indent_size = 2
+
+[test/fixtures/crlf-endings.pgn]
+end_of_line = crlf
+insert_final_newline = false
+trim_trailing_whitespace = false
