@@ -6,6 +6,11 @@ import type { PieceToken, PlayerColor } from '#types/tokens';
 /** Dense 64-byte board; index invariant 0..63 from on-board row/col. */
 type TileBytes = Uint8Array & { [index: number]: number };
 
+/** Bit mask for the color of a piece. */
+const COLOR_BIT_MASK = 0b10000000;
+/** Bit mask for the index of a piece. */
+const PIECE_INDEX_BIT_MASK = 0b01111111;
+
 /**
  * Mutable chess position used while replaying SAN moves from a PGN.
  *
@@ -19,7 +24,13 @@ type TileBytes = Uint8Array & { [index: number]: number };
  */
 class ChessBoard {
     // oxfmt-ignore
-    /** Starting position: rows 0–1 black, 6–7 white; 0 = empty. Indices match pieceLookupList. */
+    /**
+     * Starting position of the board pieces in a binary representation.
+     * The high bit is the color, the low 7 bits are the piece index (matching pieceLookupList).
+     * For example:
+     * 9   = 00001001 -> 0 = white, 0001001 = Pa (pawn on `a` file)
+     * 130 = 10000010 -> 1 = black, 0000010 = Nb (knight on `b` file)
+     */
     private static defaultTiles = new Uint8Array([
         129, 130, 131, 132, 133, 134, 135, 136,
         137, 138, 139, 140, 141, 142, 143, 144,
@@ -71,24 +82,6 @@ class ChessBoard {
         };
     }
 
-    getPieceOnCoords(coords: number[]): ChessPiece | null {
-        const row = coords[0];
-        const col = coords[1];
-        if (row === undefined || col === undefined) return null;
-
-        const pieceNumber = this.tiles[row * 8 + col];
-        if (pieceNumber === 0) return null;
-
-        const color: PlayerColor = pieceNumber & 0b10000000 ? 'b' : 'w';
-        const pieceIdx = pieceNumber & 0b01111111;
-        const name =
-            ChessBoard.pieceLookupList[pieceIdx] ??
-            this.promotedPieces[color][pieceIdx - ChessBoard.pieceLookupList.length - 1];
-
-        if (!name) return null;
-        return { name, color };
-    }
-
     /** Hot-path helper: piece name only, no object allocation. */
     getPieceNameOnCoords(coords: readonly number[]): string | null {
         return this.getPieceNameAt(coords[0], coords[1]);
@@ -104,7 +97,7 @@ class ChessBoard {
 
     /** True if square holds a pawn (standard piece indices 9–16). */
     isPawnAt(row: number, col: number): boolean {
-        const idx = this.tiles[row * 8 + col] & 0b01111111;
+        const idx = this.tiles[row * 8 + col] & PIECE_INDEX_BIT_MASK;
         return idx >= 9 && idx <= 16;
     }
 
@@ -112,8 +105,8 @@ class ChessBoard {
         const pieceNumber = this.tiles[row * 8 + col];
         if (pieceNumber === 0) return null;
 
-        const color: PlayerColor = pieceNumber & 0b10000000 ? 'b' : 'w';
-        const pieceIdx = pieceNumber & 0b01111111;
+        const color: PlayerColor = pieceNumber & COLOR_BIT_MASK ? 'b' : 'w';
+        const pieceIdx = pieceNumber & PIECE_INDEX_BIT_MASK;
 
         return (
             ChessBoard.pieceLookupList[pieceIdx] ??
@@ -133,7 +126,7 @@ class ChessBoard {
     getPieceColorAt(row: number, col: number): PlayerColor | null {
         const pieceNumber = this.tiles[row * 8 + col];
         if (pieceNumber === 0) return null;
-        return pieceNumber & 0b10000000 ? 'b' : 'w';
+        return pieceNumber & COLOR_BIT_MASK ? 'b' : 'w';
     }
 
     /** Returns the king's live `[row, col]` reference (always exactly one king per side). */
@@ -206,10 +199,10 @@ class ChessBoard {
 
         this.tiles[onIdx] = 0;
 
-        const pieceIdx = pieceNumber & 0b01111111;
+        const pieceIdx = pieceNumber & PIECE_INDEX_BIT_MASK;
         if (pieceIdx >= 9 && pieceIdx <= 16) return;
 
-        const color: PlayerColor = pieceNumber & 0b10000000 ? 'b' : 'w';
+        const color: PlayerColor = pieceNumber & COLOR_BIT_MASK ? 'b' : 'w';
         const name =
             ChessBoard.pieceLookupList[pieceIdx] ??
             this.promotedPieces[color][pieceIdx - ChessBoard.pieceLookupList.length - 1];
@@ -226,7 +219,7 @@ class ChessBoard {
         const onIdx = on[0] * 8 + on[1];
 
         const pieceNumber =
-            (player === 'w' ? 0b00000000 : 0b10000000) |
+            (player === 'w' ? 0b00000000 : COLOR_BIT_MASK) |
             (this.promotedPieces[player].length + ChessBoard.pieceLookupList.length + 1);
 
         const piecename = `${to}${pieceNumber}`;
