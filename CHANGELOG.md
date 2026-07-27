@@ -16,6 +16,8 @@
 
 - Worker pool spawns threads lazily on first task (up to configured `workerCount`).
 - Tracker config is sent once per worker via `workerData`, not per batch.
+- Multithreaded `filter` / `maxGames` use the worker-chunk path (single parse per chunk; no PGN re-encode). JS `filter` functions replay on the main thread.
+- Removed deprecated `workers.batchSize` option (legacy re-encode path).
 
 ### Ideas
 

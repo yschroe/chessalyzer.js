@@ -6,8 +6,6 @@ import type { Tracker } from '#types/tracker';
 export interface NormalizedAnalysisRun {
     configs: GameProcessorAnalysisConfigFull[];
     readInHeader: boolean;
-    /** Prefer worker-side assemble when multithreaded and no filter / game limit. */
-    useWorkerParse: boolean;
 }
 
 function resolveWorkerModule(tracker: { constructor: unknown }): string {
@@ -96,10 +94,9 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
  */
 export function normalizeAnalysisConfigs(
     configs: AnalysisConfig[],
-    multithreadCfg: MultithreadConfig | null,
+    _multithreadCfg: MultithreadConfig | null,
 ): NormalizedAnalysisRun {
     let readInHeader = false;
-    let useWorkerParse = multithreadCfg !== null;
     const normalized: GameProcessorAnalysisConfigFull[] = [];
 
     for (const cfg of configs) {
@@ -138,12 +135,8 @@ export function normalizeAnalysisConfigs(
             }
         }
 
-        if (tempCfg.config.hasFilter || tempCfg.config.cntGames !== Infinity) {
-            useWorkerParse = false;
-        }
-
         normalized.push(tempCfg);
     }
 
-    return { configs: normalized, readInHeader, useWorkerParse };
+    return { configs: normalized, readInHeader };
 }

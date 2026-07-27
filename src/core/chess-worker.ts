@@ -16,15 +16,32 @@ const gameReplayer = new GameReplayer();
 /** Tracker config is read once from workerData; batches only carry PGN chunks. */
 const ready = initWorkerTrackers(initData);
 
+function isParseOnly(idxConfig: number): boolean {
+    return initData?.configs[idxConfig]?.parseOnly ?? false;
+}
+
 /** Assemble games from a PGN chunk and replay/analyze them. */
 function processBatch(msg: WorkerTaskData): WorkerMessage {
+    const lines = decodePgnChunkBytes(msg.pgnChunkBytes).split('\n');
+
+    if (isParseOnly(msg.idxConfig)) {
+        return {
+            parsedGames: parseGamesFromLines(lines, { readInHeader: true }),
+            idxConfig: msg.idxConfig,
+            cntGames: 0,
+            cntMoves: 0,
+        };
+    }
+
     const cfg = getCachedCfg(msg.idxConfig);
     resetCfg(cfg);
 
     const hasTrackers = cfg.trackers.game.length > 0 || cfg.trackers.move.length > 0;
     const replay = resolveReplayPolicy(cfg.trackers.move.length > 0);
-    const games = parseGamesFromLines(decodePgnChunkBytes(msg.pgnChunkBytes).split('\n'), {
+    const maxGames = msg.remainingGames ?? Infinity;
+    const games = parseGamesFromLines(lines, {
         readInHeader: msg.readInHeader,
+        maxGames,
     });
 
     for (const game of games) {

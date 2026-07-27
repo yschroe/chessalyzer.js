@@ -21,7 +21,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 | Path                 | Purpose                                                                            |
 | -------------------- | ---------------------------------------------------------------------------------- |
 | `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers)                 |
-| `src/pgn/`           | PGN I/O, chunking, movetext tokenize, game assembly / re-encode                    |
+| `src/pgn/`           | PGN I/O, chunking, movetext tokenize, game assembly                                |
 | `src/replay/`        | SAN replay stages (`GameReplayer`, policy, `SanApplier`, `SanToActions`)           |
 | `src/types/`         | Public analysis types (`analysis.ts`) vs processor runtime (`analysis-runtime.ts`) |
 | `src/tracker/`       | Built-in and base tracker implementations                                          |
@@ -37,11 +37,10 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 ### Execution paths (`GameProcessor`)
 
-`analyzePGN` picks one of three internal paths. Prefer collapsing (2) and (3) once filter / `cntGames` can run without re-encoding PGN.
+`analyzePGN` picks one of two internal paths:
 
 1. **Single-threaded** — `workers: false`. Main thread: `readLinesFast` → `GameAssembler` → `GameReplayer` (policy from `resolveReplayPolicy`).
-2. **Worker-parse (preferred MT)** — multithreaded and no `filter` / finite `cntGames`. Main thread: `readPgnChunks` → workers assemble + replay; main merges via `tracker.add`.
-3. **Legacy MT** — multithreaded **and** any config has `filter` or finite `cntGames`. Main thread assembles/filters/limits, then `gamesToPgnChunk` re-encodes batches for workers (`batchSize`). Temporary; see IDEAS.md.
+2. **Multithreaded (worker-chunk)** — default. Main thread: `readPgnChunks` → workers assemble once per chunk. Without a `filter`, workers also replay and merge tracker state. With a `filter`, workers return parsed games and the main thread applies the JS predicate and replay (trackers stay on the main thread for that run). `maxGames` is enforced on workers when there is no filter, and on the main thread after filtering when there is.
 
 **Replay policy:** callers pass `resolveReplayPolicy(hasMoveTrackers)` (`'skip' | 'none' | 'actions'`) into `GameReplayer.processGame`. Today this always replays (`none` or `actions`). Set `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` in `src/replay/replay-policy.ts` to opt into skipping board replay when there are no move trackers — measure with `bench:perf` before making that the default.
 

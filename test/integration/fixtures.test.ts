@@ -42,7 +42,7 @@ describe('Fixtures', () => {
     });
 
     describe('results-mix filtering', () => {
-        it('limits by maxGames', async () => {
+        it('limits by maxGames (single-threaded)', async () => {
             const data = await analyzePGN(fixturePath('results-mix'), {
                 maxGames: 3,
                 workers: false,
@@ -50,7 +50,14 @@ describe('Fixtures', () => {
             expect(data.games).toBe(3);
         });
 
-        it('filters by result', async () => {
+        it('limits by maxGames (multithreaded)', async () => {
+            const data = await analyzePGN(fixturePath('results-mix'), {
+                maxGames: 3,
+            });
+            expect(data.games).toBe(3);
+        });
+
+        it('filters by result (single-threaded)', async () => {
             const data = await analyzePGN(fixturePath('results-mix'), {
                 filter: (game: Game) => game.Result === '1-0',
                 workers: false,
@@ -58,11 +65,26 @@ describe('Fixtures', () => {
             expect(data.games).toBe(3);
         });
 
-        it('combines filter and count', async () => {
+        it('filters by result (multithreaded)', async () => {
+            const data = await analyzePGN(fixturePath('results-mix'), {
+                filter: (game: Game) => game.Result === '1-0',
+            });
+            expect(data.games).toBe(3);
+        });
+
+        it('combines filter and count (single-threaded)', async () => {
             const data = await analyzePGN(fixturePath('results-mix'), {
                 maxGames: 2,
                 filter: (game: Game) => game.Result === '0-1',
                 workers: false,
+            });
+            expect(data.games).toBe(2);
+        });
+
+        it('combines filter and count (multithreaded)', async () => {
+            const data = await analyzePGN(fixturePath('results-mix'), {
+                maxGames: 2,
+                filter: (game: Game) => game.Result === '0-1',
             });
             expect(data.games).toBe(2);
         });

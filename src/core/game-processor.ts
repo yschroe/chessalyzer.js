@@ -6,15 +6,13 @@ import { normalizeAnalysisConfigs } from '#core/analysis-config';
 import { createWorkerResultHandler, finishTrackers } from '#core/tracker-merge';
 import WorkerPool from '#core/worker-pool';
 import { GameAssembler } from '#pgn/game-assembler';
-import { gamesToPgnChunk } from '#pgn/games-to-pgn';
 import { readLinesFast } from '#pgn/line-reader';
-import { encodePgnChunkText, readPgnChunks } from '#pgn/pgn-chunks';
+import { readPgnChunks } from '#pgn/pgn-chunks';
 import GameReplayer from '#replay/game-replayer';
 import { resolveReplayPolicy } from '#replay/replay-policy';
 import type { AnalysisConfig, GameAndMoveCount, MultithreadConfig } from '#types/analysis';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
-import type { Game } from '#types/game';
-import type { WorkerInitData } from '#types/worker';
+import type { WorkerInitData, WorkerTaskData } from '#types/worker';
 
 /** Path to the worker file. */
 const WORKER_PATH = join(import.meta.dirname, 'chess-worker.js');
@@ -27,7 +25,6 @@ class GameProcessor {
     configs: GameProcessorAnalysisConfigFull[];
     readInHeader: boolean;
     multithreadConfig: MultithreadConfig | null;
-    useWorkerParse: boolean;
     readonly onError: 'abort' | 'skip-game';
 
     constructor(
@@ -38,7 +35,6 @@ class GameProcessor {
         const normalized = normalizeAnalysisConfigs(configs, multithreadCfg);
         this.configs = normalized.configs;
         this.readInHeader = normalized.readInHeader;
-        this.useWorkerParse = normalized.useWorkerParse;
         this.multithreadConfig = multithreadCfg;
         this.onError = onError;
     }
@@ -49,18 +45,19 @@ class GameProcessor {
      * @returns Count of processed games and moves.
      */
     async processPGN(path: string): Promise<GameAndMoveCount[]> {
-        const isMultithreaded = this.multithreadConfig !== null;
-
-        if (isMultithreaded && this.useWorkerParse) {
-            return this.processPGNWithWorkerParse(path);
+        if (this.multithreadConfig !== null) {
+            return this.processPGNWithWorkers(path);
         }
 
-        return this.processPGNOnMainThread(path, isMultithreaded);
+        return this.processPGNOnMainThread(path);
     }
 
-    private async processPGNWithWorkerParse(path: string): Promise<GameAndMoveCount[]> {
+    private async processPGNWithWorkers(path: string): Promise<GameAndMoveCount[]> {
         const workerInitData: WorkerInitData = {
-            configs: this.configs.map((cfg) => ({ trackerData: cfg.trackerData })),
+            configs: this.configs.map((cfg) => ({
+                trackerData: cfg.trackerData,
+                parseOnly: cfg.config.hasFilter,
+            })),
             onError: this.onError,
         };
         const workerPool = new WorkerPool(this.resolveWorkerCount(), WORKER_PATH, workerInitData);
@@ -71,6 +68,8 @@ class GameProcessor {
             minLines: this.multithreadConfig!.minLines,
         };
 
+        const gameReplayer = new GameReplayer();
+
         // Track the first worker failure and unblock any wait on pool completion.
         // Without this, a thrown callback error leaves the pool waiting forever on 'done'.
         let fatalError: Error | undefined;
@@ -79,10 +78,14 @@ class GameProcessor {
             rejectFatal = reject;
         });
 
-        const handleWorkerResult = createWorkerResultHandler(this.configs, (err) => {
-            fatalError = err;
-            rejectFatal?.(err);
-        });
+        const handleWorkerResult = createWorkerResultHandler(
+            this.configs,
+            (err) => {
+                fatalError = err;
+                rejectFatal?.(err);
+            },
+            { gameReplayer, onError: this.onError },
+        );
 
         try {
             chunkLoop: for await (const chunk of readPgnChunks(path, chunkConfig)) {
@@ -91,19 +94,31 @@ class GameProcessor {
                 for (const [idxConfig, cfg] of this.configs.entries()) {
                     if (cfg.isDone) continue;
 
+                    if (!cfg.config.hasFilter && cfg.config.cntGames !== Infinity) {
+                        const remaining = cfg.config.cntGames - cfg.processedGames;
+                        if (remaining <= 0) continue;
+                    }
+
                     // Only one config: transfer original (zero-copy)
                     // Multiple configs: slice() so each gets its own buffer;
                     // avoids detaching the underlying buffer
                     const pgnChunkBytes =
                         this.configs.length > 1 ? chunk.bytes.slice() : chunk.bytes;
 
-                    workerPool.runTask(
-                        { pgnChunkBytes, idxConfig, readInHeader: this.readInHeader },
-                        handleWorkerResult,
-                    );
+                    const task: WorkerTaskData = {
+                        pgnChunkBytes,
+                        idxConfig,
+                        readInHeader: cfg.config.hasFilter ? true : this.readInHeader,
+                    };
+
+                    if (!cfg.config.hasFilter && cfg.config.cntGames !== Infinity) {
+                        task.remainingGames = cfg.config.cntGames - cfg.processedGames;
+                    }
+
+                    workerPool.runTask(task, handleWorkerResult);
                 }
 
-                if (this.configs.every((cfg) => cfg.isDone)) break chunkLoop;
+                if (this.configs.every((c) => c.isDone)) break chunkLoop;
             }
 
             if (fatalError) throw fatalError;
@@ -119,109 +134,33 @@ class GameProcessor {
         }
     }
 
-    private async processPGNOnMainThread(
-        path: string,
-        isMultithreaded: boolean,
-    ): Promise<GameAndMoveCount[]> {
-        let workerPool: WorkerPool | undefined;
-        if (isMultithreaded) {
-            const workerInitData: WorkerInitData = {
-                configs: this.configs.map((cfg) => ({ trackerData: cfg.trackerData })),
-                onError: this.onError,
-            };
-            workerPool = new WorkerPool(this.resolveWorkerCount(), WORKER_PATH, workerInitData);
-        }
-
-        const gameStore: Game[][] = this.configs.map(() => [] as Game[]);
+    private async processPGNOnMainThread(path: string): Promise<GameAndMoveCount[]> {
         const gameReplayer = new GameReplayer();
         const gameAssembler = new GameAssembler({ readInHeader: this.readInHeader });
-        const legacyBatchSize = this.multithreadConfig?.batchSize ?? 200;
-        const pgnOptions = { includeHeaders: this.readInHeader };
 
-        // Same fatal-error handling as processPGNWithWorkerParse (see above).
-        let fatalError: Error | undefined;
-        let rejectFatal: ((err: Error) => void) | undefined;
-        const fatalPromise = new Promise<never>((_, reject) => {
-            rejectFatal = reject;
-        });
+        lineLoop: for await (const line of readLinesFast(path)) {
+            const game = gameAssembler.processLine(line);
+            if (!game) continue;
 
-        const handleWorkerResult = createWorkerResultHandler(this.configs, (err) => {
-            fatalError = err;
-            rejectFatal?.(err);
-        });
-
-        try {
-            lineLoop: for await (const line of readLinesFast(path)) {
-                if (fatalError) break;
-
-                const game = gameAssembler.processLine(line);
-                if (!game) continue;
-
-                for (const [idxCfg, cfg] of this.configs.entries()) {
-                    if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
-                        cfg.cntReadGames += 1;
-                        const gamesForCfg = gameStore[idxCfg];
-                        if (isMultithreaded && gamesForCfg) {
-                            gamesForCfg.push(game);
-
-                            if (gamesForCfg.length === legacyBatchSize) {
-                                workerPool!.runTask(
-                                    {
-                                        pgnChunkBytes: encodePgnChunkText(
-                                            gamesToPgnChunk(gamesForCfg, pgnOptions),
-                                        ),
-                                        idxConfig: idxCfg,
-                                        readInHeader: this.readInHeader,
-                                    },
-                                    handleWorkerResult,
-                                );
-
-                                gameStore[idxCfg] = [];
-                            }
-                        } else if (!isMultithreaded) {
-                            gameReplayer.processGame(
-                                game,
-                                cfg,
-                                resolveReplayPolicy(cfg.trackers.move.length > 0),
-                                cfg.processedGames + cfg.skippedGames,
-                                this.onError,
-                            );
-                        }
-                        if (cfg.cntReadGames === cfg.config.cntGames) {
-                            cfg.isDone = true;
-                            const allDone = this.configs.reduce((a, c) => a && c.isDone, true);
-                            if (allDone) break lineLoop;
-                        }
+            for (const cfg of this.configs) {
+                if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
+                    cfg.cntReadGames += 1;
+                    gameReplayer.processGame(
+                        game,
+                        cfg,
+                        resolveReplayPolicy(cfg.trackers.move.length > 0),
+                        cfg.processedGames + cfg.skippedGames,
+                        this.onError,
+                    );
+                    if (cfg.cntReadGames === cfg.config.cntGames) {
+                        cfg.isDone = true;
+                        if (this.configs.every((c) => c.isDone)) break lineLoop;
                     }
                 }
             }
-
-            if (isMultithreaded && workerPool) {
-                if (fatalError) throw fatalError;
-
-                for (const [idx, games] of gameStore.entries()) {
-                    if (games.length > 0) {
-                        workerPool.runTask(
-                            {
-                                pgnChunkBytes: encodePgnChunkText(
-                                    gamesToPgnChunk(games, pgnOptions),
-                                ),
-                                idxConfig: idx,
-                                readInHeader: this.readInHeader,
-                            },
-                            handleWorkerResult,
-                        );
-                    }
-                }
-
-                workerPool.flagNotifyWhenDone = true;
-                await Promise.race([EventEmitter.once(workerPool, 'done'), fatalPromise]);
-            }
-
-            return finishTrackers(this.configs);
-        } finally {
-            if (workerPool) await workerPool.close();
         }
+
+        return finishTrackers(this.configs);
     }
 
     private resolveWorkerCount(): number {
