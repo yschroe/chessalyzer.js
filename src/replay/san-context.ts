@@ -1,12 +1,12 @@
 import ChessBoard from '#board/chess-board';
-import PieceFinder from '#parsing/piece-finder';
+import PieceFinder from '#replay/piece-finder';
 import type { Action, CaptureAction, MoveAction, PromoteAction } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
 
 /**
  * Shared mutable state for replaying one game's SAN moves.
  *
- * Both {@link SanApplier} (parse-only path) and {@link SanParser} (tracker path)
+ * Both {@link SanApplier} (no-actions path) and {@link SanToActions} (tracker path)
  * read/write through this object so coord buffers and the board stay in sync
  * without duplicating construction logic.
  */
@@ -23,7 +23,7 @@ export default class SanContext {
     /** Reused for en-passant capture square or as second coord buffer during castling. */
     readonly takenOnBuf: number[] = [0, 0];
 
-    // --- Parser-only pools (tracker path). Trackers consume actions synchronously. ---
+    // --- Action pools (tracker path). Trackers consume actions synchronously. ---
 
     readonly moveAction: MoveAction = {
         type: 'move',
@@ -51,7 +51,7 @@ export default class SanContext {
         to: '',
     };
 
-    /** Cleared (`length = 0`) before each `parse()` call; same Action objects are pushed back in. */
+    /** Cleared (`length = 0`) before each `SanToActions.parse()` call; same Action objects are pushed back in. */
     readonly outActions: Action[] = [];
 
     constructor() {

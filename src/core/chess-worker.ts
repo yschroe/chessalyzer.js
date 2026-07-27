@@ -1,31 +1,33 @@
 import { parentPort, workerData } from 'node:worker_threads';
 
 import { getCachedCfg, initWorkerTrackers, resetCfg } from '#core/worker-tracker-registry';
-import GameParser from '#parsing/game-parser';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import { decodePgnChunkBytes } from '#pgn/pgn-chunks';
+import GameReplayer from '#replay/game-replayer';
+import { resolveReplayPolicy } from '#replay/replay-policy';
 import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
 
 const initData = workerData as WorkerInitData | undefined;
 
-/** One GameParser per worker thread, reused across batches. */
-const gameParser = new GameParser();
+/** One GameReplayer per worker thread, reused across batches. */
+const gameReplayer = new GameReplayer();
 
 const ready = initWorkerTrackers(initData);
 
-/** Parse a PGN chunk and analyze the resulting games. */
+/** Assemble games from a PGN chunk and replay/analyze them. */
 function processBatch(msg: WorkerTaskData): WorkerMessage {
     const cfg = getCachedCfg(msg.idxConfig);
     resetCfg(cfg);
 
     const hasTrackers = cfg.trackers.game.length > 0 || cfg.trackers.move.length > 0;
+    const replay = resolveReplayPolicy(cfg.trackers.move.length > 0);
     const games = parseGamesFromLines(decodePgnChunkBytes(msg.pgnChunkBytes).split('\n'), {
         readInHeader: msg.readInHeader,
         maxGames: msg.maxGames,
     });
 
     for (const game of games) {
-        gameParser.processGame(game, cfg);
+        gameReplayer.processGame(game, cfg, replay);
     }
 
     const result: WorkerMessage = {

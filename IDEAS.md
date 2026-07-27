@@ -13,7 +13,7 @@ Today the library is optimized for **batch analysis**, not general-purpose PGN I
 - Single public entry point: `Chessalyzer.analyzePGN(path, config?, multithreadCfg?)`
 - Internal pipeline: stream lines → tokenize movetext → **always replay SAN on a board** → optionally run trackers
 - Fast path when no move trackers: `SanApplier` (direct board mutation, no `Action` objects)
-- Tracker path: `SanParser` → `Action[]` → `board.applyActions()`
+- Tracker path: `SanToActions` → `Action[]` → `board.applyActions()`
 - Assumes **standard chess from the initial position**, **valid Lichess-style PGN**, **mainline only** (parentheses stripped)
 
 There is no exported parse API, no configurable parsing mode, and no move legality validation beyond disambiguation heuristics.
@@ -144,14 +144,14 @@ Today several behaviors are hardcoded or inferred:
 - **FEN after each move** — optional; expensive but useful for debugging
 - **Castling rights / en passant square** — not tracked on `ChessBoard` today; required for strict validation and FEN export
 - **Chess960** — different castling semantics; separate board or rules adapter
-- **Castling double-count** — `SanParser.castle()` emits two `move` actions; `TileTracker` has a TODO to treat castling as one move
+- **Castling double-count** — `SanToActions.castle()` emits two `move` actions; `TileTracker` has a TODO to treat castling as one move
 
 ---
 
 ## Error handling & robustness
 
 - **Per-game isolation** — one bad game should not abort a million-game run (configurable)
-- **Structured errors** — return `{ ok, errors[] }` instead of logging + rethrow in `GameParser.processGame()`
+- **Structured errors** — return `{ ok, errors[] }` instead of logging + rethrow in `GameReplayer.processGame()`
 - **Corpus-driven hardening** — extend `test/corpus/` with RAV, FEN, variant, and intentionally illegal fixtures once validate mode exists
 - **DoS resistance** — budget limits for comment depth, variation depth, game length (cf. chessops `PgnParser` budget)
 
@@ -201,9 +201,11 @@ If the goal is “PGN library” rather than “batch analyzer only”, a reason
 
 ## Related issues in code today
 
-| Location                                | Note                                                                         |
-| --------------------------------------- | ---------------------------------------------------------------------------- |
-| `src/tracker/tile/tile-tracker-base.ts` | TODO: castling counted as two moves                                          |
-| `src/types/analysis.ts`                 | `batchSize` deprecated; ignored by worker-chunk path                         |
-| `src/core/chessalyzer.ts`               | Errors attributed to “bug or unknown PGN format” — no structured diagnostics |
-| `src/pgn/pgn-line-parser.ts`            | RAVs and comments share the same strip regex                                 |
+| Location                                | Note                                                                          |
+| --------------------------------------- | ----------------------------------------------------------------------------- |
+| `src/tracker/tile/tile-tracker-base.ts` | TODO: castling counted as two moves                                           |
+| `src/types/analysis.ts`                 | `batchSize` deprecated; ignored by worker-chunk path; still used by legacy MT |
+| `src/types/analysis-runtime.ts`         | Processor-only config/state (split from public analysis types)                |
+| `src/replay/replay-policy.ts`           | Internal `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` defaults false — opt-in skip     |
+| `src/core/chessalyzer.ts`               | Errors attributed to “bug or unknown PGN format” — no structured diagnostics  |
+| `src/pgn/movetext-tokenizer.ts`         | RAVs and comments share the same strip regex                                  |
