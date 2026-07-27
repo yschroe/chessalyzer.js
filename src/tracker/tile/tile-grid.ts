@@ -194,8 +194,7 @@ export function resetTileGrid(tiles: TileGrid): void {
 
 /** Resolve dynamic board coords to a grid cell when indices are in range. */
 export function tileCellAt(tiles: TileGrid, coords: number[]): StatsField | undefined {
-    const row = coords[0];
-    const col = coords[1];
+    const [row, col] = coords;
     if (row === undefined || col === undefined || !isBoardIndex(row) || !isBoardIndex(col)) {
         return undefined;
     }

@@ -50,8 +50,7 @@ export default class PieceFinder {
         tokenChar: number,
         player: PlayerColor,
     ): number[] {
-        const tarRow = toPosition[0];
-        const tarCol = toPosition[1];
+        const [tarRow, tarCol] = toPosition;
         if (tarRow === undefined || tarCol === undefined) {
             throw new MoveNotFoundException(token, player, -1, -1);
         }
@@ -77,8 +76,7 @@ export default class PieceFinder {
         for (let i = 0; i < len; i += 1) {
             const val = validPieces[i];
             if (!val) continue;
-            const row = val[0];
-            const col = val[1];
+            const [row, col] = val;
             if (row === undefined || col === undefined) continue;
 
             if (mustBeInRow !== null && row !== mustBeInRow) continue;
@@ -115,8 +113,7 @@ export default class PieceFinder {
         pieceLoop: for (let p = 0; p < filtered.length; p += 1) {
             const piece = filtered[p];
             if (!piece) continue;
-            const pieceRow = piece[0];
-            const pieceCol = piece[1];
+            const [pieceRow, pieceCol] = piece;
             if (pieceRow === undefined || pieceCol === undefined) continue;
 
             if (!isKnight) {
