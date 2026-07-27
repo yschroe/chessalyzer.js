@@ -81,15 +81,17 @@ class GameProcessor {
             chunkLoop: for await (const chunk of readPgnChunks(path, chunkConfig)) {
                 if (fatalError) break;
 
-                for (const [idxCfg, cfg] of this.configs.entries()) {
+                for (const [idxConfig, cfg] of this.configs.entries()) {
                     if (cfg.isDone) continue;
 
+                    // Only one config: transfer original (zero-copy)
+                    // Multiple configs: slice() so each gets its own buffer;
+                    // avoids detaching the underlying buffer
+                    const pgnChunkBytes =
+                        this.configs.length > 1 ? chunk.bytes.slice() : chunk.bytes;
+
                     workerPool.runTask(
-                        {
-                            pgnChunkBytes: chunk.bytes.slice(),
-                            idxConfig: idxCfg,
-                            readInHeader: this.readInHeader,
-                        },
+                        { pgnChunkBytes, idxConfig, readInHeader: this.readInHeader },
                         handleWorkerResult,
                     );
                 }
