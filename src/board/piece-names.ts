@@ -28,8 +28,7 @@ function isBoardIndex(n: number | undefined): n is BoardIndex {
  * are not represented here.
  */
 export function getStartingPiece(coords: number[]): ChessPiece | null {
-    const row = coords[0];
-    const col = coords[1];
+    const [row, col] = coords;
     if (!isBoardIndex(row) || !isBoardIndex(col)) return null;
 
     switch (row) {

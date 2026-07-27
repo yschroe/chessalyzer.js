@@ -6,6 +6,7 @@
         "module": "Preserve",
         "moduleResolution": "bundler",
         "lib": ["ESNext"],
+        "types": ["node"],
 
         "noEmit": true,
         "isolatedModules": true,

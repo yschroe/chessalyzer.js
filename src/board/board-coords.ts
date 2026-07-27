@@ -16,6 +16,7 @@ const algebraicToCoordsTable: number[][] = Array.from({ length: 64 }, (_, i) => 
     return [7 - rank, file];
 });
 
+/** Check if a number is a valid board index (integer and between 0 and 7) */
 function isBoardIndex(n: number): n is BoardIndex {
     return (n | 0) === n && n >= 0 && n <= 7;
 }
@@ -43,8 +44,7 @@ export function algebraicToCoordsAt(san: string, end: number): number[] {
 
 /** Convert internal `[row, col]` to algebraic notation (e.g. `[6, 4]` → `'e2'`). */
 export function coordsToAlgebraic(coords: number[]): string {
-    const col = coords[1];
-    const row = coords[0];
+    const [row, col] = coords;
     if (col === undefined || row === undefined || !isBoardIndex(col)) return '';
     return `${FILES[col]}${8 - row}`;
 }

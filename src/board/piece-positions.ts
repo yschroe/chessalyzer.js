@@ -139,8 +139,7 @@ export default class PiecePositions {
         const list = this.listForChar(tokenChar);
         if (!list) return;
 
-        const row = on[0];
-        const col = on[1];
+        const [row, col] = on;
 
         for (let i = 0; i < list.length; i += 1) {
             const p = list[i];
@@ -161,8 +160,7 @@ export default class PiecePositions {
     /** Register a newly promoted piece (gets a fresh `[row, col]` entry, not from the pre-allocated pool). */
     promote(pieceName: string, on: readonly number[]): void {
         const list = this.listForChar(pieceName.charCodeAt(0));
-        const row = on[0];
-        const col = on[1];
+        const [row, col] = on;
         if (!list || row === undefined || col === undefined) return;
         list.push([row, col]);
     }
