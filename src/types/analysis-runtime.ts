@@ -21,7 +21,7 @@ export interface GameProcessorAnalysisConfig {
 /** Main-thread processor config including serializable tracker metadata for workers. */
 export interface GameProcessorAnalysisConfigFull extends GameProcessorAnalysisConfig {
     config: GameProcessorConfig;
-    trackerData: { name: string; cfg: TrackerConfig; path: string }[];
+    trackerData: { id: string; cfg: TrackerConfig; path: string }[];
     cntReadGames: number;
     isDone: boolean;
 }

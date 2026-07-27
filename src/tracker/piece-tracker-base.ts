@@ -51,6 +51,7 @@ export function isTrackedPiece(name: string): name is Piece {
 }
 
 class PieceTracker extends MoveTracker {
+    static override trackerId = 'PieceTracker';
     static override workerModule = import.meta.url;
 
     b: PieceStatsMap;

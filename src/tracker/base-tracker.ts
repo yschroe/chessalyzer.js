@@ -18,6 +18,9 @@ class BaseTracker implements Tracker {
     t0: number;
     heatmapPresets: Record<string, HeatmapPresetEntry> | null;
 
+    /** Stable ID for worker-side tracker lookup (minification-safe). */
+    static trackerId?: string;
+
     /** Module URL for worker-side dynamic import of custom trackers. */
     static workerModule?: string;
 

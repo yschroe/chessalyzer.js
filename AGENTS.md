@@ -29,7 +29,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 | `bench/atomic/`      | Atomic micro-benchmark implementations                                             |
 | `bench/lib/`         | Shared bench utilities (fixtures, timing, PGN resolution)                          |
 | `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)                                        |
-| `test/`              | Unit and integration tests                                                         |
+| `test/`              | Integration tests, fixtures, corpus (unit tests live in `src/**/__tests__/`)       |
 | `pgn/`               | Local large PGN files for manual/bench runs (gitignored)                           |
 | `manual-tests/`      | Release smoke tests against the built package                                      |
 
@@ -96,6 +96,9 @@ Pass `single-threaded` to `bench-perf` to benchmark only the single-threaded pat
 Place large Lichess exports in `pgn/` (gitignored). The perf bench automatically picks the largest file available.
 
 ### Tests
+
+- **Unit tests** — colocated under `src/<module>/__tests__/` next to the code they cover (e.g. `src/core/__tests__/worker-pool.test.ts`). Prefer `#` import aliases.
+- **Integration tests** — `test/integration/` against the built package (`chessalyzer.js`). See [`test/README.md`](test/README.md) for fixtures vs corpus.
 
 ```bash
 npm test

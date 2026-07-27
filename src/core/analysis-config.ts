@@ -1,5 +1,6 @@
 import type { AnalysisConfig, AnalyzeOptions, MultithreadConfig } from '#types/analysis';
 import type { GameProcessorAnalysisConfigFull, GameProcessorConfig } from '#types/analysis-runtime';
+import type { Tracker } from '#types/tracker';
 
 /** Normalized analysis run: per-config runtime state plus path-selection flags. */
 export interface NormalizedAnalysisRun {
@@ -12,6 +13,16 @@ export interface NormalizedAnalysisRun {
 function resolveWorkerModule(tracker: { constructor: unknown }): string {
     const ctor = tracker.constructor as { workerModule?: string };
     return ctor.workerModule ?? '';
+}
+
+function resolveTrackerId(tracker: Tracker): string {
+    const id = (tracker.constructor as { trackerId?: string }).trackerId;
+    if (!id) {
+        throw new Error(
+            'Tracker is missing static trackerId (required for multithreaded analysis)',
+        );
+    }
+    return id;
 }
 
 function normalizeProcessorConfig(
@@ -120,7 +131,7 @@ export function normalizeAnalysisConfigs(
                 }
 
                 tempCfg.trackerData.push({
-                    name: tracker.constructor.name,
+                    id: resolveTrackerId(tracker),
                     cfg: tracker.cfg,
                     path: resolveWorkerModule(tracker),
                 });

@@ -4,7 +4,7 @@ import type { Tracker, TrackerConfig } from '#types/tracker';
 /** One-time worker bootstrap: tracker class names, cfg, optional module paths. */
 export interface WorkerInitData {
     configs: {
-        trackerData: { name: string; cfg: TrackerConfig; path?: string }[];
+        trackerData: { id: string; cfg: TrackerConfig; path?: string }[];
     }[];
     onError?: 'abort' | 'skip-game';
 }

@@ -34,6 +34,7 @@ function playerBucket(player: string): PlayerColor | undefined {
  * reaction logic and multithread aggregation.
  */
 class TileTracker extends MoveTracker {
+    static override trackerId = 'TileTracker';
     static override workerModule = import.meta.url;
 
     cntMovesGame: number;
