@@ -78,8 +78,6 @@ export interface MultithreadConfig {
     workerCount?: number;
     maxLines?: number;
     minLines?: number;
-    /** @deprecated Legacy MT path only (filter / game limit). */
-    batchSize?: number;
 }
 
 /** @internal Raw game/move counters from the processor. */

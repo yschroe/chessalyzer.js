@@ -1,6 +1,9 @@
 import { collectError } from '#core/analyze-errors';
+import GameReplayer from '#replay/game-replayer';
+import { resolveReplayPolicy } from '#replay/replay-policy';
 import type { GameAndMoveCount } from '#types/analysis';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
+import type { Game } from '#types/game';
 import type { WorkerMessage } from '#types/worker';
 
 /**
@@ -17,7 +20,7 @@ function mergeWorkerResult(
         result;
 
     const cfg = configs[idxConfig];
-    if (!cfg) return;
+    if (!cfg || cfg.isDone) return;
 
     if (gameTrackers) {
         for (let i = 0; i < gameTrackers.length; i += 1) {
@@ -48,6 +51,35 @@ function mergeWorkerResult(
     }
 }
 
+/** Apply filter, replay, and counters for games parsed on workers (JS filter path). */
+function mergeParsedGamesOnMain(
+    cfg: GameProcessorAnalysisConfigFull,
+    parsedGames: Game[],
+    gameReplayer: GameReplayer,
+    onError: 'abort' | 'skip-game',
+): void {
+    if (cfg.isDone) return;
+
+    const replay = resolveReplayPolicy(cfg.trackers.move.length > 0);
+
+    for (const game of parsedGames) {
+        if (cfg.isDone) break;
+        if (cfg.config.hasFilter && !cfg.config.filter(game)) continue;
+
+        cfg.cntReadGames += 1;
+        gameReplayer.processGame(game, cfg, replay, cfg.processedGames + cfg.skippedGames, onError);
+
+        if (cfg.cntReadGames === cfg.config.cntGames) {
+            cfg.isDone = true;
+        }
+    }
+}
+
+export interface WorkerResultHandlerOptions {
+    gameReplayer?: GameReplayer;
+    onError?: 'abort' | 'skip-game';
+}
+
 /**
  * Callback for {@link WorkerPool.runTask}: routes transport/batch errors to `onFatal`,
  * otherwise merges a successful result into `configs`.
@@ -55,6 +87,7 @@ function mergeWorkerResult(
 export function createWorkerResultHandler(
     configs: GameProcessorAnalysisConfigFull[],
     onFatal: (err: Error) => void,
+    options?: WorkerResultHandlerOptions,
 ): (err: Error | null, result: WorkerMessage | null) => void {
     let fatal = false;
     return (err, result) => {
@@ -74,7 +107,26 @@ export function createWorkerResultHandler(
             return;
         }
 
-        mergeWorkerResult(configs, result);
+        try {
+            if (result.parsedGames) {
+                const cfg = configs[result.idxConfig];
+                if (!cfg || !options?.gameReplayer) {
+                    throw new Error('Missing main-thread replayer for filtered worker batch');
+                }
+                mergeParsedGamesOnMain(
+                    cfg,
+                    result.parsedGames,
+                    options.gameReplayer,
+                    options.onError ?? 'abort',
+                );
+                return;
+            }
+
+            mergeWorkerResult(configs, result);
+        } catch (e: unknown) {
+            fatal = true;
+            onFatal(e instanceof Error ? e : new Error(String(e)));
+        }
     };
 }
 

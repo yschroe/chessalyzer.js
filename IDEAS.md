@@ -200,11 +200,10 @@ If the goal is “PGN library” rather than “batch analyzer only”, a reason
 
 ## Related issues in code today
 
-| Location                                | Note                                                                          |
-| --------------------------------------- | ----------------------------------------------------------------------------- |
-| `src/tracker/tile/tile-tracker-base.ts` | TODO: castling counted as two moves                                           |
-| `src/types/analysis.ts`                 | `batchSize` deprecated; ignored by worker-chunk path; still used by legacy MT |
-| `src/types/analysis-runtime.ts`         | Processor-only config/state (split from public analysis types)                |
-| `src/replay/replay-policy.ts`           | Internal `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` defaults false — opt-in skip     |
-| `src/core/analyze.ts`                   | Errors attributed to “bug or unknown PGN format” — no structured diagnostics  |
-| `src/pgn/movetext-tokenizer.ts`         | RAVs and comments share the same strip regex                                  |
+| Location                                | Note                                                                         |
+| --------------------------------------- | ---------------------------------------------------------------------------- |
+| `src/tracker/tile/tile-tracker-base.ts` | TODO: castling counted as two moves                                          |
+| `src/types/analysis-runtime.ts`         | Processor-only config/state (split from public analysis types)               |
+| `src/replay/replay-policy.ts`           | Internal `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` defaults false — opt-in skip    |
+| `src/core/analyze.ts`                   | Errors attributed to “bug or unknown PGN format” — no structured diagnostics |
+| `src/pgn/movetext-tokenizer.ts`         | RAVs and comments share the same strip regex                                 |

@@ -28,7 +28,7 @@ const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
 /** Encode PGN chunk text as UTF-8 bytes for worker transfer. */
-export function encodePgnChunkText(text: string): Uint8Array {
+function encodePgnChunkText(text: string): Uint8Array {
     return textEncoder.encode(text);
 }
 
