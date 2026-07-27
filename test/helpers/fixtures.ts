@@ -17,7 +17,7 @@ const TMP_DIR = join(TEST_DIR, '.tmp');
 
 export type FixtureId = keyof typeof manifest.fixtures;
 
-export interface TileTrackerGolden {
+interface TileTrackerGolden {
     cntMovesTotal: number;
     e4TileOccAll: number;
 }
