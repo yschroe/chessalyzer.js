@@ -17,6 +17,12 @@ class GameParser {
     private readonly applier: SanApplier;
     private readonly parser: SanParser;
 
+    constructor() {
+        this.ctx = new SanContext();
+        this.applier = new SanApplier(this.ctx);
+        this.parser = new SanParser(this.ctx);
+    }
+
     /** Exposed for tests/debugging; same instance as `ctx.board`. */
     get board() {
         return this.ctx.board;
@@ -24,12 +30,6 @@ class GameParser {
 
     get activePlayer(): PlayerColor {
         return this.ctx.activePlayer;
-    }
-
-    constructor() {
-        this.ctx = new SanContext();
-        this.applier = new SanApplier(this.ctx);
-        this.parser = new SanParser(this.ctx);
     }
 
     /**
