@@ -24,8 +24,8 @@ export interface WorkerTaskData {
 
 /** Worker → main result: counts and optional tracker state to merge. */
 export interface WorkerMessage {
-    cntMoves: number;
-    cntGames: number;
+    moves: number;
+    games: number;
     idxConfig: number;
     gameTrackers?: Tracker[];
     moveTrackers?: Tracker[];

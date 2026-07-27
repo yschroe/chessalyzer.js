@@ -14,10 +14,10 @@ function baseConfig(
         config: {
             hasFilter: false,
             filter: () => true,
-            cntGames: Infinity,
+            maxGames: Infinity,
         },
         trackerData: [],
-        cntReadGames: 0,
+        readGames: 0,
         isDone: false,
         trackers: { move: [], game: [] },
         processedMoves: 0,
@@ -74,8 +74,8 @@ describe('tracker merge', () => {
 
             const result: WorkerMessage = {
                 idxConfig: 0,
-                cntGames: 0,
-                cntMoves: 0,
+                games: 0,
+                moves: 0,
                 error: 'Unknown tracker "DoesNotExist"',
             };
 
@@ -93,7 +93,7 @@ describe('tracker merge', () => {
 
             const cfg = baseConfig({
                 trackers: { game: [mainTracker], move: [] },
-                config: { hasFilter: false, filter: () => true, cntGames: 10 },
+                config: { hasFilter: false, filter: () => true, maxGames: 10 },
             });
 
             const handler = createWorkerResultHandler([cfg], () => {
@@ -102,8 +102,8 @@ describe('tracker merge', () => {
 
             handler(null, {
                 idxConfig: 0,
-                cntGames: 2,
-                cntMoves: 40,
+                games: 2,
+                moves: 40,
                 gameTrackers: [batchTracker],
             });
 

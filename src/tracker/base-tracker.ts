@@ -50,24 +50,23 @@ class BaseTracker implements Tracker {
         );
     }
 
+    private resolveHeatmapFunc(analysisFunc: string | HeatmapAnalysisFunc): HeatmapAnalysisFunc {
+        if (typeof analysisFunc !== 'string') return analysisFunc;
+
+        if (!this.heatmapPresets || Object.keys(this.heatmapPresets).length === 0) {
+            throw new Error('Your tracker does not define any heatmap presets!');
+        }
+        const preset = this.heatmapPresets[analysisFunc];
+        if (!preset) throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
+        return preset.calc;
+    }
+
     generateHeatmap(
         analysisFunc: string | HeatmapAnalysisFunc,
         square?: string | number[],
         optData?: unknown,
     ): HeatmapData {
-        let heatmapFunction: HeatmapAnalysisFunc;
-
-        if (typeof analysisFunc === 'string') {
-            if (!this.heatmapPresets || Object.keys(this.heatmapPresets).length === 0)
-                throw new Error('Your tracker does not define any heatmap presets!');
-            const preset = this.heatmapPresets[analysisFunc];
-            if (!preset) throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
-            heatmapFunction = preset.calc;
-        } else {
-            heatmapFunction = analysisFunc;
-        }
-
-        return generateHeatmap(this, heatmapFunction, square, optData);
+        return generateHeatmap(this, this.resolveHeatmapFunc(analysisFunc), square, optData);
     }
 
     generateComparisonHeatmap(
@@ -76,19 +75,13 @@ class BaseTracker implements Tracker {
         square?: string | number[],
         optData?: unknown,
     ): HeatmapData {
-        let heatmapFunction: HeatmapAnalysisFunc;
-
-        if (typeof analysisFunc === 'string') {
-            if (!this.heatmapPresets || Object.keys(this.heatmapPresets).length === 0)
-                throw new Error('Your tracker does not define any heatmap presets!');
-            const preset = this.heatmapPresets[analysisFunc];
-            if (!preset) throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
-            heatmapFunction = preset.calc;
-        } else {
-            heatmapFunction = analysisFunc;
-        }
-
-        return generateComparisonHeatmap(this, compData, heatmapFunction, square, optData);
+        return generateComparisonHeatmap(
+            this,
+            compData,
+            this.resolveHeatmapFunc(analysisFunc),
+            square,
+            optData,
+        );
     }
 }
 

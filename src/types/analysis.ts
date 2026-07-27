@@ -62,28 +62,3 @@ export interface AnalyzeResult {
     /** First {@link MAX_COLLECTED_ERRORS} collected errors (skip-game or partial failure). */
     errors?: AnalyzeError[];
 }
-
-/** @internal Legacy processor input — normalized from {@link AnalyzeOptions}. */
-export interface AnalysisConfig {
-    trackers?: Tracker[];
-    config?: {
-        cntGames?: number;
-        filter?: (game: Game) => boolean;
-    };
-}
-
-/** @internal Multithread chunking. `null` disables worker threads. */
-export interface MultithreadConfig {
-    targetBytes?: number;
-    workerCount?: number;
-    maxLines?: number;
-    minLines?: number;
-}
-
-/** @internal Raw game/move counters from the processor. */
-export interface GameAndMoveCount {
-    cntGames: number;
-    cntMoves: number;
-    skippedGames?: number;
-    errors?: AnalyzeError[];
-}

@@ -113,7 +113,9 @@ for (const file of files) {
             file,
             description: descriptions[id] ?? prior?.description ?? id,
             expected,
-            ...(manifestAnalyzeOptions(policy) ? { analyzeOptions: manifestAnalyzeOptions(policy) } : {}),
+            ...(manifestAnalyzeOptions(policy)
+                ? { analyzeOptions: manifestAnalyzeOptions(policy) }
+                : {}),
             ...(prior?.golden ? { golden: prior.golden } : {}),
         };
 

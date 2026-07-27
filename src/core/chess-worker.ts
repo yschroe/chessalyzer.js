@@ -28,8 +28,8 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
         return {
             parsedGames: parseGamesFromLines(lines, { readInHeader: true }),
             idxConfig: msg.idxConfig,
-            cntGames: 0,
-            cntMoves: 0,
+            games: 0,
+            moves: 0,
         };
     }
 
@@ -55,8 +55,8 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
     }
 
     const result: WorkerMessage = {
-        cntMoves: cfg.processedMoves,
-        cntGames: cfg.processedGames,
+        moves: cfg.processedMoves,
+        games: cfg.processedGames,
         idxConfig: msg.idxConfig,
         skippedGames: cfg.skippedGames,
     };
@@ -83,8 +83,8 @@ parentPort!.on('message', (msg: WorkerTaskData) => {
             const message = e instanceof Error ? e.message : String(e);
             parentPort!.postMessage({
                 idxConfig: msg.idxConfig,
-                cntMoves: 0,
-                cntGames: 0,
+                moves: 0,
+                games: 0,
                 error: message,
             });
         });

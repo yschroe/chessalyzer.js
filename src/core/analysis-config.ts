@@ -1,4 +1,5 @@
-import type { AnalysisConfig, AnalyzeOptions, MultithreadConfig } from '#types/analysis';
+import type { AnalyzeOptions } from '#types/analysis';
+import type { AnalysisConfig, MultithreadConfig } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull, GameProcessorConfig } from '#types/analysis-runtime';
 import type { Tracker } from '#types/tracker';
 
@@ -37,7 +38,7 @@ function normalizeProcessorConfig(
         config: {
             hasFilter,
             filter: hasFilter ? filter : () => true,
-            cntGames: maxGames ?? Infinity,
+            maxGames: maxGames ?? Infinity,
         },
     };
 }
@@ -51,7 +52,7 @@ function toAnalysisConfig(
         trackers,
         config: {
             filter,
-            cntGames: maxGames,
+            maxGames,
         },
     };
 }
@@ -102,7 +103,7 @@ export function normalizeAnalysisConfigs(
     for (const cfg of configs) {
         const { config, needsHeader } = normalizeProcessorConfig(
             cfg.config?.filter,
-            cfg.config?.cntGames,
+            cfg.config?.maxGames,
         );
         if (needsHeader) readInHeader = true;
 
@@ -114,7 +115,7 @@ export function normalizeAnalysisConfigs(
             processedGames: 0,
             skippedGames: 0,
             errors: [],
-            cntReadGames: 0,
+            readGames: 0,
             isDone: false,
         };
 

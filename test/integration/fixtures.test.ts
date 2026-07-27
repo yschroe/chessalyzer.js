@@ -174,7 +174,7 @@ describe('Fixtures', () => {
             });
         }
 
-        it('counts castling as two move actions (known behavior)', async () => {
+        it('counts castling as one move (rook leg excluded from move counter)', async () => {
             const tileTracker = new TileTracker();
             await analyzePGN(fixturePath('en-passant'), {
                 trackers: [tileTracker],
@@ -182,7 +182,7 @@ describe('Fixtures', () => {
             });
 
             expect(tileTracker.cntMovesTotal).toBe(golden.cntMovesTotal);
-            expect(fixtureExpected('en-passant').cntMoves).toBe(49);
+            expect(tileTracker.cntMovesTotal).toBe(fixtureExpected('en-passant').cntMoves);
         });
     });
 });

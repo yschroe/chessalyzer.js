@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'bun:test';
 import { join } from 'node:path';
 
-import { analyzePGN, TileTracker } from 'chessalyzer.js';
+import { analyzePGN, PieceTracker, TileTracker } from 'chessalyzer.js';
 
 import WorkerPool from '../../src/core/worker-pool';
 import { fixturePath } from '../helpers/fixtures';
@@ -70,7 +70,7 @@ describe('Workers', () => {
         it('aborts on first bad game by default', async () => {
             let caught: unknown;
             try {
-                await analyzePGN(badSanPath);
+                await analyzePGN(badSanPath, { trackers: [new PieceTracker()] });
             } catch (err) {
                 caught = err;
             }

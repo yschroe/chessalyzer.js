@@ -1,5 +1,7 @@
 # Sprint 06 — Internal consistency & small perf wins
 
+**Status:** Completed (2026-07)
+
 **Effort:** Small–Medium (1–2 sessions)  
 **Impact:** Medium — contributor ergonomics and optional throughput for count-only runs  
 **Depends on:** None (can run in parallel with Sprint 01)

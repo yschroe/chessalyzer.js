@@ -3,11 +3,10 @@
     "fixtures": {
         "bad-san-mid-file": {
             "file": "bad-san-mid-file.pgn",
-            "description": "Three games; middle game has illegal SAN (error-policy tests)",
+            "description": "Three games; middle game has illegal SAN (error-policy tests use a move tracker to force replay)",
             "expected": {
-                "cntGames": 2,
-                "cntMoves": 32,
-                "skippedGames": 1
+                "cntGames": 3,
+                "cntMoves": 33
             },
             "analyzeOptions": {
                 "onError": "skip-game"
@@ -78,8 +77,8 @@
             },
             "golden": {
                 "tileTracker": {
-                    "cntMovesTotal": 51,
-                    "e4TileOccAll": 62.745098039215684
+                    "cntMovesTotal": 49,
+                    "e4TileOccAll": 61.224489795918366
                 }
             }
         },

@@ -21,6 +21,10 @@ function isBoardIndex(n: number | undefined): n is BoardIndex {
     return n !== undefined && (n | 0) === n && n >= 0 && n <= 7;
 }
 
+function isCastleRookLeg(action: Action): boolean {
+    return action.type === 'move' && (action.piece === 'Rh' || action.piece === 'Ra');
+}
+
 function playerBucket(player: string): PlayerColor | undefined {
     if (player === 'b' || player === 'w') return player;
     return undefined;
@@ -73,18 +77,28 @@ class TileTracker extends MoveTracker {
     }
 
     override trackMoves(data: Action[]) {
+        let lastMoveSan: string | undefined;
+
         for (const action of data) {
             switch (action.type) {
-                case 'move':
-                    // TODO: castle is counted as two moves. fix
-                    this.cntMovesGame += 1;
+                case 'move': {
+                    const isRookCastleLeg =
+                        lastMoveSan !== undefined &&
+                        action.san === lastMoveSan &&
+                        isCastleRookLeg(action);
+                    if (!isRookCastleLeg) {
+                        this.cntMovesGame += 1;
+                    }
+                    lastMoveSan = action.san;
                     this.processMove(
                         { from: action.from, to: action.to },
                         action.player,
                         action.piece ?? '',
                     );
                     break;
+                }
                 case 'capture':
+                    lastMoveSan = undefined;
                     this.processCapture(
                         action.on,
                         action.player,
