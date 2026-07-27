@@ -1,3 +1,5 @@
+import { collectError, createReplayError, toAbortError } from '#core/analyze-errors';
+import { isReplayFailure } from '#replay/replay-failure';
 import type { ReplayPolicy } from '#replay/replay-policy';
 import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
@@ -38,11 +40,15 @@ class GameReplayer {
      * @param game Game with `moves[]` already extracted by the PGN assembler.
      * @param analysisCfg Trackers and running processed-game/move counts.
      * @param replayPolicy `'skip'` | `'none'` | `'actions'` — see {@link ReplayPolicy}.
+     * @param gameIndex Zero-based index of this game in the processing stream.
+     * @param onError `'abort'` throws on replay failure; `'skip-game'` records and continues.
      */
     processGame(
         game: Game,
         analysisCfg: GameProcessorAnalysisConfig,
         replayPolicy: ReplayPolicy,
+        gameIndex: number,
+        onError: 'abort' | 'skip-game',
     ): void {
         for (const tracker of analysisCfg.trackers.game) {
             tracker.analyze(game);
@@ -51,8 +57,23 @@ class GameReplayer {
         const { moves } = game;
         const moveTrackers = analysisCfg.trackers.move;
 
+        let replayOk = true;
         if (replayPolicy !== 'skip') {
-            this.replayMoves(game, moveTrackers, replayPolicy);
+            replayOk = this.replayMoves(
+                game,
+                moveTrackers,
+                replayPolicy,
+                gameIndex,
+                onError,
+                analysisCfg,
+            );
+        }
+
+        if (!replayOk) {
+            for (const tracker of moveTrackers) {
+                tracker.nextGame?.();
+            }
+            return;
         }
 
         for (const tracker of moveTrackers) {
@@ -64,14 +85,25 @@ class GameReplayer {
         this.ctx.reset();
     }
 
-    /** Replay movetext onto the board; optionally emit actions for move trackers. */
-    private replayMoves(game: Game, moveTrackers: Tracker[], replayPolicy: ReplayPolicy): void {
+    /** Replay movetext onto the board; optionally emit actions for move trackers. Returns false when skipped. */
+    private replayMoves(
+        game: Game,
+        moveTrackers: Tracker[],
+        replayPolicy: ReplayPolicy,
+        gameIndex: number,
+        onError: 'abort' | 'skip-game',
+        analysisCfg: GameProcessorAnalysisConfig,
+    ): boolean {
         const { moves } = game;
         const board = this.ctx.board;
         this.ctx.activePlayer = 'w';
+        let moveIndex = 0;
+
         try {
             if (replayPolicy === 'actions') {
-                for (const san of moves) {
+                for (; moveIndex < moves.length; moveIndex += 1) {
+                    const san = moves[moveIndex];
+                    if (!san) continue;
                     const currentMoveActions = this.sanToActions.parse(san);
                     for (const tracker of moveTrackers) {
                         tracker.analyze(currentMoveActions);
@@ -80,7 +112,9 @@ class GameReplayer {
                     this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
                 }
             } else {
-                for (const san of moves) {
+                for (; moveIndex < moves.length; moveIndex += 1) {
+                    const san = moves[moveIndex];
+                    if (!san) continue;
                     this.applier.apply(san);
                     this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
                 }
@@ -90,8 +124,29 @@ class GameReplayer {
                 console.log(game);
                 board.printPosition();
             }
-            throw err;
+
+            this.ctx.reset();
+
+            const san = moves[moveIndex];
+            const reason = isReplayFailure(err) ? err.reason : 'IllegalMove';
+            const message = err instanceof Error ? err.message : String(err);
+            const replayError = createReplayError(
+                { gameIndex, moveIndex, san },
+                reason,
+                message,
+                err,
+            );
+
+            if (onError === 'abort') {
+                throw toAbortError(replayError);
+            }
+
+            collectError(analysisCfg.errors, replayError);
+            analysisCfg.skippedGames += 1;
+            return false;
         }
+
+        return true;
     }
 
     reset(): void {

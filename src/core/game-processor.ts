@@ -28,13 +28,19 @@ class GameProcessor {
     readInHeader: boolean;
     multithreadConfig: MultithreadConfig | null;
     useWorkerParse: boolean;
+    readonly onError: 'abort' | 'skip-game';
 
-    constructor(configs: AnalysisConfig[], multithreadCfg: MultithreadConfig | null) {
+    constructor(
+        configs: AnalysisConfig[],
+        multithreadCfg: MultithreadConfig | null,
+        onError: 'abort' | 'skip-game' = 'abort',
+    ) {
         const normalized = normalizeAnalysisConfigs(configs, multithreadCfg);
         this.configs = normalized.configs;
         this.readInHeader = normalized.readInHeader;
         this.useWorkerParse = normalized.useWorkerParse;
         this.multithreadConfig = multithreadCfg;
+        this.onError = onError;
     }
 
     /**
@@ -55,6 +61,7 @@ class GameProcessor {
     private async processPGNWithWorkerParse(path: string): Promise<GameAndMoveCount[]> {
         const workerInitData: WorkerInitData = {
             configs: this.configs.map((cfg) => ({ trackerData: cfg.trackerData })),
+            onError: this.onError,
         };
         const workerPool = new WorkerPool(this.resolveWorkerCount(), WORKER_PATH, workerInitData);
 
@@ -120,6 +127,7 @@ class GameProcessor {
         if (isMultithreaded) {
             const workerInitData: WorkerInitData = {
                 configs: this.configs.map((cfg) => ({ trackerData: cfg.trackerData })),
+                onError: this.onError,
             };
             workerPool = new WorkerPool(this.resolveWorkerCount(), WORKER_PATH, workerInitData);
         }
@@ -175,6 +183,8 @@ class GameProcessor {
                                 game,
                                 cfg,
                                 resolveReplayPolicy(cfg.trackers.move.length > 0),
+                                cfg.processedGames + cfg.skippedGames,
+                                this.onError,
                             );
                         }
                         if (cfg.cntReadGames === cfg.config.cntGames) {

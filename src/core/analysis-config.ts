@@ -53,15 +53,19 @@ function toAnalysisConfig(
 export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
     configs: AnalysisConfig[];
     multithreadCfg: MultithreadConfig | null;
+    onError: 'abort' | 'skip-game';
 } {
     const opts = options ?? {};
 
     const multithreadCfg: MultithreadConfig | null =
         opts.workers === false ? null : (opts.workers ?? {});
 
+    const onError = opts.onError ?? 'abort';
+
     if (opts.runs && opts.runs.length > 0) {
         return {
             multithreadCfg,
+            onError,
             configs: opts.runs.map((run) =>
                 toAnalysisConfig(run.trackers, run.filter, run.maxGames),
             ),
@@ -70,6 +74,7 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
 
     return {
         multithreadCfg,
+        onError,
         configs: [toAnalysisConfig(opts.trackers, opts.filter, opts.maxGames)],
     };
 }
@@ -99,6 +104,8 @@ export function normalizeAnalysisConfigs(
             config,
             processedMoves: 0,
             processedGames: 0,
+            skippedGames: 0,
+            errors: [],
             cntReadGames: 0,
             isDone: false,
         };

@@ -60,6 +60,8 @@ function createAnalysisCfg(
         trackers: { move: [], game: [] },
         processedMoves: 0,
         processedGames: 0,
+        skippedGames: 0,
+        errors: [],
     };
 
     const trackerData = initData?.configs[idxConfig]?.trackerData;
@@ -85,6 +87,8 @@ function createAnalysisCfg(
 export function resetCfg(cfg: GameProcessorAnalysisConfig): void {
     cfg.processedMoves = 0;
     cfg.processedGames = 0;
+    cfg.skippedGames = 0;
+    cfg.errors = [];
 
     for (const t of cfg.trackers.game) {
         t.resetWorkerBatch?.();
@@ -102,6 +106,8 @@ export function getCachedCfg(idxConfig: number): GameProcessorAnalysisConfig {
             trackers: { move: [], game: [] },
             processedMoves: 0,
             processedGames: 0,
+            skippedGames: 0,
+            errors: [],
         };
     }
     return cfg;

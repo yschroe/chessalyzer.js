@@ -1,3 +1,4 @@
+import type { AnalyzeError } from '#types/errors';
 import type { Game } from '#types/game';
 import type { Tracker } from '#types/tracker';
 
@@ -32,6 +33,11 @@ export interface AnalyzeOptions {
     runs?: AnalyzeRun[];
     /** Default: multithreaded with library defaults. `false` = single-threaded. */
     workers?: false | WorkerOptions;
+    /**
+     * How to handle replay/parse failures per game.
+     * Default `'abort'` stops on the first bad game; `'skip-game'` continues and collects errors.
+     */
+    onError?: 'abort' | 'skip-game';
 }
 
 /** Per-run counters returned from {@link analyzePGN}. */
@@ -51,6 +57,10 @@ export interface AnalyzeResult {
     movesPerSecond: number;
     /** One entry per run (length 1 when `runs` is omitted). */
     runs: AnalyzeRunResult[];
+    /** Games skipped due to replay failure when `onError: 'skip-game'`. */
+    skippedGames?: number;
+    /** First {@link MAX_COLLECTED_ERRORS} collected errors (skip-game or partial failure). */
+    errors?: AnalyzeError[];
 }
 
 /** @internal Legacy processor input — normalized from {@link AnalyzeOptions}. */
@@ -76,4 +86,6 @@ export interface MultithreadConfig {
 export interface GameAndMoveCount {
     cntGames: number;
     cntMoves: number;
+    skippedGames?: number;
+    errors?: AnalyzeError[];
 }
