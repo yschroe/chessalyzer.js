@@ -1,0 +1,11 @@
+[Event "CRLF test"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 1-0
+
+
+[Event "CRLF test multiline"]
+[Result "1-0"]
+
+1. e4 1... e5 
+2. Nf3 1-0

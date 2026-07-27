@@ -1,12 +1,14 @@
 import { describe, it, expect, afterEach } from 'bun:test';
 import { join } from 'node:path';
 
-import { analyzePGN } from 'chessalyzer.js';
+import { analyzePGN, TileTracker } from 'chessalyzer.js';
 
 import WorkerPool from '../../src/core/worker-pool';
+import { fixturePath } from '../helpers/fixtures';
 
 const workerPath = join(import.meta.dirname, '../../lib/chess-worker.js');
 const badSanPath = join(import.meta.dirname, '../fixtures/bad-san-mid-file.pgn');
+const corruptPath = fixturePath('corrupt');
 
 const minimalChunkBytes = new TextEncoder().encode('[Event "t"]\n\n1. e4 1-0\n');
 
@@ -75,6 +77,20 @@ describe('Workers', () => {
 
             expect(caught).toBeDefined();
             expect(caught).toBeInstanceOf(Error);
+        });
+
+        it('processes corrupt.pgn with an incomplete trailing game without hanging', async () => {
+            const tileTracker = new TileTracker();
+            const data = await Promise.race([
+                analyzePGN(corruptPath, { trackers: [tileTracker] }),
+                new Promise<never>((_, reject) =>
+                    setTimeout(() => reject(new Error('analyzePGN timed out')), 10_000),
+                ),
+            ]);
+
+            expect(data.games).toBe(1);
+            expect(data.moves).toBe(15);
+            expect(tileTracker.cntMovesTotal).toBeGreaterThan(0);
         });
     });
 });

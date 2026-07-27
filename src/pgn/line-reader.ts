@@ -125,6 +125,12 @@ class FixedQueue<T> {
     }
 }
 
+/** Strip a trailing CR from CRLF (or rare CR-only) line endings. */
+function stripCarriageReturn(line: string): string {
+    const last = line.charCodeAt(line.length - 1);
+    return last === 13 ? line.slice(0, -1) : line;
+}
+
 /**
  * Custom line reader that reads lines faster than the native readline module.
  * @param file - The file to read.
@@ -151,7 +157,7 @@ export function readLinesFast(file: string): AsyncIterable<string> {
             // If the file was fully read, return the leftover line.
             if (result.done) {
                 if (leftover !== '') {
-                    line = leftover;
+                    line = stripCarriageReturn(leftover);
                     leftover = '';
                 }
                 break;
@@ -169,7 +175,7 @@ export function readLinesFast(file: string): AsyncIterable<string> {
             if (!endsWithNewline) leftover = parts.pop() ?? '';
 
             // Add the parts to the cache.
-            cache.push(...parts);
+            cache.push(...parts.map(stripCarriageReturn));
 
             // Try to get a line from the cache again.
             line = cache.shift();

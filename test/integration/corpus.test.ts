@@ -249,7 +249,5 @@ if (corpusAvailable) {
     });
 } else {
     describe.skip('Corpus regression (asorted)', () => {});
-    console.warn(
-        'Skipping corpus tests: asorted-games.pgn not found in test/corpus/.',
-    );
+    console.warn('Skipping corpus tests: asorted-games.pgn not found in test/corpus/.');
 }
