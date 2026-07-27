@@ -35,7 +35,7 @@ export function isReplayError(err: unknown): err is ReplayError {
 }
 
 /** Thrown in abort mode; carries the typed replay error for callers. */
-export class AnalyzeAbortError extends Error {
+class AnalyzeAbortError extends Error {
     readonly analyzeError: ReplayError;
 
     constructor(replayError: ReplayError) {
