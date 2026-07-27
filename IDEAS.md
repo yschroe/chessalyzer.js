@@ -164,8 +164,7 @@ From CHANGELOG / known limitations:
 - Lazy worker creation (don't spawn `availableParallelism()` threads for small files)
 - Send tracker config once per worker instead of per batch
 - Defer result merging where possible
-- **`WorkerTaskData.maxGames`** is typed but never sent — wire up or remove
-- Custom tracker `path` + dynamic `import()` remains hacky; document or replace with a registration API
+- Custom tracker `workerModule` + dynamic `import()` remains hacky; document or replace with a registration API
 
 ---
 
@@ -207,5 +206,5 @@ If the goal is “PGN library” rather than “batch analyzer only”, a reason
 | `src/types/analysis.ts`                 | `batchSize` deprecated; ignored by worker-chunk path; still used by legacy MT |
 | `src/types/analysis-runtime.ts`         | Processor-only config/state (split from public analysis types)                |
 | `src/replay/replay-policy.ts`           | Internal `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` defaults false — opt-in skip     |
-| `src/core/chessalyzer.ts`               | Errors attributed to “bug or unknown PGN format” — no structured diagnostics  |
+| `src/core/analyze.ts`                   | Errors attributed to “bug or unknown PGN format” — no structured diagnostics  |
 | `src/pgn/movetext-tokenizer.ts`         | RAVs and comments share the same strip regex                                  |

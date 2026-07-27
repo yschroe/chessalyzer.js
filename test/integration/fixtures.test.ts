@@ -85,6 +85,23 @@ describe('Fixtures', () => {
         });
     });
 
+    describe('worker-parse multi-run', () => {
+        it('processes all runs without sharing detached chunk buffers', async () => {
+            const trackerA = new GameTracker();
+            const trackerB = new GameTracker();
+            const expected = fixtureExpected('results-mix');
+
+            const data = await analyzePGN(fixturePath('results-mix'), {
+                runs: [{ trackers: [trackerA] }, { trackers: [trackerB] }],
+            });
+
+            expect(data.runs[0]?.games).toBe(expected.cntGames);
+            expect(data.runs[1]?.games).toBe(expected.cntGames);
+            expect(trackerA.cntGames).toBe(expected.cntGames);
+            expect(trackerB.cntGames).toBe(expected.cntGames);
+        });
+    });
+
     describe('trackers on fixtures', () => {
         it('runs GameTracker on lichess-headers', async () => {
             const gameTracker = new GameTracker();
