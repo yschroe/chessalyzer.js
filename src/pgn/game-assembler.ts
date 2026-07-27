@@ -3,7 +3,7 @@ import {
     isGameResultLine,
     parseHeaderTag,
     stripComments,
-} from '#pgn/pgn-line-parser';
+} from '#pgn/movetext-tokenizer';
 import type { Game } from '#types/game';
 
 export interface ParseGamesOptions {
@@ -12,10 +12,10 @@ export interface ParseGamesOptions {
 }
 
 /**
- * Incremental PGN line parser that assembles complete {@link Game} objects.
+ * Incremental assembler that turns PGN lines into complete {@link Game} objects.
  * Filtering is applied by the caller after {@link processLine} returns a game.
  */
-export class GameLineParser {
+export class GameAssembler {
     private game: Game = { moves: [] };
 
     constructor(private readonly options: ParseGamesOptions) {}
@@ -53,14 +53,14 @@ export class GameLineParser {
     }
 }
 
-/** Parse a sequence of PGN lines into complete games (for worker-side batch parsing). */
+/** Assemble a sequence of PGN lines into complete games (for worker-side batch parsing). */
 export function parseGamesFromLines(lines: Iterable<string>, options: ParseGamesOptions): Game[] {
-    const parser = new GameLineParser(options);
+    const assembler = new GameAssembler(options);
     const games: Game[] = [];
     const maxGames = options.maxGames ?? Infinity;
 
     for (const line of lines) {
-        const game = parser.processLine(line);
+        const game = assembler.processLine(line);
         if (!game) continue;
         games.push(game);
         if (games.length >= maxGames) break;

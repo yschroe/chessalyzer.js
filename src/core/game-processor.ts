@@ -3,8 +3,8 @@ import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
 
 import WorkerPool from '#core/worker-pool';
-import GameParser from '#parsing/game-parser';
-import { GameLineParser } from '#pgn/game-assembler';
+import GameReplayer from '#replay/game-replayer';
+import { GameAssembler } from '#pgn/game-assembler';
 import { readLinesFast } from '#pgn/line-reader';
 import { encodePgnChunkText, readPgnChunks } from '#pgn/pgn-chunks';
 import type {
@@ -176,8 +176,8 @@ class GameProcessor {
         }
 
         const gameStore: Game[][] = this.configs.map(() => [] as Game[]);
-        const gameParser = new GameParser();
-        const lineParser = new GameLineParser({ readInHeader: this.readInHeader });
+        const gameReplayer = new GameReplayer();
+        const gameAssembler = new GameAssembler({ readInHeader: this.readInHeader });
         const legacyBatchSize = this.multithreadConfig?.batchSize ?? 200;
 
         // Same fatal-error handling as processPGNWithWorkerParse (see above).
@@ -211,7 +211,7 @@ class GameProcessor {
             lineLoop: for await (const line of readLinesFast(path)) {
                 if (fatalError) break;
 
-                const game = lineParser.processLine(line);
+                const game = gameAssembler.processLine(line);
                 if (!game) continue;
 
                 for (const [idxCfg, cfg] of this.configs.entries()) {
@@ -236,7 +236,7 @@ class GameProcessor {
                                 gameStore[idxCfg] = [];
                             }
                         } else if (!isMultithreaded) {
-                            gameParser.processGame(game, cfg);
+                            gameReplayer.processGame(game, cfg);
                         }
                         if (cfg.cntReadGames === cfg.config.cntGames) {
                             cfg.isDone = true;

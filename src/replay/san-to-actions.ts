@@ -1,5 +1,5 @@
 import { algebraicToCoordsAt } from '#board/board-coords';
-import type SanContext from '#parsing/san-context';
+import type SanContext from '#replay/san-context';
 import type { Action } from '#types/actions';
 import type { PieceToken } from '#types/tokens';
 
@@ -12,17 +12,17 @@ const PIECE_TOKEN_BY_CHAR: Record<number, PieceToken | undefined> = {
 };
 
 /**
- * Parses SAN into reusable {@link Action} objects for move trackers.
+ * Converts SAN into reusable {@link Action} objects for move trackers.
  *
  * Logic mirrors {@link SanApplier} but populates `moveAction` / `captureAction` /
  * `promoteAction` in the shared {@link SanContext} instead of mutating the board
  * directly — the caller applies actions via `board.applyActions()` afterward.
  */
-export default class SanParser {
+export default class SanToActions {
     constructor(private readonly ctx: SanContext) {}
 
     /**
-     * Parse one SAN token into a (possibly empty-then-filled) Action array.
+     * Convert one SAN token into a (possibly empty-then-filled) Action array.
      * Returns the same `outActions` buffer each call; do not retain across moves.
      */
     parse(san: string): Action[] {

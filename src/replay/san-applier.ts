@@ -1,5 +1,5 @@
 import { algebraicToCoordsAt } from '#board/board-coords';
-import type SanContext from '#parsing/san-context';
+import type SanContext from '#replay/san-context';
 import type { PieceToken } from '#types/tokens';
 
 const PIECE_TOKEN_BY_CHAR: Record<number, PieceToken | undefined> = {
@@ -13,8 +13,8 @@ const PIECE_TOKEN_BY_CHAR: Record<number, PieceToken | undefined> = {
 /**
  * Applies SAN moves directly to the board without building {@link Action} objects.
  *
- * Used on the parse-only fast path when no move trackers are attached. Each method
- * mirrors the corresponding logic in {@link SanParser} but skips tracker-facing allocations.
+ * Used on the replay fast path when no move trackers are attached. Each method
+ * mirrors the corresponding logic in {@link SanToActions} but skips tracker-facing allocations.
  */
 export default class SanApplier {
     constructor(private readonly ctx: SanContext) {}

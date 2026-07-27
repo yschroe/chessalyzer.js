@@ -27,7 +27,7 @@
     "types": "lib/index.d.ts",
     "imports": {
         "#core/*": "./src/core/*.ts",
-        "#parsing/*": "./src/parsing/*.ts",
+        "#replay/*": "./src/replay/*.ts",
         "#board/*": "./src/board/*.ts",
         "#tracker/*": "./src/tracker/*.ts",
         "#pgn/*": "./src/pgn/*.ts",

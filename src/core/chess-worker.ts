@@ -1,19 +1,19 @@
 import { parentPort, workerData } from 'node:worker_threads';
 
 import { getCachedCfg, initWorkerTrackers, resetCfg } from '#core/worker-tracker-registry';
-import GameParser from '#parsing/game-parser';
+import GameReplayer from '#replay/game-replayer';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import { decodePgnChunkBytes } from '#pgn/pgn-chunks';
 import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
 
 const initData = workerData as WorkerInitData | undefined;
 
-/** One GameParser per worker thread, reused across batches. */
-const gameParser = new GameParser();
+/** One GameReplayer per worker thread, reused across batches. */
+const gameReplayer = new GameReplayer();
 
 const ready = initWorkerTrackers(initData);
 
-/** Parse a PGN chunk and analyze the resulting games. */
+/** Assemble games from a PGN chunk and replay/analyze them. */
 function processBatch(msg: WorkerTaskData): WorkerMessage {
     const cfg = getCachedCfg(msg.idxConfig);
     resetCfg(cfg);
@@ -25,7 +25,7 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
     });
 
     for (const game of games) {
-        gameParser.processGame(game, cfg);
+        gameReplayer.processGame(game, cfg);
     }
 
     const result: WorkerMessage = {

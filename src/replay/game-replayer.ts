@@ -1,6 +1,6 @@
-import SanApplier from '#parsing/san-applier';
-import SanContext from '#parsing/san-context';
-import SanParser from '#parsing/san-parser';
+import SanApplier from '#replay/san-applier';
+import SanContext from '#replay/san-context';
+import SanToActions from '#replay/san-to-actions';
 import type { GameProcessorAnalysisConfig } from '#types/analysis';
 import type { Game } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
@@ -8,19 +8,19 @@ import type { PlayerColor } from '#types/tokens';
 /**
  * Orchestrates SAN replay for one game at a time.
  *
- * Delegates move semantics to {@link SanApplier} (no trackers) or {@link SanParser}
+ * Delegates move semantics to {@link SanApplier} (no trackers) or {@link SanToActions}
  * (trackers attached). Owns a long-lived {@link SanContext} whose board persists
  * across games within a worker thread or single-threaded run.
  */
-class GameParser {
+class GameReplayer {
     private readonly ctx: SanContext;
     private readonly applier: SanApplier;
-    private readonly parser: SanParser;
+    private readonly sanToActions: SanToActions;
 
     constructor() {
         this.ctx = new SanContext();
         this.applier = new SanApplier(this.ctx);
-        this.parser = new SanParser(this.ctx);
+        this.sanToActions = new SanToActions(this.ctx);
     }
 
     /** Exposed for tests/debugging; same instance as `ctx.board`. */
@@ -34,7 +34,7 @@ class GameParser {
 
     /**
      * Replay all moves in `game`, feed trackers, and update processed counters.
-     * @param game Game with `moves[]` already extracted by the PGN line parser.
+     * @param game Game with `moves[]` already extracted by the PGN assembler.
      * @param analysisCfg Trackers and running processed-game/move counts.
      */
     processGame(game: Game, analysisCfg: GameProcessorAnalysisConfig): void {
@@ -51,7 +51,7 @@ class GameParser {
         try {
             if (hasMoveTrackers) {
                 for (const san of moves) {
-                    const currentMoveActions = this.parser.parse(san);
+                    const currentMoveActions = this.sanToActions.parse(san);
                     for (const tracker of moveTrackers) {
                         tracker.analyze(currentMoveActions);
                     }
@@ -84,4 +84,4 @@ class GameParser {
     }
 }
 
-export default GameParser;
+export default GameReplayer;

@@ -12,16 +12,17 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 1. **Line reading** — `readLinesFast` / `readPgnChunks` in `src/pgn/line-reader.ts` stream the file with minimal overhead.
 2. **Chunking (multithreaded mode)** — the main thread splits the PGN into byte-sized chunks aligned to complete games and dispatches them to workers.
-3. **Parsing** — workers tokenize movetext and build game objects (`src/parsing/`, `src/pgn/`).
-4. **Tracking** — configured trackers receive move/game data (`src/tracker/`).
+3. **Assemble** — workers tokenize movetext and build game objects (`src/pgn/`).
+4. **Replay** — SAN is applied to a board (`src/replay/`), optionally emitting `Action[]` for move trackers.
+5. **Tracking** — configured trackers receive move/game data (`src/tracker/`).
 
 **Key directories:**
 
 | Path                 | Purpose                                                   |
 | -------------------- | --------------------------------------------------------- |
 | `src/core/`          | Orchestration (`GameProcessor`, worker pool)              |
-| `src/pgn/`           | PGN I/O, chunking, game assembly                          |
-| `src/parsing/`       | Move/game parsing                                         |
+| `src/pgn/`           | PGN I/O, chunking, movetext tokenize, game assembly       |
+| `src/replay/`        | SAN replay (`GameReplayer`, `SanApplier`, `SanToActions`) |
 | `src/tracker/`       | Built-in and base tracker implementations                 |
 | `bench/`             | Callable performance benchmarks (`bench-*.ts`)            |
 | `bench/atomic/`      | Atomic micro-benchmark implementations                    |

@@ -1,6 +1,5 @@
 import { readLinesFast } from '#pgn/line-reader';
-import { isGameResultLine } from '#pgn/pgn-line-parser';
-import { stripComments } from '#pgn/pgn-line-parser';
+import { isGameResultLine, stripComments } from '#pgn/movetext-tokenizer';
 
 /** Default chunk size (~4 MB) for worker-side PGN dispatch. */
 const DEFAULT_PGN_CHUNK_BYTES = 4 * 1024 * 1024;

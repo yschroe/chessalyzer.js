@@ -1,9 +1,9 @@
 /**
- * PGN movetext tokenization — regexes and helpers for parsing individual lines.
+ * PGN movetext tokenization — regexes and helpers for individual lines.
  *
- * Used by {@link GameProcessor} while streaming a PGN file. Each physical line may
- * contain headers, movetext, comments, or a game result; these helpers isolate that
- * logic from batching and worker dispatch.
+ * Used by {@link GameAssembler} and chunk boundary detection while streaming a PGN
+ * file. Each physical line may contain headers, movetext, comments, or a game result;
+ * these helpers isolate that logic from batching and worker dispatch.
  *
  * Note: `MOVE_REGEX` is tuned for V8's regex engine; a hand-rolled tokenizer was
  * tested and regressed multi-thread throughput because tokenization runs on the main thread.
