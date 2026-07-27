@@ -19,11 +19,10 @@ export interface HeatmapPresetEntry {
 }
 
 export interface Tracker {
-    type: string;
+    type: 'move' | 'game';
     cfg: TrackerConfig;
     time: number;
     t0: number;
-    path?: string;
     heatmapPresets?: Record<string, HeatmapPresetEntry> | null;
     analyze: (arg: Game | Action[]) => void;
     generateHeatmap: (
@@ -40,7 +39,7 @@ export interface Tracker {
     track: (arg: Game | Action[]) => void;
     nextGame?: () => void;
     finish?: () => void;
-    add?: (arg: Tracker) => void;
+    merge?: (arg: Tracker) => void;
     /** Clear per-batch state when a worker reuses tracker instances. */
     resetWorkerBatch?: () => void;
 }

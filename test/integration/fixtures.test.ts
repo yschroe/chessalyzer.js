@@ -1,8 +1,8 @@
 import { describe, it, beforeAll, afterAll, expect } from 'bun:test';
 
-import { Chessalyzer, GameTracker, PieceTracker } from 'chessalyzer.js';
+import { analyzePGN, GameTracker, PieceTracker } from 'chessalyzer.js';
 
-import type { GameAndMoveCountFull } from '../../src/types/analysis';
+import type { AnalyzeResult } from '../../src/types/analysis';
 import type { Game } from '../../src/types/game';
 import {
     allFixtureIds,
@@ -12,8 +12,6 @@ import {
     repeatPgn,
 } from '../helpers/fixtures';
 
-type FilterGame = Game & { [key: string]: unknown };
-
 // Integration tests against small committed PGN fixtures (test/fixtures/).
 describe('Fixtures', () => {
     afterAll(async () => {
@@ -22,99 +20,88 @@ describe('Fixtures', () => {
 
     for (const id of allFixtureIds) {
         describe(id, () => {
-            let data: GameAndMoveCountFull;
+            let data: AnalyzeResult;
 
             beforeAll(async () => {
-                data = await Chessalyzer.analyzePGN(fixturePath(id), { trackers: [] }, null);
+                data = await analyzePGN(fixturePath(id), { workers: false });
             });
 
             it('parses the expected number of games and moves', () => {
                 const expected = fixtureExpected(id);
-                expect(data.cntGames).toBe(expected.cntGames);
-                expect(data.cntMoves).toBe(expected.cntMoves);
+                expect(data.games).toBe(expected.cntGames);
+                expect(data.moves).toBe(expected.cntMoves);
             });
         });
     }
 
     describe('corrupt fixture', () => {
         it('drops the incomplete trailing game', async () => {
-            const data = await Chessalyzer.analyzePGN(
-                fixturePath('corrupt'),
-                { trackers: [] },
-                null,
-            );
-            expect(data.cntGames).toBe(1);
+            const data = await analyzePGN(fixturePath('corrupt'), { workers: false });
+            expect(data.games).toBe(1);
         });
     });
 
     describe('results-mix filtering', () => {
-        it('limits by cntGames', async () => {
-            const data = await Chessalyzer.analyzePGN(
-                fixturePath('results-mix'),
-                { config: { cntGames: 3 } },
-                null,
-            );
-            expect(data.cntGames).toBe(3);
+        it('limits by maxGames', async () => {
+            const data = await analyzePGN(fixturePath('results-mix'), {
+                maxGames: 3,
+                workers: false,
+            });
+            expect(data.games).toBe(3);
         });
 
         it('filters by result', async () => {
-            const data = await Chessalyzer.analyzePGN(
-                fixturePath('results-mix'),
-                { config: { filter: (game: object) => (game as FilterGame).Result === '1-0' } },
-                null,
-            );
-            expect(data.cntGames).toBe(3);
+            const data = await analyzePGN(fixturePath('results-mix'), {
+                filter: (game: Game) => game.Result === '1-0',
+                workers: false,
+            });
+            expect(data.games).toBe(3);
         });
 
         it('combines filter and count', async () => {
-            const data = await Chessalyzer.analyzePGN(
-                fixturePath('results-mix'),
-                {
-                    config: {
-                        cntGames: 2,
-                        filter: (game: object) => (game as FilterGame).Result === '0-1',
-                    },
-                },
-                null,
-            );
-            expect(data.cntGames).toBe(2);
+            const data = await analyzePGN(fixturePath('results-mix'), {
+                maxGames: 2,
+                filter: (game: Game) => game.Result === '0-1',
+                workers: false,
+            });
+            expect(data.games).toBe(2);
         });
     });
 
     describe('volume via repeated fixtures', () => {
         it('processes many games from a repeated small fixture', async () => {
             const path = await repeatPgn('results-mix', 20);
-            const data = await Chessalyzer.analyzePGN(path, { trackers: [] }, null);
-            expect(data.cntGames).toBe(fixtureExpected('results-mix').cntGames * 20);
+            const data = await analyzePGN(path, { workers: false });
+            expect(data.games).toBe(fixtureExpected('results-mix').cntGames * 20);
         });
 
         it('keeps tracker counts consistent at scale', async () => {
             const path = await repeatPgn('results-mix', 50);
             const gameTracker = new GameTracker();
-            const data = await Chessalyzer.analyzePGN(path, { trackers: [gameTracker] }, null);
-            expect(data.cntGames).toBe(gameTracker.cntGames);
+            const data = await analyzePGN(path, { trackers: [gameTracker], workers: false });
+            expect(data.games).toBe(gameTracker.cntGames);
             const resultsSum = Object.values(gameTracker.results).reduce((a, c) => a + c, 0);
-            expect(resultsSum).toBe(data.cntGames);
+            expect(resultsSum).toBe(data.games);
         });
     });
 
     describe('trackers on fixtures', () => {
         it('runs GameTracker on lichess-headers', async () => {
             const gameTracker = new GameTracker();
-            const data = await Chessalyzer.analyzePGN(fixturePath('lichess-headers'), {
+            const data = await analyzePGN(fixturePath('lichess-headers'), {
                 trackers: [gameTracker],
             });
-            expect(data.cntGames).toBe(1);
+            expect(data.games).toBe(1);
             expect(gameTracker.cntGames).toBe(1);
         });
 
         it('runs PieceTracker on promotion', async () => {
             const pieceTracker = new PieceTracker();
-            const data = await Chessalyzer.analyzePGN(fixturePath('promotion'), {
+            const data = await analyzePGN(fixturePath('promotion'), {
                 trackers: [pieceTracker],
             });
-            expect(data.cntGames).toBe(1);
-            expect(data.cntMoves).toBeGreaterThan(0);
+            expect(data.games).toBe(1);
+            expect(data.moves).toBeGreaterThan(0);
         });
     });
 });

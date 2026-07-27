@@ -21,14 +21,14 @@ function mergeWorkerResult(
         for (let i = 0; i < gameTrackers.length; i += 1) {
             const tracker = cfg.trackers.game[i];
             const data = gameTrackers[i];
-            if (tracker && data) tracker.add?.(data);
+            if (tracker && data) tracker.merge?.(data);
         }
     }
     if (moveTrackers) {
         for (let i = 0; i < moveTrackers.length; i += 1) {
             const tracker = cfg.trackers.move[i];
             const data = moveTrackers[i];
-            if (tracker && data) tracker.add?.(data);
+            if (tracker && data) tracker.merge?.(data);
         }
     }
     cfg.processedMoves += cntMoves;

@@ -1,4 +1,4 @@
-import type { AnalysisConfig, MultithreadConfig } from '#types/analysis';
+import type { AnalysisConfig, AnalyzeOptions, MultithreadConfig } from '#types/analysis';
 import type { GameProcessorAnalysisConfigFull, GameProcessorConfig } from '#types/analysis-runtime';
 
 /** Normalized analysis run: per-config runtime state plus path-selection flags. */
@@ -9,21 +9,68 @@ export interface NormalizedAnalysisRun {
     useWorkerParse: boolean;
 }
 
-function normalizeProcessorConfig(config: AnalysisConfig['config'] | undefined): {
+function resolveWorkerModule(tracker: { constructor: unknown }): string {
+    const ctor = tracker.constructor as { workerModule?: string };
+    return ctor.workerModule ?? '';
+}
+
+function normalizeProcessorConfig(
+    filter: ((game: import('#types/game').Game) => boolean) | undefined,
+    maxGames: number | undefined,
+): {
     config: GameProcessorConfig;
     needsHeader: boolean;
 } {
-    const c = config ?? {};
-    const filterFn = c.filter;
-    const hasFilter = filterFn !== undefined;
+    const hasFilter = filter !== undefined;
 
     return {
         needsHeader: hasFilter,
         config: {
             hasFilter,
-            filter: hasFilter ? filterFn : () => true,
-            cntGames: c.cntGames ?? Infinity,
+            filter: hasFilter ? filter : () => true,
+            cntGames: maxGames ?? Infinity,
         },
+    };
+}
+
+function toAnalysisConfig(
+    trackers: AnalysisConfig['trackers'],
+    filter: ((game: import('#types/game').Game) => boolean) | undefined,
+    maxGames: number | undefined,
+): AnalysisConfig {
+    return {
+        trackers,
+        config: {
+            filter,
+            cntGames: maxGames,
+        },
+    };
+}
+
+/**
+ * Convert public {@link AnalyzeOptions} into processor inputs.
+ */
+export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
+    configs: AnalysisConfig[];
+    multithreadCfg: MultithreadConfig | null;
+} {
+    const opts = options ?? {};
+
+    const multithreadCfg: MultithreadConfig | null =
+        opts.workers === false ? null : (opts.workers ?? {});
+
+    if (opts.runs && opts.runs.length > 0) {
+        return {
+            multithreadCfg,
+            configs: opts.runs.map((run) =>
+                toAnalysisConfig(run.trackers, run.filter, run.maxGames),
+            ),
+        };
+    }
+
+    return {
+        multithreadCfg,
+        configs: [toAnalysisConfig(opts.trackers, opts.filter, opts.maxGames)],
     };
 }
 
@@ -40,7 +87,10 @@ export function normalizeAnalysisConfigs(
     const normalized: GameProcessorAnalysisConfigFull[] = [];
 
     for (const cfg of configs) {
-        const { config, needsHeader } = normalizeProcessorConfig(cfg.config);
+        const { config, needsHeader } = normalizeProcessorConfig(
+            cfg.config?.filter,
+            cfg.config?.cntGames,
+        );
         if (needsHeader) readInHeader = true;
 
         const tempCfg: GameProcessorAnalysisConfigFull = {
@@ -59,14 +109,13 @@ export function normalizeAnalysisConfigs(
                     tempCfg.trackers.move.push(tracker);
                 } else if (tracker.type === 'game') {
                     tempCfg.trackers.game.push(tracker);
-                    // Game trackers need header tags (Result, ECO, …).
                     readInHeader = true;
                 }
 
                 tempCfg.trackerData.push({
                     name: tracker.constructor.name,
                     cfg: tracker.cfg,
-                    path: tracker.path ?? '',
+                    path: resolveWorkerModule(tracker),
                 });
             }
         }

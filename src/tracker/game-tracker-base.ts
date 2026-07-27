@@ -1,25 +1,26 @@
-import BaseTracker from '#tracker/base-tracker';
-import type { Action } from '#types/actions';
+import { GameTrackerBase } from '#tracker/base-tracker';
 import type { Game } from '#types/game';
 import type { Tracker } from '#types/tracker';
 
-function isGameTracker(tracker: Tracker): tracker is GameTrackerBase {
+function isGameTracker(tracker: Tracker): tracker is GameTracker {
     return 'results' in tracker && 'ECO' in tracker;
 }
 
-class GameTrackerBase extends BaseTracker {
+class GameTracker extends GameTrackerBase {
+    static override workerModule = import.meta.url;
+
     results: { white: number; black: number; draw: number };
     cntGames: number;
     ECO: { [eco: string]: number };
 
     constructor() {
-        super('game');
+        super();
         this.results = { white: 0, black: 0, draw: 0 };
         this.cntGames = 0;
         this.ECO = {};
     }
 
-    override add(tracker: Tracker) {
+    override merge(tracker: Tracker) {
         if (!isGameTracker(tracker)) return;
 
         this.results.white += tracker.results.white;
@@ -48,8 +49,7 @@ class GameTrackerBase extends BaseTracker {
         this.ECO = {};
     }
 
-    override track(game: Game | Action[]) {
-        if (Array.isArray(game)) return;
+    override trackGame(game: Game) {
         this.cntGames += 1;
         switch (game.Result) {
             case '1-0':
@@ -78,7 +78,6 @@ class GameTrackerBase extends BaseTracker {
     }
 
     finish() {
-        // sort keys
         this.ECO = Object.keys(this.ECO)
             .toSorted()
             .reduce<Record<string, number>>((a, c) => {
@@ -88,4 +87,4 @@ class GameTrackerBase extends BaseTracker {
     }
 }
 
-export default GameTrackerBase;
+export default GameTracker;

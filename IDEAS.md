@@ -10,7 +10,7 @@ For what exists now, see [README.md](./README.md) and [AGENTS.md](./AGENTS.md).
 
 Today the library is optimized for **batch analysis**, not general-purpose PGN I/O:
 
-- Single public entry point: `Chessalyzer.analyzePGN(path, config?, multithreadCfg?)`
+- Single public entry point: `analyzePGN(path, options?)`
 - Internal pipeline: stream lines → tokenize movetext → **always replay SAN on a board** → optionally run trackers
 - Fast path when no move trackers: `SanApplier` (direct board mutation, no `Action` objects)
 - Tracker path: `SanToActions` → `Action[]` → `board.applyActions()`

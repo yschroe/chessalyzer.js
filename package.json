@@ -1,6 +1,6 @@
 {
     "name": "chessalyzer.js",
-    "version": "3.0.6",
+    "version": "4.0.0",
     "description": "A JavaScript library for batch analyzing chess games.",
     "keywords": [
         "analysis",

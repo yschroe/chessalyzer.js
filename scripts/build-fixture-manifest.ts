@@ -1,16 +1,15 @@
 /**
  * Analyzes committed test/fixtures/*.pgn and writes test/fixtures/manifest.json.
- * Use a tested version of Chessalyzer for the generation of correct expected values.
+ * Use a tested version of chessalyzer for the generation of correct expected values.
  *
  * Run after adding or changing fixture PGNs: bun run test:build-fixtures
  *
- * Uses single-threaded mode (multithreadCfg: null) for deterministic analysis.
+ * Uses single-threaded mode for deterministic analysis.
  */
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { Chessalyzer } from '../src/index';
-import type { GameAndMoveCountFull } from '../src/types/analysis';
+import { analyzePGN } from '../src/index';
 
 const FIXTURES_DIR = new URL('../test/fixtures/', import.meta.url).pathname;
 
@@ -29,28 +28,23 @@ const descriptions: Record<string, string> = {
     'results-mix': 'Multiple games with mixed results and Elo headers for filter tests',
 };
 
-/* Get all PGN files in the fixtures directory and sort them */
 const files = (await readdir(FIXTURES_DIR)).filter((f) => f.endsWith('.pgn')).toSorted();
 
-/* Analyze each PGN file and store the results in a dictionary */
 const fixtures: Record<string, object> = {};
 for (const file of files) {
     const id = file.replace(/\.pgn$/, '');
     const path = join(FIXTURES_DIR, file);
 
-    /* Analyze the PGN file */
-    const result: GameAndMoveCountFull = await Chessalyzer.analyzePGN(path, { trackers: [] }, null);
+    const result = await analyzePGN(path, { workers: false });
 
-    /* Store the results in the fixtures dictionary */
     fixtures[id] = {
         file,
         description: descriptions[id] ?? id,
-        expected: { cntGames: result.cntGames, cntMoves: result.cntMoves },
+        expected: { cntGames: result.games, cntMoves: result.moves },
     };
-    console.log(`${id}: ${result.cntGames} games, ${result.cntMoves} moves`);
+    console.log(`${id}: ${result.games} games, ${result.moves} moves`);
 }
 
-/* Write the manifest to the fixtures directory */
 const manifest = { dir: 'test/fixtures', fixtures };
 await Bun.write(join(FIXTURES_DIR, 'manifest.json'), JSON.stringify(manifest, null, 4) + '\n');
 console.log('\nWrote test/fixtures/manifest.json');

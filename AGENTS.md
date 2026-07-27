@@ -6,7 +6,7 @@ This document orients coding agents working on **chessalyzer.js** — a TypeScri
 
 Chessalyzer.js parses large PGN databases and runs user-defined **trackers** over each game (move-level or game-level statistics). It is designed for throughput on multi-core machines.
 
-**Main entry point:** `Chessalyzer.analyzePGN(path, config?, multithreadCfg?)` in `src/core/chessalyzer.ts`.
+**Main entry point:** `analyzePGN(path, options?)` in [`src/core/analyze.ts`](src/core/analyze.ts).
 
 **Pipeline (high level):**
 
@@ -39,7 +39,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 `analyzePGN` picks one of three internal paths. Prefer collapsing (2) and (3) once filter / `cntGames` can run without re-encoding PGN.
 
-1. **Single-threaded** — `multithreadCfg === null`. Main thread: `readLinesFast` → `GameAssembler` → `GameReplayer` (policy from `resolveReplayPolicy`).
+1. **Single-threaded** — `workers: false`. Main thread: `readLinesFast` → `GameAssembler` → `GameReplayer` (policy from `resolveReplayPolicy`).
 2. **Worker-parse (preferred MT)** — multithreaded and no `filter` / finite `cntGames`. Main thread: `readPgnChunks` → workers assemble + replay; main merges via `tracker.add`.
 3. **Legacy MT** — multithreaded **and** any config has `filter` or finite `cntGames`. Main thread assembles/filters/limits, then `gamesToPgnChunk` re-encodes batches for workers (`batchSize`). Temporary; see IDEAS.md.
 
@@ -91,7 +91,7 @@ Pass `single-threaded` to `bench-perf` to benchmark only the single-threaded pat
 **Manual release smoke tests** (built package, smaller file):
 
 - `manual-tests/test-release.ts` — multithreaded
-- `manual-tests/test-release-singlethreaded.ts` — single-threaded (`multithreadCfg: null`)
+- `manual-tests/test-release-singlethreaded.ts` — single-threaded (`workers: false`)
 
 Place large Lichess exports in `pgn/` (gitignored). The perf bench automatically picks the largest file available.
 

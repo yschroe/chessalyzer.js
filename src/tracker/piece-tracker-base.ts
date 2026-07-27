@@ -1,7 +1,6 @@
-import BaseTracker from '#tracker/base-tracker';
+import { MoveTracker } from '#tracker/base-tracker';
 import HeatmapPresets from '#tracker/heatmaps/piece-heatmaps';
 import type { Action } from '#types/actions';
-import type { Game } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
 import type { Tracker } from '#types/tracker';
 
@@ -51,11 +50,13 @@ export function isTrackedPiece(name: string): name is Piece {
     return trackedPieceSet.has(name);
 }
 
-class PieceTrackerBase extends BaseTracker {
+class PieceTracker extends MoveTracker {
+    static override workerModule = import.meta.url;
+
     b: PieceStatsMap;
     w: PieceStatsMap;
     constructor() {
-        super('move');
+        super();
         this.heatmapPresets = HeatmapPresets;
 
         const emptyPieceStats = Object.fromEntries(pieceList.map((val) => [val, 0])) as PieceStats;
@@ -68,7 +69,7 @@ class PieceTrackerBase extends BaseTracker {
         ) as PieceStatsMap;
     }
 
-    override add(tracker: Tracker) {
+    override merge(tracker: Tracker) {
         if (!isPieceTracker(tracker)) return;
 
         this.time += tracker.time;
@@ -92,13 +93,11 @@ class PieceTrackerBase extends BaseTracker {
         }
     }
 
-    override track(data: Game | Action[]) {
-        if (!Array.isArray(data)) return;
+    override trackMoves(data: Action[]) {
         for (const action of data) {
             if (action.type === 'capture') {
                 const { takingPiece, takenPiece, player } = action;
                 if (!takingPiece || !takenPiece) continue;
-                // exlude promoted pawns from tracking
                 if (
                     takingPiece.length > 1 &&
                     takenPiece.length > 1 &&
@@ -116,8 +115,8 @@ class PieceTrackerBase extends BaseTracker {
     }
 }
 
-function isPieceTracker(tracker: Tracker): tracker is PieceTrackerBase {
+function isPieceTracker(tracker: Tracker): tracker is PieceTracker {
     return 'b' in tracker && 'w' in tracker;
 }
 
-export default PieceTrackerBase;
+export default PieceTracker;

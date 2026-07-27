@@ -1,9 +1,10 @@
+import type { Game } from '#types/game';
 import type { Tracker, TrackerConfig } from '#types/tracker';
 
 /** Normalized per-config processor state (filter, game limit). */
 export interface GameProcessorConfig {
     hasFilter: boolean;
-    filter: (game: object) => boolean;
+    filter: (game: Game) => boolean;
     cntGames: number;
 }
 
