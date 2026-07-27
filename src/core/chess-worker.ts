@@ -1,10 +1,10 @@
 import { parentPort, workerData } from 'node:worker_threads';
 
 import { getCachedCfg, initWorkerTrackers, resetCfg } from '#core/worker-tracker-registry';
-import GameReplayer from '#replay/game-replayer';
-import { resolveReplayPolicy } from '#replay/replay-policy';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import { decodePgnChunkBytes } from '#pgn/pgn-chunks';
+import GameReplayer from '#replay/game-replayer';
+import { resolveReplayPolicy } from '#replay/replay-policy';
 import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
 
 const initData = workerData as WorkerInitData | undefined;

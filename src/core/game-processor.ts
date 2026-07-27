@@ -191,7 +191,9 @@ class GameProcessor {
                     if (games.length > 0) {
                         workerPool.runTask(
                             {
-                                pgnChunkBytes: encodePgnChunkText(gamesToPgnChunk(games, pgnOptions)),
+                                pgnChunkBytes: encodePgnChunkText(
+                                    gamesToPgnChunk(games, pgnOptions),
+                                ),
                                 idxConfig: idx,
                                 readInHeader: this.readInHeader,
                             },

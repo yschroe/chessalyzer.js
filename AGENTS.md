@@ -18,20 +18,20 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 **Key directories:**
 
-| Path                 | Purpose                                                                    |
-| -------------------- | -------------------------------------------------------------------------- |
-| `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers)         |
-| `src/pgn/`           | PGN I/O, chunking, movetext tokenize, game assembly / re-encode            |
-| `src/replay/`        | SAN replay stages (`GameReplayer`, policy, `SanApplier`, `SanToActions`)   |
+| Path                 | Purpose                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers)                 |
+| `src/pgn/`           | PGN I/O, chunking, movetext tokenize, game assembly / re-encode                    |
+| `src/replay/`        | SAN replay stages (`GameReplayer`, policy, `SanApplier`, `SanToActions`)           |
 | `src/types/`         | Public analysis types (`analysis.ts`) vs processor runtime (`analysis-runtime.ts`) |
-| `src/tracker/`       | Built-in and base tracker implementations                                  |
-| `bench/`             | Callable performance benchmarks (`bench-*.ts`)                             |
-| `bench/atomic/`      | Atomic micro-benchmark implementations                                     |
-| `bench/lib/`         | Shared bench utilities (fixtures, timing, PGN resolution)                  |
-| `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)                                |
-| `test/`              | Unit and integration tests                                                 |
-| `pgn/`               | Local large PGN files for manual/bench runs (gitignored)                   |
-| `manual-tests/`      | Release smoke tests against the built package                              |
+| `src/tracker/`       | Built-in and base tracker implementations                                          |
+| `bench/`             | Callable performance benchmarks (`bench-*.ts`)                                     |
+| `bench/atomic/`      | Atomic micro-benchmark implementations                                             |
+| `bench/lib/`         | Shared bench utilities (fixtures, timing, PGN resolution)                          |
+| `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)                                        |
+| `test/`              | Unit and integration tests                                                         |
+| `pgn/`               | Local large PGN files for manual/bench runs (gitignored)                           |
+| `manual-tests/`      | Release smoke tests against the built package                                      |
 
 **Runtime:** Node ≥ 22 or Bun. Tests and benches are typically run with Bun.
 
