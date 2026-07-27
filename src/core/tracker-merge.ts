@@ -1,4 +1,5 @@
-import type { GameAndMoveCount, GameProcessorAnalysisConfigFull } from '#types/analysis';
+import type { GameAndMoveCount } from '#types/analysis';
+import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { WorkerMessage } from '#types/worker';
 
 /**

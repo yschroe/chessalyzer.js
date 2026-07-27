@@ -2,7 +2,7 @@ import BaseTracker from '#tracker/base-tracker';
 import GameTracker from '#tracker/game-tracker-base';
 import PieceTracker from '#tracker/piece-tracker-base';
 import TileTracker from '#tracker/tile/tile-tracker-base';
-import type { GameProcessorAnalysisConfig } from '#types/analysis';
+import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { WorkerInitData } from '#types/worker';
 
 /**

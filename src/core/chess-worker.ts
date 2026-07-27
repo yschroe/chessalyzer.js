@@ -2,6 +2,7 @@ import { parentPort, workerData } from 'node:worker_threads';
 
 import { getCachedCfg, initWorkerTrackers, resetCfg } from '#core/worker-tracker-registry';
 import GameReplayer from '#replay/game-replayer';
+import { resolveReplayPolicy } from '#replay/replay-policy';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import { decodePgnChunkBytes } from '#pgn/pgn-chunks';
 import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
@@ -19,13 +20,14 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
     resetCfg(cfg);
 
     const hasTrackers = cfg.trackers.game.length > 0 || cfg.trackers.move.length > 0;
+    const replay = resolveReplayPolicy(cfg.trackers.move.length > 0);
     const games = parseGamesFromLines(decodePgnChunkBytes(msg.pgnChunkBytes).split('\n'), {
         readInHeader: msg.readInHeader,
         maxGames: msg.maxGames,
     });
 
     for (const game of games) {
-        gameReplayer.processGame(game, cfg);
+        gameReplayer.processGame(game, cfg, replay);
     }
 
     const result: WorkerMessage = {

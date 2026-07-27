@@ -1,16 +1,16 @@
 import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
 import SanToActions from '#replay/san-to-actions';
-import type { GameProcessorAnalysisConfig } from '#types/analysis';
+import type { ReplayPolicy } from '#replay/replay-policy';
+import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { Game } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
 
 /**
- * Orchestrates SAN replay for one game at a time.
+ * Orchestrates per-game analysis stages: game trackers → optional SAN replay → counters.
  *
- * Delegates move semantics to {@link SanApplier} (no trackers) or {@link SanToActions}
- * (trackers attached). Owns a long-lived {@link SanContext} whose board persists
- * across games within a worker thread or single-threaded run.
+ * Replay mode is chosen by the caller via {@link ReplayPolicy} (see {@link resolveReplayPolicy}),
+ * not inferred inside this class.
  */
 class GameReplayer {
     private readonly ctx: SanContext;
@@ -33,41 +33,47 @@ class GameReplayer {
     }
 
     /**
-     * Replay all moves in `game`, feed trackers, and update processed counters.
+     * Run game trackers, optionally replay SAN / feed move trackers, then bump counters.
      * @param game Game with `moves[]` already extracted by the PGN assembler.
      * @param analysisCfg Trackers and running processed-game/move counts.
+     * @param replay `'skip'` | `'none'` | `'actions'` — see {@link ReplayPolicy}.
      */
-    processGame(game: Game, analysisCfg: GameProcessorAnalysisConfig): void {
+    processGame(
+        game: Game,
+        analysisCfg: GameProcessorAnalysisConfig,
+        replay: ReplayPolicy,
+    ): void {
         for (const tracker of analysisCfg.trackers.game) {
             tracker.analyze(game);
         }
 
         const { moves } = game;
         const moveTrackers = analysisCfg.trackers.move;
-        const hasMoveTrackers = moveTrackers.length > 0;
         const board = this.ctx.board;
 
-        this.ctx.activePlayer = 'w';
-        try {
-            if (hasMoveTrackers) {
-                for (const san of moves) {
-                    const currentMoveActions = this.sanToActions.parse(san);
-                    for (const tracker of moveTrackers) {
-                        tracker.analyze(currentMoveActions);
+        if (replay !== 'skip') {
+            this.ctx.activePlayer = 'w';
+            try {
+                if (replay === 'actions') {
+                    for (const san of moves) {
+                        const currentMoveActions = this.sanToActions.parse(san);
+                        for (const tracker of moveTrackers) {
+                            tracker.analyze(currentMoveActions);
+                        }
+                        board.applyActions(currentMoveActions);
+                        this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
                     }
-                    board.applyActions(currentMoveActions);
-                    this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
+                } else {
+                    for (const san of moves) {
+                        this.applier.apply(san);
+                        this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
+                    }
                 }
-            } else {
-                for (const san of moves) {
-                    this.applier.apply(san);
-                    this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
-                }
+            } catch (err) {
+                console.log(game);
+                board.printPosition();
+                throw err;
             }
-        } catch (err) {
-            console.log(game);
-            board.printPosition();
-            throw err;
         }
 
         for (const tracker of moveTrackers) {

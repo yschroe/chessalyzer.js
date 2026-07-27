@@ -13,26 +13,37 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 1. **Line reading** — `readLinesFast` / `readPgnChunks` in `src/pgn/line-reader.ts` stream the file with minimal overhead.
 2. **Chunking (multithreaded mode)** — the main thread splits the PGN into byte-sized chunks aligned to complete games and dispatches them to workers.
 3. **Assemble** — workers tokenize movetext and build game objects (`src/pgn/`).
-4. **Replay** — SAN is applied to a board (`src/replay/`), optionally emitting `Action[]` for move trackers.
+4. **Replay** — SAN is applied to a board (`src/replay/`), with explicit policy `'none' | 'actions'` (or `'skip'` when gated).
 5. **Tracking** — configured trackers receive move/game data (`src/tracker/`).
 
 **Key directories:**
 
-| Path                 | Purpose                                                   |
-| -------------------- | --------------------------------------------------------- |
-| `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers) |
-| `src/pgn/`           | PGN I/O, chunking, movetext tokenize, game assembly / re-encode    |
-| `src/replay/`        | SAN replay (`GameReplayer`, `SanApplier`, `SanToActions`)          |
-| `src/tracker/`       | Built-in and base tracker implementations                 |
-| `bench/`             | Callable performance benchmarks (`bench-*.ts`)            |
-| `bench/atomic/`      | Atomic micro-benchmark implementations                    |
-| `bench/lib/`         | Shared bench utilities (fixtures, timing, PGN resolution) |
-| `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)               |
-| `test/`              | Unit and integration tests                                |
-| `pgn/`               | Local large PGN files for manual/bench runs (gitignored)  |
-| `manual-tests/`      | Release smoke tests against the built package             |
+| Path                 | Purpose                                                                    |
+| -------------------- | -------------------------------------------------------------------------- |
+| `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers)         |
+| `src/pgn/`           | PGN I/O, chunking, movetext tokenize, game assembly / re-encode            |
+| `src/replay/`        | SAN replay stages (`GameReplayer`, policy, `SanApplier`, `SanToActions`)   |
+| `src/types/`         | Public analysis types (`analysis.ts`) vs processor runtime (`analysis-runtime.ts`) |
+| `src/tracker/`       | Built-in and base tracker implementations                                  |
+| `bench/`             | Callable performance benchmarks (`bench-*.ts`)                             |
+| `bench/atomic/`      | Atomic micro-benchmark implementations                                     |
+| `bench/lib/`         | Shared bench utilities (fixtures, timing, PGN resolution)                  |
+| `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)                                |
+| `test/`              | Unit and integration tests                                                 |
+| `pgn/`               | Local large PGN files for manual/bench runs (gitignored)                   |
+| `manual-tests/`      | Release smoke tests against the built package                              |
 
 **Runtime:** Node ≥ 22 or Bun. Tests and benches are typically run with Bun.
+
+### Execution paths (`GameProcessor`)
+
+`analyzePGN` picks one of three internal paths. Prefer collapsing (2) and (3) once filter / `cntGames` can run without re-encoding PGN.
+
+1. **Single-threaded** — `multithreadCfg === null`. Main thread: `readLinesFast` → `GameAssembler` → `GameReplayer` (policy from `resolveReplayPolicy`).
+2. **Worker-parse (preferred MT)** — multithreaded and no `filter` / finite `cntGames`. Main thread: `readPgnChunks` → workers assemble + replay; main merges via `tracker.add`.
+3. **Legacy MT** — multithreaded **and** any config has `filter` or finite `cntGames`. Main thread assembles/filters/limits, then `gamesToPgnChunk` re-encodes batches for workers (`batchSize`). Temporary; see IDEAS.md.
+
+**Replay policy:** callers pass `resolveReplayPolicy(hasMoveTrackers)` (`'skip' | 'none' | 'actions'`) into `GameReplayer.processGame`. Today this always replays (`none` or `actions`). Set `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` in `src/replay/replay-policy.ts` to opt into skipping board replay when there are no move trackers — measure with `bench:perf` before making that the default.
 
 ## Performance
 

@@ -1,9 +1,8 @@
+import type { AnalysisConfig, MultithreadConfig } from '#types/analysis';
 import type {
-    AnalysisConfig,
     GameProcessorAnalysisConfigFull,
     GameProcessorConfig,
-    MultithreadConfig,
-} from '#types/analysis';
+} from '#types/analysis-runtime';
 
 /** Normalized analysis run: per-config runtime state plus path-selection flags. */
 export interface NormalizedAnalysisRun {

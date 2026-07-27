@@ -10,12 +10,9 @@ import { gamesToPgnChunk } from '#pgn/games-to-pgn';
 import { readLinesFast } from '#pgn/line-reader';
 import { encodePgnChunkText, readPgnChunks } from '#pgn/pgn-chunks';
 import GameReplayer from '#replay/game-replayer';
-import type {
-    AnalysisConfig,
-    GameAndMoveCount,
-    GameProcessorAnalysisConfigFull,
-    MultithreadConfig,
-} from '#types/analysis';
+import { resolveReplayPolicy } from '#replay/replay-policy';
+import type { AnalysisConfig, GameAndMoveCount, MultithreadConfig } from '#types/analysis';
+import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { Game } from '#types/game';
 import type { WorkerInitData } from '#types/worker';
 
@@ -172,7 +169,11 @@ class GameProcessor {
                                 gameStore[idxCfg] = [];
                             }
                         } else if (!isMultithreaded) {
-                            gameReplayer.processGame(game, cfg);
+                            gameReplayer.processGame(
+                                game,
+                                cfg,
+                                resolveReplayPolicy(cfg.trackers.move.length > 0),
+                            );
                         }
                         if (cfg.cntReadGames === cfg.config.cntGames) {
                             cfg.isDone = true;
