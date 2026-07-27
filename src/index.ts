@@ -14,3 +14,11 @@ export type {
 } from '#types/analysis';
 export type { Game } from '#types/game';
 export type { HeatmapData, Tracker } from '#types/tracker';
+export type {
+    AnalyzeError,
+    AnalyzeErrorCode,
+    ParseError,
+    ReplayError,
+    ReplayErrorReason,
+} from '#types/errors';
+export { getAnalyzeError, isReplayError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';

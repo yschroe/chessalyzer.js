@@ -14,6 +14,7 @@ A JavaScript library for batch analyzing chess games.
     - [Filtering](#filtering)
     - [Compare Analyses](#compare-analyses)
     - [Multithreading](#multithreaded-analysis)
+    - [Error handling](#error-handling)
 - [Heatmap analysis functions](#heatmap-analysis-functions)
 - [Tracked statistics](#tracked-statistics)
     - [Built-in](#built-in)
@@ -142,6 +143,35 @@ By default, `analyzePGN` uses Node.js [Worker Threads](https://nodejs.org/api/wo
 ```javascript
 await analyzePGN('<pathToPgnFile>', { workers: false });
 ```
+
+## Error handling
+
+By default, `analyzePGN` **aborts on the first replay failure** (illegal or unparseable SAN). The library does not log to the console — callers decide how to handle errors:
+
+```javascript
+import { analyzePGN, getAnalyzeError, isReplayError } from 'chessalyzer.js';
+
+try {
+    await analyzePGN('<pathToPgnFile>');
+} catch (err) {
+    const analyzeError = getAnalyzeError(err);
+    if (isReplayError(analyzeError)) {
+        console.error(
+            `Game ${analyzeError.gameIndex}, move ${analyzeError.moveIndex}: ${analyzeError.san}`,
+        );
+    }
+    throw err;
+}
+```
+
+For large batch runs over mostly trusted exports (e.g. Lichess database dumps), use `onError: 'skip-game'` to continue past bad games and collect a summary:
+
+```javascript
+const result = await analyzePGN('<pathToPgnFile>', { onError: 'skip-game' });
+console.log(result.games, result.skippedGames, result.errors);
+```
+
+`result.errors` contains up to 100 typed replay errors (`gameIndex`, `moveIndex`, `san`, `reason`). Use default `abort` for untrusted or small inputs where a failure should stop the run immediately.
 
 ##### Important
 

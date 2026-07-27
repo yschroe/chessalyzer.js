@@ -3,12 +3,19 @@ import { performance } from 'node:perf_hooks';
 import chalk from 'chalk';
 
 import { normalizeAnalyzeOptions } from '#core/analysis-config';
+import { collectError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
 import GameProcessor from '#core/game-processor';
 import type { AnalyzeOptions, AnalyzeResult, AnalyzeRunResult } from '#types/analysis';
+import type { AnalyzeError } from '#types/errors';
 import type { HeatmapData } from '#types/tracker';
 
 function buildAnalyzeResult(
-    counts: { cntGames: number; cntMoves: number }[],
+    counts: {
+        cntGames: number;
+        cntMoves: number;
+        skippedGames?: number;
+        errors?: AnalyzeError[];
+    }[],
     durationMs: number,
 ): AnalyzeResult {
     const runs: AnalyzeRunResult[] = counts.map(({ cntGames, cntMoves }) => ({
@@ -19,14 +26,33 @@ function buildAnalyzeResult(
 
     const games = runs.reduce((sum, run) => sum + run.games, 0);
     const moves = runs.reduce((sum, run) => sum + run.moves, 0);
+    const skippedGames = counts.reduce((sum, c) => sum + (c.skippedGames ?? 0), 0);
 
-    return {
+    const errors: AnalyzeError[] = [];
+    for (const c of counts) {
+        if (c.errors) {
+            for (const err of c.errors) {
+                collectError(errors, err);
+            }
+        }
+    }
+
+    const result: AnalyzeResult = {
         durationMs,
         games,
         moves,
         movesPerSecond: durationMs > 0 ? Math.round(moves / (durationMs / 1000)) : 0,
         runs,
     };
+
+    if (skippedGames > 0) {
+        result.skippedGames = skippedGames;
+    }
+    if (errors.length > 0) {
+        result.errors = errors.slice(0, MAX_COLLECTED_ERRORS);
+    }
+
+    return result;
 }
 
 /**
@@ -36,22 +62,13 @@ export async function analyzePGN(
     pathToPgn: string,
     options?: AnalyzeOptions,
 ): Promise<AnalyzeResult> {
-    const { configs, multithreadCfg } = normalizeAnalyzeOptions(options);
-    const gameProcessor = new GameProcessor(configs, multithreadCfg);
+    const { configs, multithreadCfg, onError } = normalizeAnalyzeOptions(options);
+    const gameProcessor = new GameProcessor(configs, multithreadCfg, onError);
 
     const t0 = performance.now();
-
-    try {
-        const counts = await gameProcessor.processPGN(pathToPgn);
-        const durationMs = performance.now() - t0;
-        return buildAnalyzeResult(counts, durationMs);
-    } catch (err) {
-        console.error(
-            'Error occurred during processing. This is probably a bug in the library or you are using an unkown PGN format. Aborting...',
-        );
-        console.error(err);
-        throw err;
-    }
+    const counts = await gameProcessor.processPGN(pathToPgn);
+    const durationMs = performance.now() - t0;
+    return buildAnalyzeResult(counts, durationMs);
 }
 
 /** Print {@link HeatmapData} to the terminal. */

@@ -1,4 +1,5 @@
 import { algebraicToCoordsAt } from '#board/board-coords';
+import { ReplayFailure } from '#replay/replay-failure';
 import type SanContext from '#replay/san-context';
 import type { PieceToken } from '#types/tokens';
 
@@ -88,7 +89,9 @@ export default class SanApplier {
         const board = this.ctx.board;
         const tokenChar = san.charCodeAt(0);
         const token = PIECE_TOKEN_BY_CHAR[tokenChar];
-        if (!token) return;
+        if (!token) {
+            throw new ReplayFailure('UnknownToken', `Unknown piece token in SAN: ${san}`);
+        }
 
         const end = san.length;
         const to = algebraicToCoordsAt(san, end);

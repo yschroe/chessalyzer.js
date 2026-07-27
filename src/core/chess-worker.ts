@@ -8,6 +8,7 @@ import { resolveReplayPolicy } from '#replay/replay-policy';
 import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
 
 const initData = workerData as WorkerInitData | undefined;
+const onErrorPolicy: 'abort' | 'skip-game' = initData?.onError ?? 'abort';
 
 /** One GameReplayer per worker thread, reused across batches. */
 const gameReplayer = new GameReplayer();
@@ -26,14 +27,25 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
     });
 
     for (const game of games) {
-        gameReplayer.processGame(game, cfg, replay);
+        gameReplayer.processGame(
+            game,
+            cfg,
+            replay,
+            cfg.processedGames + cfg.skippedGames,
+            onErrorPolicy,
+        );
     }
 
     const result: WorkerMessage = {
         cntMoves: cfg.processedMoves,
         cntGames: cfg.processedGames,
         idxConfig: msg.idxConfig,
+        skippedGames: cfg.skippedGames,
     };
+
+    if (cfg.errors.length > 0) {
+        result.errors = cfg.errors;
+    }
 
     if (hasTrackers) {
         result.gameTrackers = cfg.trackers.game;

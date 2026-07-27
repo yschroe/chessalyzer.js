@@ -1,10 +1,11 @@
+import { collectError } from '#core/analyze-errors';
 import type { GameAndMoveCount } from '#types/analysis';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { WorkerMessage } from '#types/worker';
 
 /**
  * Merge one worker batch into the matching main-thread config (trackers + counters).
- * Callers must already have rejected batch-level `result.error` / transport errors.
+ * Callers must already have rejected batch-level `result.error` / transport errors when aborting.
  */
 function mergeWorkerResult(
     configs: GameProcessorAnalysisConfigFull[],
@@ -12,7 +13,8 @@ function mergeWorkerResult(
 ): void {
     if (result.error) throw new Error(result.error);
 
-    const { idxConfig, gameTrackers, moveTrackers, cntMoves, cntGames } = result;
+    const { idxConfig, gameTrackers, moveTrackers, cntMoves, cntGames, skippedGames, errors } =
+        result;
 
     const cfg = configs[idxConfig];
     if (!cfg) return;
@@ -33,6 +35,13 @@ function mergeWorkerResult(
     }
     cfg.processedMoves += cntMoves;
     cfg.processedGames += cntGames;
+    cfg.skippedGames += skippedGames ?? 0;
+
+    if (errors) {
+        for (const err of errors) {
+            collectError(cfg.errors, err);
+        }
+    }
 
     if (cfg.processedGames >= cfg.config.cntGames) {
         cfg.isDone = true;
@@ -79,5 +88,7 @@ export function finishTrackers(configs: GameProcessorAnalysisConfigFull[]): Game
     return configs.map((cfg) => ({
         cntGames: cfg.processedGames,
         cntMoves: cfg.processedMoves,
+        skippedGames: cfg.skippedGames,
+        errors: cfg.errors.length > 0 ? cfg.errors : undefined,
     }));
 }

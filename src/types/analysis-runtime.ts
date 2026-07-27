@@ -1,3 +1,4 @@
+import type { AnalyzeError } from '#types/errors';
 import type { Game } from '#types/game';
 import type { Tracker, TrackerConfig } from '#types/tracker';
 
@@ -13,6 +14,8 @@ export interface GameProcessorAnalysisConfig {
     trackers: { move: Tracker[]; game: Tracker[] };
     processedMoves: number;
     processedGames: number;
+    skippedGames: number;
+    errors: AnalyzeError[];
 }
 
 /** Main-thread processor config including serializable tracker metadata for workers. */

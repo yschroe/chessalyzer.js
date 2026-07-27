@@ -1,4 +1,5 @@
 import type ChessBoard from '#board/chess-board';
+import { ReplayFailure } from '#replay/replay-failure';
 import type { PieceToken, PlayerColor } from '#types/tokens';
 
 /**
@@ -14,11 +15,16 @@ DIAG[81] = 1; // Q
 DIAG[66] = 1; // B
 
 /** Thrown when no candidate piece can legally reach the target square. */
-class MoveNotFoundException extends Error {
-    constructor(token: string, player: PlayerColor, tarRow: number, tarCol: number) {
-        super(`${player}: No piece for move ${token} to (${tarRow},${tarCol}) found!`);
-        this.name = 'MoveNotFoundError';
-    }
+function moveNotFoundFailure(
+    token: string,
+    player: PlayerColor,
+    tarRow: number,
+    tarCol: number,
+): ReplayFailure {
+    return new ReplayFailure(
+        'IllegalMove',
+        `${player}: No piece for move ${token} to (${tarRow},${tarCol}) found!`,
+    );
 }
 
 /**
@@ -52,7 +58,7 @@ export default class PieceFinder {
     ): number[] {
         const [tarRow, tarCol] = toPosition;
         if (tarRow === undefined || tarCol === undefined) {
-            throw new MoveNotFoundException(token, player, -1, -1);
+            throw moveNotFoundFailure(token, player, -1, -1);
         }
 
         const validPieces = this.board.getPositionsForToken(player, token);
@@ -61,7 +67,7 @@ export default class PieceFinder {
         if (len === 1) {
             const only = validPieces[0];
             if (!only) {
-                throw new MoveNotFoundException(token, player, tarRow, tarCol);
+                throw moveNotFoundFailure(token, player, tarRow, tarCol);
             }
             return only;
         }
@@ -103,7 +109,7 @@ export default class PieceFinder {
         if (filtered.length === 1) {
             const only = filtered[0];
             if (!only) {
-                throw new MoveNotFoundException(token, player, tarRow, tarCol);
+                throw moveNotFoundFailure(token, player, tarRow, tarCol);
             }
             return only;
         }
@@ -136,7 +142,7 @@ export default class PieceFinder {
             }
         }
 
-        throw new MoveNotFoundException(token, player, tarRow, tarCol);
+        throw moveNotFoundFailure(token, player, tarRow, tarCol);
     }
 
     /**
