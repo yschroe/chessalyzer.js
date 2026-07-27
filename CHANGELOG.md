@@ -11,6 +11,8 @@
 - Multi-run analyses via `runs: [...]` instead of passing an array of configs.
 - Tracker `add()` renamed to `merge()`; custom MT trackers use `static workerModule = import.meta.url` and `static trackerId`.
 - Export `MoveTracker`, `GameTrackerBase`, and public config/result types.
+- Built-in tracker stats aligned with `AnalyzeResult`: `GameTracker.cntGames` → `games`; `TileTracker.cntMovesGame` / `cntMovesTotal` → `movesGame` / `movesTotal`.
+- Tracker modules renamed: `game-tracker.ts`, `piece-tracker.ts`, `tile/tile-tracker.ts` (drop misleading `-base` suffix on concrete exports).
 
 ### Changes
 
@@ -18,6 +20,9 @@
 - Tracker config is sent once per worker via `workerData`, not per batch.
 - Multithreaded `filter` / `maxGames` use the worker-chunk path (single parse per chunk; no PGN re-encode). JS `filter` functions replay on the main thread.
 - Removed deprecated `workers.batchSize` option (legacy re-encode path).
+- Count-only runs (no move trackers) skip board replay by default (~10% throughput on large fixtures; Node, M-series, 2× Lichess 2014-09). Set `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = false` in `replay-policy.ts` to always replay SAN.
+- Internal processor counters aligned with public `maxGames` naming; `@internal` types moved to `analysis-runtime.ts`.
+- `TileTracker` counts castling as one move (rook leg excluded from move counter).
 
 ### Ideas
 

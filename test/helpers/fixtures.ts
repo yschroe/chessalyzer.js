@@ -18,14 +18,14 @@ const TMP_DIR = join(TEST_DIR, '.tmp');
 export type FixtureId = keyof typeof manifest.fixtures;
 
 interface TileTrackerGolden {
-    cntMovesTotal: number;
+    movesTotal: number;
     e4TileOccAll: number;
 }
 
 export interface FixtureEntry {
     file: string;
     description: string;
-    expected: { cntGames: number; cntMoves: number; skippedGames?: number };
+    expected: { games: number; moves: number; skippedGames?: number };
     analyzeOptions?: { onError?: 'abort' | 'skip-game' };
     golden?: {
         tileTracker?: TileTrackerGolden;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
 import { normalizeAnalysisConfigs } from '#core/analysis-config';
-import type { AnalysisConfig } from '#types/analysis';
+import type { AnalysisConfig } from '#types/analysis-runtime';
 
 describe('normalizeAnalysisConfigs', () => {
     const baseCfg: AnalysisConfig = { trackers: [] };
@@ -16,18 +16,18 @@ describe('normalizeAnalysisConfigs', () => {
 
     it('sets readInHeader when maxGames is finite', () => {
         const { readInHeader } = normalizeAnalysisConfigs(
-            [{ ...baseCfg, config: { cntGames: 10 } }],
+            [{ ...baseCfg, config: { maxGames: 10 } }],
             {},
         );
         expect(readInHeader).toBe(false);
     });
 
-    it('normalizes maxGames to cntGames on each config', () => {
+    it('normalizes maxGames on each config', () => {
         const { configs } = normalizeAnalysisConfigs(
-            [{ ...baseCfg, config: { cntGames: 100 } }],
+            [{ ...baseCfg, config: { maxGames: 100 } }],
             {},
         );
-        expect(configs[0]?.config.cntGames).toBe(100);
+        expect(configs[0]?.config.maxGames).toBe(100);
         expect(configs[0]?.config.hasFilter).toBe(false);
     });
 

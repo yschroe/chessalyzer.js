@@ -1,13 +1,13 @@
-import { isTrackedPiece } from '#tracker/piece-tracker-base';
-import type PieceTrackerBase from '#tracker/piece-tracker-base';
+import { isTrackedPiece } from '#tracker/piece-tracker';
+import type PieceTracker from '#tracker/piece-tracker';
 import type { SquareData } from '#types/game';
 
-function isPieceTracker(data: unknown): data is PieceTrackerBase {
+function isPieceTracker(data: unknown): data is PieceTracker {
     return typeof data === 'object' && data !== null && 'b' in data && 'w' in data;
 }
 
 function captureCount(
-    data: PieceTrackerBase,
+    data: PieceTracker,
     takerColor: 'b' | 'w',
     takerName: string,
     takenName: string,

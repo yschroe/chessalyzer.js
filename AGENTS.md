@@ -10,7 +10,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 **Pipeline (high level):**
 
-1. **Line reading** — `readLinesFast` / `readPgnChunks` in `src/pgn/line-reader.ts` stream the file with minimal overhead.
+1. **Line reading** — `readLinesFast` in `src/pgn/line-reader.ts` and `readPgnChunks` in `src/pgn/pgn-chunks.ts` stream the file with minimal overhead.
 2. **Chunking (multithreaded mode)** — the main thread splits the PGN into byte-sized chunks aligned to complete games and dispatches them to workers.
 3. **Assemble** — workers tokenize movetext and build game objects (`src/pgn/`).
 4. **Replay** — SAN is applied to a board (`src/replay/`), with explicit policy `'none' | 'actions'` (or `'skip'` when gated).
@@ -42,7 +42,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 1. **Single-threaded** — `workers: false`. Main thread: `readLinesFast` → `GameAssembler` → `GameReplayer` (policy from `resolveReplayPolicy`).
 2. **Multithreaded (worker-chunk)** — default. Main thread: `readPgnChunks` → workers assemble once per chunk. Without a `filter`, workers also replay and merge tracker state. With a `filter`, workers return parsed games and the main thread applies the JS predicate and replay (trackers stay on the main thread for that run). `maxGames` is enforced on workers when there is no filter, and on the main thread after filtering when there is.
 
-**Replay policy:** callers pass `resolveReplayPolicy(hasMoveTrackers)` (`'skip' | 'none' | 'actions'`) into `GameReplayer.processGame`. Today this always replays (`none` or `actions`). Set `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` in `src/replay/replay-policy.ts` to opt into skipping board replay when there are no move trackers — measure with `bench:perf` before making that the default.
+**Replay policy:** `resolveReplayPolicy(hasMoveTrackers)` returns `'skip' | 'none' | 'actions'`. Count-only runs (no move trackers) skip board replay by default (`SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = true` in `src/replay/replay-policy.ts`). Move trackers always get `'actions'`; game-only trackers get `'none'` when replay runs. Flip the constant to `false` to always replay SAN (e.g. to surface replay errors on count-only runs).
 
 ## Performance
 
@@ -50,7 +50,7 @@ This library has been **carefully tuned for performance**. Some code may look un
 
 Examples of deliberate choices:
 
-- **Manual `Symbol.asyncIterator` instead of `async function*`** in `readPgnChunks` (~7–10% faster than async generators on large files). See `bench/exploratory/bench-pgn-chunks-iterator.ts`.
+- **Manual `Symbol.asyncIterator` instead of `async function*`** in `readPgnChunks` (~7–10% faster than async generators on large files).
 - **`Array.concat` vs `push`** in specific hot loops where benchmarks showed a win. Run `npm run bench:atomic -- array` before changing append patterns.
 - **Fixed-size circular-buffer queue** in `readLinesFast` (Node-style `FixedQueue`) to avoid shift-from-array costs.
 - **Worker-side parsing** with transferable UTF-8 chunk bytes to minimize main-thread work and copying.
@@ -60,7 +60,7 @@ Examples of deliberate choices:
 
 1. **Measure before and after** any change that touches parsing, I/O, chunking, worker dispatch, or tracker hot paths.
 2. **Prefer existing benchmarks.** Run the relevant script and compare mean/min and coefficient of variation (CV).
-3. **Add a bench when introducing a non-obvious optimization** so the rationale is reproducible (see `bench/exploratory/bench-pgn-chunks-iterator.ts` as a template).
+3. **Add a bench when introducing a non-obvious optimization** so the rationale is reproducible (see `bench/exploratory/` scripts as templates).
 4. **Do not regress throughput for readability alone.** If a refactor is needed, preserve behavior and verify performance.
 5. **Use a large fixture for end-to-end checks.** Short runs (~3 s) have high variance because startup dominates. Use the perf bench below.
 
@@ -74,10 +74,10 @@ Examples of deliberate choices:
 
 **Exploratory scripts** (run directly with `bun bench/exploratory/<name>.ts`):
 
-- `bench-pgn-chunks-iterator.ts` — async generator vs manual iterator
 - `bench-chunk-sizes.ts` — chunk size × worker count sweep
 - `profile-bottlenecks-node.ts` — staged pipeline profile
 - `line-reader-readline.ts` — readline vs `readLinesFast`
+- `bench-worker-overhead.ts` — worker pool startup cost
 
 **Perf bench env vars:**
 

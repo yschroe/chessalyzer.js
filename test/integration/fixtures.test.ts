@@ -33,8 +33,8 @@ describe('Fixtures', () => {
 
             it('parses the expected number of games and moves', () => {
                 const expected = getFixtureEntry(id).expected;
-                expect(data.games).toBe(expected.cntGames);
-                expect(data.moves).toBe(expected.cntMoves);
+                expect(data.games).toBe(expected.games);
+                expect(data.moves).toBe(expected.moves);
                 if (expected.skippedGames !== undefined) {
                     expect(data.skippedGames).toBe(expected.skippedGames);
                 }
@@ -102,14 +102,14 @@ describe('Fixtures', () => {
         it('processes many games from a repeated small fixture', async () => {
             const path = await repeatPgn('results-mix', 20);
             const data = await analyzePGN(path, { workers: false });
-            expect(data.games).toBe(fixtureExpected('results-mix').cntGames * 20);
+            expect(data.games).toBe(fixtureExpected('results-mix').games * 20);
         });
 
         it('keeps tracker counts consistent at scale', async () => {
             const path = await repeatPgn('results-mix', 50);
             const gameTracker = new GameTracker();
             const data = await analyzePGN(path, { trackers: [gameTracker], workers: false });
-            expect(data.games).toBe(gameTracker.cntGames);
+            expect(data.games).toBe(gameTracker.games);
             const resultsSum = Object.values(gameTracker.results).reduce((a, c) => a + c, 0);
             expect(resultsSum).toBe(data.games);
         });
@@ -125,10 +125,10 @@ describe('Fixtures', () => {
                 runs: [{ trackers: [trackerA] }, { trackers: [trackerB] }],
             });
 
-            expect(data.runs[0]?.games).toBe(expected.cntGames);
-            expect(data.runs[1]?.games).toBe(expected.cntGames);
-            expect(trackerA.cntGames).toBe(expected.cntGames);
-            expect(trackerB.cntGames).toBe(expected.cntGames);
+            expect(data.runs[0]?.games).toBe(expected.games);
+            expect(data.runs[1]?.games).toBe(expected.games);
+            expect(trackerA.games).toBe(expected.games);
+            expect(trackerB.games).toBe(expected.games);
         });
     });
 
@@ -139,7 +139,7 @@ describe('Fixtures', () => {
                 trackers: [gameTracker],
             });
             expect(data.games).toBe(1);
-            expect(gameTracker.cntGames).toBe(1);
+            expect(gameTracker.games).toBe(1);
         });
 
         it('runs PieceTracker on promotion', async () => {
@@ -168,21 +168,21 @@ describe('Fixtures', () => {
                 });
 
                 expect(data.games).toBe(1);
-                expect(tileTracker.cntMovesTotal).toBe(golden.cntMovesTotal);
+                expect(tileTracker.movesTotal).toBe(golden.movesTotal);
                 const heat = tileTracker.generateHeatmap('TILE_OCC_ALL', 'e4');
                 expect(heat.map[4]?.[4]).toBe(golden.e4TileOccAll);
             });
         }
 
-        it('counts castling as two move actions (known behavior)', async () => {
+        it('counts castling as one move (rook leg excluded from move counter)', async () => {
             const tileTracker = new TileTracker();
             await analyzePGN(fixturePath('en-passant'), {
                 trackers: [tileTracker],
                 workers: false,
             });
 
-            expect(tileTracker.cntMovesTotal).toBe(golden.cntMovesTotal);
-            expect(fixtureExpected('en-passant').cntMoves).toBe(49);
+            expect(tileTracker.movesTotal).toBe(golden.movesTotal);
+            expect(tileTracker.movesTotal).toBe(fixtureExpected('en-passant').moves);
         });
     });
 });

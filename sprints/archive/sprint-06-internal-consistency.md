@@ -1,5 +1,7 @@
 # Sprint 06 — Internal consistency & small perf wins
 
+**Status:** Completed (2026-07)
+
 **Effort:** Small–Medium (1–2 sessions)  
 **Impact:** Medium — contributor ergonomics and optional throughput for count-only runs  
 **Depends on:** None (can run in parallel with Sprint 01)
@@ -25,7 +27,7 @@ Align internal naming with the v4 public API, tidy types/exports, and enable opt
 
 - [ ] **Clarify tracker file exports**
     - `game-tracker-base.ts` exports default `GameTracker` (concrete) — rename file to `game-tracker.ts` OR re-export clearly in index
-    - Consider consistent named exports for built-ins (optional breaking change — defer to v5 if needed)
+    - Consider consistent named exports for built-ins (shipped in v4: tracker modules renamed, public counter fields aligned with `AnalyzeResult`)
 
 ### Code duplication (safe)
 

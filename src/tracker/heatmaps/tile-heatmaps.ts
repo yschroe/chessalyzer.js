@@ -1,9 +1,9 @@
 import { tileCellAt } from '#tracker/tile/tile-grid';
-import TileTrackerBase from '#tracker/tile/tile-tracker-base';
+import TileTracker from '#tracker/tile/tile-tracker';
 import type { SquareData } from '#types/game';
 
-function isTileTracker(data: unknown): data is TileTrackerBase {
-    return typeof data === 'object' && data !== null && 'tiles' in data && 'cntMovesTotal' in data;
+function isTileTracker(data: unknown): data is TileTracker {
+    return typeof data === 'object' && data !== null && 'tiles' in data && 'movesTotal' in data;
 }
 
 export default {
@@ -16,7 +16,7 @@ export default {
             const cell = tileCellAt(data.tiles, loopSqrData.coords);
             if (!cell) return 0;
             let val = cell.w.wasOn + cell.b.wasOn;
-            val = (val * 100) / data.cntMovesTotal;
+            val = (val * 100) / data.movesTotal;
             return val;
         },
     },
@@ -29,7 +29,7 @@ export default {
             const cell = tileCellAt(data.tiles, loopSqrData.coords);
             if (!cell) return 0;
             let val = cell.w.wasOn;
-            val = (val * 100) / data.cntMovesTotal;
+            val = (val * 100) / data.movesTotal;
             return val;
         },
     },
@@ -42,7 +42,7 @@ export default {
             const cell = tileCellAt(data.tiles, loopSqrData.coords);
             if (!cell) return 0;
             let val = cell.b.wasOn;
-            val = (val * 100) / data.cntMovesTotal;
+            val = (val * 100) / data.movesTotal;
             return val;
         },
     },
@@ -60,7 +60,7 @@ export default {
                 const pieceStats = cell[piece.color][piece.name];
                 val = pieceStats?.wasOn ?? 0;
             }
-            val = (val * 100) / data.cntMovesTotal;
+            val = (val * 100) / data.movesTotal;
             return val;
         },
     },

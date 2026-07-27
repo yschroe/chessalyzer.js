@@ -54,7 +54,7 @@ Corpus tests use `describe.skip` when `test/corpus/asorted-games.pgn` is missing
 | Worker error propagation | —               | yes           | `workers.test.ts`, `tracker-merge.test.ts`   |
 | Tracker merge unit       | —               | —             | `src/core/__tests__/tracker-merge.test.ts`   |
 
-**Corpus-only gaps:** GameTracker ECO totals, PieceTracker heatmaps, and large-scale filter counts require `test/corpus/asorted-games.pgn`. TileTracker castling double-count (two move actions per castle) is documented in fixture golden tests.
+**Corpus-only gaps:** GameTracker ECO totals, PieceTracker heatmaps, and large-scale filter counts require `test/corpus/asorted-games.pgn`.
 
 ## Commands
 

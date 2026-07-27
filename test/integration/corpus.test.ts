@@ -29,11 +29,11 @@ if (corpusAvailable) {
             });
 
             it('processed all games in the corpus file', () => {
-                expect(data.games).toBe(entry.expected.cntGames);
+                expect(data.games).toBe(entry.expected.games);
             });
 
             it('processed all moves in the corpus file', () => {
-                expect(data.moves).toBe(entry.expected.cntMoves);
+                expect(data.moves).toBe(entry.expected.moves);
             });
         });
 
@@ -63,7 +63,7 @@ if (corpusAvailable) {
             it('runs a single tracker across the full corpus', async () => {
                 const gameTracker = new GameTracker();
                 const data = await analyzePGN(path, { trackers: [gameTracker] });
-                expect(data.games).toBe(entry.expected.cntGames);
+                expect(data.games).toBe(entry.expected.games);
             });
 
             it('runs multiple configs with different filters', async () => {
@@ -89,8 +89,8 @@ if (corpusAvailable) {
 
             it('runs in single-threaded mode', async () => {
                 const data = await analyzePGN(path, { workers: false });
-                expect(data.games).toBe(entry.expected.cntGames);
-                expect(data.moves).toBe(entry.expected.cntMoves);
+                expect(data.games).toBe(entry.expected.games);
+                expect(data.moves).toBe(entry.expected.moves);
             });
         });
 
@@ -103,7 +103,7 @@ if (corpusAvailable) {
                 });
 
                 it('matches parser game count', () => {
-                    expect(data.games).toBe(gameTracker.cntGames);
+                    expect(data.games).toBe(gameTracker.games);
                 });
 
                 it('sums result counts to total games', () => {
@@ -123,7 +123,7 @@ if (corpusAvailable) {
                 });
 
                 it('matches parser game count', () => {
-                    expect(data.games).toBe(gameTracker.cntGames);
+                    expect(data.games).toBe(gameTracker.games);
                 });
             });
 

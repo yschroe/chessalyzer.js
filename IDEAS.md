@@ -11,8 +11,9 @@ For what exists now, see [README.md](./README.md) and [AGENTS.md](./AGENTS.md).
 Today the library is optimized for **batch analysis**, not general-purpose PGN I/O:
 
 - Single public entry point: `analyzePGN(path, options?)`
-- Internal pipeline: stream lines → tokenize movetext → **always replay SAN on a board** → optionally run trackers
-- Fast path when no move trackers: `SanApplier` (direct board mutation, no `Action` objects)
+- Internal pipeline: stream lines → tokenize movetext → replay SAN when needed → optionally run trackers
+- Count-only runs (no move trackers): board replay skipped by default; move counts come from tokenized SAN list length
+- When replay runs without move trackers: `SanApplier` (direct board mutation, no `Action` objects)
 - Tracker path: `SanToActions` → `Action[]` → `board.applyActions()`
 - Assumes **standard chess from the initial position**, **valid Lichess-style PGN**, **mainline only** (parentheses stripped)
 
@@ -128,13 +129,13 @@ Ideas:
 
 Today several behaviors are hardcoded or inferred:
 
-| Behavior          | Today                           | Could become                                          |
-| ----------------- | ------------------------------- | ----------------------------------------------------- |
-| Read headers      | Auto if filter / game tracker   | `parseConfig.headers: true \| false \| 'filter-only'` |
-| Worker-side parse | Auto unless filter / `cntGames` | Explicit `parseLocation: 'main' \| 'worker'`          |
-| Comment handling  | Always strip                    | `'strip' \| 'preserve' \| 'parse-commands'`           |
-| Variations        | Always strip (parens)           | `'strip' \| 'mainline-only' \| 'tree'`                |
-| Error policy      | Abort entire run                | `'abort' \| 'skip-game' \| 'skip-move' \| 'collect'`  |
+| Behavior          | Today                                  | Could become                                          |
+| ----------------- | -------------------------------------- | ----------------------------------------------------- |
+| Read headers      | Auto if filter / game tracker          | `parseConfig.headers: true \| false \| 'filter-only'` |
+| Worker-side parse | Auto when filter present (`parseOnly`) | Explicit `parseLocation: 'main' \| 'worker'`          |
+| Comment handling  | Always strip                           | `'strip' \| 'preserve' \| 'parse-commands'`           |
+| Variations        | Always strip (parens)                  | `'strip' \| 'mainline-only' \| 'tree'`                |
+| Error policy      | `'abort'` or `'skip-game'` (shipped)   | `'skip-move'`, richer collect modes                   |
 
 ---
 
@@ -144,14 +145,17 @@ Today several behaviors are hardcoded or inferred:
 - **FEN after each move** — optional; expensive but useful for debugging
 - **Castling rights / en passant square** — not tracked on `ChessBoard` today; required for strict validation and FEN export
 - **Chess960** — different castling semantics; separate board or rules adapter
-- **Castling double-count** — `SanToActions.castle()` emits two `move` actions; `TileTracker` has a TODO to treat castling as one move
+
+**Done:** `TileTracker` counts castling as one move (rook leg excluded from move counter; king/rook grid updates still apply both legs).
 
 ---
 
 ## Error handling & robustness
 
-- **Per-game isolation** — one bad game should not abort a million-game run (configurable)
-- **Structured errors** — return `{ ok, errors[] }` instead of logging + rethrow in `GameReplayer.processGame()`
+**Shipped:** `onError: 'abort' | 'skip-game'`, typed `AnalyzeError` / `ReplayError`, per-game skip with collected errors on `AnalyzeResult`.
+
+Still open:
+
 - **Corpus-driven hardening** — extend `test/corpus/` with RAV, FEN, variant, and intentionally illegal fixtures once validate mode exists
 - **DoS resistance** — budget limits for comment depth, variation depth, game length (cf. chessops `PgnParser` budget)
 
@@ -159,12 +163,12 @@ Today several behaviors are hardcoded or inferred:
 
 ## Multithreading & workers
 
-From CHANGELOG / known limitations:
+**Shipped:** lazy worker pool, tracker config once per worker via `workerData`, `trackerId` + `workerModule` for custom trackers.
 
-- Lazy worker creation (don't spawn `availableParallelism()` threads for small files)
-- Send tracker config once per worker instead of per batch
-- Defer result merging where possible
-- Custom tracker `workerModule` + dynamic `import()` remains hacky; document or replace with a registration API
+Still open:
+
+- Defer result merging until pool drain (see CHANGELOG Unreleased Ideas)
+- Document or replace custom tracker `workerModule` dynamic import with a registration API
 
 ---
 
@@ -191,7 +195,7 @@ If the goal is “PGN library” rather than “batch analyzer only”, a reason
 
 1. **Public parse API** with `tokenize` and `parse` modes (no replay)
 2. **Explicit replay config** — document today’s behavior as `trust`; keep as default
-3. **Error policy** — `skip-game` for production batch runs
+3. **Error policy** — ~~`skip-game` for production batch runs~~ (shipped in v4)
 4. **Comment / NAG preservation** (optional flag)
 5. **Validate mode** — correctness path, slower
 6. **RAV / FEN / variants** — larger design effort
@@ -200,10 +204,7 @@ If the goal is “PGN library” rather than “batch analyzer only”, a reason
 
 ## Related issues in code today
 
-| Location                                | Note                                                                         |
-| --------------------------------------- | ---------------------------------------------------------------------------- |
-| `src/tracker/tile/tile-tracker-base.ts` | TODO: castling counted as two moves                                          |
-| `src/types/analysis-runtime.ts`         | Processor-only config/state (split from public analysis types)               |
-| `src/replay/replay-policy.ts`           | Internal `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` defaults false — opt-in skip    |
-| `src/core/analyze.ts`                   | Errors attributed to “bug or unknown PGN format” — no structured diagnostics |
-| `src/pgn/movetext-tokenizer.ts`         | RAVs and comments share the same strip regex                                 |
+| Location                        | Note                                                                |
+| ------------------------------- | ------------------------------------------------------------------- |
+| `src/pgn/movetext-tokenizer.ts` | RAVs and comments share the same strip regex                        |
+| `src/replay/replay-policy.ts`   | `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` defaults true (count-only skip) |

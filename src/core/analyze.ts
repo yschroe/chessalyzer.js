@@ -11,17 +11,17 @@ import type { HeatmapData } from '#types/tracker';
 
 function buildAnalyzeResult(
     counts: {
-        cntGames: number;
-        cntMoves: number;
+        games: number;
+        moves: number;
         skippedGames?: number;
         errors?: AnalyzeError[];
     }[],
     durationMs: number,
 ): AnalyzeResult {
-    const runs: AnalyzeRunResult[] = counts.map(({ cntGames, cntMoves }) => ({
-        games: cntGames,
-        moves: cntMoves,
-        movesPerSecond: durationMs > 0 ? Math.round(cntMoves / (durationMs / 1000)) : 0,
+    const runs: AnalyzeRunResult[] = counts.map(({ games, moves }) => ({
+        games,
+        moves,
+        movesPerSecond: durationMs > 0 ? Math.round(moves / (durationMs / 1000)) : 0,
     }));
 
     const games = runs.reduce((sum, run) => sum + run.games, 0);

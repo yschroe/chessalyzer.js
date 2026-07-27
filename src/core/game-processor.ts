@@ -10,12 +10,49 @@ import { readLinesFast } from '#pgn/line-reader';
 import { readPgnChunks } from '#pgn/pgn-chunks';
 import GameReplayer from '#replay/game-replayer';
 import { resolveReplayPolicy } from '#replay/replay-policy';
-import type { AnalysisConfig, GameAndMoveCount, MultithreadConfig } from '#types/analysis';
-import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
+import type {
+    AnalysisConfig,
+    GameAndMoveCount,
+    GameProcessorAnalysisConfigFull,
+    MultithreadConfig,
+} from '#types/analysis-runtime';
 import type { WorkerInitData, WorkerTaskData } from '#types/worker';
 
 /** Path to the worker file. */
 const WORKER_PATH = join(import.meta.dirname, 'chess-worker.js');
+
+interface FatalErrorGate {
+    fatalPromise: Promise<never>;
+    onFatal: (err: Error) => void;
+    getFatalError: () => Error | undefined;
+}
+
+/** Track the first worker/callback failure and unblock pool completion waits. */
+function createFatalErrorGate(): FatalErrorGate {
+    let fatalError: Error | undefined;
+    let rejectFatal: ((err: Error) => void) | undefined;
+    const fatalPromise = new Promise<never>((_, reject) => {
+        rejectFatal = reject;
+    });
+
+    return {
+        fatalPromise,
+        onFatal: (err: Error) => {
+            fatalError = err;
+            rejectFatal?.(err);
+        },
+        getFatalError: () => fatalError,
+    };
+}
+
+/** Wait for worker pool drain, racing against the first fatal callback error. */
+async function awaitWorkerPoolDone(workerPool: WorkerPool, gate: FatalErrorGate): Promise<void> {
+    const fatalError = gate.getFatalError();
+    if (fatalError) throw fatalError;
+
+    workerPool.flagNotifyWhenDone = true;
+    await Promise.race([EventEmitter.once(workerPool, 'done'), gate.fatalPromise]);
+}
 
 /**
  * Orchestrates PGN I/O, optional worker dispatch, SAN replay, and tracker merge.
@@ -69,33 +106,22 @@ class GameProcessor {
         };
 
         const gameReplayer = new GameReplayer();
+        const gate = createFatalErrorGate();
 
-        // Track the first worker failure and unblock any wait on pool completion.
-        // Without this, a thrown callback error leaves the pool waiting forever on 'done'.
-        let fatalError: Error | undefined;
-        let rejectFatal: ((err: Error) => void) | undefined;
-        const fatalPromise = new Promise<never>((_, reject) => {
-            rejectFatal = reject;
+        const handleWorkerResult = createWorkerResultHandler(this.configs, gate.onFatal, {
+            gameReplayer,
+            onError: this.onError,
         });
-
-        const handleWorkerResult = createWorkerResultHandler(
-            this.configs,
-            (err) => {
-                fatalError = err;
-                rejectFatal?.(err);
-            },
-            { gameReplayer, onError: this.onError },
-        );
 
         try {
             chunkLoop: for await (const chunk of readPgnChunks(path, chunkConfig)) {
-                if (fatalError) break;
+                if (gate.getFatalError()) break;
 
                 for (const [idxConfig, cfg] of this.configs.entries()) {
                     if (cfg.isDone) continue;
 
-                    if (!cfg.config.hasFilter && cfg.config.cntGames !== Infinity) {
-                        const remaining = cfg.config.cntGames - cfg.processedGames;
+                    if (!cfg.config.hasFilter && cfg.config.maxGames !== Infinity) {
+                        const remaining = cfg.config.maxGames - cfg.processedGames;
                         if (remaining <= 0) continue;
                     }
 
@@ -111,8 +137,8 @@ class GameProcessor {
                         readInHeader: cfg.config.hasFilter ? true : this.readInHeader,
                     };
 
-                    if (!cfg.config.hasFilter && cfg.config.cntGames !== Infinity) {
-                        task.remainingGames = cfg.config.cntGames - cfg.processedGames;
+                    if (!cfg.config.hasFilter && cfg.config.maxGames !== Infinity) {
+                        task.remainingGames = cfg.config.maxGames - cfg.processedGames;
                     }
 
                     workerPool.runTask(task, handleWorkerResult);
@@ -121,11 +147,7 @@ class GameProcessor {
                 if (this.configs.every((c) => c.isDone)) break chunkLoop;
             }
 
-            if (fatalError) throw fatalError;
-
-            workerPool.flagNotifyWhenDone = true;
-            // Race 'done' against fatalPromise so errors don't hang until all tasks finish.
-            await Promise.race([EventEmitter.once(workerPool, 'done'), fatalPromise]);
+            await awaitWorkerPoolDone(workerPool, gate);
 
             return finishTrackers(this.configs);
         } finally {
@@ -144,7 +166,7 @@ class GameProcessor {
 
             for (const cfg of this.configs) {
                 if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
-                    cfg.cntReadGames += 1;
+                    cfg.readGames += 1;
                     gameReplayer.processGame(
                         game,
                         cfg,
@@ -152,7 +174,7 @@ class GameProcessor {
                         cfg.processedGames + cfg.skippedGames,
                         this.onError,
                     );
-                    if (cfg.cntReadGames === cfg.config.cntGames) {
+                    if (cfg.readGames === cfg.config.maxGames) {
                         cfg.isDone = true;
                         if (this.configs.every((c) => c.isDone)) break lineLoop;
                     }

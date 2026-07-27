@@ -1,7 +1,7 @@
 import { collectError } from '#core/analyze-errors';
 import GameReplayer from '#replay/game-replayer';
 import { resolveReplayPolicy } from '#replay/replay-policy';
-import type { GameAndMoveCount } from '#types/analysis';
+import type { GameAndMoveCount } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { Game } from '#types/game';
 import type { WorkerMessage } from '#types/worker';
@@ -16,8 +16,7 @@ function mergeWorkerResult(
 ): void {
     if (result.error) throw new Error(result.error);
 
-    const { idxConfig, gameTrackers, moveTrackers, cntMoves, cntGames, skippedGames, errors } =
-        result;
+    const { idxConfig, gameTrackers, moveTrackers, moves, games, skippedGames, errors } = result;
 
     const cfg = configs[idxConfig];
     if (!cfg || cfg.isDone) return;
@@ -36,8 +35,8 @@ function mergeWorkerResult(
             if (tracker && data) tracker.merge?.(data);
         }
     }
-    cfg.processedMoves += cntMoves;
-    cfg.processedGames += cntGames;
+    cfg.processedMoves += moves;
+    cfg.processedGames += games;
     cfg.skippedGames += skippedGames ?? 0;
 
     if (errors) {
@@ -46,7 +45,7 @@ function mergeWorkerResult(
         }
     }
 
-    if (cfg.processedGames >= cfg.config.cntGames) {
+    if (cfg.processedGames >= cfg.config.maxGames) {
         cfg.isDone = true;
     }
 }
@@ -66,10 +65,10 @@ function mergeParsedGamesOnMain(
         if (cfg.isDone) break;
         if (cfg.config.hasFilter && !cfg.config.filter(game)) continue;
 
-        cfg.cntReadGames += 1;
+        cfg.readGames += 1;
         gameReplayer.processGame(game, cfg, replay, cfg.processedGames + cfg.skippedGames, onError);
 
-        if (cfg.cntReadGames === cfg.config.cntGames) {
+        if (cfg.readGames === cfg.config.maxGames) {
             cfg.isDone = true;
         }
     }
@@ -138,8 +137,8 @@ export function finishTrackers(configs: GameProcessorAnalysisConfigFull[]): Game
     }
 
     return configs.map((cfg) => ({
-        cntGames: cfg.processedGames,
-        cntMoves: cfg.processedMoves,
+        games: cfg.processedGames,
+        moves: cfg.processedMoves,
         skippedGames: cfg.skippedGames,
         errors: cfg.errors.length > 0 ? cfg.errors : undefined,
     }));

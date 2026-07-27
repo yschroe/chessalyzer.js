@@ -6,8 +6,8 @@
             "file": "asorted-games.pgn",
             "description": "Large Lichess export used for golden regression tests",
             "expected": {
-                "cntGames": 14630,
-                "cntMoves": 959243,
+                "games": 14630,
+                "moves": 959243,
                 "filters": {
                     "whiteWins": 7515,
                     "blackWins": 5128,

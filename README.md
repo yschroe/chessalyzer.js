@@ -40,7 +40,7 @@ A JavaScript library for batch analyzing chess games.
 npm install chessalyzer.js
 ```
 
-2. Import the library (ES module — see [this guide](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#file-esm-package-md)):
+2. Import the library:
 
 ```javascript
 import { analyzePGN, printHeatmap, TileTracker } from 'chessalyzer.js';
@@ -114,7 +114,7 @@ await analyzePGN('<pathToPgnFile>', {
 let func = (data, loopSqrData) => {
     const { coords } = loopSqrData;
     let val = data.tiles[coords[0]][coords[1]].w.wasOn;
-    val = (val * 100) / data.cntMovesTotal;
+    val = (val * 100) / data.movesTotal;
     return val;
 };
 
@@ -179,10 +179,10 @@ To use a custom tracker with your multithreaded analysis please see the importan
 
 # Heatmap generation functions
 
-The function you create for heatmap generation gets passed up to four parameters (inside `generateHeatMap(...)`):
+The function you create for heatmap generation gets passed up to four parameters (inside `generateHeatmap(...)`):
 
-1. `data`: The data that is the basis for the heatmap. Per default this data is the Tracker you called the `generateHeatMap(...)` function from itself.
-2. `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The `generateHeatMap(...)` function loops over every square of the board to calculate a heat map value for each tile. `sqrData` is an object with the following entries:
+1. `data`: The data that is the basis for the heatmap. Per default this data is the Tracker you called the `generateHeatmap(...)` function from itself.
+2. `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The `generateHeatmap(...)` function loops over every square of the board to calculate a heat map value for each tile. `sqrData` is an object with the following entries:
 
     ```typescript
     interface SquareData {
@@ -195,14 +195,14 @@ The function you create for heatmap generation gets passed up to four parameters
         // The piece that starts at the passed square. If no piece starts at the passed square, piece is null.
         piece: {
             // Name of the piece (e.g. 'Pa' for the a-pawn).
-            color: string;
-            // Color of the piece ('b' or 'w').
             name: string;
+            // Color of the piece ('b' or 'w').
+            color: string;
         };
     }
     ```
 
-3. `sqrData`: Contains informations about the square you passed into the `generateHeatMap()` function. The structure of `sqrData` is the same as of `loopSqrData`. You'll need this for extracting the values for the square / piece you are interested in. For example if you want to generate a heatmap for white's a pawn, the square for `sqrData` would be 'a2' (= starting position of the white a pawn).
+3. `sqrData`: Contains informations about the square you passed into the `generateHeatmap()` function. The structure of `sqrData` is the same as of `loopSqrData`. You'll need this for extracting the values for the square / piece you are interested in. For example if you want to generate a heatmap for white's a pawn, the square for `sqrData` would be 'a2' (= starting position of the white a pawn).
 
 4. `optData`: Optional data you may need in this function. For example, if you wanted to generate a heatmap to show the average position of a piece after X moves, you could pass that 'X' here.
 
@@ -214,13 +214,13 @@ chessalyzer.js comes with three built-in trackers, which can be directly importe
 
 `GameTracker`:
 
-- `result`
+- `results`
   An object which counts the results of the tracked games. Contains the keys `white`, `draw` and `black`
 
 - `ECO`
   Counts the ECO keys of the processed games. `ECO` is an object that contains the different keys, for example 'A00'.
 
-- `cntGames`  
+- `games`  
   Number of games processed
 
 `PieceTracker`:
@@ -242,7 +242,7 @@ chessalyzer.js comes with three built-in trackers, which can be directly importe
 
     These stats are also tracked for black and white as a whole. Simply omit the piece name to get the total stats of one side for a specific tile, e.g. `tiles[0][6].b.wasOn`.
 
-- `cntMovesTotal`: Amount of moves processed in total.
+- `movesTotal`: Amount of moves processed in total.
 
 ## Custom Trackers
 
@@ -281,7 +281,7 @@ merge(tracker) {
     this.results.white += tracker.results.white;
     this.results.black += tracker.results.black;
     this.results.draw += tracker.results.draw;
-    this.cntGames += tracker.cntGames;
+    this.games += tracker.games;
     this.time += tracker.time;
 }
 ```

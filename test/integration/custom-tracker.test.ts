@@ -13,8 +13,8 @@ describe('Custom tracker', () => {
             trackers: [tracker],
         });
 
-        expect(data.games).toBe(expected.cntGames);
-        expect(tracker.cntGames).toBe(expected.cntGames);
-        expect(tracker.wins[0] + tracker.wins[1] + tracker.wins[2]).toBe(expected.cntGames);
+        expect(data.games).toBe(expected.games);
+        expect(tracker.games).toBe(expected.games);
+        expect(tracker.wins[0] + tracker.wins[1] + tracker.wins[2]).toBe(expected.games);
     });
 });

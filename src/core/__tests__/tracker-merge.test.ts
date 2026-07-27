@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 
 import { createWorkerResultHandler } from '#core/tracker-merge';
-import TileTracker from '#tracker/tile/tile-tracker-base';
+import TileTracker from '#tracker/tile/tile-tracker';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { WorkerMessage } from '#types/worker';
 
@@ -14,10 +14,10 @@ function baseConfig(
         config: {
             hasFilter: false,
             filter: () => true,
-            cntGames: Infinity,
+            maxGames: Infinity,
         },
         trackerData: [],
-        cntReadGames: 0,
+        readGames: 0,
         isDone: false,
         trackers: { move: [], game: [] },
         processedMoves: 0,
@@ -34,14 +34,14 @@ describe('tracker merge', () => {
             const main = new TileTracker();
             const batch = new TileTracker();
 
-            main.cntMovesTotal = 10;
-            batch.cntMovesTotal = 7;
+            main.movesTotal = 10;
+            batch.movesTotal = 7;
             main.tiles[4][4].w.movedTo = 3;
             batch.tiles[4][4].w.movedTo = 2;
 
             main.merge(batch);
 
-            expect(main.cntMovesTotal).toBe(17);
+            expect(main.movesTotal).toBe(17);
             expect(main.tiles[4][4].w.movedTo).toBe(5);
         });
     });
@@ -52,14 +52,14 @@ describe('tracker merge', () => {
             const batch = new CustomGameTracker();
 
             main.wins = [2, 1, 3];
-            main.cntGames = 6;
+            main.games = 6;
             batch.wins = [1, 0, 2];
-            batch.cntGames = 3;
+            batch.games = 3;
 
             main.merge(batch);
 
             expect(main.wins).toEqual([3, 1, 5]);
-            expect(main.cntGames).toBe(9);
+            expect(main.games).toBe(9);
         });
     });
 
@@ -74,8 +74,8 @@ describe('tracker merge', () => {
 
             const result: WorkerMessage = {
                 idxConfig: 0,
-                cntGames: 0,
-                cntMoves: 0,
+                games: 0,
+                moves: 0,
                 error: 'Unknown tracker "DoesNotExist"',
             };
 
@@ -89,11 +89,11 @@ describe('tracker merge', () => {
             const mainTracker = new CustomGameTracker();
             const batchTracker = new CustomGameTracker();
             batchTracker.wins = [1, 0, 1];
-            batchTracker.cntGames = 2;
+            batchTracker.games = 2;
 
             const cfg = baseConfig({
                 trackers: { game: [mainTracker], move: [] },
-                config: { hasFilter: false, filter: () => true, cntGames: 10 },
+                config: { hasFilter: false, filter: () => true, maxGames: 10 },
             });
 
             const handler = createWorkerResultHandler([cfg], () => {
@@ -102,14 +102,14 @@ describe('tracker merge', () => {
 
             handler(null, {
                 idxConfig: 0,
-                cntGames: 2,
-                cntMoves: 40,
+                games: 2,
+                moves: 40,
                 gameTrackers: [batchTracker],
             });
 
             expect(cfg.processedGames).toBe(2);
             expect(cfg.processedMoves).toBe(40);
-            expect(mainTracker.cntGames).toBe(2);
+            expect(mainTracker.games).toBe(2);
             expect(mainTracker.wins).toEqual([1, 0, 1]);
         });
     });

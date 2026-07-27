@@ -14,11 +14,15 @@ import type { PlayerColor } from '#types/tokens';
 import type { Tracker } from '#types/tracker';
 
 function isTileTracker(tracker: Tracker): tracker is TileTracker {
-    return 'tiles' in tracker && 'cntMovesTotal' in tracker;
+    return 'tiles' in tracker && 'movesTotal' in tracker;
 }
 
 function isBoardIndex(n: number | undefined): n is BoardIndex {
     return n !== undefined && (n | 0) === n && n >= 0 && n <= 7;
+}
+
+function isCastleRookLeg(action: Action): boolean {
+    return action.type === 'move' && (action.piece === 'Rh' || action.piece === 'Ra');
 }
 
 function playerBucket(player: string): PlayerColor | undefined {
@@ -37,15 +41,15 @@ class TileTracker extends MoveTracker {
     static override trackerId = 'TileTracker';
     static override workerModule = import.meta.url;
 
-    cntMovesGame: number;
-    cntMovesTotal: number;
+    movesGame: number;
+    movesTotal: number;
     tiles: TileGrid;
 
     constructor() {
         super();
         this.heatmapPresets = HeatmapPresets;
-        this.cntMovesGame = 0;
-        this.cntMovesTotal = 0;
+        this.movesGame = 0;
+        this.movesTotal = 0;
         this.tiles = createTileGrid();
     }
 
@@ -54,8 +58,8 @@ class TileTracker extends MoveTracker {
         if (!isTileTracker(tracker)) return;
 
         this.time += tracker.time;
-        this.cntMovesGame += tracker.cntMovesGame;
-        this.cntMovesTotal += tracker.cntMovesTotal;
+        this.movesGame += tracker.movesGame;
+        this.movesTotal += tracker.movesTotal;
 
         for (const row of BOARD_INDICES) {
             for (const col of BOARD_INDICES) {
@@ -67,24 +71,34 @@ class TileTracker extends MoveTracker {
     /** Clear per-batch counters and restore grid for worker instance reuse. */
     resetWorkerBatch() {
         this.time = 0;
-        this.cntMovesGame = 0;
-        this.cntMovesTotal = 0;
+        this.movesGame = 0;
+        this.movesTotal = 0;
         resetTileGrid(this.tiles);
     }
 
     override trackMoves(data: Action[]) {
+        let lastMoveSan: string | undefined;
+
         for (const action of data) {
             switch (action.type) {
-                case 'move':
-                    // TODO: castle is counted as two moves. fix
-                    this.cntMovesGame += 1;
+                case 'move': {
+                    const isRookCastleLeg =
+                        lastMoveSan !== undefined &&
+                        action.san === lastMoveSan &&
+                        isCastleRookLeg(action);
+                    if (!isRookCastleLeg) {
+                        this.movesGame += 1;
+                    }
+                    lastMoveSan = action.san;
                     this.processMove(
                         { from: action.from, to: action.to },
                         action.player,
                         action.piece ?? '',
                     );
                     break;
+                }
                 case 'capture':
+                    lastMoveSan = undefined;
                     this.processCapture(
                         action.on,
                         action.player,
@@ -112,8 +126,8 @@ class TileTracker extends MoveTracker {
                 setStartingPiece(this.tiles, row, col);
             }
         }
-        this.cntMovesTotal += this.cntMovesGame;
-        this.cntMovesGame = 0;
+        this.movesTotal += this.movesGame;
+        this.movesGame = 0;
     }
 
     /**
@@ -143,7 +157,7 @@ class TileTracker extends MoveTracker {
 
         toCell.currentPiece = movingPiece;
         if (movingPiece !== null) {
-            movingPiece.lastMovedOn = this.cntMovesGame;
+            movingPiece.lastMovedOn = this.movesGame;
         }
         fromCell.currentPiece = null;
 
@@ -179,7 +193,7 @@ class TileTracker extends MoveTracker {
     }
 
     /**
-     * Add `(cntMovesGame - lastMovedOn)` to wasOn for the piece currently on `pos`.
+     * Add `(movesGame - lastMovedOn)` to wasOn for the piece currently on `pos`.
      * Measures how many half-moves the piece occupied the square since it arrived.
      */
     addOccupation(pos: number[]): void {
@@ -189,7 +203,7 @@ class TileTracker extends MoveTracker {
         const { currentPiece } = cell;
         if (currentPiece === null) return;
 
-        const toAdd = this.cntMovesGame - currentPiece.lastMovedOn;
+        const toAdd = this.movesGame - currentPiece.lastMovedOn;
         cell[currentPiece.color].wasOn += toAdd;
         const pieceBucket = cell[currentPiece.color][currentPiece.piece];
         if (pieceBucket) pieceBucket.wasOn += toAdd;
