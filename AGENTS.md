@@ -20,9 +20,9 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 | Path                 | Purpose                                                   |
 | -------------------- | --------------------------------------------------------- |
-| `src/core/`          | Orchestration (`GameProcessor`, worker pool)              |
-| `src/pgn/`           | PGN I/O, chunking, movetext tokenize, game assembly       |
-| `src/replay/`        | SAN replay (`GameReplayer`, `SanApplier`, `SanToActions`) |
+| `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers) |
+| `src/pgn/`           | PGN I/O, chunking, movetext tokenize, game assembly / re-encode    |
+| `src/replay/`        | SAN replay (`GameReplayer`, `SanApplier`, `SanToActions`)          |
 | `src/tracker/`       | Built-in and base tracker implementations                 |
 | `bench/`             | Callable performance benchmarks (`bench-*.ts`)            |
 | `bench/atomic/`      | Atomic micro-benchmark implementations                    |
