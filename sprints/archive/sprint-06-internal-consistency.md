@@ -27,7 +27,7 @@ Align internal naming with the v4 public API, tidy types/exports, and enable opt
 
 - [ ] **Clarify tracker file exports**
     - `game-tracker-base.ts` exports default `GameTracker` (concrete) — rename file to `game-tracker.ts` OR re-export clearly in index
-    - Consider consistent named exports for built-ins (optional breaking change — defer to v5 if needed)
+    - Consider consistent named exports for built-ins (shipped in v4: tracker modules renamed, public counter fields aligned with `AnalyzeResult`)
 
 ### Code duplication (safe)
 

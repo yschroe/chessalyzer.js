@@ -11,13 +11,13 @@ class GameTracker extends GameTrackerBase {
     static override workerModule = import.meta.url;
 
     results: { white: number; black: number; draw: number };
-    cntGames: number;
+    games: number;
     ECO: { [eco: string]: number };
 
     constructor() {
         super();
         this.results = { white: 0, black: 0, draw: 0 };
-        this.cntGames = 0;
+        this.games = 0;
         this.ECO = {};
     }
 
@@ -27,7 +27,7 @@ class GameTracker extends GameTrackerBase {
         this.results.white += tracker.results.white;
         this.results.black += tracker.results.black;
         this.results.draw += tracker.results.draw;
-        this.cntGames += tracker.cntGames;
+        this.games += tracker.games;
         this.time += tracker.time;
 
         for (const key of Object.keys(tracker.ECO)) {
@@ -45,13 +45,13 @@ class GameTracker extends GameTrackerBase {
         this.results.white = 0;
         this.results.black = 0;
         this.results.draw = 0;
-        this.cntGames = 0;
+        this.games = 0;
         this.time = 0;
         this.ECO = {};
     }
 
     override trackGame(game: Game) {
-        this.cntGames += 1;
+        this.games += 1;
         switch (game.Result) {
             case '1-0':
                 this.results.white += 1;

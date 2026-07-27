@@ -11,6 +11,8 @@
 - Multi-run analyses via `runs: [...]` instead of passing an array of configs.
 - Tracker `add()` renamed to `merge()`; custom MT trackers use `static workerModule = import.meta.url` and `static trackerId`.
 - Export `MoveTracker`, `GameTrackerBase`, and public config/result types.
+- Built-in tracker stats aligned with `AnalyzeResult`: `GameTracker.cntGames` → `games`; `TileTracker.cntMovesGame` / `cntMovesTotal` → `movesGame` / `movesTotal`.
+- Tracker modules renamed: `game-tracker.ts`, `piece-tracker.ts`, `tile/tile-tracker.ts` (drop misleading `-base` suffix on concrete exports).
 
 ### Changes
 

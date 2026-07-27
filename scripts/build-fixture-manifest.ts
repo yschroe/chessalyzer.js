@@ -38,8 +38,8 @@ const FIXTURE_ANALYZE: Record<string, AnalyzeOptions | 'manual'> = {
 };
 
 interface ManifestExpected {
-    cntGames: number;
-    cntMoves: number;
+    games: number;
+    moves: number;
     skippedGames?: number;
 }
 
@@ -93,7 +93,7 @@ for (const file of files) {
             continue;
         }
         fixtures[id] = { ...prior, file };
-        console.log(`${id}: kept manual entry (${prior.expected.cntGames} games)`);
+        console.log(`${id}: kept manual entry (${prior.expected.games} games)`);
         continue;
     }
 
@@ -102,8 +102,8 @@ for (const file of files) {
     try {
         const result = await analyzePGN(path, analyzeOpts);
         const expected: ManifestExpected = {
-            cntGames: result.games,
-            cntMoves: result.moves,
+            games: result.games,
+            moves: result.moves,
         };
         if ((result.skippedGames ?? 0) > 0) {
             expected.skippedGames = result.skippedGames;

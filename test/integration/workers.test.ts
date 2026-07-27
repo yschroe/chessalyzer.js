@@ -90,7 +90,7 @@ describe('Workers', () => {
 
             expect(data.games).toBe(1);
             expect(data.moves).toBe(15);
-            expect(tileTracker.cntMovesTotal).toBeGreaterThan(0);
+            expect(tileTracker.movesTotal).toBeGreaterThan(0);
         });
     });
 });

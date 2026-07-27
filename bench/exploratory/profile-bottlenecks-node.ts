@@ -9,9 +9,9 @@ import { performance } from 'node:perf_hooks';
 
 import { analyzePGN } from '#core/analyze';
 import { readLinesFast } from '#pgn/line-reader';
-import GameTracker from '#tracker/game-tracker-base';
-import PieceTracker from '#tracker/piece-tracker-base';
-import TileTracker from '#tracker/tile/tile-tracker-base';
+import GameTracker from '#tracker/game-tracker';
+import PieceTracker from '#tracker/piece-tracker';
+import TileTracker from '#tracker/tile/tile-tracker';
 import type { AnalyzeOptions } from '#types/analysis';
 
 import { findLargestPgn } from '../lib/pgn-fixture';

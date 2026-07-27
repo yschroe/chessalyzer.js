@@ -6,22 +6,16 @@
 
 ## Goal
 
-Clarify tracker module layout and fix doc drift without breaking public exports.
+Finish remaining contributor ergonomics after v4 tracker renames (file renames and public field alignment shipped in Sprint 06 follow-up).
 
 ## Tasks
 
-- [ ] **Tracker file naming**
-    - `game-tracker-base.ts` exports concrete `GameTracker` — rename to `game-tracker.ts` or clarify re-exports in index
-    - Same for `piece-tracker-base.ts`, `tile-tracker-base.ts` if desired
-    - Keep public symbol names stable (`GameTracker`, `PieceTracker`, `TileTracker`)
+- [x] **Tracker file naming** — `game-tracker.ts`, `piece-tracker.ts`, `tile/tile-tracker.ts`
+- [x] **Public tracker counter names** — `GameTracker.games`, `TileTracker.movesGame` / `movesTotal`
+- [x] **README API fixes** — `generateHeatmap`, `results`, `games`, `movesTotal`
 
 - [ ] **Deduplicate `BoardIndex` / `isBoardIndex`**
     - Consolidate copies in [`src/board/board-coords.ts`](../src/board/board-coords.ts), tile tracker types, piece-names, tile-grid
-
-- [ ] **README API fixes**
-    - `generateHeatMap` → `generateHeatmap`
-    - `GameTracker.result` → `results`
-    - Fix swapped `SquareData` color/name comments
 
 - [ ] **Document custom tracker MT contract**
     - `static trackerId`, `static workerModule = import.meta.url`, `merge()` requirements
@@ -29,8 +23,9 @@ Clarify tracker module layout and fix doc drift without breaking public exports.
 
 ## Done when
 
-- No misleading `*-base.ts` filenames without a documented reason, or re-exports are explicit.
+- No misleading `*-base.ts` filenames without a documented reason.
 - README matches shipped API.
+- `BoardIndex` / `isBoardIndex` have a single source of truth.
 
 ## Verification
 

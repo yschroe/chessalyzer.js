@@ -5,8 +5,8 @@
             "file": "bad-san-mid-file.pgn",
             "description": "Three games; middle game has illegal SAN (error-policy tests use a move tracker to force replay)",
             "expected": {
-                "cntGames": 3,
-                "cntMoves": 33
+                "games": 3,
+                "moves": 33
             },
             "analyzeOptions": {
                 "onError": "skip-game"
@@ -16,68 +16,68 @@
             "file": "basic-normal.pgn",
             "description": "Standard complete game, single-line movetext",
             "expected": {
-                "cntGames": 1,
-                "cntMoves": 25
+                "games": 1,
+                "moves": 25
             }
         },
         "black-wins": {
             "file": "black-wins.pgn",
             "description": "Short game ending 0-1",
             "expected": {
-                "cntGames": 1,
-                "cntMoves": 4
+                "games": 1,
+                "moves": 4
             }
         },
         "comments-multiline": {
             "file": "comments-multiline.pgn",
             "description": "One game with comments, multi-line movetext",
             "expected": {
-                "cntGames": 1,
-                "cntMoves": 26
+                "games": 1,
+                "moves": 26
             }
         },
         "comments-singleline": {
             "file": "comments-singleline.pgn",
             "description": "One game with comments, single-line movetext",
             "expected": {
-                "cntGames": 1,
-                "cntMoves": 92
+                "games": 1,
+                "moves": 92
             }
         },
         "corrupt": {
             "file": "corrupt.pgn",
             "description": "One complete game plus one truncated game at EOF",
             "expected": {
-                "cntGames": 1,
-                "cntMoves": 15
+                "games": 1,
+                "moves": 15
             }
         },
         "crlf-endings": {
             "file": "crlf-endings.pgn",
             "description": "Two complete games with CRLF line endings",
             "expected": {
-                "cntGames": 2,
-                "cntMoves": 6
+                "games": 2,
+                "moves": 6
             }
         },
         "draw": {
             "file": "draw.pgn",
             "description": "Short game ending 1/2-1/2",
             "expected": {
-                "cntGames": 1,
-                "cntMoves": 7
+                "games": 1,
+                "moves": 7
             }
         },
         "en-passant": {
             "file": "en-passant.pgn",
             "description": "Game containing an en passant capture",
             "expected": {
-                "cntGames": 1,
-                "cntMoves": 49
+                "games": 1,
+                "moves": 49
             },
             "golden": {
                 "tileTracker": {
-                    "cntMovesTotal": 49,
+                    "movesTotal": 49,
                     "e4TileOccAll": 61.224489795918366
                 }
             }
@@ -86,40 +86,40 @@
             "file": "lichess-headers.pgn",
             "description": "Lichess-style headers with a complete game",
             "expected": {
-                "cntGames": 1,
-                "cntMoves": 7
+                "games": 1,
+                "moves": 7
             }
         },
         "multiple-promotions": {
             "file": "multiple-promotions.pgn",
             "description": "Game with multiple pawn promotions",
             "expected": {
-                "cntGames": 1,
-                "cntMoves": 117
+                "games": 1,
+                "moves": 117
             }
         },
         "promotion": {
             "file": "promotion.pgn",
             "description": "Game with a pawn promotion",
             "expected": {
-                "cntGames": 1,
-                "cntMoves": 69
+                "games": 1,
+                "moves": 69
             }
         },
         "results-mix": {
             "file": "results-mix.pgn",
             "description": "Multiple games with mixed results and Elo headers for filter tests",
             "expected": {
-                "cntGames": 6,
-                "cntMoves": 92
+                "games": 6,
+                "moves": 92
             }
         },
         "white-wins": {
             "file": "white-wins.pgn",
             "description": "Short game ending 1-0",
             "expected": {
-                "cntGames": 1,
-                "cntMoves": 7
+                "games": 1,
+                "moves": 7
             }
         }
     }
