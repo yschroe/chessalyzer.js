@@ -1,10 +1,11 @@
 import type { PlayerColor } from '#types/tokens';
 
-/** Minimal game object built while streaming PGN movetext. */
+/** Game object built while streaming PGN movetext. Header tags are string values. */
 export interface Game {
+    moves: string[];
     Result?: string;
     ECO?: string;
-    moves: string[];
+    [header: string]: string | string[] | undefined;
 }
 
 /** Board square pair used in move actions. */

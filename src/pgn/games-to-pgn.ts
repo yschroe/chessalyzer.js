@@ -14,7 +14,7 @@ export function gamesToPgnChunk(games: Game[], options: GamesToPgnOptions): stri
     for (const game of games) {
         if (options.includeHeaders) {
             for (const [key, value] of Object.entries(game)) {
-                if (key === 'moves') continue;
+                if (key === 'moves' || typeof value !== 'string') continue;
                 lines.push(`[${key} "${value}"]`);
             }
             lines.push('');

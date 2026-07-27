@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Breaking changes (v4)
+
+- Replace static `Chessalyzer` class with module functions `analyzePGN` and `printHeatmap`.
+- Single options object: `analyzePGN(path, { trackers, filter, maxGames, runs, workers })`.
+- Single-threaded mode: `{ workers: false }` instead of passing `null` as a third argument.
+- Unified return type `AnalyzeResult` (`games`, `moves`, `movesPerSecond`, `runs`, `durationMs`).
+- Multi-run analyses via `runs: [...]` instead of passing an array of configs.
+- Tracker `add()` renamed to `merge()`; custom MT trackers use `static workerModule = import.meta.url`.
+- Export `MoveTracker`, `GameTrackerBase`, and public config/result types.
+
 ### Ideas
 
 - Do not create numThreads workers on init of the workerpool, but dynamically if needed.

@@ -12,11 +12,14 @@ import type {
 } from '#types/tracker';
 
 class BaseTracker implements Tracker {
-    type: 'move' | 'game';
+    readonly type: 'move' | 'game';
     cfg: TrackerConfig;
     time: number;
     t0: number;
     heatmapPresets: Record<string, HeatmapPresetEntry> | null;
+
+    /** Module URL for worker-side dynamic import of custom trackers. */
+    static workerModule?: string;
 
     constructor(type: 'move' | 'game') {
         this.type = type;
@@ -26,10 +29,6 @@ class BaseTracker implements Tracker {
         this.time = 0;
         this.t0 = 0;
         this.heatmapPresets = {};
-
-        if (this.type === undefined) {
-            throw new Error('Your tracker must specify a type!');
-        }
     }
 
     analyze(data: Game | Action[]) {
@@ -42,9 +41,9 @@ class BaseTracker implements Tracker {
         throw new Error('Your tracker must implement a track(...) method!');
     }
 
-    add(_data: Tracker) {
+    merge(_data: Tracker) {
         throw new Error(
-            'Your tracker must implement an add(...) method if you are using multihread mode!',
+            'Your tracker must implement merge(...) when using multithreaded analysis!',
         );
     }
 
@@ -88,6 +87,38 @@ class BaseTracker implements Tracker {
 
         return generateComparisonHeatmap(this, compData, heatmapFunction, square, optData);
     }
+}
+
+/** Abstract base for move-level trackers (receive {@link Action}[] per half-move). */
+export abstract class MoveTracker extends BaseTracker {
+    override readonly type = 'move' as const;
+
+    constructor() {
+        super('move');
+    }
+
+    override track(data: Game | Action[]): void {
+        if (Array.isArray(data)) this.trackMoves(data);
+    }
+
+    abstract trackMoves(actions: Action[]): void;
+    abstract override merge(other: Tracker): void;
+}
+
+/** Abstract base for game-level trackers (receive {@link Game} after each game). */
+export abstract class GameTrackerBase extends BaseTracker {
+    override readonly type = 'game' as const;
+
+    constructor() {
+        super('game');
+    }
+
+    override track(data: Game | Action[]): void {
+        if (!Array.isArray(data)) this.trackGame(data);
+    }
+
+    abstract trackGame(game: Game): void;
+    abstract override merge(other: Tracker): void;
 }
 
 export default BaseTracker;

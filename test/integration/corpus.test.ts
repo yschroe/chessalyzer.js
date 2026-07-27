@@ -2,14 +2,12 @@ import { describe, it, beforeAll, expect } from 'bun:test';
 
 // Optional golden regression tests against the large corpus (test/corpus/).
 // Skipped automatically when corpus files are not present locally.
-import { Chessalyzer, GameTracker, PieceTracker, isTrackedPiece } from 'chessalyzer.js';
+import { analyzePGN, GameTracker, PieceTracker, isTrackedPiece } from 'chessalyzer.js';
 
-import type { GameAndMoveCountFull } from '../../src/types/analysis';
+import type { AnalyzeResult } from '../../src/types/analysis';
 import type { Game } from '../../src/types/game';
 import type { HeatmapAnalysisFunc } from '../../src/types/tracker';
 import { corpusPath, getCorpusEntry } from '../helpers/fixtures';
-
-type FilterGame = Game & { WhiteElo?: number; [key: string]: unknown };
 
 const pgnPath = await corpusPath('asorted');
 const corpusAvailable = pgnPath !== null;
@@ -25,91 +23,87 @@ if (corpusAvailable) {
         const entry = getCorpusEntry('asorted');
 
         describe('Basic parsing', () => {
-            let data: GameAndMoveCountFull;
+            let data: AnalyzeResult;
             beforeAll(async () => {
-                data = await Chessalyzer.analyzePGN(path);
+                data = await analyzePGN(path);
             });
 
             it('processed all games in the corpus file', () => {
-                expect(data.cntGames).toBe(entry.expected.cntGames);
+                expect(data.games).toBe(entry.expected.cntGames);
             });
 
             it('processed all moves in the corpus file', () => {
-                expect(data.cntMoves).toBe(entry.expected.cntMoves);
+                expect(data.moves).toBe(entry.expected.cntMoves);
             });
         });
 
         describe('Filtering', () => {
-            it('limits by cntGames', async () => {
-                const data = await Chessalyzer.analyzePGN(path, { config: { cntGames: 100 } });
-                expect(data.cntGames).toBe(100);
+            it('limits by maxGames', async () => {
+                const data = await analyzePGN(path, { maxGames: 100 });
+                expect(data.games).toBe(100);
             });
 
             it('filters by result', async () => {
-                const data = await Chessalyzer.analyzePGN(path, {
-                    config: { filter: (game: object) => (game as FilterGame).Result === '1-0' },
+                const data = await analyzePGN(path, {
+                    filter: (game: Game) => game.Result === '1-0',
                 });
-                expect(data.cntGames).toBe(entry.expected.filters.whiteWins);
+                expect(data.games).toBe(entry.expected.filters.whiteWins);
             });
 
             it('combines filter and count', async () => {
-                const data = await Chessalyzer.analyzePGN(path, {
-                    config: {
-                        cntGames: 500,
-                        filter: (game: object) => (game as FilterGame).Result === '0-1',
-                    },
+                const data = await analyzePGN(path, {
+                    maxGames: 500,
+                    filter: (game: Game) => game.Result === '0-1',
                 });
-                expect(data.cntGames).toBe(500);
+                expect(data.games).toBe(500);
             });
         });
 
         describe('Trackers', () => {
             it('runs a single tracker across the full corpus', async () => {
                 const gameTracker = new GameTracker();
-                const data = await Chessalyzer.analyzePGN(path, { trackers: [gameTracker] });
-                expect(data.cntGames).toBe(entry.expected.cntGames);
+                const data = await analyzePGN(path, { trackers: [gameTracker] });
+                expect(data.games).toBe(entry.expected.cntGames);
             });
 
             it('runs multiple configs with different filters', async () => {
                 const gameTracker = new GameTracker();
                 const pieceTracker = new PieceTracker();
-                const data = await Chessalyzer.analyzePGN(path, [
-                    {
-                        trackers: [gameTracker],
-                        config: {
-                            cntGames: entry.expected.multiConfig.highRatedGames,
-                            filter: (val: object) => ((val as FilterGame).WhiteElo ?? 0) > 1500,
+                const data = await analyzePGN(path, {
+                    runs: [
+                        {
+                            trackers: [gameTracker],
+                            maxGames: entry.expected.multiConfig.highRatedGames,
+                            filter: (game: Game) => Number(game.WhiteElo) > 1500,
                         },
-                    },
-                    {
-                        trackers: [pieceTracker],
-                        config: {
-                            cntGames: entry.expected.multiConfig.lowRatedGames,
-                            filter: (val: object) => ((val as FilterGame).WhiteElo ?? 0) < 1500,
+                        {
+                            trackers: [pieceTracker],
+                            maxGames: entry.expected.multiConfig.lowRatedGames,
+                            filter: (game: Game) => Number(game.WhiteElo) < 1500,
                         },
-                    },
-                ]);
-                expect(data[0]?.cntGames).toBe(entry.expected.multiConfig.highRatedGames);
-                expect(data[1]?.cntGames).toBe(entry.expected.multiConfig.lowRatedGames);
+                    ],
+                });
+                expect(data.runs[0]?.games).toBe(entry.expected.multiConfig.highRatedGames);
+                expect(data.runs[1]?.games).toBe(entry.expected.multiConfig.lowRatedGames);
             });
 
             it('runs in single-threaded mode', async () => {
-                const data = await Chessalyzer.analyzePGN(path, undefined, null);
-                expect(data.cntGames).toBe(entry.expected.cntGames);
-                expect(data.cntMoves).toBe(entry.expected.cntMoves);
+                const data = await analyzePGN(path, { workers: false });
+                expect(data.games).toBe(entry.expected.cntGames);
+                expect(data.moves).toBe(entry.expected.cntMoves);
             });
         });
 
         describe('GameTracker golden values', () => {
             describe('Multithreaded', () => {
-                let data: GameAndMoveCountFull;
+                let data: AnalyzeResult;
                 const gameTracker = new GameTracker();
                 beforeAll(async () => {
-                    data = await Chessalyzer.analyzePGN(path, { trackers: [gameTracker] });
+                    data = await analyzePGN(path, { trackers: [gameTracker] });
                 });
 
                 it('matches parser game count', () => {
-                    expect(data.cntGames).toBe(gameTracker.cntGames);
+                    expect(data.games).toBe(gameTracker.cntGames);
                 });
 
                 it('sums result counts to total games', () => {
@@ -117,31 +111,29 @@ if (corpusAvailable) {
                         (a, c) => a + c,
                         0,
                     );
-                    expect(resultsSum).toBe(data.cntGames);
+                    expect(resultsSum).toBe(data.games);
                 });
             });
 
             describe('Singlethreaded', () => {
-                let data: GameAndMoveCountFull;
+                let data: AnalyzeResult;
                 const gameTracker = new GameTracker();
                 beforeAll(async () => {
-                    data = await Chessalyzer.analyzePGN(path, { trackers: [gameTracker] }, null);
+                    data = await analyzePGN(path, { trackers: [gameTracker], workers: false });
                 });
 
                 it('matches parser game count', () => {
-                    expect(data.cntGames).toBe(gameTracker.cntGames);
+                    expect(data.games).toBe(gameTracker.cntGames);
                 });
             });
 
             describe('Filtered white wins', () => {
                 const gameTracker = new GameTracker();
                 beforeAll(async () => {
-                    await Chessalyzer.analyzePGN(path, {
+                    await analyzePGN(path, {
                         trackers: [gameTracker],
-                        config: {
-                            cntGames: entry.golden.gameTracker.filterWhiteWins,
-                            filter: (game: object) => (game as FilterGame).Result === '1-0',
-                        },
+                        maxGames: entry.golden.gameTracker.filterWhiteWins,
+                        filter: (game: Game) => game.Result === '1-0',
                     });
                 });
 
@@ -157,7 +149,7 @@ if (corpusAvailable) {
             describe('ECO counts', () => {
                 const gameTracker = new GameTracker();
                 beforeAll(async () => {
-                    await Chessalyzer.analyzePGN(path, { trackers: [gameTracker] });
+                    await analyzePGN(path, { trackers: [gameTracker] });
                 });
 
                 it('matches known ECO totals', () => {
@@ -172,7 +164,7 @@ if (corpusAvailable) {
             describe('Multithreaded', () => {
                 const pieceTracker = new PieceTracker();
                 beforeAll(async () => {
-                    await Chessalyzer.analyzePGN(path, { trackers: [pieceTracker] });
+                    await analyzePGN(path, { trackers: [pieceTracker] });
                 });
 
                 it('tracks the reference square pair', () => {
@@ -187,7 +179,7 @@ if (corpusAvailable) {
             describe('Singlethreaded', () => {
                 const pieceTracker = new PieceTracker();
                 beforeAll(async () => {
-                    await Chessalyzer.analyzePGN(path, { trackers: [pieceTracker] }, null);
+                    await analyzePGN(path, { trackers: [pieceTracker], workers: false });
                 });
 
                 it('tracks the reference square pair', () => {
@@ -202,7 +194,7 @@ if (corpusAvailable) {
             describe('Heatmaps', () => {
                 const pieceTracker = new PieceTracker();
                 beforeAll(async () => {
-                    await Chessalyzer.analyzePGN(path, { trackers: [pieceTracker] });
+                    await analyzePGN(path, { trackers: [pieceTracker] });
                 });
 
                 it('PIECE_CAPTURED preset', () => {

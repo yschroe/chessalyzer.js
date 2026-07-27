@@ -1,4 +1,4 @@
-import BaseTracker from '#tracker/base-tracker';
+import { MoveTracker } from '#tracker/base-tracker';
 import HeatmapPresets from '#tracker/heatmaps/tile-heatmaps';
 import {
     createTileGrid,
@@ -9,11 +9,11 @@ import {
 } from '#tracker/tile/tile-grid';
 import { BOARD_INDICES, type BoardIndex, type TileGrid } from '#tracker/tile/tile-tracker-types';
 import type { Action } from '#types/actions';
-import type { Game, Move } from '#types/game';
+import type { Move } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
 import type { Tracker } from '#types/tracker';
 
-function isTileTracker(tracker: Tracker): tracker is TileTrackerBase {
+function isTileTracker(tracker: Tracker): tracker is TileTracker {
     return 'tiles' in tracker && 'cntMovesTotal' in tracker;
 }
 
@@ -33,13 +33,15 @@ function playerBucket(player: string): PlayerColor | undefined {
  * Grid allocation/reset/merge lives in `./tile-grid`; this class implements move/capture
  * reaction logic and multithread aggregation.
  */
-class TileTrackerBase extends BaseTracker {
+class TileTracker extends MoveTracker {
+    static override workerModule = import.meta.url;
+
     cntMovesGame: number;
     cntMovesTotal: number;
     tiles: TileGrid;
 
     constructor() {
-        super('move');
+        super();
         this.heatmapPresets = HeatmapPresets;
         this.cntMovesGame = 0;
         this.cntMovesTotal = 0;
@@ -47,7 +49,7 @@ class TileTrackerBase extends BaseTracker {
     }
 
     /** Merge stats from a worker batch tracker into this (main-thread) instance. */
-    override add(tracker: Tracker) {
+    override merge(tracker: Tracker) {
         if (!isTileTracker(tracker)) return;
 
         this.time += tracker.time;
@@ -69,8 +71,7 @@ class TileTrackerBase extends BaseTracker {
         resetTileGrid(this.tiles);
     }
 
-    override track(data: Game | Action[]) {
-        if (!Array.isArray(data)) return;
+    override trackMoves(data: Action[]) {
         for (const action of data) {
             switch (action.type) {
                 case 'move':
@@ -194,4 +195,4 @@ class TileTrackerBase extends BaseTracker {
     }
 }
 
-export default TileTrackerBase;
+export default TileTracker;

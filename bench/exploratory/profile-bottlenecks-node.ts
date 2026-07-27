@@ -7,12 +7,12 @@ import { createReadStream } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { performance } from 'node:perf_hooks';
 
-import Chessalyzer from '#core/chessalyzer';
+import { analyzePGN } from '#core/analyze';
 import { readLinesFast } from '#pgn/line-reader';
 import GameTracker from '#tracker/game-tracker-base';
 import PieceTracker from '#tracker/piece-tracker-base';
 import TileTracker from '#tracker/tile/tile-tracker-base';
-import type { AnalysisConfig } from '#types/analysis';
+import type { AnalyzeOptions } from '#types/analysis';
 
 import { findLargestPgn } from '../lib/pgn-fixture';
 import { formatSeconds } from '../lib/timing';
@@ -68,12 +68,11 @@ async function stageTokenize(readHeader: boolean) {
     return { ms: performance.now() - t0, games, moves };
 }
 
-async function api(config: AnalysisConfig, mt: Parameters<typeof Chessalyzer.analyzePGN>[2]) {
+async function api(options: AnalyzeOptions) {
     const t0 = performance.now();
-    const result = await Chessalyzer.analyzePGN(pgn.path, config, mt);
+    const result = await analyzePGN(pgn.path, options);
     const ms = performance.now() - t0;
-    const r = Array.isArray(result) ? result[0]! : result;
-    return { ms, ...r };
+    return { ms, cntGames: result.games, cntMoves: result.moves, mps: result.movesPerSecond };
 }
 
 console.log(`Runtime: node ${process.version}`);
@@ -100,32 +99,28 @@ console.log(
     `4 Tokenize + hdr     ${formatSeconds(tokH.ms).padStart(9)}s  | ${mps(tokH.moves, tokH.ms)} moves/s`,
 );
 
-const multi = await api({ trackers: [] }, { targetBytes: 4 * 1024 * 1024 });
+const multi = await api({ trackers: [], workers: { targetBytes: 4 * 1024 * 1024 } });
 console.log(
     `5 API multi none     ${formatSeconds(multi.ms).padStart(9)}s  | ${multi.mps.toLocaleString()} moves/s`,
 );
 
-const single = await api({ trackers: [] }, null);
+const single = await api({ trackers: [], workers: false });
 console.log(
     `6 API single none    ${formatSeconds(single.ms).padStart(9)}s  | ${single.mps.toLocaleString()} moves/s`,
 );
 
-const tile = await api(
-    { trackers: [new TileTracker()] },
-    {
-        targetBytes: 4 * 1024 * 1024,
-    },
-);
+const tile = await api({
+    trackers: [new TileTracker()],
+    workers: { targetBytes: 4 * 1024 * 1024 },
+});
 console.log(
     `7 API multi Tile     ${formatSeconds(tile.ms).padStart(9)}s  | ${tile.mps.toLocaleString()} moves/s`,
 );
 
-const all = await api(
-    {
-        trackers: [new TileTracker(), new GameTracker(), new PieceTracker()],
-    },
-    { targetBytes: 4 * 1024 * 1024 },
-);
+const all = await api({
+    trackers: [new TileTracker(), new GameTracker(), new PieceTracker()],
+    workers: { targetBytes: 4 * 1024 * 1024 },
+});
 console.log(
     `8 API multi all      ${formatSeconds(all.ms).padStart(9)}s  | ${all.mps.toLocaleString()} moves/s`,
 );

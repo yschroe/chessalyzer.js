@@ -1,14 +1,14 @@
-import { BaseTracker } from 'chessalyzer.js';
+import { GameTrackerBase } from 'chessalyzer.js';
+import type { Game, Tracker } from 'chessalyzer.js';
 
-export default class CustomGameTracker extends BaseTracker {
-    constructor() {
-        super('game');
-        this.path = import.meta.url;
-        this.wins = [0, 0, 0];
-        this.cntGames = 0;
-    }
+export default class CustomGameTracker extends GameTrackerBase {
+    static override workerModule = import.meta.url;
 
-    add(tracker) {
+    wins = [0, 0, 0];
+    cntGames = 0;
+
+    merge(tracker: Tracker) {
+        if (!(tracker instanceof CustomGameTracker)) return;
         this.wins[0] += tracker.wins[0];
         this.wins[1] += tracker.wins[1];
         this.wins[2] += tracker.wins[2];
@@ -16,7 +16,7 @@ export default class CustomGameTracker extends BaseTracker {
         this.time += tracker.time;
     }
 
-    track(game) {
+    trackGame(game: Game) {
         this.cntGames += 1;
         switch (game.Result) {
             case '1-0':

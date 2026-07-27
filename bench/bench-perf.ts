@@ -18,7 +18,7 @@
  */
 import { performance } from 'node:perf_hooks';
 
-import Chessalyzer from '#core/chessalyzer';
+import { analyzePGN } from '#core/analyze';
 
 import { resolvePerfPgn } from './lib/pgn-fixture';
 import { getRuntimeLabel } from './lib/report';
@@ -46,18 +46,13 @@ async function runScenario(
 ): Promise<ScenarioResult> {
     const analyze = async () => {
         const t0 = performance.now();
-        const header = await Chessalyzer.analyzePGN(
-            path,
-            undefined,
-            singlethreaded ? null : undefined,
-        );
-        const result = Array.isArray(header) ? header[0]! : header;
+        const result = await analyzePGN(path, singlethreaded ? { workers: false } : undefined);
         const ms = performance.now() - t0;
         return {
             ms,
-            games: result.cntGames,
-            moves: result.cntMoves,
-            mps: Math.round(result.cntMoves / (ms / 1000)),
+            games: result.games,
+            moves: result.moves,
+            mps: Math.round(result.moves / (ms / 1000)),
         };
     };
 

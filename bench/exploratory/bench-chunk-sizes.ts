@@ -6,7 +6,7 @@
 import { availableParallelism } from 'node:os';
 import { performance } from 'node:perf_hooks';
 
-import Chessalyzer from '#core/chessalyzer';
+import { analyzePGN } from '#core/analyze';
 
 import { findLargestPgn } from '../lib/pgn-fixture';
 import { getRuntimeLabel } from '../lib/report';
@@ -19,12 +19,17 @@ const workerCounts = [Math.max(1, availableParallelism() - 1), availableParallel
 
 async function bench(label: string, multithreadCfg: { targetBytes: number; workerCount: number }) {
     const t0 = performance.now();
-    const raw = await Chessalyzer.analyzePGN(pgn.path, { trackers: [] }, multithreadCfg);
-    const result = Array.isArray(raw) ? raw[0]! : raw;
+    const result = await analyzePGN(pgn.path, {
+        trackers: [],
+        workers: {
+            targetBytes: multithreadCfg.targetBytes,
+            workerCount: multithreadCfg.workerCount,
+        },
+    });
     const ms = performance.now() - t0;
-    const mps = Math.round(result.cntMoves / (ms / 1000)).toLocaleString();
+    const mps = Math.round(result.moves / (ms / 1000)).toLocaleString();
     console.log(`${label.padEnd(28)} ${formatSeconds(ms).padStart(9)}s  ${mps} moves/s`);
-    return result.cntMoves / ms;
+    return result.moves / ms;
 }
 
 console.log(`Chunk size sweep (${getRuntimeLabel()})`);

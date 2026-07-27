@@ -39,27 +39,24 @@ A JavaScript library for batch analyzing chess games.
 npm install chessalyzer.js
 ```
 
-2. Import the Chessalyzer object (Note: since V2.0 chessalyzer is an [ES module](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#file-esm-package-md) so you can't use the Node.js require(...) syntax).
+2. Import the library (ES module — see [this guide](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c#file-esm-package-md)):
 
 ```javascript
-import { Chessalyzer } from 'chessalyzer.js';
+import { analyzePGN, printHeatmap, TileTracker } from 'chessalyzer.js';
 ```
 
 3. Use the library. See next chapters for examples.
 
 ```javascript
-Chessalyzer.analyzePGN('<pathToPgnFile', yourAnalysisConfig);
+const result = await analyzePGN('<pathToPgnFile>', { trackers: [new TileTracker()] });
+console.log(result.games, result.moves, result.movesPerSecond);
 ```
 
 4. Check out the examples or the [docs](https://yschroe.github.io/chessalyzer.js/).
 
 # How it works
 
-Chessalyzer.js consists of two submodules which work hand-in-hand: The first module is the `Chessalyzer` class which handles the PGN parsing and provides you with a function for previewing heatmaps. The class by itself is static (meaning it can not be instantiated and does not store data in itself) and does not track any statistics though. For this you need a `Tracker` object which you then can pass into the parsing function of the Chessalyzer class. The Chessalyzer class recognizes the Tracker objects and passes data into it. Typically this will either be an `Action[]` containing information about e.g. which piece moved from where to where or which piece captured which other piece for each move of each game. Additionally you can also use the information from the header of the PGN file, where you can find e.g. the player names and which opening was played (ECO code).
-
-Inside the Tracker object you can do whatever you want with the data. If you want to track some obscure stat like how often the e pawn was promoted to a rook on the a8 square you could write a Tracker for that. Chessalyzer.js ships with three different preconfigured Trackers which should cover most usecases, so if you are happy with that you don't need to code your own Tracker.
-
-Lastly chessalyzer.js provides you with functions to convert your raw data from your Trackers into heatmaps which you then can use in your frontend of choice.
+Chessalyzer.js parses PGN files and runs **trackers** over each game. The main entry points are `analyzePGN` (batch analysis) and `printHeatmap` (terminal preview). Trackers receive move-level `Action[]` data or game-level header data and accumulate statistics in place.
 
 # Examples
 
@@ -68,24 +65,15 @@ Lastly chessalyzer.js provides you with functions to convert your raw data from 
 Let's start with a basic example. Here we simply want to track the tile occupation (=how often did each tile have a piece on it) for the whole board. For this we can use the preconfigured TileTracker class from the library. Afterwards we want to create a heatmap out of the data to visualize the tile occupation. For this basic heatmap a preset is also provided:
 
 ```javascript
-// Import the library and trackers.
-import { Chessalyzer, TileTracker } from 'chessalyzer.js';
+import { analyzePGN, printHeatmap, TileTracker } from 'chessalyzer.js';
 
-// Create basic tile tracker.
 const tileTracker = new TileTracker();
 
-// Start a batch analysis for the PGN file at <pathToPgnFile>.
-// The data is tracked directly inside the tileTracker instance.
-// See later chapters for how the data is structured inside the trackers.
-await Chessalyzer.analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
+const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
 
-// Generate a tile occupation heatmap.
 const heatmapData = tileTracker.generateHeatmap('TILE_OCC_ALL');
 
-// Print heatmap to console for preview.
-Chessalyzer.printHeatmap(heatmapData);
-
-// ...or use heatmapData with your favourite frontend.
+printHeatmap(heatmapData);
 ```
 
 ## Filtering
@@ -93,20 +81,10 @@ Chessalyzer.printHeatmap(heatmapData);
 You can also filter the PGN file for specific criteria, e.g. only evaluate games where `WhiteElo > 2000`:
 
 ```javascript
-// Create filter function that returns true for all games where WhiteElo > 2000.
-// The 'game' object passed contains every header key included in the pgn file (case sensitive).
-let fil = function (game) {
-    return game.WhiteElo > 2000;
-};
-
-await Chessalyzer.analyzePGN('<pathToPgnFile>', {
+await analyzePGN('<pathToPgnFile>', {
     trackers: [tileTracker],
-    config: {
-        filter: fil,
-    },
+    filter: (game) => Number(game.WhiteElo) > 2000,
 });
-
-// ...do something with the tileTracker data.
 ```
 
 ## Compare Analyses
@@ -114,31 +92,24 @@ await Chessalyzer.analyzePGN('<pathToPgnFile>', {
 You can also generate a comparison heat map where you can compare the data of two different analyses. Let's say you wanted to compare how the white player occupates the board between a lower rated player and a higher rated player. To get comparable results 1000 games of each shall be evaluated:
 
 ```javascript
-// Create two Tile Trackers.
 const tileT1 = new TileTracker();
 const tileT2 = new TileTracker();
 
-// Start the analysis.
-// Instead of passing just one analysis config you can also pass an array of configs,
-// tileT1 will only receive games with WhiteElo >2000, tileT2 only receives games with WhiteElo < 1200.
-await Chessalyzer.analyzePGN('<pathToPgnFile>', [
-    {
-        trackers: [tileT1],
-        config: {
-            filter: (game) => game.WhiteElo > 2000,
-            cntGames: 1000,
+await analyzePGN('<pathToPgnFile>', {
+    runs: [
+        {
+            trackers: [tileT1],
+            filter: (game) => Number(game.WhiteElo) > 2000,
+            maxGames: 1000,
         },
-    },
-    {
-        trackers: [tileT2],
-        config: {
-            filter: (game) => game.WhiteElo < 1200,
-            cntGames: 1000,
+        {
+            trackers: [tileT2],
+            filter: (game) => Number(game.WhiteElo) < 1200,
+            maxGames: 1000,
         },
-    },
-]);
+    ],
+});
 
-// Create an evaluation function for the heat map.
 let func = (data, loopSqrData) => {
     const { coords } = loopSqrData;
     let val = data.tiles[coords[0]][coords[1]].w.wasOn;
@@ -157,27 +128,20 @@ const heatmapData = tileT1.generateComparisonHeatmap(tileT2, func);
 Per default chessalyzer.js uses Node.js [Worker Threads](https://nodejs.org/api/worker_threads.html) to read-in the pgn file and analyze the data in parallel.
 
 ```javascript
-// Start a multithreaded batch analysis for the PGN file at <pathToPgnFile>.
-
-await Chessalyzer.analyzePGN(
-    '<pathToPgnFile>',
-    {
-        trackers: [tileTracker],
-        config: {
-            cntGames: 10000,
-        },
-    },
-    { batchSize: 500 },
-);
-
-// ...
+await analyzePGN('<pathToPgnFile>', {
+    trackers: [tileTracker],
+    maxGames: 10000,
+    workers: { targetBytes: 4 * 1024 * 1024 },
+});
 ```
 
-`analyzePGN(...)` in multithreaded mode reads in chunks of games of size `batchSize` and starts the analysis of this chunk in a different thread. While the other thread parses and analyzes the games, the next chunk is read-in from the PGN file in the main thread in parallel. Every time the defined count of games has been read in, chessalyzer.js checks if any of the previously started threads is ready to analyze new data. If no free thread is found a new thread is started.
+By default, `analyzePGN` uses Node.js [Worker Threads](https://nodejs.org/api/worker_threads.html) and byte-sized PGN chunks aligned to game boundaries.
 
-### Forcing single threaded mode
+### Single-threaded mode
 
-To use singlethreaded mode in which the games are read in and analyzed sequentially on a single thread, simply pass `null` as the 3rd argument into analyzePGN(...).
+```javascript
+await analyzePGN('<pathToPgnFile>', { workers: false });
+```
 
 ##### Important
 
@@ -252,87 +216,22 @@ chessalyzer.js comes with three built-in trackers, which can be directly importe
 
 ## Custom Trackers
 
-If you want to have other stats tracked you can easily create a custom tracker. You must derive your tracker from the `BaseTracker` class.
+Derive from `MoveTracker` (move-level) or `GameTrackerBase` (game-level). Custom multithreaded trackers need a separate module with a default export and `static workerModule = import.meta.url` on the class.
 
-Your tracker also must have the following properties:
+- `track(data)`: called per half-move (`Action[]`) or per game (`Game` with headers + `moves`)
+- `merge(tracker)`: combine worker batch stats into the main-thread instance (required for multithreading)
 
-- `type`:  
-  The type of your tracker. Either move based (`this.type = 'move'`) or game based (`this.type = 'game'`).
+Example merge for the built-in GameTracker:
 
-- `path`:
-  Variable which contains the path of the file your custom tracker is defined in. You can use `this.path = import.meta.url;` for this. Your Tracker MUST be defined in a separate file and it must be the only object that is exported from that file. Background: Since the data passed to the worker thread is serialized first, you can't pass non-primitive types to the worker. So the library dynamically imports the Custom Tracker provided in the path variable into the Worker Thread. In there the Tracker will be instantiated as normal. (If you happen to know a better way for passing classes into a worker thread, let me know. The current solution is a bit hacky but it works.)
-
-- `track(data)`:  
-  The main analysis function that is called during the PGN processing. Depending on your `type` the function is called after every half-move (move-typed trackers) or after every game (game-typed trackers). The `data` object contains the following properties:
-    - For move-typed trackers: An `Action` array with one or more entries of the following action types:
-
-        ```typescript
-        type Action = MoveAction | CaptureAction | PromoteAction;
-
-        interface BaseAction {
-            type: 'move' | 'capture' | 'promote';
-            san: string; // special tokens like [?!#+] are not included here
-            player: 'b' | 'w';
-        }
-
-        interface MoveAction extends BaseAction {
-            type: 'move';
-            piece: string;
-            from: number[];
-            to: number[];
-        }
-
-        interface CaptureAction extends BaseAction {
-            type: 'capture';
-            takingPiece: string;
-            takenPiece: string;
-            on: number[];
-        }
-
-        interface PromoteAction extends BaseAction {
-            type: 'promote';
-            to: string;
-            on: number[];
-        }
-        ```
-
-        If e.g. a piece captures another piece this array will contain a `CaptureAction` and a `MoveAction`
-
-    - For game-typed trackers:
-      `data` is an object that contains `{key: value}` entries, where `key` is the property in the header of the PGN (e.g. `'WhiteElo'`, case sensitive) and `value` is the respective value of the property. The property `data.moves` is an array that contains the moves of the game in standard algebraic notation.
-
-- `add(tracker)`:
-  Function that is only required for multithreading. This function gets passed a Tracker object of the same type. In the function you need to define how the statistics of two trackers are added together. For example the add(...) function for the built-in Game Tracker looks like this:
-
-    ```javascript
-    add(tracker) {
-        this.results.white += tracker.results.white;
-        this.results.black += tracker.results.black;
-        this.results.draw += tracker.results.draw;
-        this.cntGames += tracker.cntGames;
-        this.time += tracker.time;
-    }
-    ```
-
-- `nextGame()` (opt.):
-  Optional method that is called for move-type trackers after the last move of every game. You can use this to do end-of-game stuff inside your tracker, like storing and resetting statistics for the current game.
-
-- `finish()` (opt.):
-  Optional method that is called when all games have been processed. Can be used for example to clean up or sort the data in the tracker.
-
-- `heatmapPresets` (opt.): If you want to predefine heatmap analysis functions for your custom tracker you can call by name instead of passing a function, `this.heatmapPresets` can be overriden with an object, in which the keys are the names of the presets.
-    ```javascript
-        this.heatmapPresets = {
-            MY_FIRST_HEATMAP_FUNC: {
-                name: 'My first Heatmap func',
-                description: 'all keys beside the "calc" key are optional',
-                calc: (data, loopSqrData, sqrData) => return 123
-            },
-            ANOTHER_HEATMAP_FUNC: {
-                calc: (...)
-            }
-        }
-    ```
+```javascript
+merge(tracker) {
+    this.results.white += tracker.results.white;
+    this.results.black += tracker.results.black;
+    this.results.draw += tracker.results.draw;
+    this.cntGames += tracker.cntGames;
+    this.time += tracker.time;
+}
+```
 
 # Heatmap Presets
 
@@ -358,7 +257,7 @@ Instead of defining your own heatmap function you can also use the heatmap prese
 
 # Visualisation
 
-For a quick preview you can put your heatmap data into `Chessalyzer.printHeatmap(...)` to see your heatmap in the terminal if it supports color:
+For a quick preview you can put your heatmap data into `printHeatmap(...)` to see your heatmap in the terminal if it supports color:
 
 <img src="https://i.imgur.com/THV7gwY.png" width="40%">
 
