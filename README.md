@@ -246,10 +246,33 @@ chessalyzer.js comes with three built-in trackers, which can be directly importe
 
 ## Custom Trackers
 
-Derive from `MoveTracker` (move-level) or `GameTrackerBase` (game-level). Custom multithreaded trackers need a separate module with a default export and `static workerModule = import.meta.url` on the class.
+Derive from `MoveTracker` (move-level) or `GameTrackerBase` (game-level). For multithreaded analysis, custom trackers must live in a **separate module** and follow this contract:
+
+1. **Default export** — the tracker class
+2. **`static trackerId = 'YourUniqueId'`** — stable ID (minification-safe; used to match worker instances)
+3. **`static workerModule = import.meta.url`** — so workers can import your module
+4. **`merge(tracker)`** — combine worker batch stats into the main-thread instance (duck-type the argument; do not use `instanceof` — worker payloads are plain objects)
+
+See [`manual-tests/custom-game-tracker.ts`](manual-tests/custom-game-tracker.ts) for a minimal game-level example.
 
 - `track(data)`: called per half-move (`Action[]`) or per game (`Game` with headers + `moves`)
-- `merge(tracker)`: combine worker batch stats into the main-thread instance (required for multithreading)
+- `merge(tracker)`: required for multithreading (see example below)
+
+Example skeleton:
+
+```javascript
+export default class MyTracker extends GameTrackerBase {
+    static trackerId = 'MyTracker';
+    static workerModule = import.meta.url;
+
+    merge(tracker) {
+        /* aggregate batch stats */
+    }
+    trackGame(game) {
+        /* ... */
+    }
+}
+```
 
 Example merge for the built-in GameTracker:
 

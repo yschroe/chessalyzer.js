@@ -7,6 +7,7 @@ function isGameTracker(tracker: Tracker): tracker is GameTracker {
 }
 
 class GameTracker extends GameTrackerBase {
+    static override trackerId = 'GameTracker';
     static override workerModule = import.meta.url;
 
     results: { white: number; black: number; draw: number };

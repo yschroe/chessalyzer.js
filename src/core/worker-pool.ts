@@ -33,6 +33,8 @@ class WorkerPoolTaskInfo extends AsyncResource {
 export default class WorkerPool extends EventEmitter {
     flagNotifyWhenDone: boolean;
     numThreads: number;
+    filePath: string;
+    workerInitData?: WorkerInitData;
     workers: WorkerWithTaskInfo[];
     freeWorkers: WorkerWithTaskInfo[];
     tasks: {
@@ -42,20 +44,21 @@ export default class WorkerPool extends EventEmitter {
 
     /**
      * Creates a new `WorkerPool`.
-     * @param numThreads Count of workers that will be created for the pool.
+     * Workers are spawned lazily on first {@link runTask}, up to `numThreads`.
+     * @param numThreads Maximum worker count for the pool.
      * @param filePath Path of the code each worker shall execute.
-     * @param workerInitData One-time init payload (e.g. tracker config), passed via workerData.
+     * @param workerInitData One-time init payload (tracker config, onError), passed via workerData.
      */
     constructor(numThreads: number, filePath: string, workerInitData?: WorkerInitData) {
         super();
         this.numThreads = numThreads;
+        this.filePath = filePath;
+        this.workerInitData = workerInitData;
         this.workers = [];
         this.freeWorkers = [];
         this.tasks = [];
 
         this.flagNotifyWhenDone = false;
-
-        for (let i = 0; i < numThreads; i++) this.addNewWorker(filePath, workerInitData);
 
         // Any time the kWorkerFreedEvent is emitted, dispatch
         // the next task pending in the queue, if any.
@@ -123,10 +126,14 @@ export default class WorkerPool extends EventEmitter {
      * Adds a new task for the `WorkerPool` to execute. If a free worker is available, it will
      * directly execute the task. Else the task is pushed to the queue waiting for a worker to
      * pick it up.
-     * @param task Data the worker shall process.
+     * @param task Data the worker shall process (PGN chunk only — tracker config is in workerData).
      * @param callback The callback function which is called when the task is done or on error.
      */
     runTask(task: WorkerTaskData, callback: WorkerCallback) {
+        if (this.freeWorkers.length === 0 && this.workers.length < this.numThreads) {
+            this.addNewWorker(this.filePath, this.workerInitData);
+        }
+
         // No free threads, wait until a worker thread becomes free.
         if (this.freeWorkers.length === 0) {
             this.tasks.push({ task, callback });

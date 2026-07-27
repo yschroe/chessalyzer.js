@@ -13,6 +13,7 @@ const onErrorPolicy: 'abort' | 'skip-game' = initData?.onError ?? 'abort';
 /** One GameReplayer per worker thread, reused across batches. */
 const gameReplayer = new GameReplayer();
 
+/** Tracker config is read once from workerData; batches only carry PGN chunks. */
 const ready = initWorkerTrackers(initData);
 
 /** Assemble games from a PGN chunk and replay/analyze them. */

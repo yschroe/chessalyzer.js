@@ -9,23 +9,23 @@ import type { WorkerInitData } from '#types/worker';
  * Worker-thread tracker registry and per-config analysis state cache.
  *
  * Initialized once from `workerData` ({@link WorkerInitData}). Custom tracker modules
- * are dynamically imported at startup; built-ins are registered by constructor name.
+ * are dynamically imported at startup; built-ins are registered by stable {@link trackerId}.
  * {@link cfgCache} holds reused tracker instances — {@link resetCfg} clears them each batch
  * instead of reconstructing (important for {@link TileTracker} grid cost).
  */
 
-const TrackerList: Record<string, new () => BaseTracker> = {
-    [PieceTracker.name]: PieceTracker,
-    [TileTracker.name]: TileTracker,
-    [GameTracker.name]: GameTracker,
-};
+const BUILTIN_TRACKERS = [PieceTracker, TileTracker, GameTracker] as const;
+
+const TrackerList: Record<string, new () => BaseTracker> = Object.fromEntries(
+    BUILTIN_TRACKERS.map((T) => [T.trackerId, T]),
+);
 
 /** Reused analysis configs indexed by `idxConfig` from incoming batch messages. */
 const cfgCache: GameProcessorAnalysisConfig[] = [];
 
 /**
  * Bootstrap tracker registry from worker init payload.
- * @param initData One-time config from main thread (tracker names, cfg, optional paths).
+ * @param initData One-time config from main thread (tracker ids, cfg, optional paths).
  * @returns Promise that resolves when custom modules are loaded and cfg cache is warm.
  */
 export async function initWorkerTrackers(initData: WorkerInitData | undefined): Promise<void> {
@@ -41,11 +41,23 @@ async function loadCustomTrackers(initData: WorkerInitData | undefined): Promise
     if (!initData) return;
     for (const cfg of initData.configs) {
         for (const tracker of cfg.trackerData) {
-            if (tracker.path && !(tracker.name in TrackerList)) {
-                const customTracker = await import(tracker.path);
-                TrackerList[tracker.name] = customTracker.default
-                    ? customTracker.default
-                    : customTracker;
+            if (tracker.path && !(tracker.id in TrackerList)) {
+                let customTracker: unknown;
+                try {
+                    customTracker = await import(tracker.path);
+                } catch (cause) {
+                    throw new Error(
+                        `Failed to import custom tracker "${tracker.id}" from ${tracker.path}`,
+                        { cause },
+                    );
+                }
+                const TrackerClass = (customTracker as { default?: new () => BaseTracker }).default;
+                if (!TrackerClass || typeof TrackerClass !== 'function') {
+                    throw new Error(
+                        `Custom tracker "${tracker.id}" module must default-export a tracker class`,
+                    );
+                }
+                TrackerList[tracker.id] = TrackerClass;
             }
         }
     }
@@ -68,8 +80,10 @@ function createAnalysisCfg(
     if (!trackerData) return cfg;
 
     for (const tracker of trackerData) {
-        const TrackerClass = TrackerList[tracker.name];
-        if (!TrackerClass) continue;
+        const TrackerClass = TrackerList[tracker.id];
+        if (!TrackerClass) {
+            throw new Error(`Unknown tracker "${tracker.id}"`);
+        }
 
         const instance: BaseTracker = new TrackerClass();
         instance.cfg = tracker.cfg;
@@ -98,17 +112,11 @@ export function resetCfg(cfg: GameProcessorAnalysisConfig): void {
     }
 }
 
-/** Cached config for the given analysis index (falls back to index 0). */
+/** Cached config for the given analysis index. */
 export function getCachedCfg(idxConfig: number): GameProcessorAnalysisConfig {
-    const cfg = cfgCache[idxConfig] ?? cfgCache[0];
+    const cfg = cfgCache[idxConfig];
     if (!cfg) {
-        return {
-            trackers: { move: [], game: [] },
-            processedMoves: 0,
-            processedGames: 0,
-            skippedGames: 0,
-            errors: [],
-        };
+        throw new Error(`Invalid analysis config index: ${idxConfig}`);
     }
     return cfg;
 }

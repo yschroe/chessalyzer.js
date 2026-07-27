@@ -9,13 +9,16 @@
 - Single-threaded mode: `{ workers: false }` instead of passing `null` as a third argument.
 - Unified return type `AnalyzeResult` (`games`, `moves`, `movesPerSecond`, `runs`, `durationMs`).
 - Multi-run analyses via `runs: [...]` instead of passing an array of configs.
-- Tracker `add()` renamed to `merge()`; custom MT trackers use `static workerModule = import.meta.url`.
+- Tracker `add()` renamed to `merge()`; custom MT trackers use `static workerModule = import.meta.url` and `static trackerId`.
 - Export `MoveTracker`, `GameTrackerBase`, and public config/result types.
+
+### Changes
+
+- Worker pool spawns threads lazily on first task (up to configured `workerCount`).
+- Tracker config is sent once per worker via `workerData`, not per batch.
 
 ### Ideas
 
-- Do not create numThreads workers on init of the workerpool, but dynamically if needed.
-- Send tracker config only once on init of the worker pool
 - Do not send result back to main thread every time a chunk was processed, but only once at the end.
 
 ## [3.0.6] - 2024-03-17
