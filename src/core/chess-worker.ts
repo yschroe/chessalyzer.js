@@ -23,7 +23,6 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
     const replay = resolveReplayPolicy(cfg.trackers.move.length > 0);
     const games = parseGamesFromLines(decodePgnChunkBytes(msg.pgnChunkBytes).split('\n'), {
         readInHeader: msg.readInHeader,
-        maxGames: msg.maxGames,
     });
 
     for (const game of games) {

@@ -13,7 +13,6 @@ export interface WorkerTaskData {
     pgnChunkBytes: Uint8Array;
     idxConfig: number;
     readInHeader: boolean;
-    maxGames?: number;
 }
 
 /** Worker → main result: counts and optional tracker state to merge. */

@@ -86,7 +86,7 @@ class GameProcessor {
 
                     workerPool.runTask(
                         {
-                            pgnChunkBytes: chunk.bytes,
+                            pgnChunkBytes: chunk.bytes.slice(),
                             idxConfig: idxCfg,
                             readInHeader: this.readInHeader,
                         },

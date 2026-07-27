@@ -16,7 +16,7 @@ Module-specific tests live next to the code they exercise (e.g. `src/pgn/__tests
 
 ### Integration tests
 
-Tests that run the full `Chessalyzer` pipeline stay in `test/integration/` because they span parsing, workers, and trackers — not a single module.
+Tests that run the full `analyzePGN` pipeline stay in `test/integration/` because they span parsing, workers, and trackers — not a single module.
 
 ### Fixtures vs corpus
 

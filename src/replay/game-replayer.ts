@@ -86,8 +86,10 @@ class GameReplayer {
                 }
             }
         } catch (err) {
-            console.log(game);
-            board.printPosition();
+            if (process.env.CHESSALYZER_DEBUG_REPLAY) {
+                console.log(game);
+                board.printPosition();
+            }
             throw err;
         }
     }
