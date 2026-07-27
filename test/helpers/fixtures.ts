@@ -17,6 +17,20 @@ const TMP_DIR = join(TEST_DIR, '.tmp');
 
 export type FixtureId = keyof typeof manifest.fixtures;
 
+export interface TileTrackerGolden {
+    cntMovesTotal: number;
+    e4TileOccAll: number;
+}
+
+export interface FixtureEntry {
+    file: string;
+    description: string;
+    expected: { cntGames: number; cntMoves: number };
+    golden?: {
+        tileTracker?: TileTrackerGolden;
+    };
+}
+
 /** Absolute path to a committed fixture PGN. */
 export function fixturePath(id: FixtureId): string {
     const entry = manifest.fixtures[id];
@@ -27,6 +41,13 @@ export function fixturePath(id: FixtureId): string {
 /** Expected game/move counts from test/fixtures/manifest.json. */
 export function fixtureExpected(id: FixtureId) {
     return manifest.fixtures[id].expected;
+}
+
+/** Full manifest entry for a fixture (includes optional golden values). */
+export function getFixtureEntry(id: FixtureId): FixtureEntry {
+    const entry = manifest.fixtures[id];
+    if (!entry) throw new Error(`Unknown fixture id: ${id}`);
+    return entry as FixtureEntry;
 }
 
 /**

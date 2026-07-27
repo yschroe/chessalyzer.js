@@ -1,6 +1,6 @@
 import { describe, it, beforeAll, afterAll, expect } from 'bun:test';
 
-import { analyzePGN, GameTracker, PieceTracker } from 'chessalyzer.js';
+import { analyzePGN, GameTracker, PieceTracker, TileTracker } from 'chessalyzer.js';
 
 import type { AnalyzeResult } from '../../src/types/analysis';
 import type { Game } from '../../src/types/game';
@@ -9,6 +9,7 @@ import {
     cleanupTmpPgns,
     fixtureExpected,
     fixturePath,
+    getFixtureEntry,
     repeatPgn,
 } from '../helpers/fixtures';
 
@@ -141,6 +142,40 @@ describe('Fixtures', () => {
             });
             expect(data.games).toBe(1);
             expect(data.moves).toBeGreaterThan(0);
+        });
+    });
+
+    describe('TileTracker golden (en-passant)', () => {
+        const golden = getFixtureEntry('en-passant').golden?.tileTracker;
+        if (!golden) throw new Error('en-passant fixture missing tileTracker golden values');
+
+        for (const [mode, workers] of [
+            ['single-threaded', false],
+            ['multithreaded', undefined],
+        ] as const) {
+            it(`matches golden values (${mode})`, async () => {
+                const tileTracker = new TileTracker();
+                const data = await analyzePGN(fixturePath('en-passant'), {
+                    trackers: [tileTracker],
+                    ...(workers === false ? { workers: false } : {}),
+                });
+
+                expect(data.games).toBe(1);
+                expect(tileTracker.cntMovesTotal).toBe(golden.cntMovesTotal);
+                const heat = tileTracker.generateHeatmap('TILE_OCC_ALL', 'e4');
+                expect(heat.map[4]?.[4]).toBe(golden.e4TileOccAll);
+            });
+        }
+
+        it('counts castling as two move actions (known behavior)', async () => {
+            const tileTracker = new TileTracker();
+            await analyzePGN(fixturePath('en-passant'), {
+                trackers: [tileTracker],
+                workers: false,
+            });
+
+            expect(tileTracker.cntMovesTotal).toBe(golden.cntMovesTotal);
+            expect(fixtureExpected('en-passant').cntMoves).toBe(49);
         });
     });
 });

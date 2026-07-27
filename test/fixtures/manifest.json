@@ -55,6 +55,12 @@
             "expected": {
                 "cntGames": 1,
                 "cntMoves": 49
+            },
+            "golden": {
+                "tileTracker": {
+                    "cntMovesTotal": 51,
+                    "e4TileOccAll": 62.745098039215684
+                }
             }
         },
         "lichess-headers": {
