@@ -1,6 +1,18 @@
 {
     "dir": "test/fixtures",
     "fixtures": {
+        "bad-san-mid-file": {
+            "file": "bad-san-mid-file.pgn",
+            "description": "Three games; middle game has illegal SAN (error-policy tests)",
+            "expected": {
+                "cntGames": 2,
+                "cntMoves": 32,
+                "skippedGames": 1
+            },
+            "analyzeOptions": {
+                "onError": "skip-game"
+            }
+        },
         "basic-normal": {
             "file": "basic-normal.pgn",
             "description": "Standard complete game, single-line movetext",
@@ -39,6 +51,14 @@
             "expected": {
                 "cntGames": 1,
                 "cntMoves": 15
+            }
+        },
+        "crlf-endings": {
+            "file": "crlf-endings.pgn",
+            "description": "Two complete games with CRLF line endings",
+            "expected": {
+                "cntGames": 2,
+                "cntMoves": 6
             }
         },
         "draw": {

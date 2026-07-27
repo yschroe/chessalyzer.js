@@ -24,13 +24,20 @@ describe('Fixtures', () => {
             let data: AnalyzeResult;
 
             beforeAll(async () => {
-                data = await analyzePGN(fixturePath(id), { workers: false });
+                const entry = getFixtureEntry(id);
+                data = await analyzePGN(fixturePath(id), {
+                    workers: false,
+                    ...entry.analyzeOptions,
+                });
             });
 
             it('parses the expected number of games and moves', () => {
-                const expected = fixtureExpected(id);
+                const expected = getFixtureEntry(id).expected;
                 expect(data.games).toBe(expected.cntGames);
                 expect(data.moves).toBe(expected.cntMoves);
+                if (expected.skippedGames !== undefined) {
+                    expect(data.skippedGames).toBe(expected.skippedGames);
+                }
             });
         });
     }

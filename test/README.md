@@ -61,8 +61,10 @@ Corpus tests use `describe.skip` when `test/corpus/asorted-games.pgn` is missing
 ```sh
 bun run build                # required before integration tests (CI runs this automatically)
 bun test                     # fixtures + unit tests (CI default)
-bun run test:build-fixtures  # regenerate manifest after fixture changes
+bun run test:build-fixtures  # merge-update manifest after fixture changes (preserves golden)
 ```
+
+`test:build-fixtures` re-analyzes each `test/fixtures/*.pgn` and updates `expected` counts. It preserves `golden` blocks and uses per-fixture `analyzeOptions` overrides (see `FIXTURE_ANALYZE` in `scripts/build-fixture-manifest.ts`) for error-policy fixtures like `bad-san-mid-file`.
 
 CI (`.github/workflows/ci.yml`) runs `bun run build` then `bun test`. Corpus tests are included in `bun test` but skip when the local corpus file is absent.
 
