@@ -1,8 +1,16 @@
 import { describe, it, expect } from 'bun:test';
 
-import { parsePGN } from 'chessalyzer.js/pgn';
+import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
 
 import { allFixtureIds, fixtureExpected, fixturePath } from '../helpers/fixtures';
+
+async function collectStream(path: string, options?: Parameters<typeof streamParsePGN>[1]) {
+    const games = [];
+    for await (const game of streamParsePGN(path, options)) {
+        games.push(game);
+    }
+    return games;
+}
 
 describe('parsePGN', () => {
     it('parses games without headers by default', async () => {
@@ -47,6 +55,28 @@ describe('parsePGN', () => {
     for (const id of allFixtureIds) {
         it(`${id}: matches fixture game and move counts`, async () => {
             const games = await parsePGN(fixturePath(id));
+
+            const expected = fixtureExpected(id);
+            expect(games).toHaveLength(expected.games);
+
+            const moveCount = games.reduce((sum, game) => sum + game.moves.length, 0);
+            expect(moveCount).toBe(expected.moves);
+        });
+    }
+});
+
+describe('streamParsePGN', () => {
+    it('yields the same games as parsePGN on built package', async () => {
+        const path = fixturePath('basic-normal');
+        const eager = await parsePGN(path);
+        const streamed = await collectStream(path);
+
+        expect(streamed).toEqual(eager);
+    });
+
+    for (const id of allFixtureIds) {
+        it(`${id}: matches fixture game and move counts`, async () => {
+            const games = await collectStream(fixturePath(id));
 
             const expected = fixtureExpected(id);
             expect(games).toHaveLength(expected.games);
