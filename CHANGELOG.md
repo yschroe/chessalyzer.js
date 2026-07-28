@@ -64,10 +64,8 @@ Docs and benchmarks use pipeline stage names: **I/O → PGN parse → replay →
 - Count-only runs (no move trackers) skip board replay by default (~10% throughput on large fixtures; Node, M-series, 2× Lichess 2014-09). Set `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = false` in `replay-policy.ts` to always replay SAN.
 - Internal processor counters aligned with public `maxGames` naming; `@internal` types moved to `analysis-runtime.ts`.
 - `TileTracker` counts castling as one move (rook leg excluded from move counter).
-
-### Ideas
-
-- Do not send result back to main thread every time a chunk was processed, but only once at the end.
+- Multithreaded `runs: [...]` dispatches one worker task per chunk (parse once, replay per run); zero-copy chunk transfer restored for multi-run.
+- Worker tracker state merges at pool drain (per-batch worker→main posts counts/errors only; flush merges tracker payloads once per worker).
 
 ## [3.0.6] - 2024-03-17
 

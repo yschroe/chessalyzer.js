@@ -56,8 +56,7 @@ describe('Workers', () => {
                 pool,
                 {
                     pgnChunkBytes: minimalChunkBytes,
-                    idxConfig: 0,
-                    parseHeaders: false,
+                    configs: [{ idxConfig: 0, parseHeaders: false }],
                 },
                 10_000,
             );

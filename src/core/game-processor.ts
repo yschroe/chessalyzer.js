@@ -3,7 +3,11 @@ import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
 
 import { normalizeAnalysisConfigs, type NormalizeAnalysisOptions } from '#core/analysis-config';
-import { createWorkerResultHandler, finishTrackers } from '#core/tracker-merge';
+import {
+    createWorkerResultHandler,
+    finishTrackers,
+    mergeWorkerTrackerFlush,
+} from '#core/tracker-merge';
 import WorkerPool from '#core/worker-pool';
 import { readLines } from '#io/line-reader';
 import { readPgnChunks } from '#io/pgn-chunks';
@@ -15,7 +19,7 @@ import type {
     GameProcessorAnalysisConfigFull,
     MultithreadConfig,
 } from '#types/analysis-runtime';
-import type { WorkerInitData, WorkerTaskData } from '#types/worker';
+import type { WorkerBatchTask, WorkerInitData, WorkerTaskConfigEntry } from '#types/worker';
 
 /** Path to the worker file. */
 const WORKER_PATH = join(import.meta.dirname, 'chess-worker.js');
@@ -118,6 +122,8 @@ class GameProcessor {
             chunkLoop: for await (const chunk of readPgnChunks(path, chunkConfig)) {
                 if (gate.getFatalError()) break;
 
+                const taskConfigs: WorkerTaskConfigEntry[] = [];
+
                 for (const [idxConfig, cfg] of this.configs.entries()) {
                     if (cfg.isDone) continue;
 
@@ -126,29 +132,39 @@ class GameProcessor {
                         if (remaining <= 0) continue;
                     }
 
-                    // Only one config: transfer original (zero-copy)
-                    // Multiple configs: slice() so each gets its own buffer;
-                    // avoids detaching the underlying buffer
-                    const pgnChunkBytes =
-                        this.configs.length > 1 ? chunk.bytes.slice() : chunk.bytes;
-
-                    const task: WorkerTaskData = {
-                        pgnChunkBytes,
+                    const entry: WorkerTaskConfigEntry = {
                         idxConfig,
                         parseHeaders: cfg.config.hasFilter ? true : this.parseHeaders,
                     };
 
                     if (!cfg.config.hasFilter && cfg.config.maxGames !== Infinity) {
-                        task.remainingGames = cfg.config.maxGames - cfg.processedGames;
+                        entry.remainingGames = cfg.config.maxGames - cfg.processedGames;
                     }
 
-                    workerPool.runTask(task, handleWorkerResult);
+                    taskConfigs.push(entry);
                 }
+
+                if (taskConfigs.length === 0) {
+                    if (this.configs.every((c) => c.isDone)) break chunkLoop;
+                    continue;
+                }
+
+                const task: WorkerBatchTask = {
+                    pgnChunkBytes: chunk.bytes,
+                    configs: taskConfigs,
+                };
+
+                workerPool.runTask(task, handleWorkerResult);
 
                 if (this.configs.every((c) => c.isDone)) break chunkLoop;
             }
 
             await awaitWorkerPoolDone(workerPool, gate);
+
+            const flushResults = await workerPool.flush();
+            for (const flushResult of flushResults) {
+                mergeWorkerTrackerFlush(this.configs, flushResult);
+            }
 
             return finishTrackers(this.configs);
         } finally {

@@ -160,11 +160,10 @@ Still open:
 
 ## Multithreading & workers
 
-**Shipped:** lazy worker pool, tracker config once per worker via `workerData`, `trackerId` + `workerModule` for custom trackers; MT contract documented in README + AGENTS.md.
+**Shipped:** lazy worker pool, tracker config once per worker via `workerData`, `trackerId` + `workerModule` for custom trackers; MT contract documented in README + AGENTS.md; deferred tracker merge at pool drain (Sprint 07).
 
 Still open:
 
-- Defer result merging until pool drain (see CHANGELOG Unreleased Ideas)
 - Replace custom tracker `workerModule` dynamic import with a registration API (optional ergonomics)
 
 ---

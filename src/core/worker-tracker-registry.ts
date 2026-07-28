@@ -113,21 +113,12 @@ function createAnalysisCfg(
     return cfg;
 }
 
-/**
- * Reset batch counters and tracker state before processing a new worker batch.
- */
-export function resetCfg(cfg: GameProcessorAnalysisConfig): void {
+/** Reset per-batch counters only; tracker state accumulates until pool flush. */
+export function resetCfgBatchCounters(cfg: GameProcessorAnalysisConfig): void {
     cfg.processedMoves = 0;
     cfg.processedGames = 0;
     cfg.skippedGames = 0;
     cfg.errors = [];
-
-    for (const t of cfg.trackers.game) {
-        t.resetWorkerBatch?.();
-    }
-    for (const t of cfg.trackers.move) {
-        t.resetWorkerBatch?.();
-    }
 }
 
 /** Cached config for the given analysis index. */
