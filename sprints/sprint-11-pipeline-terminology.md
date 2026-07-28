@@ -122,16 +122,16 @@ Replace overloaded / misleading names:
 
 ### Phase 1 — Docs & benchmark vocabulary (no behavior change)
 
-- [ ] **Add “Pipeline” section to README**
+- [x] **Add “Pipeline” section to README**
     - Glossary table above
     - Mermaid diagram
     - Benchmark tier table (see [Benchmark tiers](#benchmark-tiers-v4))
-- [ ] **Rewrite AGENTS.md pipeline section** — replace “tokenize/assemble” wording with I/O → PGN parse → replay → analyze
-- [ ] **Update IDEAS.md** — replace `tokenize` tier with **PGN parse**; note Sprint 11 as source of truth for naming
-- [ ] **Rename bench stages** in [`bench/exploratory/profile-bottlenecks-node.ts`](../bench/exploratory/profile-bottlenecks-node.ts)
+- [x] **Rewrite AGENTS.md pipeline section** — replace “tokenize/assemble” wording with I/O → PGN parse → replay → analyze
+- [x] **Update IDEAS.md** — replace `tokenize` tier with **PGN parse**; note Sprint 11 as source of truth for naming
+- [x] **Rename bench stages** in [`bench/exploratory/profile-bottlenecks-node.ts`](../bench/exploratory/profile-bottlenecks-node.ts)
     - `stageTokenize` → `stagePgnParse`
     - Console labels: “PGN parse (no hdr)” / “PGN parse (+ hdr)”
-- [ ] **Add v4 migration appendix to CHANGELOG** (breaking rename table for pre-release API)
+- [x] **Add v4 migration appendix to CHANGELOG** (breaking rename table for pre-release API)
 
 ### Phase 2 — PGN parse layer renames
 

@@ -10,19 +10,20 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 **Pipeline (high level):**
 
-1. **Line reading** — `readLines` / `openLineStream` in `src/pgn/line-reader.ts` (readline `'line'` events) and `readPgnChunks` in `src/pgn/pgn-chunks.ts` stream the file with minimal overhead.
-2. **Chunking (multithreaded mode)** — the main thread splits the PGN into byte-sized chunks aligned to complete games and dispatches them to workers.
-3. **Assemble** — workers tokenize movetext and build game objects (`src/pgn/`).
-4. **Replay** — SAN is applied to a board (`src/replay/`), with explicit policy `'none' | 'actions'` (or `'skip'` when gated).
-5. **Tracking** — configured trackers receive move/game data (`src/tracker/`).
+1. **I/O** — `readLines` / `openLineStream` in [`src/pgn/line-reader.ts`](src/pgn/line-reader.ts) and `readPgnChunks` in [`src/pgn/pgn-chunks.ts`](src/pgn/pgn-chunks.ts) stream the file with minimal overhead. In multithreaded mode, chunking splits the PGN into byte-sized batches aligned to complete games for worker dispatch (parallel I/O, not a semantic stage).
+2. **PGN parse** — structural parse: tag pairs, mainline SAN strings, game boundaries (`GameAssembler`, [`movetext-tokenizer.ts`](src/pgn/movetext-tokenizer.ts); file → `movetext.ts` in Sprint 11 Phase 2).
+3. **Replay** — SAN decode + play on a board ([`src/replay/`](src/replay/)), policy `'skip' | 'none' | 'actions'`.
+4. **Analyze** — [`GameProcessor`](src/core/game-processor.ts) runs configured trackers ([`src/tracker/`](src/tracker/)).
+
+**Terminology:** Canonical glossary in the [README Pipeline section](README.md#pipeline) and [Sprint 11](sprints/sprint-11-pipeline-terminology.md). Public docs use **replay** for SAN decode + play.
 
 **Key directories:**
 
 | Path                 | Purpose                                                                            |
 | -------------------- | ---------------------------------------------------------------------------------- |
 | `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers)                 |
-| `src/pgn/`           | PGN I/O, chunking, movetext tokenize, game assembly                                |
-| `src/replay/`        | SAN replay stages (`GameReplayer`, policy, `SanApplier`, `SanToActions`)           |
+| `src/pgn/`           | I/O, chunking, PGN parse (game assembly, movetext SAN extraction)                  |
+| `src/replay/`        | Replay — SAN decode + play (`GameReplayer`, policy, `SanApplier`, `SanToActions`)  |
 | `src/types/`         | Public analysis types (`analysis.ts`) vs processor runtime (`analysis-runtime.ts`) |
 | `src/tracker/`       | Built-in and base tracker implementations                                          |
 | `bench/`             | Callable performance benchmarks (`bench-*.ts`)                                     |
@@ -39,10 +40,10 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 `analyzePGN` picks one of two internal paths:
 
-1. **Single-threaded** — `workers: false`. Main thread: `readLines` → `GameAssembler` → `GameReplayer` (policy from `resolveReplayPolicy`).
-2. **Multithreaded (worker-chunk)** — default. Main thread: `readPgnChunks` → workers assemble once per chunk. Without a `filter`, workers also replay and merge tracker state. With a `filter`, workers return parsed games and the main thread applies the JS predicate and replay (trackers stay on the main thread for that run). `maxGames` is enforced on workers when there is no filter, and on the main thread after filtering when there is.
+1. **Single-threaded** — `workers: false`. Main thread: I/O (`readLines`) → PGN parse (`GameAssembler`) → replay (`GameReplayer`, policy from `resolveReplayPolicy`) → analyze (trackers).
+2. **Multithreaded (worker-chunk)** — default. Main thread: I/O + chunking (`readPgnChunks`) → workers PGN-parse once per chunk. Without a `filter`, workers also replay and merge tracker state. With a `filter`, workers return parsed games and the main thread applies the JS predicate and replay (trackers stay on the main thread for that run). `maxGames` is enforced on workers when there is no filter, and on the main thread after filtering when there is.
 
-**Replay policy:** `resolveReplayPolicy(hasMoveTrackers)` returns `'skip' | 'none' | 'actions'`. Count-only runs (no move trackers) skip board replay by default (`SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = true` in `src/replay/replay-policy.ts`). Move trackers always get `'actions'`; game-only trackers get `'none'` when replay runs. Flip the constant to `false` to always replay SAN (e.g. to surface replay errors on count-only runs).
+**Replay policy:** `resolveReplayPolicy(hasMoveTrackers)` returns `'skip' | 'none' | 'actions'`. Public docs use **replay** for SAN decode + play; `'none'` means board-only replay without building `Action[]`. Count-only runs (no move trackers) skip board replay by default (`SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = true` in [`src/replay/replay-policy.ts`](src/replay/replay-policy.ts)). Move trackers always get `'actions'`; game-only trackers get `'none'` when replay runs. Flip the constant to `false` to always replay SAN (e.g. to surface replay errors on count-only runs). Phase 3 renames `'none'` → `'board'`.
 
 ## Performance
 

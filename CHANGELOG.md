@@ -14,6 +14,21 @@
 - Built-in tracker stats aligned with `AnalyzeResult`: `GameTracker.cntGames` → `games`; `TileTracker.cntMovesGame` / `cntMovesTotal` → `movesGame` / `movesTotal`.
 - Tracker modules renamed: `game-tracker.ts`, `piece-tracker.ts`, `tile/tile-tracker.ts` (drop misleading `-base` suffix on concrete exports).
 
+#### Pipeline terminology (Sprint 11)
+
+Docs and benchmarks now use industry-aligned stage names: **I/O → PGN parse → replay → analyze**. See [README Pipeline section](./README.md#pipeline) and [Sprint 11](sprints/sprint-11-pipeline-terminology.md).
+
+Upcoming code/API renames before v4 release (not yet applied in Phase 1):
+
+| Pre-sprint / legacy              | v4 target                                | Sprint phase   |
+| -------------------------------- | ---------------------------------------- | -------------- |
+| `readInHeader`                   | `parseHeaders` / public `headers` option | Phase 2        |
+| `parseOnly` (worker)             | `pgnParseOnly`                           | Phase 2        |
+| `ReplayPolicy 'none'`            | `ReplayMode 'board'`                     | Phase 3        |
+| `SanToActions.parse()`           | `SanDecoder.decodeSan()`                 | Phase 3        |
+| Docs “tokenize” (SAN extraction) | **PGN parse**                            | Phase 1 (docs) |
+| `movetext-tokenizer.ts`          | `movetext.ts`                            | Phase 2        |
+
 ### Changes
 
 - Worker pool spawns threads lazily on first task (up to configured `workerCount`).

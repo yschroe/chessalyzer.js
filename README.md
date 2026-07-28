@@ -9,6 +9,8 @@ A JavaScript library for batch analyzing chess games.
 - [Features](#features)
 - [Installation](#installation)
 - [How it works](#how-it-works)
+- [Pipeline](#pipeline)
+    - [Performance tiers](#performance-tiers)
 - [Examples](#examples)
     - [Basic Usage](#basic-usage)
     - [Filtering](#filtering)
@@ -28,7 +30,7 @@ A JavaScript library for batch analyzing chess games.
 - Filter games (e.g. only analyze games where WhiteElo > 1800)
 - Fully modular, track only the stats you need to preserve performance
 - Generate heatmaps out of the generated data
-- It's fast and highly parallelized: Processes ~25M moves/s on an Apple M1 (PGN parsing only; no validation)
+- It's fast and highly parallelized: Processes ~25M moves/s on an Apple M1 (PGN parse only; no board replay or validation)
 - Handles big files easily
 - Just one dependency (chalk)
 
@@ -57,7 +59,65 @@ console.log(result.games, result.moves, result.movesPerSecond);
 
 # How it works
 
-Chessalyzer.js parses PGN files and runs **trackers** over each game. The main entry points are `analyzePGN` (batch analysis) and `printHeatmap` (terminal preview). Trackers receive move-level `Action[]` data or game-level header data and accumulate statistics in place.
+Chessalyzer.js runs **PGN parse**, optional **replay**, and **analyze** (trackers) over each game. See [Pipeline](#pipeline) for stage definitions. The main entry points are `analyzePGN` (batch analysis) and `printHeatmap` (terminal preview). Move trackers receive move-level `Action[]` data; game trackers receive header fields. Statistics accumulate in place on each tracker instance.
+
+# Pipeline
+
+Processing a PGN file follows four semantic stages. Worker **chunking** (byte-sized batches aligned to game boundaries) is parallel I/O for multithreaded mode — not a separate stage.
+
+```mermaid
+flowchart TB
+    subgraph io ["1. I/O"]
+        A[Read file → lines or chunks]
+    end
+    subgraph pgn ["2. PGN parse (syntactic)"]
+        B[Tag pairs → headers]
+        C[Movetext → SAN strings]
+        D[Game boundaries + result]
+    end
+    subgraph replay ["3. Replay (semantic)"]
+        E[SAN decode → from/to move]
+        F[Play on board]
+    end
+    subgraph analyze ["4. Analyze"]
+        G[Trackers / stats]
+    end
+    A --> B
+    A --> C
+    B --> D
+    C --> D
+    D --> E --> F --> G
+```
+
+| Term                    | Meaning                                                                 | Position-dependent? |
+| ----------------------- | ----------------------------------------------------------------------- | ------------------- |
+| **I/O** / **streaming** | Read bytes from disk; deliver lines or worker chunks                    | No                  |
+| **PGN parse**           | Structural parse: headers + mainline SAN **strings** + result; no board | No                  |
+| **SAN decode**          | One SAN string → concrete move (`from`/`to`) using live board           | Yes                 |
+| **Play**                | Apply decoded move to board state                                       | Yes                 |
+| **Replay**              | SAN decode + play through a game's mainline                             | Yes                 |
+| **Analyze**             | Run game/move trackers and aggregate stats                              | Depends             |
+
+**Industry note:** “PGN parser” means stage 2 only (cf. chessops `parsePgn`). Raw file → legal moves requires **PGN parse + replay**.
+
+Internally today: I/O uses `readLines` / `readPgnChunks`; PGN parse uses `GameAssembler` and `movetext-tokenizer`; replay uses `GameReplayer`, `SanApplier`, and `SanToActions`; analyze is `analyzePGN` with trackers. A standalone `parsePGN` export is planned for v4 (Sprint 11).
+
+### Performance tiers
+
+Benchmark scripts (e.g. `bench/exploratory/profile-bottlenecks-node.ts`) measure these tiers on a large Lichess fixture:
+
+| Tier | Label                   | Measures                                   |
+| ---- | ----------------------- | ------------------------------------------ |
+| 0    | Raw I/O                 | MB/s read                                  |
+| 1    | Line I/O                | lines/s                                    |
+| 2    | PGN parse               | games/s, moves/s (SAN strings)             |
+| 2h   | PGN parse + headers     | same with tag pairs                        |
+| 3    | Replay (trust, board)   | moves/s, board-only replay path            |
+| 3a   | Replay (trust, actions) | moves/s, with `Action[]` for move trackers |
+| 4    | Analyze E2E             | `analyzePGN` moves/s with/without trackers |
+| —    | Parallel overhead       | chunk size × workers (not a semantic tier) |
+
+Count-only runs (no move trackers) skip board replay by default; tier-2 move counts can therefore exceed tier-3 when replay is skipped.
 
 # Examples
 
@@ -126,7 +186,7 @@ const heatmapData = tileT1.generateComparisonHeatmap(tileT2, func);
 
 ## Multithreaded analysis
 
-Per default chessalyzer.js uses Node.js [Worker Threads](https://nodejs.org/api/worker_threads.html) to read-in the pgn file and analyze the data in parallel.
+By default chessalyzer.js uses Node.js [Worker Threads](https://nodejs.org/api/worker_threads.html) to stream the PGN file via I/O and analyze data in parallel.
 
 ```javascript
 await analyzePGN('<pathToPgnFile>', {
