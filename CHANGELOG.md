@@ -35,6 +35,7 @@ Docs and benchmarks use pipeline stage names: **I/O → PGN parse → replay →
 **Applied in Phase 4 (public parse API):**
 
 - Export `parsePGN(path, options?)` — single-threaded PGN parse (`readLines` + `GameAssembler`); options `headers`, `maxGames`
+- Export `streamParsePGN(path, options?)` — async iterator of `ParsedGame` with backpressure (`openLineStream` + `GameAssembler`); same options as `parsePGN`
 - Export `ParsedGame` (alias for `Game`) and `ParsePgnOptions`
 - Export `ReplayMode`; `AnalyzeOptions.headers` and `AnalyzeOptions.replay` for explicit pipeline control
 - `analyzePGN` shares parse/replay resolution with `parsePGN` via `normalizeAnalysisConfigs` (does not call `parsePGN` internally — preserves streaming/worker chunking)
@@ -51,12 +52,6 @@ Docs and benchmarks use pipeline stage names: **I/O → PGN parse → replay →
 - Root export is analyze-only (`analyzePGN`, `printHeatmap`, error helpers/types); `parsePGN` lives on `/pgn`; trackers and tracker types on `/trackers`
 - Built-in trackers use named exports (`GameTracker`, `PieceTracker`, `TileTracker`, `BaseTracker`)
 - Internal folder renamed `src/tracker/` → `src/trackers/` (`#trackers/*` import alias)
-
-**Deferred:**
-
-| Item                            | Sprint    |
-| ------------------------------- | --------- |
-| `streamParsePGN` async iterator | Sprint 09 |
 
 **Planned (Phase 5+):**
 

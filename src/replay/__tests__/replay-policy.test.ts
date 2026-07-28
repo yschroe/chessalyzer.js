@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import { resolveEffectiveReplayMode, resolveReplayMode } from '#replay/replay-policy';
+import { resolveEffectiveReplayMode, resolveReplayMode } from '#replay/replay-mode';
 
 describe('resolveReplayMode', () => {
     it('returns actions when move trackers are present', () => {

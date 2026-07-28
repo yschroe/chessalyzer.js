@@ -201,7 +201,7 @@ If the goal is “PGN library” rather than “batch analyzer only”, a reason
 
 ## Related issues in code today
 
-| Location                      | Note                                                                |
-| ----------------------------- | ------------------------------------------------------------------- |
-| `src/pgn/movetext.ts`         | RAVs and comments share the same strip regex                        |
-| `src/replay/replay-policy.ts` | `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` defaults true (count-only skip) |
+| Location                    | Note                                                                |
+| --------------------------- | ------------------------------------------------------------------- |
+| `src/pgn/movetext.ts`       | RAVs and comments share the same strip regex                        |
+| `src/replay/replay-mode.ts` | `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` defaults true (count-only skip) |

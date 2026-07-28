@@ -1,4 +1,4 @@
-import type { ReplayMode } from '#replay/replay-policy';
+import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
 import type { ParsedGame } from '#types/parse-pgn';
 import type { Tracker } from '#types/tracker';

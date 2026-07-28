@@ -154,7 +154,7 @@ Replace overloaded / misleading names:
     - `ReplayPolicy` → `ReplayMode`
     - Values: `'skip' | 'board' | 'actions'` (`'none'` → `'board'`)
     - `resolveReplayPolicy` → `resolveReplayMode`
-    - File: [`replay-policy.ts`](../src/replay/replay-policy.ts)
+    - File: [`replay-mode.ts`](../src/replay/replay-mode.ts)
 - [x] **SAN decode vs apply naming**
     - `SanToActions` → `SanDecoder` (class that builds `Action[]`)
     - Method `parse()` → **`decodeSan()`**
@@ -209,9 +209,9 @@ Replace overloaded / misleading names:
 | `ParseGamesOptions`             | `readInHeader`                   | `parseHeaders`                                                  |
 | `WorkerInitData` / messages     | `readInHeader`                   | `parseHeaders`                                                  |
 | Worker config                   | `parseOnly`                      | `pgnParseOnly`                                                  |
-| `replay-policy.ts`              | `ReplayPolicy`                   | `ReplayMode`                                                    |
+| `replay-mode.ts`                | `ReplayPolicy`                   | `ReplayMode`                                                    |
 | Replay values                   | `'none'`                         | `'board'`                                                       |
-| `replay-policy.ts`              | `resolveReplayPolicy`            | `resolveReplayMode`                                             |
+| `replay-mode.ts`                | `resolveReplayPolicy`            | `resolveReplayMode`                                             |
 | `san-to-actions.ts`             | class `SanToActions`, `.parse()` | `SanDecoder`, `.decodeSan()`                                    |
 | `san-applier.ts`                | class `SanApplier`, `.apply()`   | unchanged (Phase 3.1 reverted interim `SanPlayer`)              |
 | Docs / bench                    | tokenize, read-in                | PGN parse, I/O                                                  |
@@ -244,7 +244,7 @@ Note: tier-2 move counts may exceed tier-3 when `replay: 'skip'` — document as
 | ------------------------------------------------------ | ----------------------------------------- |
 | `src/pgn/movetext.ts` (rename from movetext-tokenizer) | Terminology, optional symbol renames      |
 | `src/pgn/game-assembler.ts`                            | `parseHeaders`                            |
-| `src/replay/replay-policy.ts`                          | `ReplayMode`, `'board'`                   |
+| `src/replay/replay-mode.ts`                            | `ReplayMode`, `'board'`                   |
 | `src/replay/san-to-actions.ts`                         | → `san-decoder.ts`, `decodeSan`           |
 | `src/replay/san-applier.ts`                            | `SanApplier`, `apply()`                   |
 | `src/replay/game-replayer.ts`                          | Updated types + JSDoc                     |

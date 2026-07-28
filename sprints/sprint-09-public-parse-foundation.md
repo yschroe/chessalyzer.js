@@ -12,7 +12,7 @@ Split “parse PGN” from “run trackers” with a minimal public API — no v
 
 ## Tasks
 
-- [ ] **Streaming ergonomics** _(if not done in Sprint 11)_
+- [x] **Streaming ergonomics**
     - Async iterator / `PgnStream` for large files
     - Reuse [`GameAssembler`](../src/pgn/game-assembler.ts), [`readLines`](../src/io/line-reader.ts), [`readPgnChunks`](../src/io/pgn-chunks.ts)
 

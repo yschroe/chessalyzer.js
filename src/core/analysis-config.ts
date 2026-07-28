@@ -1,5 +1,5 @@
-import { resolveEffectiveReplayMode } from '#replay/replay-policy';
-import type { ReplayMode } from '#replay/replay-policy';
+import { resolveEffectiveReplayMode } from '#replay/replay-mode';
+import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeOptions } from '#types/analysis';
 import type { AnalysisConfig, MultithreadConfig } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull, GameProcessorConfig } from '#types/analysis-runtime';

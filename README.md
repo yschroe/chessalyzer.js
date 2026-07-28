@@ -101,16 +101,21 @@ flowchart TB
 
 **Terminology note:** “PGN parser” usually means stage 2 only — syntactic parse to SAN strings and headers, without board replay. Raw file → legal moves requires **PGN parse + replay**.
 
-Public entry points: **`analyzePGN`** (full pipeline), **`parsePGN`** via `chessalyzer.js/pgn` (stage 2 only), trackers via `chessalyzer.js/trackers`. Internally, both share `GameAssembler` / `readLines`; multithreaded analyze uses worker chunks instead of loading all games.
+Public entry points: **`analyzePGN`** (full pipeline), **`parsePGN`** / **`streamParsePGN`** via `chessalyzer.js/pgn` (stage 2 only), trackers via `chessalyzer.js/trackers`. Internally, both share `GameAssembler` / `readLines`; multithreaded analyze uses worker chunks instead of loading all games.
 
 ```javascript
 import { analyzePGN } from 'chessalyzer.js';
-import { parsePGN } from 'chessalyzer.js/pgn';
+import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
 import { GameTracker } from 'chessalyzer.js/trackers';
 
-// PGN parse only — no board replay
+// PGN parse only — no board replay (all games in memory)
 const games = await parsePGN('<pathToPgnFile>', { headers: true, maxGames: 100 });
 // games[0].moves — mainline SAN strings
+
+// Stream games one at a time (lower memory on large files)
+for await (const game of streamParsePGN('<pathToPgnFile>', { headers: true })) {
+    // game.moves — mainline SAN strings
+}
 
 // Full pipeline with explicit replay mode
 await analyzePGN('<pathToPgnFile>', {
@@ -126,7 +131,7 @@ Subpath imports (pipeline stages + trackers):
 
 ```javascript
 import { readLines, readPgnChunks } from 'chessalyzer.js/io';
-import { parsePGN } from 'chessalyzer.js/pgn';
+import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
 import { resolveReplayMode } from 'chessalyzer.js/replay';
 import { TileTracker, GameTrackerBase } from 'chessalyzer.js/trackers';
 ```
