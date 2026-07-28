@@ -6,7 +6,7 @@ import type { PlayerColor } from '#types/tokens';
 /**
  * Shared mutable state for replaying one game's SAN moves.
  *
- * Both {@link SanPlayer} (board path) and {@link SanDecoder} (tracker path)
+ * Both {@link SanApplier} (board path) and {@link SanDecoder} (tracker path)
  * read/write through this object so coord buffers and the board stay in sync
  * without duplicating construction logic.
  */

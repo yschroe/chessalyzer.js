@@ -13,7 +13,7 @@ Today the library is optimized for **batch analysis**, not general-purpose PGN I
 - Single public entry point: `analyzePGN(path, options?)`
 - Internal pipeline: I/O (stream lines) → PGN parse → replay when needed → analyze (trackers)
 - Count-only runs (no move trackers): board replay skipped by default; move counts come from the parsed SAN list length
-- When replay runs without move trackers: `SanPlayer` (direct board mutation, no `Action` objects)
+- When replay runs without move trackers: `SanApplier` (direct board mutation, no `Action` objects)
 - Tracker path: `SanDecoder` → `Action[]` → `board.applyActions()`
 - Assumes **standard chess from the initial position**, **valid Lichess-style PGN**, **mainline only** (parentheses stripped)
 

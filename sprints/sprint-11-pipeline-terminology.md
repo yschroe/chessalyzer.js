@@ -48,7 +48,7 @@ Use these terms in code comments, public docs, CHANGELOG, and benchmark output. 
 | **I/O** / **streaming** | Read bytes from disk; deliver lines or transferable chunks              | No                  | `line-reader`, `pgn-chunks`                            |
 | **PGN parse**           | Structural parse: headers + mainline SAN **strings** + result; no board | No                  | `game-assembler`, `movetext`                           |
 | **SAN decode**          | One SAN string → concrete move (`from`/`to`) using live board           | Yes                 | `san-decoder` (today `san-to-actions`), `piece-finder` |
-| **Play**                | Apply decoded move to board state                                       | Yes                 | `san-player` (today `san-applier`), `chess-board`      |
+| **Play**                | Apply decoded move to board state                                       | Yes                 | `san-applier`, `chess-board`                           |
 | **Replay**              | SAN decode + play through a game's mainline                             | Yes                 | `game-replayer`, replay policy                         |
 | **Analyze**             | Run game/move trackers and aggregate stats                              | Depends             | `core`, `tracker`                                      |
 
@@ -155,13 +155,20 @@ Replace overloaded / misleading names:
     - Values: `'skip' | 'board' | 'actions'` (`'none'` → `'board'`)
     - `resolveReplayPolicy` → `resolveReplayMode`
     - File: [`replay-policy.ts`](../src/replay/replay-policy.ts)
-- [x] **SAN decode vs play naming**
+- [x] **SAN decode vs apply naming**
     - `SanToActions` → `SanDecoder` (class that builds `Action[]`)
     - Method `parse()` → **`decodeSan()`**
-    - `SanApplier` → `SanPlayer` (applies SAN directly to board; “play” matches chessops)
+    - Keep **`SanApplier`** / **`apply()`** on `san-applier.ts` (board path; see Phase 3.1)
     - Update [`san-context.ts`](../src/replay/san-context.ts) comments accordingly
-- [x] **Keep `GameReplayer`** as stage-3 orchestrator; JSDoc: “replay = decode + play”
+- [x] **Keep `GameReplayer`** as stage-3 orchestrator; JSDoc: “replay = decode + apply”
 - [x] **Error naming** — keep `ReplayError` / `code: 'replay'` (already correct); ensure `ParseError` remains reserved for stage 2
+
+### Phase 3.1 — Revert interim `SanPlayer` naming
+
+- [x] **`SanPlayer` → `SanApplier`** — “player” reads like a human; applier matches board mutation role
+- [x] **`play(san)` → `apply(san)`**
+- [x] **File stays `san-applier.ts`** (revert `git mv` to `san-player.ts`)
+- [x] Update cross-refs: `game-replayer`, tests, `replay-policy`, `san-context`, `san-decoder`, docs, CHANGELOG
 
 ### Phase 4 — Public `parsePGN` & compose `analyzePGN`
 
@@ -210,7 +217,7 @@ Low priority if renames are complete; do only when subpath exports are added.
 | Replay values                   | `'none'`                         | `'board'`                                                       |
 | `replay-policy.ts`              | `resolveReplayPolicy`            | `resolveReplayMode`                                             |
 | `san-to-actions.ts`             | class `SanToActions`, `.parse()` | `SanDecoder`, `.decodeSan()`                                    |
-| `san-applier.ts`                | class `SanApplier`               | `SanPlayer`                                                     |
+| `san-applier.ts`                | class `SanApplier`, `.apply()`   | unchanged (Phase 3.1 reverted interim `SanPlayer`)            |
 | Docs / bench                    | tokenize, read-in                | PGN parse, I/O                                                  |
 | Sprint 09 draft API             | `tokenize \| parse` modes        | **`parsePGN` only** (headers flag); no separate “tokenize” mode |
 
@@ -226,7 +233,7 @@ Publish in README; implement in `profile-bottlenecks-node.ts` and optionally `be
 | 1    | Line I/O                | lines/s                                    |
 | 2    | PGN parse               | games/s, moves/s (SAN strings)             |
 | 2h   | PGN parse + headers     | same with tag pairs                        |
-| 3    | Replay (trust, board)   | moves/s, `SanPlayer` path                  |
+| 3    | Replay (trust, board)   | moves/s, `SanApplier` path                 |
 | 3a   | Replay (trust, actions) | moves/s, `SanDecoder` + `Action[]`         |
 | 4    | Analyze E2E             | `analyzePGN` moves/s with/without trackers |
 | —    | Parallel overhead       | chunk size × workers (not a semantic tier) |
@@ -243,7 +250,7 @@ Note: tier-2 move counts may exceed tier-3 when `replay: 'skip'` — document as
 | `src/pgn/game-assembler.ts`                            | `parseHeaders`                            |
 | `src/replay/replay-policy.ts`                          | `ReplayMode`, `'board'`                   |
 | `src/replay/san-to-actions.ts`                         | → `san-decoder.ts`, `decodeSan`           |
-| `src/replay/san-applier.ts`                            | → `san-player.ts`                         |
+| `src/replay/san-applier.ts`                            | `SanApplier`, `apply()`                   |
 | `src/replay/game-replayer.ts`                          | Updated types + JSDoc                     |
 | `src/core/analysis-config.ts`                          | `parseHeaders`, `pgnParseOnly`            |
 | `src/core/game-processor.ts`                           | Compose stages; option names              |
@@ -283,7 +290,7 @@ bun bench/exploratory/profile-bottlenecks-node.ts   # tier labels updated
 
 - **Validate mode** — trust-only replay; see Sprint 10+ / IDEAS.md
 - **RAV trees, comment/NAG preservation, FEN/`SetUp` starts** — out of scope
-- **Merging `SanPlayer` and `SanDecoder`** — intentional perf split; rename only
+- **Merging `SanApplier` and `SanDecoder`** — intentional perf split; rename only
 - **Regex / hot-loop changes** in movetext without atomic bench (`npm run bench:atomic -- array`)
 - **Chess960, UCI output, write-PGN** — IDEAS longer term
 

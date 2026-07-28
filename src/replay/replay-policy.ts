@@ -1,7 +1,7 @@
 /**
  * Board replay mode for one game (string discriminant — no allocations).
  * - `skip` — no board replay (PGN parse + game trackers + counts only)
- * - `board` — SAN decode + play on board ({@link SanPlayer}); no {@link Action} objects
+ * - `board` — SAN decode + apply on board ({@link SanApplier}); no {@link Action} objects
  * - `actions` — SAN decode + {@link Action}[] for move trackers ({@link SanDecoder})
  */
 export type ReplayMode = 'skip' | 'board' | 'actions';

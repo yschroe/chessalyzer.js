@@ -3,7 +3,7 @@ import { isReplayFailure } from '#replay/replay-failure';
 import type { ReplayMode } from '#replay/replay-policy';
 import SanContext from '#replay/san-context';
 import SanDecoder from '#replay/san-decoder';
-import SanPlayer from '#replay/san-player';
+import SanApplier from '#replay/san-applier';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { Game } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
@@ -17,12 +17,12 @@ import type { Tracker } from '#types/tracker';
  */
 class GameReplayer {
     private readonly ctx: SanContext;
-    private readonly player: SanPlayer;
+    private readonly applier: SanApplier;
     private readonly sanDecoder: SanDecoder;
 
     constructor() {
         this.ctx = new SanContext();
-        this.player = new SanPlayer(this.ctx);
+        this.applier = new SanApplier(this.ctx);
         this.sanDecoder = new SanDecoder(this.ctx);
     }
 
@@ -115,7 +115,7 @@ class GameReplayer {
                 for (; moveIndex < moves.length; moveIndex += 1) {
                     const san = moves[moveIndex];
                     if (!san) continue;
-                    this.player.play(san);
+                    this.applier.apply(san);
                     this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
                 }
             }

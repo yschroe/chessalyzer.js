@@ -15,7 +15,7 @@ const PIECE_TOKEN_BY_CHAR: Record<number, PieceToken | undefined> = {
 /**
  * SAN decode for move trackers — builds reusable {@link Action} objects.
  *
- * Logic mirrors {@link SanPlayer} but populates `moveAction` / `captureAction` /
+ * Logic mirrors {@link SanApplier} but populates `moveAction` / `captureAction` /
  * `promoteAction` in the shared {@link SanContext} instead of mutating the board
  * directly — the caller applies actions via `board.applyActions()` afterward.
  */

@@ -12,19 +12,19 @@ const PIECE_TOKEN_BY_CHAR: Record<number, PieceToken | undefined> = {
 };
 
 /**
- * Play one SAN on the board without building {@link Action} objects.
+ * Apply one SAN on the board without building {@link Action} objects.
  *
  * Used on the replay fast path when no move trackers are attached. Each method
  * mirrors the corresponding logic in {@link SanDecoder} but skips tracker-facing allocations.
  */
-export default class SanPlayer {
+export default class SanApplier {
     constructor(private readonly ctx: SanContext) {}
 
     /**
-     * Play one SAN token on the board.
+     * Apply one SAN token on the board.
      * Dispatch uses char codes: a–h = pawn, 'O' (79) = castle, else piece letter.
      */
-    play(san: string): void {
+    apply(san: string): void {
         const c = san.charCodeAt(0);
         if (c >= 97) this.applyPawn(san);
         else if (c === 79) this.applyCastle(san);

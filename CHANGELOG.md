@@ -29,7 +29,7 @@ Docs and benchmarks use industry-aligned stage names: **I/O → PGN parse → re
 - `ReplayPolicy` → `ReplayMode`; `'none'` → `'board'`
 - `resolveReplayPolicy` → `resolveReplayMode`
 - `san-to-actions.ts` / `SanToActions.parse()` → `san-decoder.ts` / `SanDecoder.decodeSan()`
-- `san-applier.ts` / `SanApplier.apply()` → `san-player.ts` / `SanPlayer.play()`
+- `SanApplier` / `apply()` kept on `san-applier.ts` (Phase 3.1 reverted interim `SanPlayer` / `play()` naming)
 
 **Planned (Phase 4+):**
 

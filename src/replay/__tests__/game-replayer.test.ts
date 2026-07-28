@@ -5,7 +5,7 @@ import type ChessBoard from '#board/chess-board';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
 import SanContext from '#replay/san-context';
-import SanPlayer from '#replay/san-player';
+import SanApplier from '#replay/san-applier';
 import { MoveTracker } from '#tracker/base-tracker';
 import type { Action } from '#types/actions';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
@@ -27,12 +27,12 @@ function game(moves: string[], result = '1-0'): Game {
     return { moves, Result: result };
 }
 
-/** Same SanPlayer path GameReplayer uses for `'board'` mode. */
+/** Same SanApplier path GameReplayer uses for `'board'` mode. */
 function boardAfterSans(moves: string[]): ChessBoard {
     const ctx = new SanContext();
-    const player = new SanPlayer(ctx);
+    const applier = new SanApplier(ctx);
     for (const san of moves) {
-        player.play(san);
+        applier.apply(san);
         ctx.activePlayer = ctx.activePlayer === 'w' ? 'b' : 'w';
     }
     return ctx.board;
@@ -96,7 +96,7 @@ describe('GameReplayer', () => {
         });
     });
 
-    describe('trust-mode board state (board mode / SanPlayer path)', () => {
+    describe('trust-mode board state (board mode / SanApplier path)', () => {
         it('replays a basic SAN sequence', () => {
             const board = boardAfterSans(['e4', 'e5', 'Nf3']);
 
