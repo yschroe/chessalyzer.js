@@ -52,13 +52,13 @@ analyzePGN(path, {
 
 ### Trust vs validate
 
-|               | **Trust mode** (today)               | **Validate mode** (missing)                                                            |
-| ------------- | ------------------------------------ | -------------------------------------------------------------------------------------- |
-| Assumption    | Database PGN is well-formed          | Input may be wrong or adversarial                                                      |
-| Ambiguous SAN | `PieceFinder` picks a matching piece | Generate legal moves, match SAN uniquely                                               |
-| Illegal move  | May throw or corrupt board state     | Skip move, skip game, or collect error                                                 |
-| Castling / EP | Applied if SAN parses                | Verify castling rights, en passant legality                                            |
-| Performance   | ~16M moves/s (M1, multithreaded)     | Expect large regression (cf. `pgn-reader` validate ≈2× slower than stats-only in Rust) |
+|               | **Trust mode** (today)               | **Validate mode** (missing)                                                   |
+| ------------- | ------------------------------------ | ----------------------------------------------------------------------------- |
+| Assumption    | Database PGN is well-formed          | Input may be wrong or adversarial                                             |
+| Ambiguous SAN | `PieceFinder` picks a matching piece | Generate legal moves, match SAN uniquely                                      |
+| Illegal move  | May throw or corrupt board state     | Skip move, skip game, or collect error                                        |
+| Castling / EP | Applied if SAN parses                | Verify castling rights, en passant legality                                   |
+| Performance   | ~16M moves/s (M1, multithreaded)     | Expect large regression (validation is typically much slower than parse-only) |
 
 Trust mode is the right default for batch stats on Lichess exports. Validate mode would be opt-in for interactive tools, importers, and fuzz/corpus hardening.
 
@@ -154,7 +154,7 @@ Today several behaviors are hardcoded or inferred:
 Still open:
 
 - **Corpus-driven hardening** — extend `test/corpus/` with RAV, FEN, variant, and intentionally illegal fixtures once validate mode exists
-- **DoS resistance** — budget limits for comment depth, variation depth, game length (cf. chessops `PgnParser` budget)
+- **DoS resistance** — budget limits for comment depth, variation depth, game length
 
 ---
 
@@ -171,7 +171,7 @@ Still open:
 
 ## Performance & benchmarking
 
-- **Cross-parser benchmark harness** — same Lichess fixture, defined tiers (PGN parse / replay / validate), compare against chessops, `pgn-parser`, Rust `pgn-reader` / shakmaty
+- **Cross-parser benchmark harness** — same Lichess fixture, defined tiers (PGN parse / replay / validate), compare against other PGN parsers
 - **Published benchmark table** in README with methodology (hardware, fixture, mode definitions)
 - **Single-threaded vs multithreaded** breakdown in `bench:perf` output
 - **Regression CI** — optional job when `pgn/` fixture is present (too large for default CI)

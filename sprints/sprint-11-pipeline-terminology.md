@@ -7,7 +7,7 @@
 
 ## Goal
 
-Align code, public API, and docs with industry-standard chess PGN pipeline terminology. v4 (currently in dev) may break names and exports before release; behavior and throughput should stay equivalent unless a rename forces a measurable fix.
+Align code, public API, and docs with standard chess PGN pipeline terminology. v4 (currently in dev) may break names and exports before release; behavior and throughput should stay equivalent unless a rename forces a measurable fix.
 
 The library should read as four explicit stages:
 
@@ -52,7 +52,7 @@ Use these terms in code comments, public docs, CHANGELOG, and benchmark output. 
 | **Replay**              | SAN decode + play through a game's mainline                             | Yes                 | `game-replayer`, replay policy                         |
 | **Analyze**             | Run game/move trackers and aggregate stats                              | Depends             | `core`, `tracker`                                      |
 
-**Industry alignment:** “PGN parser” = stage 2 only (cf. chessops `parsePgn`, pgn-reader visitor through `san` events). Full “raw file → legal moves” = **PGN parse + replay**, not “parser” alone.
+**Pipeline terminology:** “PGN parser” = stage 2 only (syntactic parse to SAN strings and headers; no board). Full “raw file → legal moves” = **PGN parse + replay**, not “parser” alone.
 
 **Validation** is a **mode** (`trust` | `validate`), not a pipeline stage. v4 ships `trust` only; validate remains future work (Sprint 10+).
 
@@ -140,7 +140,7 @@ Replace overloaded / misleading names:
     - File header: “movetext helpers for PGN parse (SAN extraction, comments, results)”
 - [x] **Rename options on assembler**
     - `ParseGamesOptions.readInHeader` → `parseHeaders: boolean`
-    - Keep `parseGamesFromLines` and `GameAssembler` (industry-aligned)
+    - Keep `parseGamesFromLines` and `GameAssembler` (pipeline-aligned naming)
 - [x] **Optional clarity renames** (same file, same hot path — bench if touching loops):
     - `extractMoves` → `extractSanFromLine` (or keep `extractMoves` with updated JSDoc: “extract SAN tokens from one movetext line”)
 - [x] **Worker / config wiring**

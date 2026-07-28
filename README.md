@@ -98,7 +98,7 @@ flowchart TB
 | **Replay**              | SAN decode + play through a game's mainline                             | Yes                 |
 | **Analyze**             | Run game/move trackers and aggregate stats                              | Depends             |
 
-**Industry note:** “PGN parser” means stage 2 only (cf. chessops `parsePgn`). Raw file → legal moves requires **PGN parse + replay**.
+**Terminology note:** “PGN parser” usually means stage 2 only — syntactic parse to SAN strings and headers, without board replay. Raw file → legal moves requires **PGN parse + replay**.
 
 Public entry points: **`parsePGN`** (stage 2 only), **`analyzePGN`** (I/O + parse + optional replay + trackers). Internally, both share `GameAssembler` / `readLines`; multithreaded analyze uses worker chunks instead of loading all games.
 

@@ -16,7 +16,7 @@
 
 #### Pipeline terminology (Sprint 11)
 
-Docs and benchmarks use industry-aligned stage names: **I/O → PGN parse → replay → analyze**. See [README Pipeline section](./README.md#pipeline) and [Sprint 11](sprints/sprint-11-pipeline-terminology.md).
+Docs and benchmarks use pipeline stage names: **I/O → PGN parse → replay → analyze**. See [README Pipeline section](./README.md#pipeline) and [Sprint 11](sprints/sprint-11-pipeline-terminology.md).
 
 **Applied in Phase 2 (internal renames):**
 
