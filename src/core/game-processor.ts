@@ -6,7 +6,7 @@ import { normalizeAnalysisConfigs } from '#core/analysis-config';
 import { createWorkerResultHandler, finishTrackers } from '#core/tracker-merge';
 import WorkerPool from '#core/worker-pool';
 import { GameAssembler } from '#pgn/game-assembler';
-import { readLinesFast } from '#pgn/line-reader';
+import { readLines } from '#pgn/line-reader';
 import { readPgnChunks } from '#pgn/pgn-chunks';
 import GameReplayer from '#replay/game-replayer';
 import { resolveReplayPolicy } from '#replay/replay-policy';
@@ -160,9 +160,9 @@ class GameProcessor {
         const gameReplayer = new GameReplayer();
         const gameAssembler = new GameAssembler({ readInHeader: this.readInHeader });
 
-        lineLoop: for await (const line of readLinesFast(path)) {
+        await readLines(path, (line) => {
             const game = gameAssembler.processLine(line);
-            if (!game) continue;
+            if (!game) return;
 
             for (const cfg of this.configs) {
                 if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
@@ -176,11 +176,11 @@ class GameProcessor {
                     );
                     if (cfg.readGames === cfg.config.maxGames) {
                         cfg.isDone = true;
-                        if (this.configs.every((c) => c.isDone)) break lineLoop;
+                        if (this.configs.every((c) => c.isDone)) return false;
                     }
                 }
             }
-        }
+        });
 
         return finishTrackers(this.configs);
     }

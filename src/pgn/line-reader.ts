@@ -1,192 +1,121 @@
-import { createReadStream } from 'node:fs';
+import { createReadStream, type ReadStream } from 'node:fs';
+import { createInterface, type Interface } from 'node:readline';
 
-const DEFAULT_QUEUE_SIZE = 1024;
-
-/* https://github.com/nodejs/node/blob/bae03c4e30f927676203f61ff5a34fe0a0c0bbc9/lib/internal/fixed_queue.js
- * The FixedQueue is implemented as a singly-linked list of fixed-size
- * circular buffers. It looks something like this:
- *
- *  head                                                       tail
- *    |                                                          |
- *    v                                                          v
- * +-----------+ <-----\       +-----------+ <------\         +-----------+
- * |  [null]   |        \----- |   next    |         \------- |   next    |
- * +-----------+               +-----------+                  +-----------+
- * |   item    | <-- bottom    |   item    | <-- bottom       |  [empty]  |
- * |   item    |               |   item    |                  |  [empty]  |
- * |   item    |               |   item    |                  |  [empty]  |
- * |   item    |               |   item    |                  |  [empty]  |
- * |   item    |               |   item    |       bottom --> |   item    |
- * |   item    |               |   item    |                  |   item    |
- * |    ...    |               |    ...    |                  |    ...    |
- * |   item    |               |   item    |                  |   item    |
- * |   item    |               |   item    |                  |   item    |
- * |  [empty]  | <-- top       |   item    |                  |   item    |
- * |  [empty]  |               |   item    |                  |   item    |
- * |  [empty]  |               |  [empty]  | <-- top  top --> |  [empty]  |
- * +-----------+               +-----------+                  +-----------+
- *
- * Or, if there is only one circular buffer, it looks something
- * like either of these:
- *
- *  head   tail                                 head   tail
- *    |     |                                     |     |
- *    v     v                                     v     v
- * +-----------+                               +-----------+
- * |  [null]   |                               |  [null]   |
- * +-----------+                               +-----------+
- * |  [empty]  |                               |   item    |
- * |  [empty]  |                               |   item    |
- * |   item    | <-- bottom            top --> |  [empty]  |
- * |   item    |                               |  [empty]  |
- * |  [empty]  | <-- top            bottom --> |   item    |
- * |  [empty]  |                               |   item    |
- * +-----------+                               +-----------+
- *
- * Adding a value means moving `top` forward by one, removing means
- * moving `bottom` forward by one. After reaching the end, the queue
- * wraps around.
- *
- * When `top === bottom` the current queue is empty and when
- * `top + 1 === bottom` it's full. This wastes a single space of storage
- * but allows much quicker checks.
+/**
+ * Sync line handler. Return `false` to stop reading early (closes the stream).
+ * Keep work synchronous — awaiting here would reintroduce per-line async overhead.
  */
+export type LineHandler = (line: string) => void | false;
 
-class FixedCircularBuffer<T> {
-    kMask: number;
-    top: number;
-    bottom: number;
-    list: (T | undefined)[];
-    next: FixedCircularBuffer<T> | null;
-
-    constructor(kSize: number) {
-        this.bottom = 0;
-        this.top = 0;
-        this.list = new Array(kSize);
-        this.next = null;
-        this.kMask = kSize - 1;
-    }
-
-    isEmpty() {
-        return this.top === this.bottom;
-    }
-
-    isFull() {
-        return ((this.top + 1) & this.kMask) === this.bottom;
-    }
-
-    push(data: T) {
-        this.list[this.top] = data;
-        this.top = (this.top + 1) & this.kMask;
-    }
-
-    shift() {
-        const { list, bottom } = this;
-        const nextItem = list[bottom];
-        if (nextItem === undefined) return null;
-        list[bottom] = undefined;
-        this.bottom = (bottom + 1) & this.kMask;
-        return nextItem;
-    }
-}
-
-class FixedQueue<T> {
-    head: FixedCircularBuffer<T>;
-    tail: FixedCircularBuffer<T>;
-
-    constructor(private readonly kSize = DEFAULT_QUEUE_SIZE) {
-        this.head = this.tail = new FixedCircularBuffer(kSize);
-    }
-
-    isEmpty() {
-        return this.head.isEmpty();
-    }
-
-    push(...data: T[]) {
-        for (const item of data) {
-            if (this.head.isFull()) {
-                // Head is full: Creates a new queue, sets the old queue's `.next` to it,
-                // and sets it as the new main queue.
-                this.head = this.head.next = new FixedCircularBuffer(this.kSize);
-            }
-            this.head.push(item);
-        }
-    }
-
-    shift() {
-        const tail = this.tail;
-        const next = tail.shift();
-        if (tail.isEmpty() && tail.next !== null) {
-            // If there is another queue, it forms the new tail.
-            this.tail = tail.next;
-            tail.next = null;
-        }
-        return next;
-    }
-}
-
-/** Strip a trailing CR from CRLF (or rare CR-only) line endings. */
-function stripCarriageReturn(line: string): string {
-    const last = line.charCodeAt(line.length - 1);
-    return last === 13 ? line.slice(0, -1) : line;
+/** Handlers for {@link openLineStream}. Attach at open time so no lines are missed. */
+export interface LineStreamHandlers {
+    onLine: (line: string) => void;
+    onClose?: () => void;
+    onError?: (err: Error) => void;
 }
 
 /**
- * Custom line reader that reads lines faster than the native readline module.
- * @param file - The file to read.
- * @returns An async iterator that yields lines from the file.
- * @see https://github.com/oven-sh/bun/issues/5136#issuecomment-3503523219
+ * Controllable UTF-8 line stream over a file.
+ * Sole owner of `fs` / `readline` I/O in the PGN pipeline.
  */
-export function readLinesFast(file: string): AsyncIterable<string> {
-    const rs = createReadStream(file, { encoding: 'utf-8' });
-    const sourceIterator: AsyncIterator<string> = rs.iterator();
+export interface LineStream {
+    /** Pause the underlying read stream (backpressure). No-op if already closed. */
+    pause(): void;
+    /** Resume after {@link pause}. No-op if already closed. */
+    resume(): void;
+    /** Close the readline interface and destroy the file stream. */
+    close(): void;
+    readonly closed: boolean;
+}
 
-    const cache: FixedQueue<string> = new FixedQueue();
-    let leftover = '';
+/**
+ * Open a file for line-oriented reading via readline `'line'` events.
+ *
+ * **Performance:** Event-mode is intentional. Sync `'line'` handlers beat
+ * `for await` / async-iterator pull by a wide margin on large PGNs (see
+ * `bench/exploratory/line-reader-readline.ts` and Node's readline docs). Do not
+ * wrap this in per-line `await` — that reintroduces the slow path. Keep handler
+ * work synchronous; use {@link LineStream.pause} / {@link LineStream.resume} for
+ * chunk-level backpressure instead.
+ *
+ * Callers that need backpressure (e.g. chunking) should use pause/resume.
+ * Prefer {@link readLines} for simple full-file scans.
+ */
+export function openLineStream(file: string, handlers: LineStreamHandlers): LineStream {
+    const input: ReadStream = createReadStream(file, { encoding: 'utf8' });
+    const rl: Interface = createInterface({ input, crlfDelay: Infinity });
 
-    /** Returns the next line from the file. */
-    const next = async (): Promise<IteratorResult<string>> => {
-        // Try to get a line from the cache.
-        let line: string | null = cache.shift();
+    let closed = false;
 
-        // If the cache is empty, read the next chunk from the stream.
-        while (line === null) {
-            // oxlint-disable-next-line no-await-in-loop
-            const result = await sourceIterator.next();
+    const stream: LineStream = {
+        get closed() {
+            return closed;
+        },
+        pause() {
+            if (!closed) rl.pause();
+        },
+        resume() {
+            if (!closed) rl.resume();
+        },
+        close() {
+            if (closed) return;
+            closed = true;
+            rl.close();
+            input.destroy();
+        },
+    };
 
-            // If the file was fully read, return the leftover line.
-            if (result.done) {
-                if (leftover !== '') {
-                    line = stripCarriageReturn(leftover);
-                    leftover = '';
+    rl.on('line', (line) => {
+        if (closed) return;
+        handlers.onLine(line);
+    });
+
+    rl.once('close', () => {
+        closed = true;
+        handlers.onClose?.();
+    });
+
+    const fail = (err: Error) => {
+        if (closed) return;
+        handlers.onError?.(err);
+        stream.close();
+    };
+
+    rl.once('error', fail);
+    input.once('error', fail);
+
+    return stream;
+}
+
+/**
+ * Read a file line-by-line via readline `'line'` events.
+ *
+ * Processing stays on the sync event path (see {@link openLineStream} for why);
+ * the returned promise resolves when the stream closes (EOF, early stop, or error).
+ */
+export async function readLines(file: string, onLine: LineHandler): Promise<void> {
+    let handlerError: unknown;
+
+    await new Promise<void>((resolve, reject) => {
+        const stream = openLineStream(file, {
+            onLine: (line) => {
+                try {
+                    if (onLine(line) === false) {
+                        stream.close();
+                    }
+                } catch (err) {
+                    handlerError = err;
+                    stream.close();
                 }
-                break;
-            }
+            },
+            onClose: () => {
+                resolve();
+            },
+            onError: (err) => {
+                reject(err);
+            },
+        });
+    });
 
-            // Combine the leftover line from the previous chunk with the new chunk.
-            const combined = leftover + result.value;
-            leftover = '';
-
-            // Split the combined line into parts.
-            const parts = combined.split('\n');
-
-            // If the line does not end with a newline, save the last part as the leftover.
-            const endsWithNewline = result.value.charCodeAt(result.value.length - 1) === 10;
-            if (!endsWithNewline) leftover = parts.pop() ?? '';
-
-            // Add the parts to the cache.
-            cache.push(...parts.map(stripCarriageReturn));
-
-            // Try to get a line from the cache again.
-            line = cache.shift();
-        }
-
-        if (line !== null) return { value: line, done: false };
-
-        return { done: true, value: undefined };
-    };
-
-    return {
-        [Symbol.asyncIterator]: () => ({ next }),
-    };
+    if (handlerError !== undefined) throw handlerError;
 }

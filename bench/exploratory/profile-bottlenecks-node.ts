@@ -8,7 +8,7 @@ import { availableParallelism } from 'node:os';
 import { performance } from 'node:perf_hooks';
 
 import { analyzePGN } from '#core/analyze';
-import { readLinesFast } from '#pgn/line-reader';
+import { readLines } from '#pgn/line-reader';
 import GameTracker from '#tracker/game-tracker';
 import PieceTracker from '#tracker/piece-tracker';
 import TileTracker from '#tracker/tile/tile-tracker';
@@ -36,7 +36,9 @@ async function stageRawBytes() {
 async function stageLineReader() {
     const t0 = performance.now();
     let lines = 0;
-    for await (const _ of readLinesFast(pgn.path)) lines += 1;
+    await readLines(pgn.path, () => {
+        lines += 1;
+    });
     return { ms: performance.now() - t0, lines };
 }
 
@@ -46,15 +48,15 @@ async function stageTokenize(readHeader: boolean) {
     let moves = 0;
     let game: { moves: string[]; [key: string]: unknown } = { moves: [] };
 
-    for await (const line of readLinesFast(pgn.path)) {
-        if (!line) continue;
-        if (line === '') continue;
+    await readLines(pgn.path, (line) => {
+        if (!line) return;
+        if (line === '') return;
         if (line.startsWith('[')) {
             if (readHeader) {
                 const m = HEADER_REGEX.exec(line);
                 if (m) game[m[1]!] = m[2];
             }
-            continue;
+            return;
         }
         const cleaned = line.replaceAll(COMMENT_REGEX, '');
         const matched = cleaned.match(MOVE_REGEX) ?? [];
@@ -64,7 +66,7 @@ async function stageTokenize(readHeader: boolean) {
             moves += game.moves.length;
             game = { moves: [] };
         }
-    }
+    });
     return { ms: performance.now() - t0, games, moves };
 }
 
