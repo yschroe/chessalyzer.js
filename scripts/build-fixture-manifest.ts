@@ -59,6 +59,7 @@ interface Manifest {
 async function loadExistingManifest(): Promise<Manifest> {
     try {
         const text = await readFile(MANIFEST_PATH, 'utf8');
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- build script reads self-generated manifest.json
         return JSON.parse(text) as Manifest;
     } catch {
         return { dir: 'test/fixtures', fixtures: {} };
@@ -100,6 +101,7 @@ for (const file of files) {
     const analyzeOpts: AnalyzeOptions = { workers: false, ...policy };
 
     try {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- sequential fixture analysis for readable logs and lower memory use
         const result = await analyzePGN(path, analyzeOpts);
         const expected: ManifestExpected = {
             games: result.games,

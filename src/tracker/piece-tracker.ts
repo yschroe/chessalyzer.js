@@ -60,11 +60,14 @@ class PieceTracker extends MoveTracker {
         super();
         this.heatmapPresets = HeatmapPresets;
 
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries cannot infer PieceStats mapped type
         const emptyPieceStats = Object.fromEntries(pieceList.map((val) => [val, 0])) as PieceStats;
 
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries cannot infer PieceStatsMap mapped type
         this.b = Object.fromEntries(
             pieceList.map((val) => [val, { ...emptyPieceStats }]),
         ) as PieceStatsMap;
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries cannot infer PieceStatsMap mapped type
         this.w = Object.fromEntries(
             pieceList.map((val) => [val, { ...emptyPieceStats }]),
         ) as PieceStatsMap;
@@ -103,9 +106,11 @@ class PieceTracker extends MoveTracker {
                     takingPiece.length > 1 &&
                     takenPiece.length > 1 &&
                     !takingPiece.match(/\d/g) &&
-                    !takenPiece.match(/\d/g)
+                    !takenPiece.match(/\d/g) &&
+                    isTrackedPiece(takingPiece) &&
+                    isTrackedPiece(takenPiece)
                 ) {
-                    this.processCapture(player, takingPiece as Piece, takenPiece as Piece);
+                    this.processCapture(player, takingPiece, takenPiece);
                 }
             }
         }

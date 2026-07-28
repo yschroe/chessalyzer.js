@@ -144,7 +144,16 @@ export default class WorkerPool extends EventEmitter {
         if (!worker) return;
 
         worker[kTaskInfo] = new WorkerPoolTaskInfo(callback);
-        worker.postMessage(task, [task.pgnChunkBytes.buffer as ArrayBuffer]);
+        const { buffer, byteOffset, byteLength } = task.pgnChunkBytes;
+        // Check if the buffer is already the correct slice, or if we need to create a new one.
+        const transferBuffer =
+            byteOffset === 0 && byteLength === buffer.byteLength
+                ? buffer
+                : buffer.slice(byteOffset, byteOffset + byteLength);
+        if (transferBuffer instanceof SharedArrayBuffer) {
+            throw new Error('PGN chunk buffer must be an ArrayBuffer');
+        }
+        worker.postMessage(task, [transferBuffer]);
     }
 
     /**
@@ -152,6 +161,6 @@ export default class WorkerPool extends EventEmitter {
      * Required so worker threads don't keep the Node/Bun process alive after errors.
      */
     async close() {
-        for (const worker of this.workers) await worker.terminate();
+        await Promise.all(this.workers.map((worker) => worker.terminate()));
     }
 }

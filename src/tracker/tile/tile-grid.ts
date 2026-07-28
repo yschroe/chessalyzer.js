@@ -75,7 +75,9 @@ export function createTileGrid(): TileGrid {
 /** Build one empty cell with aggregate + per-piece stat slots (all zero). */
 function createEmptyCell(): StatsField {
     const cell: StatsField = {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ColorBucket built incrementally; aggregate TileStats then per-piece slots
         b: new TileStats() as ColorBucket,
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ColorBucket built incrementally; aggregate TileStats then per-piece slots
         w: new TileStats() as ColorBucket,
         currentPiece: null,
     };

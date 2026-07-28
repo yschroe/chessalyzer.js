@@ -10,11 +10,13 @@ export interface NormalizedAnalysisRun {
 }
 
 function resolveWorkerModule(tracker: { constructor: unknown }): string {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- static workerModule lives on constructor, not Tracker instance type
     const ctor = tracker.constructor as { workerModule?: string };
     return ctor.workerModule ?? '';
 }
 
 function resolveTrackerId(tracker: Tracker): string {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- static trackerId lives on constructor, not Tracker instance type
     const id = (tracker.constructor as { trackerId?: string }).trackerId;
     if (!id) {
         throw new Error(

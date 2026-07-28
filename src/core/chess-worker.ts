@@ -7,6 +7,7 @@ import GameReplayer from '#replay/game-replayer';
 import { resolveReplayPolicy } from '#replay/replay-policy';
 import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- workerData is untyped at worker entry; shape validated at use sites
 const initData = workerData as WorkerInitData | undefined;
 const onErrorPolicy: 'abort' | 'skip-game' = initData?.onError ?? 'abort';
 
@@ -76,16 +77,19 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
 parentPort!.on('message', (msg: WorkerTaskData) => {
     void ready
         .then(() => processBatch(msg))
+        // oxlint-disable-next-line unicorn/require-post-message-target-origin -- Node worker_threads MessagePort has no targetOrigin
         .then((result) => parentPort!.postMessage(result))
         .catch((e: unknown) => {
             // Return errors to the main thread instead of throwing — unhandled worker
             // rejections would otherwise leave the pool waiting indefinitely.
             const message = e instanceof Error ? e.message : String(e);
-            parentPort!.postMessage({
+            const errorResult: WorkerMessage = {
                 idxConfig: msg.idxConfig,
                 moves: 0,
                 games: 0,
                 error: message,
-            });
+            };
+            // oxlint-disable-next-line unicorn/require-post-message-target-origin -- Node worker_threads MessagePort has no targetOrigin
+            parentPort!.postMessage(errorResult);
         });
 });

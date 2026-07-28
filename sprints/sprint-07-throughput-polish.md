@@ -20,10 +20,6 @@ Squeeze the existing `analyzePGN` pipeline: parse once per chunk for multi-run, 
     - Measure with `npm run bench:perf`
     - Files: [`src/core/tracker-merge.ts`](../src/core/tracker-merge.ts), [`src/core/worker-pool.ts`](../src/core/worker-pool.ts)
 
-- [ ] **Optional: iterator exploratory bench**
-    - Restore or replace missing async-generator vs manual-iterator comparison for AGENTS claims
-    - File: `bench/exploratory/`
-
 ## Done when
 
 - Multi-run on a large fixture is measurably faster than N× single-run parse cost.

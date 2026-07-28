@@ -23,6 +23,16 @@ const TrackerList: Record<string, new () => BaseTracker> = Object.fromEntries(
 /** Reused analysis configs indexed by `idxConfig` from incoming batch messages. */
 const cfgCache: GameProcessorAnalysisConfig[] = [];
 
+/** Check if a dynamic import resolved to a module with a default export. */
+function hasDefaultExport(module: unknown): module is { default: unknown } {
+    return typeof module === 'object' && module !== null && 'default' in module;
+}
+
+/** Check if a value is a constructable tracker class. */
+function isTrackerClass(value: unknown): value is new () => BaseTracker {
+    return typeof value === 'function';
+}
+
 /**
  * Bootstrap tracker registry from worker init payload.
  * @param initData One-time config from main thread (tracker ids, cfg, optional paths).
@@ -44,6 +54,7 @@ async function loadCustomTrackers(initData: WorkerInitData | undefined): Promise
             if (tracker.path && !(tracker.id in TrackerList)) {
                 let customTracker: unknown;
                 try {
+                    // oxlint-disable-next-line eslint/no-await-in-loop -- sequential imports: fail-fast with clear module path
                     customTracker = await import(tracker.path);
                 } catch (cause) {
                     throw new Error(
@@ -51,10 +62,17 @@ async function loadCustomTrackers(initData: WorkerInitData | undefined): Promise
                         { cause },
                     );
                 }
-                const TrackerClass = (customTracker as { default?: new () => BaseTracker }).default;
-                if (!TrackerClass || typeof TrackerClass !== 'function') {
+
+                if (!hasDefaultExport(customTracker)) {
                     throw new Error(
                         `Custom tracker "${tracker.id}" module must default-export a tracker class`,
+                    );
+                }
+
+                const TrackerClass = customTracker.default;
+                if (!isTrackerClass(TrackerClass)) {
+                    throw new Error(
+                        `Custom tracker "${tracker.id}" module default export must be a tracker class`,
                     );
                 }
                 TrackerList[tracker.id] = TrackerClass;

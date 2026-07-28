@@ -48,6 +48,7 @@ export function fixtureExpected(id: FixtureId) {
 export function getFixtureEntry(id: FixtureId): FixtureEntry {
     const entry = manifest.fixtures[id];
     if (!entry) throw new Error(`Unknown fixture id: ${id}`);
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- JSON manifest shape matches FixtureEntry; keys are validated via FixtureId
     return entry as FixtureEntry;
 }
 
@@ -91,12 +92,13 @@ export async function repeatPgn(id: FixtureId, times: number): Promise<string> {
 export async function cleanupTmpPgns(): Promise<void> {
     try {
         const glob = new Bun.Glob('*.pgn');
-        for (const file of glob.scanSync(TMP_DIR)) {
-            await unlink(join(TMP_DIR, file));
-        }
+        const paths = [...glob.scanSync(TMP_DIR)].map((file) => join(TMP_DIR, file));
+        await Promise.all(paths.map((path) => unlink(path)));
     } catch {
         // tmp dir may not exist
     }
 }
 
-export const allFixtureIds = Object.keys(manifest.fixtures) as FixtureId[];
+export const allFixtureIds = Object.keys(manifest.fixtures).filter(
+    (id): id is FixtureId => id in manifest.fixtures,
+);
