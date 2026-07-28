@@ -1,6 +1,6 @@
 import { collectError } from '#core/analyze-errors';
 import GameReplayer from '#replay/game-replayer';
-import { resolveReplayPolicy } from '#replay/replay-policy';
+import { resolveReplayMode } from '#replay/replay-policy';
 import type { GameAndMoveCount } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { Game } from '#types/game';
@@ -59,14 +59,20 @@ function mergeParsedGamesOnMain(
 ): void {
     if (cfg.isDone) return;
 
-    const replay = resolveReplayPolicy(cfg.trackers.move.length > 0);
+    const replayMode = resolveReplayMode(cfg.trackers.move.length > 0);
 
     for (const game of parsedGames) {
         if (cfg.isDone) break;
         if (cfg.config.hasFilter && !cfg.config.filter(game)) continue;
 
         cfg.readGames += 1;
-        gameReplayer.processGame(game, cfg, replay, cfg.processedGames + cfg.skippedGames, onError);
+        gameReplayer.processGame(
+            game,
+            cfg,
+            replayMode,
+            cfg.processedGames + cfg.skippedGames,
+            onError,
+        );
 
         if (cfg.readGames === cfg.config.maxGames) {
             cfg.isDone = true;

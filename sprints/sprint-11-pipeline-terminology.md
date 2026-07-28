@@ -150,18 +150,18 @@ Replace overloaded / misleading names:
 
 ### Phase 3 — Replay layer renames
 
-- [ ] **Replay mode type**
+- [x] **Replay mode type**
     - `ReplayPolicy` → `ReplayMode`
     - Values: `'skip' | 'board' | 'actions'` (`'none'` → `'board'`)
     - `resolveReplayPolicy` → `resolveReplayMode`
     - File: [`replay-policy.ts`](../src/replay/replay-policy.ts)
-- [ ] **SAN decode vs play naming**
+- [x] **SAN decode vs play naming**
     - `SanToActions` → `SanDecoder` (class that builds `Action[]`)
     - Method `parse()` → **`decodeSan()`**
     - `SanApplier` → `SanPlayer` (applies SAN directly to board; “play” matches chessops)
     - Update [`san-context.ts`](../src/replay/san-context.ts) comments accordingly
-- [ ] **Keep `GameReplayer`** as stage-3 orchestrator; JSDoc: “replay = decode + play”
-- [ ] **Error naming** — keep `ReplayError` / `code: 'replay'` (already correct); ensure `ParseError` remains reserved for stage 2
+- [x] **Keep `GameReplayer`** as stage-3 orchestrator; JSDoc: “replay = decode + play”
+- [x] **Error naming** — keep `ReplayError` / `code: 'replay'` (already correct); ensure `ParseError` remains reserved for stage 2
 
 ### Phase 4 — Public `parsePGN` & compose `analyzePGN`
 

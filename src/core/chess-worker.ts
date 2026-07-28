@@ -4,7 +4,7 @@ import { getCachedCfg, initWorkerTrackers, resetCfg } from '#core/worker-tracker
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import { decodePgnChunkBytes } from '#pgn/pgn-chunks';
 import GameReplayer from '#replay/game-replayer';
-import { resolveReplayPolicy } from '#replay/replay-policy';
+import { resolveReplayMode } from '#replay/replay-policy';
 import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
 
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- workerData is untyped at worker entry; shape validated at use sites
@@ -38,7 +38,7 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
     resetCfg(cfg);
 
     const hasTrackers = cfg.trackers.game.length > 0 || cfg.trackers.move.length > 0;
-    const replay = resolveReplayPolicy(cfg.trackers.move.length > 0);
+    const replayMode = resolveReplayMode(cfg.trackers.move.length > 0);
     const maxGames = msg.remainingGames ?? Infinity;
     const games = parseGamesFromLines(lines, {
         parseHeaders: msg.parseHeaders,
@@ -49,7 +49,7 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
         gameReplayer.processGame(
             game,
             cfg,
-            replay,
+            replayMode,
             cfg.processedGames + cfg.skippedGames,
             onErrorPolicy,
         );

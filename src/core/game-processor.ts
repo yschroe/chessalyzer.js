@@ -9,7 +9,7 @@ import { GameAssembler } from '#pgn/game-assembler';
 import { readLines } from '#pgn/line-reader';
 import { readPgnChunks } from '#pgn/pgn-chunks';
 import GameReplayer from '#replay/game-replayer';
-import { resolveReplayPolicy } from '#replay/replay-policy';
+import { resolveReplayMode } from '#replay/replay-policy';
 import type {
     AnalysisConfig,
     GameAndMoveCount,
@@ -170,7 +170,7 @@ class GameProcessor {
                     gameReplayer.processGame(
                         game,
                         cfg,
-                        resolveReplayPolicy(cfg.trackers.move.length > 0),
+                        resolveReplayMode(cfg.trackers.move.length > 0),
                         cfg.processedGames + cfg.skippedGames,
                         this.onError,
                     );

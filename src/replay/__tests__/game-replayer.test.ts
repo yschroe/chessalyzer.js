@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 import type ChessBoard from '#board/chess-board';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
-import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
+import SanPlayer from '#replay/san-player';
 import { MoveTracker } from '#tracker/base-tracker';
 import type { Action } from '#types/actions';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
@@ -27,12 +27,12 @@ function game(moves: string[], result = '1-0'): Game {
     return { moves, Result: result };
 }
 
-/** Same SanApplier path GameReplayer uses for `'none'` policy. */
+/** Same SanPlayer path GameReplayer uses for `'board'` mode. */
 function boardAfterSans(moves: string[]): ChessBoard {
     const ctx = new SanContext();
-    const applier = new SanApplier(ctx);
+    const player = new SanPlayer(ctx);
     for (const san of moves) {
-        applier.apply(san);
+        player.play(san);
         ctx.activePlayer = ctx.activePlayer === 'w' ? 'b' : 'w';
     }
     return ctx.board;
@@ -44,7 +44,7 @@ describe('GameReplayer', () => {
             const replayer = new GameReplayer();
             const cfg = emptyCfg();
 
-            replayer.processGame(game(['e4', 'e5', 'Nf3']), cfg, 'none', 0, 'abort');
+            replayer.processGame(game(['e4', 'e5', 'Nf3']), cfg, 'board', 0, 'abort');
 
             expect(cfg.processedGames).toBe(1);
             expect(cfg.processedMoves).toBe(3);
@@ -77,7 +77,7 @@ describe('GameReplayer', () => {
             const replayer = new GameReplayer();
             const cfg = emptyCfg();
 
-            replayer.processGame(game(['Nf9']), cfg, 'none', 0, 'skip-game');
+            replayer.processGame(game(['Nf9']), cfg, 'board', 0, 'skip-game');
 
             expect(cfg.processedGames).toBe(0);
             expect(cfg.skippedGames).toBe(1);
@@ -88,7 +88,7 @@ describe('GameReplayer', () => {
             const replayer = new GameReplayer();
             const cfg = emptyCfg();
 
-            replayer.processGame(game(['e4']), cfg, 'none', 0, 'abort');
+            replayer.processGame(game(['e4']), cfg, 'board', 0, 'abort');
             replayer.reset();
 
             expect(replayer.board.getPieceAt(6, 4)?.name).toBe('Pe');
@@ -96,7 +96,7 @@ describe('GameReplayer', () => {
         });
     });
 
-    describe('trust-mode board state (none policy / SanApplier path)', () => {
+    describe('trust-mode board state (board mode / SanPlayer path)', () => {
         it('replays a basic SAN sequence', () => {
             const board = boardAfterSans(['e4', 'e5', 'Nf3']);
 

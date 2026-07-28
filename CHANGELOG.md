@@ -24,13 +24,19 @@ Docs and benchmarks use industry-aligned stage names: **I/O → PGN parse → re
 - `readInHeader` → `parseHeaders` (`ParseGamesOptions`, worker tasks, `GameProcessor`)
 - `parseOnly` (worker) → `pgnParseOnly`
 
-**Planned (Phase 3+):**
+**Applied in Phase 3 (replay layer):**
 
-| Pre-sprint / legacy     | v4 target                | Sprint phase |
-| ----------------------- | ------------------------ | ------------ |
-| `ReplayPolicy 'none'`   | `ReplayMode 'board'`     | Phase 3      |
-| `SanToActions.parse()`  | `SanDecoder.decodeSan()` | Phase 3      |
-| Public `headers` option | alias for `parseHeaders` | Phase 4      |
+- `ReplayPolicy` → `ReplayMode`; `'none'` → `'board'`
+- `resolveReplayPolicy` → `resolveReplayMode`
+- `san-to-actions.ts` / `SanToActions.parse()` → `san-decoder.ts` / `SanDecoder.decodeSan()`
+- `san-applier.ts` / `SanApplier.apply()` → `san-player.ts` / `SanPlayer.play()`
+
+**Planned (Phase 4+):**
+
+| Pre-sprint / legacy                                 | v4 target                | Sprint phase |
+| --------------------------------------------------- | ------------------------ | ------------ |
+| Public `headers` option                             | alias for `parseHeaders` | Phase 4      |
+| `analyzePGN` composes `parsePGN` + replay + analyze | explicit pipeline        | Phase 4      |
 
 ### Changes
 
