@@ -131,6 +131,40 @@ describe('Fixtures', () => {
             expect(trackerA.games).toBe(expected.games);
             expect(trackerB.games).toBe(expected.games);
         });
+
+        it('handles mixed filter and unfiltered runs in one pass', async () => {
+            const allGames = new GameTracker();
+            const whiteWins = new GameTracker();
+
+            const data = await analyzePGN(fixturePath('results-mix'), {
+                runs: [
+                    { trackers: [allGames] },
+                    {
+                        trackers: [whiteWins],
+                        filter: (game: Game) => game.Result === '1-0',
+                    },
+                ],
+            });
+
+            expect(data.runs[0]?.games).toBe(fixtureExpected('results-mix').games);
+            expect(data.runs[1]?.games).toBe(3);
+            expect(allGames.games).toBe(fixtureExpected('results-mix').games);
+            expect(whiteWins.games).toBe(3);
+        });
+
+        it('respects per-run maxGames in multi-run', async () => {
+            const capped = new GameTracker();
+            const full = new GameTracker();
+
+            const data = await analyzePGN(fixturePath('results-mix'), {
+                runs: [{ trackers: [capped], maxGames: 2 }, { trackers: [full] }],
+            });
+
+            expect(data.runs[0]?.games).toBe(2);
+            expect(data.runs[1]?.games).toBe(fixtureExpected('results-mix').games);
+            expect(capped.games).toBe(2);
+            expect(full.games).toBe(fixtureExpected('results-mix').games);
+        });
     });
 
     describe('trackers on fixtures', () => {

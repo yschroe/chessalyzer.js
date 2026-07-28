@@ -2,7 +2,7 @@
 
 ## Completed (v4 cleanup)
 
-Sprints **01–06** shipped after the v4 API redesign. See [`archive/`](./archive/) for the original task lists and [CHANGELOG](../CHANGELOG.md) for what landed.
+Sprints **01–07** shipped after the v4 API redesign. See [`archive/`](./archive/) for the original task lists and [CHANGELOG](../CHANGELOG.md) for what landed.
 
 | Sprint | Theme                                                       |
 | ------ | ----------------------------------------------------------- |
@@ -12,22 +12,21 @@ Sprints **01–06** shipped after the v4 API redesign. See [`archive/`](./archiv
 | 04     | Collapse legacy MT (filter/maxGames on worker-chunk)        |
 | 05     | Test coverage matrix                                        |
 | 06     | Internal consistency (naming, types, replay skip, castling) |
+| 07     | Throughput polish (multi-run parse-once, deferred merge)    |
 
 ## Active backlog
 
 Forward-looking sprints grounded in [IDEAS.md](../IDEAS.md). Order is suggested priority; sprints can be reordered where dependencies allow.
 
-| Sprint                                                                    | Theme                                          | Effort | Impact |
-| ------------------------------------------------------------------------- | ---------------------------------------------- | ------ | ------ |
-| [07 — Throughput polish](./sprint-07-throughput-polish.md)                | Multi-run parse-once, deferred merge           | Medium | High   |
-| [08 — Tracker & type hygiene](./sprint-08-tracker-type-hygiene.md)        | File naming, README fixes, dedup               | Small  | Medium |
-| [11 — Pipeline terminology & v4 API](./sprint-11-pipeline-terminology.md) | I/O → PGN parse → replay → analyze; v4 dev API | Large  | High   |
-| [09 — Public parse foundation](./sprint-09-public-parse-foundation.md)    | _(mostly absorbed by 11)_                      | Large  | High   |
-| [10 — Board state for validate/FEN](./sprint-10-board-state-fen.md)       | Castling rights, EP, validate prep             | Medium | Medium |
+| Sprint                                                                     | Theme                                          | Effort | Impact |
+| -------------------------------------------------------------------------- | ---------------------------------------------- | ------ | ------ |
+| [08 — Tracker & type hygiene](./archive/sprint-08-tracker-type-hygiene.md) | File naming, README fixes, dedup               | Small  | Medium |
+| [11 — Pipeline terminology & v4 API](./sprint-11-pipeline-terminology.md)  | I/O → PGN parse → replay → analyze; v4 dev API | Large  | High   |
+| [09 — Public parse foundation](./sprint-09-public-parse-foundation.md)     | _(mostly absorbed by 11)_                      | Large  | High   |
+| [10 — Board state for validate/FEN](./sprint-10-board-state-fen.md)        | Castling rights, EP, validate prep             | Medium | Medium |
 
 ```mermaid
 flowchart LR
-    s07[Sprint 07 Throughput]
     s08[Sprint 08 Hygiene]
     s11[Sprint 11 Pipeline v4]
     s09[Sprint 09 Parse gaps]
@@ -38,7 +37,6 @@ flowchart LR
     s11 --> s09
     s11 --> s10
     s10 --> ideas
-    s07 --> ideas
 ```
 
 **Not in scope here:** hot-path refactors (`SanApplier` / `SanToActions` split, manual iterators, `Array.concat` patterns) — always bench before changing.

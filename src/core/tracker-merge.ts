@@ -3,7 +3,7 @@ import GameReplayer from '#replay/game-replayer';
 import type { GameAndMoveCount } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { Game } from '#types/game';
-import type { WorkerMessage } from '#types/worker';
+import type { WorkerConfigResult, WorkerMessage } from '#types/worker';
 
 /**
  * Merge one worker batch into the matching main-thread config (trackers + counters).
@@ -11,10 +11,8 @@ import type { WorkerMessage } from '#types/worker';
  */
 function mergeWorkerResult(
     configs: GameProcessorAnalysisConfigFull[],
-    result: WorkerMessage,
+    result: WorkerConfigResult,
 ): void {
-    if (result.error) throw new Error(result.error);
-
     const { idxConfig, gameTrackers, moveTrackers, moves, games, skippedGames, errors } = result;
 
     const cfg = configs[idxConfig];
@@ -46,6 +44,34 @@ function mergeWorkerResult(
 
     if (cfg.processedGames >= cfg.config.maxGames) {
         cfg.isDone = true;
+    }
+}
+
+/** Merge tracker state from a pool flush (counters were merged per batch). */
+export function mergeWorkerTrackerFlush(
+    configs: GameProcessorAnalysisConfigFull[],
+    result: WorkerMessage,
+): void {
+    if (result.error) throw new Error(result.error);
+
+    for (const configResult of result.results) {
+        const cfg = configs[configResult.idxConfig];
+        if (!cfg) continue;
+
+        if (configResult.gameTrackers) {
+            for (let i = 0; i < configResult.gameTrackers.length; i += 1) {
+                const tracker = cfg.trackers.game[i];
+                const data = configResult.gameTrackers[i];
+                if (tracker && data) tracker.merge?.(data);
+            }
+        }
+        if (configResult.moveTrackers) {
+            for (let i = 0; i < configResult.moveTrackers.length; i += 1) {
+                const tracker = cfg.trackers.move[i];
+                const data = configResult.moveTrackers[i];
+                if (tracker && data) tracker.merge?.(data);
+            }
+        }
     }
 }
 
@@ -84,6 +110,30 @@ export interface WorkerResultHandlerOptions {
     onError?: 'abort' | 'skip-game';
 }
 
+function mergeWorkerMessage(
+    configs: GameProcessorAnalysisConfigFull[],
+    result: WorkerMessage,
+    options?: WorkerResultHandlerOptions,
+): void {
+    for (const configResult of result.results) {
+        if (configResult.parsedGames) {
+            const cfg = configs[configResult.idxConfig];
+            if (!cfg || !options?.gameReplayer) {
+                throw new Error('Missing main-thread replayer for filtered worker batch');
+            }
+            mergeParsedGamesOnMain(
+                cfg,
+                configResult.parsedGames,
+                options.gameReplayer,
+                options.onError ?? 'abort',
+            );
+            continue;
+        }
+
+        mergeWorkerResult(configs, configResult);
+    }
+}
+
 /**
  * Callback for {@link WorkerPool.runTask}: routes transport/batch errors to `onFatal`,
  * otherwise merges a successful result into `configs`.
@@ -112,21 +162,7 @@ export function createWorkerResultHandler(
         }
 
         try {
-            if (result.parsedGames) {
-                const cfg = configs[result.idxConfig];
-                if (!cfg || !options?.gameReplayer) {
-                    throw new Error('Missing main-thread replayer for filtered worker batch');
-                }
-                mergeParsedGamesOnMain(
-                    cfg,
-                    result.parsedGames,
-                    options.gameReplayer,
-                    options.onError ?? 'abort',
-                );
-                return;
-            }
-
-            mergeWorkerResult(configs, result);
+            mergeWorkerMessage(configs, result, options);
         } catch (e: unknown) {
             fatal = true;
             onFatal(e instanceof Error ? e : new Error(String(e)));

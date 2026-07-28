@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
-import { createWorkerResultHandler } from '#core/tracker-merge';
+import { createWorkerResultHandler, mergeWorkerTrackerFlush } from '#core/tracker-merge';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { WorkerMessage } from '#types/worker';
@@ -74,9 +74,7 @@ describe('tracker merge', () => {
             });
 
             const result: WorkerMessage = {
-                idxConfig: 0,
-                games: 0,
-                moves: 0,
+                results: [],
                 error: 'Unknown tracker "DoesNotExist"',
             };
 
@@ -102,16 +100,79 @@ describe('tracker merge', () => {
             });
 
             handler(null, {
-                idxConfig: 0,
-                games: 2,
-                moves: 40,
-                gameTrackers: [batchTracker],
+                results: [
+                    {
+                        idxConfig: 0,
+                        games: 2,
+                        moves: 40,
+                        gameTrackers: [batchTracker],
+                    },
+                ],
             });
 
             expect(cfg.processedGames).toBe(2);
             expect(cfg.processedMoves).toBe(40);
             expect(mainTracker.games).toBe(2);
             expect(mainTracker.wins).toEqual([1, 0, 1]);
+        });
+
+        it('merges multi-config batch results', () => {
+            const trackerA = new CustomGameTracker();
+            const trackerB = new CustomGameTracker();
+            const batchA = new CustomGameTracker();
+            const batchB = new CustomGameTracker();
+            batchA.games = 1;
+            batchB.games = 2;
+
+            const cfgA = baseConfig({ trackers: { game: [trackerA], move: [] } });
+            const cfgB = baseConfig({ trackers: { game: [trackerB], move: [] } });
+
+            const handler = createWorkerResultHandler([cfgA, cfgB], () => {
+                throw new Error('onFatal should not run');
+            });
+
+            handler(null, {
+                results: [
+                    { idxConfig: 0, games: 1, moves: 10, gameTrackers: [batchA] },
+                    { idxConfig: 1, games: 2, moves: 20, gameTrackers: [batchB] },
+                ],
+            });
+
+            expect(cfgA.processedGames).toBe(1);
+            expect(cfgB.processedGames).toBe(2);
+            expect(trackerA.games).toBe(1);
+            expect(trackerB.games).toBe(2);
+        });
+    });
+
+    describe('mergeWorkerTrackerFlush', () => {
+        it('merges tracker state without touching counters', () => {
+            const mainTracker = new TileTracker();
+            const workerTracker = new TileTracker();
+            workerTracker.movesTotal = 12;
+            workerTracker.tiles[0][0].w.movedTo = 4;
+
+            const cfg = baseConfig({
+                trackers: { game: [], move: [mainTracker] },
+                processedGames: 50,
+                processedMoves: 500,
+            });
+
+            mergeWorkerTrackerFlush([cfg], {
+                results: [
+                    {
+                        idxConfig: 0,
+                        games: 0,
+                        moves: 0,
+                        moveTrackers: [workerTracker],
+                    },
+                ],
+            });
+
+            expect(cfg.processedGames).toBe(50);
+            expect(cfg.processedMoves).toBe(500);
+            expect(mainTracker.movesTotal).toBe(12);
+            expect(mainTracker.tiles[0][0].w.movedTo).toBe(4);
         });
     });
 });

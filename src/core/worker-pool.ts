@@ -3,7 +3,7 @@ import { AsyncResource } from 'node:async_hooks';
 import { EventEmitter } from 'node:events';
 import { Worker } from 'node:worker_threads';
 
-import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
+import type { WorkerBatchTask, WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
 
 const kTaskInfo = Symbol('kTaskInfo');
 const kWorkerFreedEvent = Symbol('kWorkerFreedEvent');
@@ -38,7 +38,7 @@ export default class WorkerPool extends EventEmitter {
     workers: WorkerWithTaskInfo[];
     freeWorkers: WorkerWithTaskInfo[];
     tasks: {
-        task: WorkerTaskData;
+        task: WorkerBatchTask;
         callback: WorkerCallback;
     }[];
 
@@ -129,7 +129,7 @@ export default class WorkerPool extends EventEmitter {
      * @param task Data the worker shall process (PGN chunk only — tracker config is in workerData).
      * @param callback The callback function which is called when the task is done or on error.
      */
-    runTask(task: WorkerTaskData, callback: WorkerCallback) {
+    runTask(task: WorkerBatchTask, callback: WorkerCallback) {
         if (this.freeWorkers.length === 0 && this.workers.length < this.numThreads) {
             this.addNewWorker(this.filePath, this.workerInitData);
         }
@@ -154,6 +154,36 @@ export default class WorkerPool extends EventEmitter {
             throw new Error('PGN chunk buffer must be an ArrayBuffer');
         }
         worker.postMessage(task, [transferBuffer]);
+    }
+
+    /**
+     * Collect accumulated tracker state from every worker after all batch tasks drain.
+     */
+    flush(): Promise<WorkerMessage[]> {
+        if (this.workers.length === 0) return Promise.resolve([]);
+
+        return Promise.all(
+            this.workers.map(
+                (worker) =>
+                    new Promise<WorkerMessage>((resolve, reject) => {
+                        if (worker[kTaskInfo]) {
+                            reject(
+                                new Error('WorkerPool flush called while a batch task is active'),
+                            );
+                            return;
+                        }
+
+                        worker[kTaskInfo] = new WorkerPoolTaskInfo((err, result) => {
+                            if (err) reject(err);
+                            else resolve(result!);
+                        });
+
+                        const flushTask: WorkerTaskData = { type: 'flush' };
+                        // oxlint-disable-next-line unicorn/require-post-message-target-origin -- Node worker_threads MessagePort has no targetOrigin
+                        worker.postMessage(flushTask);
+                    }),
+            ),
+        );
     }
 
     /**

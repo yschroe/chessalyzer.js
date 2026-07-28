@@ -68,8 +68,7 @@ async function bench(nWorkers: number, label: string, transfer = false) {
                     w.on('error', reject);
                     const msg = {
                         pgnChunkBytes: gamesToChunkBytes(games),
-                        idxConfig: 0,
-                        parseHeaders: false,
+                        configs: [{ idxConfig: 0, parseHeaders: false }],
                     };
                     if (transfer) {
                         w.postMessage(msg, [msg.pgnChunkBytes.buffer]);
