@@ -6,6 +6,7 @@
         "src/export/io.ts",
         "src/export/pgn.ts",
         "src/export/replay.ts",
+        "src/export/trackers.ts",
         "bench/*.ts",
         "bench/{atomic,exploratory}/*.ts"
     ],
