@@ -186,11 +186,11 @@ Replace overloaded / misleading names:
 
 ### Phase 5 — Tests, corpus, integration
 
-- [ ] Rename/update tests referencing old symbols (`readInHeader`, `'none'`, `parseOnly`, etc.)
-- [ ] **New integration suite: `test/integration/parse-pgn.test.ts`**
+- [x] Rename/update tests referencing old symbols (`readInHeader`, `'none'`, `parseOnly`, etc.) — none remaining in `src/` or `test/` after corpus rename
+- [x] **New integration suite: `test/integration/parse-pgn.test.ts`**
     - Headers on/off, move counts, no board mutation
-- [ ] **Corpus tests** — rename “parser game count” wording to “PGN parse game count”
-- [ ] **Custom tracker / worker tests** — `pgnParseOnly` path with filters
+- [x] **Corpus tests** — rename “parser game count” wording to “PGN parse game count”
+- [x] **Custom tracker / worker tests** — `pgnParseOnly` path with filters
 
 ### Phase 6 — Optional module layout (if time; same sprint or follow-up)
 

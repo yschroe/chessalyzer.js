@@ -102,7 +102,7 @@ if (corpusAvailable) {
                     data = await analyzePGN(path, { trackers: [gameTracker] });
                 });
 
-                it('matches parser game count', () => {
+                it('matches PGN parse game count', () => {
                     expect(data.games).toBe(gameTracker.games);
                 });
 
@@ -122,7 +122,7 @@ if (corpusAvailable) {
                     data = await analyzePGN(path, { trackers: [gameTracker], workers: false });
                 });
 
-                it('matches parser game count', () => {
+                it('matches PGN parse game count', () => {
                     expect(data.games).toBe(gameTracker.games);
                 });
             });
