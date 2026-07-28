@@ -7,8 +7,8 @@ import EventEmitter from 'node:events';
 import { createReadStream } from 'node:fs';
 import { createInterface } from 'node:readline';
 
-import { readLines } from '#pgn/line-reader';
-import { readPgnChunks } from '#pgn/pgn-chunks';
+import { readLines } from '#io/line-reader';
+import { readPgnChunks } from '#io/pgn-chunks';
 
 import { findLargestPgn } from '../lib/pgn-fixture';
 import { getRuntimeLabel } from '../lib/report';

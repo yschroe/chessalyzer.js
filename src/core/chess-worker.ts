@@ -1,8 +1,8 @@
 import { parentPort, workerData } from 'node:worker_threads';
 
 import { getCachedCfg, initWorkerTrackers, resetCfg } from '#core/worker-tracker-registry';
+import { decodePgnChunkBytes } from '#io/pgn-chunks';
 import { parseGamesFromLines } from '#pgn/game-assembler';
-import { decodePgnChunkBytes } from '#pgn/pgn-chunks';
 import GameReplayer from '#replay/game-replayer';
 import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
 

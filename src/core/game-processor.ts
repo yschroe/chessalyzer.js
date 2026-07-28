@@ -5,9 +5,9 @@ import { join } from 'node:path';
 import { normalizeAnalysisConfigs, type NormalizeAnalysisOptions } from '#core/analysis-config';
 import { createWorkerResultHandler, finishTrackers } from '#core/tracker-merge';
 import WorkerPool from '#core/worker-pool';
+import { readLines } from '#io/line-reader';
+import { readPgnChunks } from '#io/pgn-chunks';
 import { GameAssembler } from '#pgn/game-assembler';
-import { readLines } from '#pgn/line-reader';
-import { readPgnChunks } from '#pgn/pgn-chunks';
 import GameReplayer from '#replay/game-replayer';
 import type {
     AnalysisConfig,

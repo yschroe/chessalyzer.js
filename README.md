@@ -119,6 +119,14 @@ await analyzePGN('<pathToPgnFile>', {
 
 On `analyzePGN`, `headers` defaults to inferred behavior (on when a filter or game tracker needs tag pairs). Setting `headers: false` still parses headers when a filter or game tracker requires them.
 
+Optional subpath imports (same pipeline stages):
+
+```javascript
+import { readLines, readPgnChunks } from 'chessalyzer.js/io';
+import { parsePGN } from 'chessalyzer.js/pgn';
+import { resolveReplayMode } from 'chessalyzer.js/replay';
+```
+
 ### Performance tiers
 
 Benchmark scripts (e.g. `bench/exploratory/profile-bottlenecks-node.ts`) measure these tiers on a large Lichess fixture:

@@ -30,6 +30,7 @@
         "#replay/*": "./src/replay/*.ts",
         "#board/*": "./src/board/*.ts",
         "#tracker/*": "./src/tracker/*.ts",
+        "#io/*": "./src/io/*.ts",
         "#pgn/*": "./src/pgn/*.ts",
         "#types/*": "./src/types/*.ts"
     },
@@ -37,6 +38,18 @@
         ".": {
             "types": "./lib/index.d.ts",
             "import": "./lib/index.js"
+        },
+        "./io": {
+            "types": "./lib/io.d.ts",
+            "import": "./lib/io.js"
+        },
+        "./pgn": {
+            "types": "./lib/pgn.d.ts",
+            "import": "./lib/pgn.js"
+        },
+        "./replay": {
+            "types": "./lib/replay.d.ts",
+            "import": "./lib/replay.js"
         }
     },
     "scripts": {

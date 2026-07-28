@@ -192,13 +192,12 @@ Replace overloaded / misleading names:
 - [x] **Corpus tests** — rename “parser game count” wording to “PGN parse game count”
 - [x] **Custom tracker / worker tests** — `pgnParseOnly` path with filters
 
-### Phase 6 — Optional module layout (if time; same sprint or follow-up)
+### Phase 6 — Module layout & subpath exports
 
-Low priority if renames are complete; do only when subpath exports are added.
-
-- [ ] **`src/io/`** — move `line-reader.ts`, `pgn-chunks.ts` from `pgn/`
-- [ ] **`src/pgn/`** — parse-only: `game-assembler.ts`, `movetext.ts`
-- [ ] Keep `#imports` aliases stable via re-export shims for one release if needed
+- [x] **`src/io/`** — `line-reader.ts`, `pgn-chunks.ts` (moved from `pgn/`)
+- [x] **`src/pgn/`** — parse-only: `game-assembler.ts`, `movetext.ts`, `parse-pgn.ts`
+- [x] **`#io/*` import alias**; internal imports updated (no re-export shims)
+- [x] Subpath exports: `chessalyzer.js/io`, `/pgn`, `/replay`
 
 ---
 

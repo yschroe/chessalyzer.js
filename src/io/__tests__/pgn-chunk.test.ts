@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 
+import { readLines } from '#io/line-reader';
+import { chunkEndsWithCompleteGame, readPgnChunks, type PgnChunkConfig } from '#io/pgn-chunks';
 import { parseGamesFromLines } from '#pgn/game-assembler';
-import { readLines } from '#pgn/line-reader';
-import { chunkEndsWithCompleteGame, readPgnChunks, type PgnChunkConfig } from '#pgn/pgn-chunks';
 
 import { fixturePath, repeatPgn, cleanupTmpPgns } from '../../../test/helpers/fixtures';
 

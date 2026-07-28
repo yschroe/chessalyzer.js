@@ -14,7 +14,7 @@ Split “parse PGN” from “run trackers” with a minimal public API — no v
 
 - [ ] **Streaming ergonomics** _(if not done in Sprint 11)_
     - Async iterator / `PgnStream` for large files
-    - Reuse [`GameAssembler`](../src/pgn/game-assembler.ts), [`readLines`](../src/pgn/line-reader.ts), [`readPgnChunks`](../src/pgn/pgn-chunks.ts)
+    - Reuse [`GameAssembler`](../src/pgn/game-assembler.ts), [`readLines`](../src/io/line-reader.ts), [`readPgnChunks`](../src/io/pgn-chunks.ts)
 
 - [x] _(moved to Sprint 11)_ **Export `parsePGN`**
     - ~~Modes: `tokenize` | `parse`~~ → single **`parsePGN`** with `headers` option (PGN parse stage)

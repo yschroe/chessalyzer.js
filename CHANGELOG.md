@@ -38,13 +38,21 @@ Docs and benchmarks use industry-aligned stage names: **I/O → PGN parse → re
 - Export `ReplayMode`; `AnalyzeOptions.headers` and `AnalyzeOptions.replay` for explicit pipeline control
 - `analyzePGN` shares parse/replay resolution with `parsePGN` via `normalizeAnalysisConfigs` (does not call `parsePGN` internally — preserves streaming/worker chunking)
 
+**Applied in Phase 5 (tests):**
+
+- Integration suite `test/integration/parse-pgn.test.ts`; corpus wording; custom tracker filter path
+
+**Applied in Phase 6 (module layout):**
+
+- `src/io/` — `line-reader.ts`, `pgn-chunks.ts` (moved from `src/pgn/`)
+- `src/pgn/` — parse-only (`game-assembler`, `movetext`, `parse-pgn`)
+- Package subpath exports: `chessalyzer.js/io`, `chessalyzer.js/pgn`, `chessalyzer.js/replay`
+
 **Deferred:**
 
 | Item                            | Sprint    |
 | ------------------------------- | --------- |
 | `streamParsePGN` async iterator | Sprint 09 |
-| Package subpath exports         | Phase 6   |
-| Integration `parse-pgn.test.ts` | Phase 5   |
 
 **Planned (Phase 5+):**
 

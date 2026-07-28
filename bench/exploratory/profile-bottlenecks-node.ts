@@ -8,7 +8,7 @@ import { availableParallelism } from 'node:os';
 import { performance } from 'node:perf_hooks';
 
 import { analyzePGN } from '#core/analyze';
-import { readLines } from '#pgn/line-reader';
+import { readLines } from '#io/line-reader';
 import GameTracker from '#tracker/game-tracker';
 import PieceTracker from '#tracker/piece-tracker';
 import TileTracker from '#tracker/tile/tile-tracker';

@@ -1,4 +1,4 @@
-import { openLineStream, type LineStream } from '#pgn/line-reader';
+import { openLineStream, type LineStream } from '#io/line-reader';
 import { isGameResultLine, stripComments } from '#pgn/movetext';
 
 /** Default chunk size (~4 MB) for worker-side PGN dispatch. */

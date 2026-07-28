@@ -3,6 +3,9 @@
     "entry": [
         "src/index.ts",
         "src/core/chess-worker.ts",
+        "src/export/io.ts",
+        "src/export/pgn.ts",
+        "src/export/replay.ts",
         "bench/*.ts",
         "bench/{atomic,exploratory}/*.ts"
     ],

@@ -1,5 +1,5 @@
+import { readLines } from '#io/line-reader';
 import { GameAssembler } from '#pgn/game-assembler';
-import { readLines } from '#pgn/line-reader';
 import type { ParsedGame, ParsePgnOptions } from '#types/parse-pgn';
 
 /**

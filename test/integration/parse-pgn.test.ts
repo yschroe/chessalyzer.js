@@ -5,6 +5,12 @@ import { parsePGN } from 'chessalyzer.js';
 import { allFixtureIds, fixtureExpected, fixturePath } from '../helpers/fixtures';
 
 describe('parsePGN', () => {
+    it('is available from chessalyzer.js/pgn subpath', async () => {
+        const { parsePGN: parseFromSubpath } = await import('chessalyzer.js/pgn');
+        const games = await parseFromSubpath(fixturePath('basic-normal'));
+        expect(games).toHaveLength(1);
+    });
+
     it('parses games without headers by default', async () => {
         const games = await parsePGN(fixturePath('lichess-headers'));
 

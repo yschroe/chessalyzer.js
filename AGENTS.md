@@ -10,7 +10,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 **Pipeline (high level):**
 
-1. **I/O** — `readLines` / `openLineStream` in [`src/pgn/line-reader.ts`](src/pgn/line-reader.ts) and `readPgnChunks` in [`src/pgn/pgn-chunks.ts`](src/pgn/pgn-chunks.ts) stream the file with minimal overhead. In multithreaded mode, chunking splits the PGN into byte-sized batches aligned to complete games for worker dispatch (parallel I/O, not a semantic stage).
+1. **I/O** — `readLines` / `openLineStream` in [`src/io/line-reader.ts`](src/io/line-reader.ts) and `readPgnChunks` in [`src/io/pgn-chunks.ts`](src/io/pgn-chunks.ts) stream the file with minimal overhead. In multithreaded mode, chunking splits the PGN into byte-sized batches aligned to complete games for worker dispatch (parallel I/O, not a semantic stage).
 2. **PGN parse** — structural parse: tag pairs, mainline SAN strings, game boundaries (`GameAssembler`, [`movetext.ts`](src/pgn/movetext.ts)).
 3. **Replay** — SAN decode + play on a board ([`src/replay/`](src/replay/)), mode `'skip' | 'board' | 'actions'`.
 4. **Analyze** — [`GameProcessor`](src/core/game-processor.ts) runs configured trackers ([`src/tracker/`](src/tracker/)).
@@ -22,7 +22,8 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 | Path                 | Purpose                                                                                |
 | -------------------- | -------------------------------------------------------------------------------------- |
 | `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers)                     |
-| `src/pgn/`           | I/O, chunking, PGN parse (game assembly, movetext SAN extraction)                      |
+| `src/io/`            | Streaming I/O (`readLines`, `readPgnChunks`, worker chunk bytes)                       |
+| `src/pgn/`           | PGN parse (`GameAssembler`, `movetext`, `parsePGN`)                                    |
 | `src/replay/`        | Replay — SAN decode + apply (`GameReplayer`, `ReplayMode`, `SanApplier`, `SanDecoder`) |
 | `src/types/`         | Public analysis types (`analysis.ts`) vs processor runtime (`analysis-runtime.ts`)     |
 | `src/tracker/`       | Built-in and base tracker implementations                                              |

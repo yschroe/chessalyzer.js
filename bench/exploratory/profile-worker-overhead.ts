@@ -11,7 +11,7 @@ import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 
-import { readLines } from '#pgn/line-reader';
+import { readLines } from '#io/line-reader';
 
 import { findLargestPgn } from '../lib/pgn-fixture';
 import { formatSeconds } from '../lib/timing';
