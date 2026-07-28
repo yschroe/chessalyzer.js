@@ -2,7 +2,8 @@ import { describe, it, beforeAll, expect } from 'bun:test';
 
 // Optional golden regression tests against the large corpus (test/corpus/).
 // Skipped automatically when corpus files are not present locally.
-import { analyzePGN, GameTracker, PieceTracker, isTrackedPiece } from 'chessalyzer.js';
+import { analyzePGN } from 'chessalyzer.js';
+import { GameTracker, PieceTracker, isTrackedPiece } from 'chessalyzer.js/trackers';
 
 import type { AnalyzeResult } from '../../src/types/analysis';
 import type { Game } from '../../src/types/game';

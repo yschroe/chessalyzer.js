@@ -18,14 +18,14 @@ Module-specific tests live next to the code they exercise (e.g. `src/pgn/__tests
 
 Tests that run the full `analyzePGN` pipeline stay in `test/integration/` because they span parsing, workers, and trackers — not a single module.
 
-| File                     | Focus                                           |
-| ------------------------ | ----------------------------------------------- |
-| `fixtures.test.ts`       | Small PGN fixtures, filters, TileTracker golden |
-| `parse-pgn.test.ts`      | Public `parsePGN` export, fixture move counts   |
-| `workers.test.ts`        | WorkerPool error propagation, MT abort          |
-| `custom-tracker.test.ts` | Custom tracker + `workerModule` in MT mode      |
-| `error-policy.test.ts`   | `onError: 'abort'` / `'skip-game'`              |
-| `corpus.test.ts`         | Optional large-file golden regression           |
+| File                     | Focus                                                |
+| ------------------------ | ---------------------------------------------------- |
+| `fixtures.test.ts`       | Small PGN fixtures, filters, TileTracker golden      |
+| `parse-pgn.test.ts`      | `chessalyzer.js/pgn` `parsePGN`, fixture move counts |
+| `workers.test.ts`        | WorkerPool error propagation, MT abort               |
+| `custom-tracker.test.ts` | Custom tracker + `workerModule` in MT mode           |
+| `error-policy.test.ts`   | `onError: 'abort'` / `'skip-game'`                   |
+| `corpus.test.ts`         | Optional large-file golden regression                |
 
 ### Fixtures vs corpus
 

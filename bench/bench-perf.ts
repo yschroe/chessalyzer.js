@@ -12,7 +12,7 @@
  * Pass `single-threaded` to benchmark only the single-threaded path.
  *
  * Env:
- *   BENCH_RUNS=3           Number of timed iterations (default 3)
+ *   BENCH_RUNS=2           Number of timed iterations (default 2)
  *   BENCH_WARMUP=0         Skip the warmup run
  *   BENCH_PGN_REPEATS=2    Concatenate the largest pgn/*.pgn this many times
  */
@@ -29,7 +29,7 @@ import {
     type TimedRunResult,
 } from './lib/timing';
 
-const RUNS = Number(process.env.BENCH_RUNS ?? 3);
+const RUNS = Number(process.env.BENCH_RUNS ?? 2);
 const WARMUP = process.env.BENCH_WARMUP !== '0';
 const isSingleThreaded = process.argv.includes('single-threaded');
 

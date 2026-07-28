@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 
 import { normalizeAnalysisConfigs } from '#core/analysis-config';
-import GameTracker from '#tracker/game-tracker';
-import TileTracker from '#tracker/tile/tile-tracker';
+import { GameTracker } from '#trackers/game-tracker';
+import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { AnalysisConfig } from '#types/analysis-runtime';
 
 describe('normalizeAnalysisConfigs', () => {

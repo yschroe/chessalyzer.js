@@ -1,6 +1,7 @@
 import { describe, it, beforeAll, afterAll, expect } from 'bun:test';
 
-import { analyzePGN, GameTracker, PieceTracker, TileTracker } from 'chessalyzer.js';
+import { analyzePGN } from 'chessalyzer.js';
+import { GameTracker, PieceTracker, TileTracker } from 'chessalyzer.js/trackers';
 
 import type { AnalyzeResult } from '../../src/types/analysis';
 import type { Game } from '../../src/types/game';

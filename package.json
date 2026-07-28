@@ -1,6 +1,6 @@
 {
     "name": "chessalyzer.js",
-    "version": "4.0.0-alpha.1",
+    "version": "4.0.0-develop.1",
     "description": "A JavaScript library for batch analyzing chess games.",
     "keywords": [
         "analysis",
@@ -29,7 +29,7 @@
         "#core/*": "./src/core/*.ts",
         "#replay/*": "./src/replay/*.ts",
         "#board/*": "./src/board/*.ts",
-        "#tracker/*": "./src/tracker/*.ts",
+        "#trackers/*": "./src/trackers/*.ts",
         "#io/*": "./src/io/*.ts",
         "#pgn/*": "./src/pgn/*.ts",
         "#types/*": "./src/types/*.ts"
@@ -50,6 +50,10 @@
         "./replay": {
             "types": "./lib/replay.d.ts",
             "import": "./lib/replay.js"
+        },
+        "./trackers": {
+            "types": "./lib/trackers.d.ts",
+            "import": "./lib/trackers.js"
         }
     },
     "scripts": {

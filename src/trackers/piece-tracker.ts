@@ -1,5 +1,5 @@
-import { MoveTracker } from '#tracker/base-tracker';
-import HeatmapPresets from '#tracker/heatmaps/piece-heatmaps';
+import { MoveTracker } from '#trackers/base-tracker';
+import HeatmapPresets from '#trackers/heatmaps/piece-heatmaps';
 import type { Action } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
 import type { Tracker } from '#types/tracker';
@@ -125,4 +125,4 @@ function isPieceTracker(tracker: Tracker): tracker is PieceTracker {
     return 'b' in tracker && 'w' in tracker;
 }
 
-export default PieceTracker;
+export { PieceTracker };

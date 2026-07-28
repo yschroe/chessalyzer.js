@@ -1,5 +1,5 @@
-import { GameTrackerBase } from 'chessalyzer.js';
-import type { Game, Tracker } from 'chessalyzer.js';
+import { GameTrackerBase } from 'chessalyzer.js/trackers';
+import type { Game, Tracker } from 'chessalyzer.js/trackers';
 
 function isCustomGameTracker(tracker: Tracker): tracker is CustomGameTracker {
     return 'wins' in tracker && Array.isArray(tracker.wins);

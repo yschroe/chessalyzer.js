@@ -11,6 +11,7 @@ const result = await Bun.build({
         './src/export/io.ts',
         './src/export/pgn.ts',
         './src/export/replay.ts',
+        './src/export/trackers.ts',
     ],
     outdir: './lib/',
     target: 'node',
@@ -31,4 +32,5 @@ await Bun.$`rm -rf lib/core`;
 await Bun.$`mv lib/export/io.d.ts lib/io.d.ts`;
 await Bun.$`mv lib/export/pgn.d.ts lib/pgn.d.ts`;
 await Bun.$`mv lib/export/replay.d.ts lib/replay.d.ts`;
+await Bun.$`mv lib/export/trackers.d.ts lib/trackers.d.ts`;
 await Bun.$`rm -rf lib/export`;

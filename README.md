@@ -45,7 +45,8 @@ npm install chessalyzer.js
 2. Import the library:
 
 ```javascript
-import { analyzePGN, printHeatmap, TileTracker } from 'chessalyzer.js';
+import { analyzePGN, printHeatmap } from 'chessalyzer.js';
+import { TileTracker } from 'chessalyzer.js/trackers';
 ```
 
 3. Use the library. See next chapters for examples.
@@ -100,10 +101,12 @@ flowchart TB
 
 **Terminology note:** “PGN parser” usually means stage 2 only — syntactic parse to SAN strings and headers, without board replay. Raw file → legal moves requires **PGN parse + replay**.
 
-Public entry points: **`parsePGN`** (stage 2 only), **`analyzePGN`** (I/O + parse + optional replay + trackers). Internally, both share `GameAssembler` / `readLines`; multithreaded analyze uses worker chunks instead of loading all games.
+Public entry points: **`analyzePGN`** (full pipeline), **`parsePGN`** via `chessalyzer.js/pgn` (stage 2 only), trackers via `chessalyzer.js/trackers`. Internally, both share `GameAssembler` / `readLines`; multithreaded analyze uses worker chunks instead of loading all games.
 
 ```javascript
-import { parsePGN, analyzePGN, GameTracker } from 'chessalyzer.js';
+import { analyzePGN } from 'chessalyzer.js';
+import { parsePGN } from 'chessalyzer.js/pgn';
+import { GameTracker } from 'chessalyzer.js/trackers';
 
 // PGN parse only — no board replay
 const games = await parsePGN('<pathToPgnFile>', { headers: true, maxGames: 100 });
@@ -119,12 +122,13 @@ await analyzePGN('<pathToPgnFile>', {
 
 On `analyzePGN`, `headers` defaults to inferred behavior (on when a filter or game tracker needs tag pairs). Setting `headers: false` still parses headers when a filter or game tracker requires them.
 
-Optional subpath imports (same pipeline stages):
+Subpath imports (pipeline stages + trackers):
 
 ```javascript
 import { readLines, readPgnChunks } from 'chessalyzer.js/io';
 import { parsePGN } from 'chessalyzer.js/pgn';
 import { resolveReplayMode } from 'chessalyzer.js/replay';
+import { TileTracker, GameTrackerBase } from 'chessalyzer.js/trackers';
 ```
 
 ### Performance tiers
@@ -151,7 +155,8 @@ Count-only runs (no move trackers) skip board replay by default; tier-2 move cou
 Let's start with a basic example. Here we simply want to track the tile occupation (=how often did each tile have a piece on it) for the whole board. For this we can use the preconfigured TileTracker class from the library. Afterwards we want to create a heatmap out of the data to visualize the tile occupation. For this basic heatmap a preset is also provided:
 
 ```javascript
-import { analyzePGN, printHeatmap, TileTracker } from 'chessalyzer.js';
+import { analyzePGN, printHeatmap } from 'chessalyzer.js';
+import { TileTracker } from 'chessalyzer.js/trackers';
 
 const tileTracker = new TileTracker();
 
@@ -357,6 +362,13 @@ export default class MyTracker extends GameTrackerBase {
         /* ... */
     }
 }
+```
+
+Import bases and types from the trackers subpath:
+
+```javascript
+import { GameTrackerBase, MoveTracker } from 'chessalyzer.js/trackers';
+import type { Game, Tracker } from 'chessalyzer.js/trackers';
 ```
 
 Example merge for the built-in GameTracker:

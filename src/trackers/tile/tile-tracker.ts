@@ -1,13 +1,13 @@
-import { MoveTracker } from '#tracker/base-tracker';
-import HeatmapPresets from '#tracker/heatmaps/tile-heatmaps';
+import { MoveTracker } from '#trackers/base-tracker';
+import HeatmapPresets from '#trackers/heatmaps/tile-heatmaps';
 import {
     createTileGrid,
     mergeCellStats,
     resetTileGrid,
     setStartingPiece,
     tileCellAt,
-} from '#tracker/tile/tile-grid';
-import { BOARD_INDICES, type BoardIndex, type TileGrid } from '#tracker/tile/tile-tracker-types';
+} from '#trackers/tile/tile-grid';
+import { BOARD_INDICES, type BoardIndex, type TileGrid } from '#trackers/tile/tile-tracker-types';
 import type { Action } from '#types/actions';
 import type { Move } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
@@ -210,4 +210,4 @@ class TileTracker extends MoveTracker {
     }
 }
 
-export default TileTracker;
+export { TileTracker };

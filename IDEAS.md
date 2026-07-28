@@ -180,7 +180,7 @@ Still open:
 
 ## Ecosystem & packaging
 
-- **Subpath exports** — e.g. `chessalyzer.js/pgn`, `chessalyzer.js/board` for advanced users without bloating default import
+- **Subpath exports** — `chessalyzer.js/io`, `/pgn`, `/replay`, `/trackers` (shipped); optional `/board` later for advanced users without bloating the default import
 - **Browser build** — WASM or lightweight bundle if parse-only mode exists (no `worker_threads`)
 - **Write PGN** — out of scope today; only mentioned if parse tree exists
 

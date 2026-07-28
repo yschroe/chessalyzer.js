@@ -6,7 +6,7 @@ import { parseGamesFromLines } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
 import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
-import { MoveTracker } from '#tracker/base-tracker';
+import { MoveTracker } from '#trackers/base-tracker';
 import type { Action } from '#types/actions';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { Game } from '#types/game';

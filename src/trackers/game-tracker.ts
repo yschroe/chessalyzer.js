@@ -1,4 +1,4 @@
-import { GameTrackerBase } from '#tracker/base-tracker';
+import { GameTrackerBase } from '#trackers/base-tracker';
 import type { Game } from '#types/game';
 import type { Tracker } from '#types/tracker';
 
@@ -88,4 +88,4 @@ class GameTracker extends GameTrackerBase {
     }
 }
 
-export default GameTracker;
+export { GameTracker };
