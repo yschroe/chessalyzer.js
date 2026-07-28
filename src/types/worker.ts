@@ -8,7 +8,7 @@ export interface WorkerInitData {
         trackerData: { id: string; cfg: TrackerConfig; path?: string }[];
         /** When true, worker assembles games and returns them for main-thread filter/replay. */
         pgnParseOnly?: boolean;
-        replayMode: import('#replay/replay-policy').ReplayMode;
+        replayMode: import('#replay/replay-mode').ReplayMode;
     }[];
     onError?: 'abort' | 'skip-game';
 }

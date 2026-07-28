@@ -20,7 +20,7 @@ function isPgnParseOnly(idxConfig: number): boolean {
     return initData?.configs[idxConfig]?.pgnParseOnly ?? false;
 }
 
-function getReplayMode(idxConfig: number): import('#replay/replay-policy').ReplayMode {
+function getReplayMode(idxConfig: number): import('#replay/replay-mode').ReplayMode {
     return initData?.configs[idxConfig]?.replayMode ?? 'skip';
 }
 

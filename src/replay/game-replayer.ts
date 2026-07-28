@@ -1,6 +1,6 @@
 import { collectError, createReplayError, toAbortError } from '#core/analyze-errors';
 import { isReplayFailure } from '#replay/replay-failure';
-import type { ReplayMode } from '#replay/replay-policy';
+import type { ReplayMode } from '#replay/replay-mode';
 import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
 import SanDecoder from '#replay/san-decoder';
