@@ -2,7 +2,8 @@ import { describe, it, beforeAll, expect } from 'bun:test';
 
 // Optional golden regression tests against the large corpus (test/corpus/).
 // Skipped automatically when corpus files are not present locally.
-import { analyzePGN, GameTracker, PieceTracker, isTrackedPiece } from 'chessalyzer.js';
+import { analyzePGN } from 'chessalyzer.js';
+import { GameTracker, PieceTracker, isTrackedPiece } from 'chessalyzer.js/trackers';
 
 import type { AnalyzeResult } from '../../src/types/analysis';
 import type { Game } from '../../src/types/game';
@@ -102,7 +103,7 @@ if (corpusAvailable) {
                     data = await analyzePGN(path, { trackers: [gameTracker] });
                 });
 
-                it('matches parser game count', () => {
+                it('matches PGN parse game count', () => {
                     expect(data.games).toBe(gameTracker.games);
                 });
 
@@ -122,7 +123,7 @@ if (corpusAvailable) {
                     data = await analyzePGN(path, { trackers: [gameTracker], workers: false });
                 });
 
-                it('matches parser game count', () => {
+                it('matches PGN parse game count', () => {
                     expect(data.games).toBe(gameTracker.games);
                 });
             });

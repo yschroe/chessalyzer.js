@@ -1,6 +1,6 @@
 import { performance } from 'node:perf_hooks';
 
-import { generateComparisonHeatmap, generateHeatmap } from '#tracker/heatmap-utils';
+import { generateComparisonHeatmap, generateHeatmap } from '#trackers/heatmap-utils';
 import type { Action } from '#types/actions';
 import type { Game } from '#types/game';
 import type {
@@ -117,4 +117,4 @@ export abstract class GameTrackerBase extends BaseTracker {
     abstract override merge(other: Tracker): void;
 }
 
-export default BaseTracker;
+export { BaseTracker };

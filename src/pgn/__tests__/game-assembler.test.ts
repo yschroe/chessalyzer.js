@@ -10,9 +10,9 @@ function linesFromFixture(id: 'lichess-headers' | 'corrupt'): string[] {
 }
 
 describe('GameAssembler', () => {
-    it('reads headers when readInHeader is true', () => {
+    it('reads headers when parseHeaders is true', () => {
         const games = parseGamesFromLines(linesFromFixture('lichess-headers'), {
-            readInHeader: true,
+            parseHeaders: true,
         });
 
         expect(games).toHaveLength(1);
@@ -22,9 +22,9 @@ describe('GameAssembler', () => {
         expect(games[0]?.ECO).toBe('C20');
     });
 
-    it('ignores headers when readInHeader is false', () => {
+    it('ignores headers when parseHeaders is false', () => {
         const games = parseGamesFromLines(linesFromFixture('lichess-headers'), {
-            readInHeader: false,
+            parseHeaders: false,
         });
 
         expect(games).toHaveLength(1);
@@ -34,7 +34,7 @@ describe('GameAssembler', () => {
     });
 
     it('drops an incomplete trailing game', () => {
-        const games = parseGamesFromLines(linesFromFixture('corrupt'), { readInHeader: true });
+        const games = parseGamesFromLines(linesFromFixture('corrupt'), { parseHeaders: true });
 
         expect(games).toHaveLength(1);
         expect(games[0]?.Result).toBe('1-0');
@@ -55,7 +55,7 @@ describe('GameAssembler', () => {
             '1. c4 1-0',
         ];
 
-        const games = parseGamesFromLines(lines, { readInHeader: false, maxGames: 2 });
+        const games = parseGamesFromLines(lines, { parseHeaders: false, maxGames: 2 });
 
         expect(games).toHaveLength(2);
         expect(games[0]?.moves[0]).toBe('e4');
@@ -63,7 +63,7 @@ describe('GameAssembler', () => {
     });
 
     it('returns null until a game completes', () => {
-        const assembler = new GameAssembler({ readInHeader: true });
+        const assembler = new GameAssembler({ parseHeaders: true });
 
         expect(assembler.processLine('[Event "x"]')).toBeNull();
         expect(assembler.processLine('')).toBeNull();

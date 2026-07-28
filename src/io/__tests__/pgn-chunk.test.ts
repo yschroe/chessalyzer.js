@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 
+import { readLines } from '#io/line-reader';
+import { chunkEndsWithCompleteGame, readPgnChunks, type PgnChunkConfig } from '#io/pgn-chunks';
 import { parseGamesFromLines } from '#pgn/game-assembler';
-import { readLines } from '#pgn/line-reader';
-import { chunkEndsWithCompleteGame, readPgnChunks, type PgnChunkConfig } from '#pgn/pgn-chunks';
 
 import { fixturePath, repeatPgn, cleanupTmpPgns } from '../../../test/helpers/fixtures';
 
@@ -44,7 +44,7 @@ describe('readPgnChunks', () => {
         const chunkGames = [];
         for await (const chunk of readPgnChunks(path, { targetBytes: 1 })) {
             chunkGames.push(
-                ...parseGamesFromLines(chunk.text.split('\n'), { readInHeader: false }),
+                ...parseGamesFromLines(chunk.text.split('\n'), { parseHeaders: false }),
             );
         }
 
@@ -82,7 +82,7 @@ describe('readPgnChunks', () => {
         expect(chunks).toHaveLength(1);
         const [chunk] = chunks;
         expect(chunk).toBeDefined();
-        const games = parseGamesFromLines(chunk.text.split('\n'), { readInHeader: true });
+        const games = parseGamesFromLines(chunk.text.split('\n'), { parseHeaders: true });
         expect(games).toHaveLength(1);
         expect(games[0]?.Result).toBe('1-0');
     });

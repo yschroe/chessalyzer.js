@@ -13,20 +13,20 @@ const PIECE_TOKEN_BY_CHAR: Record<number, PieceToken | undefined> = {
 };
 
 /**
- * Converts SAN into reusable {@link Action} objects for move trackers.
+ * SAN decode for move trackers — builds reusable {@link Action} objects.
  *
  * Logic mirrors {@link SanApplier} but populates `moveAction` / `captureAction` /
  * `promoteAction` in the shared {@link SanContext} instead of mutating the board
  * directly — the caller applies actions via `board.applyActions()` afterward.
  */
-export default class SanToActions {
+export default class SanDecoder {
     constructor(private readonly ctx: SanContext) {}
 
     /**
-     * Convert one SAN token into a (possibly empty-then-filled) Action array.
+     * Decode one SAN token into a (possibly empty-then-filled) Action array.
      * Returns the same `outActions` buffer each call; do not retain across moves.
      */
-    parse(san: string): Action[] {
+    decodeSan(san: string): Action[] {
         const c = san.charCodeAt(0);
 
         if (c >= 97) return this.pawnMove(san);

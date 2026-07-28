@@ -1,8 +1,10 @@
 # Sprint 09 — Public parse foundation
 
-**Effort:** Large (multiple sessions)  
+**Effort:** Small (remaining gaps after Sprint 11)  
 **Impact:** High — foundation for IDEAS “PGN library” direction  
-**Depends on:** Sprint 08 helpful but not required
+**Depends on:** [Sprint 11 — Pipeline terminology & v4 API](./sprint-11-pipeline-terminology.md)
+
+> **Note:** Most of this sprint is absorbed by Sprint 11 (`parsePGN`, `ParsedGame`, pipeline glossary, rename map). Keep this file for follow-up items only.
 
 ## Goal
 
@@ -10,19 +12,21 @@ Split “parse PGN” from “run trackers” with a minimal public API — no v
 
 ## Tasks
 
-- [ ] **Export `parsePGN` (or async iterator)**
-    - Modes: `tokenize` | `parse` (no board replay)
-    - Reuse [`GameAssembler`](../src/pgn/game-assembler.ts), [`readLinesFast`](../src/pgn/line-reader.ts), [`readPgnChunks`](../src/pgn/pgn-chunks.ts)
+- [ ] **Streaming ergonomics** _(if not done in Sprint 11)_
+    - Async iterator / `PgnStream` for large files
+    - Reuse [`GameAssembler`](../src/pgn/game-assembler.ts), [`readLines`](../src/io/line-reader.ts), [`readPgnChunks`](../src/io/pgn-chunks.ts)
 
-- [ ] **Public `ParsedGame` type**
+- [x] _(moved to Sprint 11)_ **Export `parsePGN`**
+    - ~~Modes: `tokenize` | `parse`~~ → single **`parsePGN`** with `headers` option (PGN parse stage)
+
+- [x] _(moved to Sprint 11)_ **Public `ParsedGame` type**
     - Headers + mainline SAN + optional result
-    - File: [`src/types/`](../src/types/)
 
-- [ ] **Refactor `analyzePGN`**
-    - Compose parse + replay + trackers internally (behavior unchanged for existing callers)
+- [x] _(moved to Sprint 11)_ **Refactor `analyzePGN`**
+    - Compose PGN parse + replay + trackers
 
-- [ ] **Surface header/read policy**
-    - Explicit enough for count-only / header-filter callers without inventing game trackers
+- [x] _(moved to Sprint 11)_ **Surface header policy**
+    - `headers` / `parseHeaders` option (replaces internal `readInHeader`)
 
 ## Done when
 

@@ -47,6 +47,7 @@ export interface GameProcessorAnalysisConfig {
 export interface GameProcessorAnalysisConfigFull extends GameProcessorAnalysisConfig {
     config: GameProcessorConfig;
     trackerData: { id: string; cfg: TrackerConfig; path: string }[];
+    replayMode: import('#replay/replay-policy').ReplayMode;
     readGames: number;
     isDone: boolean;
 }

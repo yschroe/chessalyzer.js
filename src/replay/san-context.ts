@@ -6,7 +6,7 @@ import type { PlayerColor } from '#types/tokens';
 /**
  * Shared mutable state for replaying one game's SAN moves.
  *
- * Both {@link SanApplier} (no-actions path) and {@link SanToActions} (tracker path)
+ * Both {@link SanApplier} (board path) and {@link SanDecoder} (tracker path)
  * read/write through this object so coord buffers and the board stay in sync
  * without duplicating construction logic.
  */
@@ -51,7 +51,7 @@ export default class SanContext {
         to: '',
     };
 
-    /** Cleared (`length = 0`) before each `SanToActions.parse()` call; same Action objects are pushed back in. */
+    /** Cleared (`length = 0`) before each `SanDecoder.decodeSan()` call; same Action objects are pushed back in. */
     readonly outActions: Action[] = [];
 
     constructor() {

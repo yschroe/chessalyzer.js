@@ -12,16 +12,16 @@ const PIECE_TOKEN_BY_CHAR: Record<number, PieceToken | undefined> = {
 };
 
 /**
- * Applies SAN moves directly to the board without building {@link Action} objects.
+ * Apply one SAN on the board without building {@link Action} objects.
  *
  * Used on the replay fast path when no move trackers are attached. Each method
- * mirrors the corresponding logic in {@link SanToActions} but skips tracker-facing allocations.
+ * mirrors the corresponding logic in {@link SanDecoder} but skips tracker-facing allocations.
  */
 export default class SanApplier {
     constructor(private readonly ctx: SanContext) {}
 
     /**
-     * Apply one SAN token to the board.
+     * Apply one SAN token on the board.
      * Dispatch uses char codes: a–h = pawn, 'O' (79) = castle, else piece letter.
      */
     apply(san: string): void {

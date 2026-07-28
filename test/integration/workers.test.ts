@@ -1,7 +1,8 @@
 import { describe, it, expect, afterEach } from 'bun:test';
 import { join } from 'node:path';
 
-import { analyzePGN, PieceTracker, TileTracker } from 'chessalyzer.js';
+import { analyzePGN } from 'chessalyzer.js';
+import { PieceTracker, TileTracker } from 'chessalyzer.js/trackers';
 
 import WorkerPool from '../../src/core/worker-pool';
 import { fixturePath } from '../helpers/fixtures';
@@ -46,6 +47,7 @@ describe('Workers', () => {
                         trackerData: [
                             { id: 'DoesNotExist', cfg: { profilingActive: false }, path: '' },
                         ],
+                        replayMode: 'skip',
                     },
                 ],
             });
@@ -55,7 +57,7 @@ describe('Workers', () => {
                 {
                     pgnChunkBytes: minimalChunkBytes,
                     idxConfig: 0,
-                    readInHeader: false,
+                    parseHeaders: false,
                 },
                 10_000,
             );

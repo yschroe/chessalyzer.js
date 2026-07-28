@@ -1,5 +1,5 @@
-import { tileCellAt } from '#tracker/tile/tile-grid';
-import TileTracker from '#tracker/tile/tile-tracker';
+import { tileCellAt } from '#trackers/tile/tile-grid';
+import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { SquareData } from '#types/game';
 
 function isTileTracker(data: unknown): data is TileTracker {

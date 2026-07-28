@@ -13,6 +13,52 @@
 - Export `MoveTracker`, `GameTrackerBase`, and public config/result types.
 - Built-in tracker stats aligned with `AnalyzeResult`: `GameTracker.cntGames` → `games`; `TileTracker.cntMovesGame` / `cntMovesTotal` → `movesGame` / `movesTotal`.
 - Tracker modules renamed: `game-tracker.ts`, `piece-tracker.ts`, `tile/tile-tracker.ts` (drop misleading `-base` suffix on concrete exports).
+- Public API split by subpath: root is analyze-only; `parsePGN` → `chessalyzer.js/pgn`; trackers → `chessalyzer.js/trackers` (named exports).
+
+#### Pipeline terminology (Sprint 11)
+
+Docs and benchmarks use pipeline stage names: **I/O → PGN parse → replay → analyze**. See [README Pipeline section](./README.md#pipeline) and [Sprint 11](sprints/sprint-11-pipeline-terminology.md).
+
+**Applied in Phase 2 (internal renames):**
+
+- `movetext-tokenizer.ts` → `movetext.ts`
+- `readInHeader` → `parseHeaders` (`ParseGamesOptions`, worker tasks, `GameProcessor`)
+- `parseOnly` (worker) → `pgnParseOnly`
+
+**Applied in Phase 3 (replay layer):**
+
+- `ReplayPolicy` → `ReplayMode`; `'none'` → `'board'`
+- `resolveReplayPolicy` → `resolveReplayMode`
+- `san-to-actions.ts` / `SanToActions.parse()` → `san-decoder.ts` / `SanDecoder.decodeSan()`
+- `SanApplier` / `apply()` kept on `san-applier.ts` (Phase 3.1 reverted interim `SanPlayer` / `play()` naming)
+
+**Applied in Phase 4 (public parse API):**
+
+- Export `parsePGN(path, options?)` — single-threaded PGN parse (`readLines` + `GameAssembler`); options `headers`, `maxGames`
+- Export `ParsedGame` (alias for `Game`) and `ParsePgnOptions`
+- Export `ReplayMode`; `AnalyzeOptions.headers` and `AnalyzeOptions.replay` for explicit pipeline control
+- `analyzePGN` shares parse/replay resolution with `parsePGN` via `normalizeAnalysisConfigs` (does not call `parsePGN` internally — preserves streaming/worker chunking)
+
+**Applied in Phase 5 (tests):**
+
+- Integration suite `test/integration/parse-pgn.test.ts`; corpus wording; custom tracker filter path
+
+**Applied in Phase 6 (module layout):**
+
+- `src/io/` — `line-reader.ts`, `pgn-chunks.ts` (moved from `src/pgn/`)
+- `src/pgn/` — parse-only (`game-assembler`, `movetext`, `parse-pgn`)
+- Package subpath exports: `chessalyzer.js/io`, `chessalyzer.js/pgn`, `chessalyzer.js/replay`, `chessalyzer.js/trackers`, `chessalyzer.js/trackers`
+- Root export is analyze-only (`analyzePGN`, `printHeatmap`, error helpers/types); `parsePGN` lives on `/pgn`; trackers and tracker types on `/trackers`
+- Built-in trackers use named exports (`GameTracker`, `PieceTracker`, `TileTracker`, `BaseTracker`)
+- Internal folder renamed `src/tracker/` → `src/trackers/` (`#trackers/*` import alias)
+
+**Deferred:**
+
+| Item                            | Sprint    |
+| ------------------------------- | --------- |
+| `streamParsePGN` async iterator | Sprint 09 |
+
+**Planned (Phase 5+):**
 
 ### Changes
 

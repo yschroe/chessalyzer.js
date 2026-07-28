@@ -1,13 +1,8 @@
-import {
-    extractMoves,
-    isGameResultLine,
-    parseHeaderTag,
-    stripComments,
-} from '#pgn/movetext-tokenizer';
+import { extractMoves, isGameResultLine, parseHeaderTag, stripComments } from '#pgn/movetext';
 import type { Game } from '#types/game';
 
 export interface ParseGamesOptions {
-    readInHeader: boolean;
+    parseHeaders: boolean;
     maxGames?: number;
 }
 
@@ -25,7 +20,7 @@ export class GameAssembler {
         if (line === '') return null;
 
         if (line.startsWith('[')) {
-            if (!this.options.readInHeader) return null;
+            if (!this.options.parseHeaders) return null;
             const header = parseHeaderTag(line);
             if (header) {
                 const [key, value] = header;

@@ -1,29 +1,29 @@
 import { collectError, createReplayError, toAbortError } from '#core/analyze-errors';
 import { isReplayFailure } from '#replay/replay-failure';
-import type { ReplayPolicy } from '#replay/replay-policy';
+import type { ReplayMode } from '#replay/replay-policy';
 import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
-import SanToActions from '#replay/san-to-actions';
+import SanDecoder from '#replay/san-decoder';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { Game } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
 import type { Tracker } from '#types/tracker';
 
 /**
- * Orchestrates per-game analysis stages: game trackers → optional SAN replay → counters.
+ * Orchestrates per-game analysis: game trackers → optional SAN replay (decode + play) → counters.
  *
- * Replay mode is chosen by the caller via {@link ReplayPolicy} (see {@link resolveReplayPolicy}),
+ * Replay mode is chosen by the caller via {@link ReplayMode} (see {@link resolveReplayMode}),
  * not inferred inside this class.
  */
 class GameReplayer {
     private readonly ctx: SanContext;
     private readonly applier: SanApplier;
-    private readonly sanToActions: SanToActions;
+    private readonly sanDecoder: SanDecoder;
 
     constructor() {
         this.ctx = new SanContext();
         this.applier = new SanApplier(this.ctx);
-        this.sanToActions = new SanToActions(this.ctx);
+        this.sanDecoder = new SanDecoder(this.ctx);
     }
 
     /** Exposed for tests/debugging; same instance as `ctx.board`. */
@@ -39,14 +39,14 @@ class GameReplayer {
      * Run game trackers, optionally replay SAN / feed move trackers, then bump counters.
      * @param game Game with `moves[]` already extracted by the PGN assembler.
      * @param analysisCfg Trackers and running processed-game/move counts.
-     * @param replayPolicy `'skip'` | `'none'` | `'actions'` — see {@link ReplayPolicy}.
+     * @param replayMode `'skip'` | `'board'` | `'actions'` — see {@link ReplayMode}.
      * @param gameIndex Zero-based index of this game in the processing stream.
      * @param onError `'abort'` throws on replay failure; `'skip-game'` records and continues.
      */
     processGame(
         game: Game,
         analysisCfg: GameProcessorAnalysisConfig,
-        replayPolicy: ReplayPolicy,
+        replayMode: ReplayMode,
         gameIndex: number,
         onError: 'abort' | 'skip-game',
     ): void {
@@ -58,11 +58,11 @@ class GameReplayer {
         const moveTrackers = analysisCfg.trackers.move;
 
         let replayOk = true;
-        if (replayPolicy !== 'skip') {
+        if (replayMode !== 'skip') {
             replayOk = this.replayMoves(
                 game,
                 moveTrackers,
-                replayPolicy,
+                replayMode,
                 gameIndex,
                 onError,
                 analysisCfg,
@@ -89,7 +89,7 @@ class GameReplayer {
     private replayMoves(
         game: Game,
         moveTrackers: Tracker[],
-        replayPolicy: ReplayPolicy,
+        replayMode: ReplayMode,
         gameIndex: number,
         onError: 'abort' | 'skip-game',
         analysisCfg: GameProcessorAnalysisConfig,
@@ -100,11 +100,11 @@ class GameReplayer {
         let moveIndex = 0;
 
         try {
-            if (replayPolicy === 'actions') {
+            if (replayMode === 'actions') {
                 for (; moveIndex < moves.length; moveIndex += 1) {
                     const san = moves[moveIndex];
                     if (!san) continue;
-                    const currentMoveActions = this.sanToActions.parse(san);
+                    const currentMoveActions = this.sanDecoder.decodeSan(san);
                     for (const tracker of moveTrackers) {
                         tracker.analyze(currentMoveActions);
                     }

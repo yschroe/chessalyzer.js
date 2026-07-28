@@ -1,5 +1,4 @@
-import { isTrackedPiece } from '#tracker/piece-tracker';
-import type PieceTracker from '#tracker/piece-tracker';
+import { isTrackedPiece, type PieceTracker } from '#trackers/piece-tracker';
 import type { SquareData } from '#types/game';
 
 function isPieceTracker(data: unknown): data is PieceTracker {

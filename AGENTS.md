@@ -6,32 +6,34 @@ This document orients coding agents working on **chessalyzer.js** — a TypeScri
 
 Chessalyzer.js parses large PGN databases and runs user-defined **trackers** over each game (move-level or game-level statistics). It is designed for throughput on multi-core machines.
 
-**Main entry point:** `analyzePGN(path, options?)` in [`src/core/analyze.ts`](src/core/analyze.ts).
+**Main entry points:** `analyzePGN(path, options?)` in [`src/core/analyze.ts`](src/core/analyze.ts) (full pipeline); `parsePGN(path, options?)` in [`src/pgn/parse-pgn.ts`](src/pgn/parse-pgn.ts) via `chessalyzer.js/pgn`; trackers via `chessalyzer.js/trackers`.
 
 **Pipeline (high level):**
 
-1. **Line reading** — `readLines` / `openLineStream` in `src/pgn/line-reader.ts` (readline `'line'` events) and `readPgnChunks` in `src/pgn/pgn-chunks.ts` stream the file with minimal overhead.
-2. **Chunking (multithreaded mode)** — the main thread splits the PGN into byte-sized chunks aligned to complete games and dispatches them to workers.
-3. **Assemble** — workers tokenize movetext and build game objects (`src/pgn/`).
-4. **Replay** — SAN is applied to a board (`src/replay/`), with explicit policy `'none' | 'actions'` (or `'skip'` when gated).
-5. **Tracking** — configured trackers receive move/game data (`src/tracker/`).
+1. **I/O** — `readLines` / `openLineStream` in [`src/io/line-reader.ts`](src/io/line-reader.ts) and `readPgnChunks` in [`src/io/pgn-chunks.ts`](src/io/pgn-chunks.ts) stream the file with minimal overhead. In multithreaded mode, chunking splits the PGN into byte-sized batches aligned to complete games for worker dispatch (parallel I/O, not a semantic stage).
+2. **PGN parse** — structural parse: tag pairs, mainline SAN strings, game boundaries (`GameAssembler`, [`movetext.ts`](src/pgn/movetext.ts)).
+3. **Replay** — SAN decode + play on a board ([`src/replay/`](src/replay/)), mode `'skip' | 'board' | 'actions'`.
+4. **Analyze** — [`GameProcessor`](src/core/game-processor.ts) runs configured trackers ([`src/trackers/`](src/trackers/)).
+
+**Terminology:** Canonical glossary in the [README Pipeline section](README.md#pipeline) and [Sprint 11](sprints/sprint-11-pipeline-terminology.md). Public docs use **replay** for SAN decode + play.
 
 **Key directories:**
 
-| Path                 | Purpose                                                                            |
-| -------------------- | ---------------------------------------------------------------------------------- |
-| `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers)                 |
-| `src/pgn/`           | PGN I/O, chunking, movetext tokenize, game assembly                                |
-| `src/replay/`        | SAN replay stages (`GameReplayer`, policy, `SanApplier`, `SanToActions`)           |
-| `src/types/`         | Public analysis types (`analysis.ts`) vs processor runtime (`analysis-runtime.ts`) |
-| `src/tracker/`       | Built-in and base tracker implementations                                          |
-| `bench/`             | Callable performance benchmarks (`bench-*.ts`)                                     |
-| `bench/atomic/`      | Atomic micro-benchmark implementations                                             |
-| `bench/lib/`         | Shared bench utilities (fixtures, timing, PGN resolution)                          |
-| `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)                                        |
-| `test/`              | Integration tests, fixtures, corpus (unit tests live in `src/**/__tests__/`)       |
-| `pgn/`               | Local large PGN files for manual/bench runs (gitignored)                           |
-| `manual-tests/`      | Release smoke tests against the built package                                      |
+| Path                 | Purpose                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers)                     |
+| `src/io/`            | Streaming I/O (`readLines`, `readPgnChunks`, worker chunk bytes)                       |
+| `src/pgn/`           | PGN parse (`GameAssembler`, `movetext`, `parsePGN`)                                    |
+| `src/replay/`        | Replay — SAN decode + apply (`GameReplayer`, `ReplayMode`, `SanApplier`, `SanDecoder`) |
+| `src/types/`         | Public analysis types (`analysis.ts`) vs processor runtime (`analysis-runtime.ts`)     |
+| `src/trackers/`      | Built-in and base tracker implementations                                              |
+| `bench/`             | Callable performance benchmarks (`bench-*.ts`)                                         |
+| `bench/atomic/`      | Atomic micro-benchmark implementations                                                 |
+| `bench/lib/`         | Shared bench utilities (fixtures, timing, PGN resolution)                              |
+| `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)                                            |
+| `test/`              | Integration tests, fixtures, corpus (unit tests live in `src/**/__tests__/`)           |
+| `pgn/`               | Local large PGN files for manual/bench runs (gitignored)                               |
+| `manual-tests/`      | Release smoke tests against the built package                                          |
 
 **Runtime:** Node ≥ 22 or Bun. Tests and benches are typically run with Bun.
 
@@ -39,10 +41,12 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 `analyzePGN` picks one of two internal paths:
 
-1. **Single-threaded** — `workers: false`. Main thread: `readLines` → `GameAssembler` → `GameReplayer` (policy from `resolveReplayPolicy`).
-2. **Multithreaded (worker-chunk)** — default. Main thread: `readPgnChunks` → workers assemble once per chunk. Without a `filter`, workers also replay and merge tracker state. With a `filter`, workers return parsed games and the main thread applies the JS predicate and replay (trackers stay on the main thread for that run). `maxGames` is enforced on workers when there is no filter, and on the main thread after filtering when there is.
+1. **Single-threaded** — `workers: false`. Main thread: I/O (`readLines`) → PGN parse (`GameAssembler`) → replay (`GameReplayer`, mode from per-config `replayMode`) → analyze (trackers).
+2. **Multithreaded (worker-chunk)** — default. Main thread: I/O + chunking (`readPgnChunks`) → workers PGN-parse once per chunk. Without a `filter`, workers also replay and merge tracker state. With a `filter`, workers return parsed games and the main thread applies the JS predicate and replay (trackers stay on the main thread for that run). `maxGames` is enforced on workers when there is no filter, and on the main thread after filtering when there is.
 
-**Replay policy:** `resolveReplayPolicy(hasMoveTrackers)` returns `'skip' | 'none' | 'actions'`. Count-only runs (no move trackers) skip board replay by default (`SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = true` in `src/replay/replay-policy.ts`). Move trackers always get `'actions'`; game-only trackers get `'none'` when replay runs. Flip the constant to `false` to always replay SAN (e.g. to surface replay errors on count-only runs).
+**Replay mode:** Default from `resolveReplayMode(hasMoveTrackers)`; override via `AnalyzeOptions.replay` (`resolveEffectiveReplayMode`). Move trackers require `'actions'`. Per-config `replayMode` is stored at normalization and passed to workers via `WorkerInitData`. Count-only runs skip board replay by default (`SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = true` in [`src/replay/replay-policy.ts`](src/replay/replay-policy.ts)).
+
+**Parse headers:** `AnalyzeOptions.headers` maps to processor `parseHeaders`; when omitted, inferred from filter/game trackers. Filters and game trackers force header parsing even when `headers: false`.
 
 ## Performance
 

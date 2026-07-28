@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 
 import { createWorkerResultHandler } from '#core/tracker-merge';
-import TileTracker from '#tracker/tile/tile-tracker';
+import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { WorkerMessage } from '#types/worker';
 
@@ -24,6 +24,7 @@ function baseConfig(
         processedGames: 0,
         skippedGames: 0,
         errors: [],
+        replayMode: 'skip',
         ...overrides,
     };
 }

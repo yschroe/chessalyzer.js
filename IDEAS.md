@@ -2,7 +2,7 @@
 
 Forward-looking notes on what chessalyzer.js does **not** do today, and plausible directions for extending it. This is not a committed roadmap — items may be reordered, dropped, or implemented differently.
 
-For what exists now, see [README.md](./README.md) and [AGENTS.md](./AGENTS.md).
+For what exists now, see [README.md](./README.md) and [AGENTS.md](./AGENTS.md). **Pipeline naming:** [Sprint 11](sprints/sprint-11-pipeline-terminology.md) is the source of truth for stage terminology (I/O → PGN parse → replay → analyze).
 
 ---
 
@@ -11,10 +11,10 @@ For what exists now, see [README.md](./README.md) and [AGENTS.md](./AGENTS.md).
 Today the library is optimized for **batch analysis**, not general-purpose PGN I/O:
 
 - Single public entry point: `analyzePGN(path, options?)`
-- Internal pipeline: stream lines → tokenize movetext → replay SAN when needed → optionally run trackers
-- Count-only runs (no move trackers): board replay skipped by default; move counts come from tokenized SAN list length
+- Internal pipeline: I/O (stream lines) → PGN parse → replay when needed → analyze (trackers)
+- Count-only runs (no move trackers): board replay skipped by default; move counts come from the parsed SAN list length
 - When replay runs without move trackers: `SanApplier` (direct board mutation, no `Action` objects)
-- Tracker path: `SanToActions` → `Action[]` → `board.applyActions()`
+- Tracker path: `SanDecoder` → `Action[]` → `board.applyActions()`
 - Assumes **standard chess from the initial position**, **valid Lichess-style PGN**, **mainline only** (parentheses stripped)
 
 There is no exported parse API, no configurable parsing mode, and no move legality validation beyond disambiguation heuristics.
@@ -27,41 +27,38 @@ The biggest gap is that parsing depth is implicit. A explicit **`ParseConfig`** 
 
 ### Suggested tiers
 
-| Mode                  | Input → output                                                  | Board replay                 | Typical use                                      |
-| --------------------- | --------------------------------------------------------------- | ---------------------------- | ------------------------------------------------ |
-| **tokenize**          | Raw PGN lines → `{ moves: string[] }` per game                  | No                           | Counting moves, indexing, checksums              |
-| **parse**             | PGN → `{ headers, moves: string[], result?, comments?, nags? }` | No                           | Filters on headers, export, databases            |
-| **replay (trust)**    | SAN strings → updated board state                               | Yes, assume PGN is correct   | Current default; max throughput on Lichess dumps |
-| **replay (validate)** | SAN → legal move resolution                                     | Yes, reject/skip illegal SAN | Untrusted input, correctness tooling             |
-| **replay (actions)**  | SAN → `Action[]` with from/to coords                            | Yes                          | Move trackers, heatmaps, custom analysis         |
+| Mode                  | Input → output                                                | Board replay                 | Typical use                                      |
+| --------------------- | ------------------------------------------------------------- | ---------------------------- | ------------------------------------------------ |
+| **PGN parse**         | PGN lines → `{ moves: string[], headers?, result? }` per game | No                           | Move counts, header filters, indexing, export    |
+| **replay (trust)**    | SAN strings → updated board state                             | Yes, assume PGN is correct   | Current default; max throughput on Lichess dumps |
+| **replay (validate)** | SAN → legal move resolution                                   | Yes, reject/skip illegal SAN | Untrusted input, correctness tooling             |
+| **replay (actions)**  | SAN → `Action[]` with from/to coords                          | Yes                          | Move trackers, heatmaps, custom analysis         |
 
 These could compose. Example:
 
 ```ts
 // Hypothetical — not implemented
 parsePGN(path, {
-    mode: 'parse', // stop after structural parse
-    headers: true,
+    headers: true, // tag pairs; false = mainline SAN + result only
     comments: false,
     variations: false,
 });
 
-parsePGN(path, {
-    mode: 'replay',
-    validation: 'trust', // 'trust' | 'validate' | 'skip-illegal'
-    output: 'actions', // 'none' | 'board' | 'actions' | 'uci'
+analyzePGN(path, {
+    replay: 'actions', // 'skip' | 'board' | 'actions'
+    validation: 'trust', // 'trust' | 'validate' (future)
 });
 ```
 
 ### Trust vs validate
 
-|               | **Trust mode** (today)               | **Validate mode** (missing)                                                            |
-| ------------- | ------------------------------------ | -------------------------------------------------------------------------------------- |
-| Assumption    | Database PGN is well-formed          | Input may be wrong or adversarial                                                      |
-| Ambiguous SAN | `PieceFinder` picks a matching piece | Generate legal moves, match SAN uniquely                                               |
-| Illegal move  | May throw or corrupt board state     | Skip move, skip game, or collect error                                                 |
-| Castling / EP | Applied if SAN parses                | Verify castling rights, en passant legality                                            |
-| Performance   | ~16M moves/s (M1, multithreaded)     | Expect large regression (cf. `pgn-reader` validate ≈2× slower than stats-only in Rust) |
+|               | **Trust mode** (today)               | **Validate mode** (missing)                                                   |
+| ------------- | ------------------------------------ | ----------------------------------------------------------------------------- |
+| Assumption    | Database PGN is well-formed          | Input may be wrong or adversarial                                             |
+| Ambiguous SAN | `PieceFinder` picks a matching piece | Generate legal moves, match SAN uniquely                                      |
+| Illegal move  | May throw or corrupt board state     | Skip move, skip game, or collect error                                        |
+| Castling / EP | Applied if SAN parses                | Verify castling rights, en passant legality                                   |
+| Performance   | ~16M moves/s (M1, multithreaded)     | Expect large regression (validation is typically much slower than parse-only) |
 
 Trust mode is the right default for batch stats on Lichess exports. Validate mode would be opt-in for interactive tools, importers, and fuzz/corpus hardening.
 
@@ -85,7 +82,7 @@ Beyond the minimal internal `Game` type (`moves: string[]`, optional `Result` / 
 | **RAVs / variations** `( … )`               | Stripped by `stripComments()`        | Effectively mainline-only; no variation tree            |
 | **FEN / `[SetUp "1"]`**                     | Ignored; board always standard start | Needed for puzzles, studies, partial games              |
 | **Variants** (`[Variant "Chess960"]`, etc.) | Ignored                              | Would need variant-specific rules                       |
-| **NAGs** (`$1`, `$3`, Unicode `!`, `??`)    | Not tokenized; lost with movetext    | Useful for quality / annotation stats                   |
+| **NAGs** (`$1`, `$3`, Unicode `!`, `??`)    | Not extracted; lost with movetext    | Useful for quality / annotation stats                   |
 | **Comments** `{ … }`                        | Stripped, not exposed                | Lichess eval/clock tags (`[%eval]`, `[%clk]`) live here |
 | **`0-0` castling**                          | Not recognized (`O-O` only)          | Common typo in some exports                             |
 | **Non–double-quoted headers**               | `parseHeaderTag()` skips them        | PGN spec allows other quoting                           |
@@ -94,7 +91,7 @@ Beyond the minimal internal `Game` type (`moves: string[]`, optional `Result` / 
 
 ### Partial / implicit
 
-- **Headers** — only read when a game tracker or filter is present (`readInHeader` is internal)
+- **Headers** — only parsed when a game tracker or filter is present (`parseHeaders` is internal)
 - **Promotions, en passant, castling** — handled in replay path for standard chess
 - **Move suffixes** `+`, `#`, `?`, `!` — stripped from SAN tokens before replay
 
@@ -129,13 +126,13 @@ Ideas:
 
 Today several behaviors are hardcoded or inferred:
 
-| Behavior          | Today                                  | Could become                                          |
-| ----------------- | -------------------------------------- | ----------------------------------------------------- |
-| Read headers      | Auto if filter / game tracker          | `parseConfig.headers: true \| false \| 'filter-only'` |
-| Worker-side parse | Auto when filter present (`parseOnly`) | Explicit `parseLocation: 'main' \| 'worker'`          |
-| Comment handling  | Always strip                           | `'strip' \| 'preserve' \| 'parse-commands'`           |
-| Variations        | Always strip (parens)                  | `'strip' \| 'mainline-only' \| 'tree'`                |
-| Error policy      | `'abort'` or `'skip-game'` (shipped)   | `'skip-move'`, richer collect modes                   |
+| Behavior          | Today                                     | Could become                                          |
+| ----------------- | ----------------------------------------- | ----------------------------------------------------- |
+| Read headers      | Auto if filter / game tracker             | `parseConfig.headers: true \| false \| 'filter-only'` |
+| Worker-side parse | Auto when filter present (`pgnParseOnly`) | Explicit `parseLocation: 'main' \| 'worker'`          |
+| Comment handling  | Always strip                              | `'strip' \| 'preserve' \| 'parse-commands'`           |
+| Variations        | Always strip (parens)                     | `'strip' \| 'mainline-only' \| 'tree'`                |
+| Error policy      | `'abort'` or `'skip-game'` (shipped)      | `'skip-move'`, richer collect modes                   |
 
 ---
 
@@ -157,7 +154,7 @@ Today several behaviors are hardcoded or inferred:
 Still open:
 
 - **Corpus-driven hardening** — extend `test/corpus/` with RAV, FEN, variant, and intentionally illegal fixtures once validate mode exists
-- **DoS resistance** — budget limits for comment depth, variation depth, game length (cf. chessops `PgnParser` budget)
+- **DoS resistance** — budget limits for comment depth, variation depth, game length
 
 ---
 
@@ -174,7 +171,7 @@ Still open:
 
 ## Performance & benchmarking
 
-- **Cross-parser benchmark harness** — same Lichess fixture, defined tiers (tokenize / parse / replay / validate), compare against chessops, `pgn-parser`, Rust `pgn-reader` / shakmaty
+- **Cross-parser benchmark harness** — same Lichess fixture, defined tiers (PGN parse / replay / validate), compare against other PGN parsers
 - **Published benchmark table** in README with methodology (hardware, fixture, mode definitions)
 - **Single-threaded vs multithreaded** breakdown in `bench:perf` output
 - **Regression CI** — optional job when `pgn/` fixture is present (too large for default CI)
@@ -183,7 +180,7 @@ Still open:
 
 ## Ecosystem & packaging
 
-- **Subpath exports** — e.g. `chessalyzer.js/pgn`, `chessalyzer.js/board` for advanced users without bloating default import
+- **Subpath exports** — `chessalyzer.js/io`, `/pgn`, `/replay`, `/trackers` (shipped); optional `/board` later for advanced users without bloating the default import
 - **Browser build** — WASM or lightweight bundle if parse-only mode exists (no `worker_threads`)
 - **Write PGN** — out of scope today; only mentioned if parse tree exists
 
@@ -193,7 +190,7 @@ Still open:
 
 If the goal is “PGN library” rather than “batch analyzer only”, a reasonable order:
 
-1. **Public parse API** with `tokenize` and `parse` modes (no replay)
+1. **Public parse API** — `parsePGN` with optional headers (PGN parse stage; no replay)
 2. **Explicit replay config** — document today’s behavior as `trust`; keep as default
 3. **Error policy** — ~~`skip-game` for production batch runs~~ (shipped in v4)
 4. **Comment / NAG preservation** (optional flag)
@@ -204,7 +201,7 @@ If the goal is “PGN library” rather than “batch analyzer only”, a reason
 
 ## Related issues in code today
 
-| Location                        | Note                                                                |
-| ------------------------------- | ------------------------------------------------------------------- |
-| `src/pgn/movetext-tokenizer.ts` | RAVs and comments share the same strip regex                        |
-| `src/replay/replay-policy.ts`   | `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` defaults true (count-only skip) |
+| Location                      | Note                                                                |
+| ----------------------------- | ------------------------------------------------------------------- |
+| `src/pgn/movetext.ts`         | RAVs and comments share the same strip regex                        |
+| `src/replay/replay-policy.ts` | `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` defaults true (count-only skip) |

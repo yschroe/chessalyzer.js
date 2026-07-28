@@ -1,5 +1,5 @@
-import { openLineStream, type LineStream } from '#pgn/line-reader';
-import { isGameResultLine, stripComments } from '#pgn/movetext-tokenizer';
+import { openLineStream, type LineStream } from '#io/line-reader';
+import { isGameResultLine, stripComments } from '#pgn/movetext';
 
 /** Default chunk size (~4 MB) for worker-side PGN dispatch. */
 const DEFAULT_PGN_CHUNK_BYTES = 4 * 1024 * 1024;

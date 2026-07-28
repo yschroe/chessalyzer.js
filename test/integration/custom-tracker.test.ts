@@ -17,4 +17,18 @@ describe('Custom tracker', () => {
         expect(tracker.games).toBe(expected.games);
         expect(tracker.wins[0] + tracker.wins[1] + tracker.wins[2]).toBe(expected.games);
     });
+
+    it('merges custom game tracker with filter in worker-parse mode', async () => {
+        const tracker = new CustomGameTracker();
+        const data = await analyzePGN(fixturePath('results-mix'), {
+            trackers: [tracker],
+            filter: (game) => game.Result === '1-0',
+        });
+
+        expect(data.games).toBe(3);
+        expect(tracker.games).toBe(3);
+        expect(tracker.wins[0]).toBe(3);
+        expect(tracker.wins[1]).toBe(0);
+        expect(tracker.wins[2]).toBe(0);
+    });
 });

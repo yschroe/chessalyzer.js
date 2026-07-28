@@ -2,7 +2,7 @@
 
 **Effort:** Medium (2 sessions)  
 **Impact:** Medium — unblocks validate mode and FEN export  
-**Depends on:** Sprint 09 recommended
+**Depends on:** [Sprint 11 — Pipeline terminology & v4 API](./sprint-11-pipeline-terminology.md) recommended
 
 ## Goal
 
