@@ -1,3 +1,4 @@
+import { BOARD_INDICES, isBoardIndex } from '#board/board-coords';
 import { MoveTracker } from '#trackers/base-tracker';
 import HeatmapPresets from '#trackers/heatmaps/tile-heatmaps';
 import {
@@ -7,7 +8,7 @@ import {
     setStartingPiece,
     tileCellAt,
 } from '#trackers/tile/tile-grid';
-import { BOARD_INDICES, type BoardIndex, type TileGrid } from '#trackers/tile/tile-tracker-types';
+import type { TileGrid } from '#trackers/tile/tile-tracker-types';
 import type { Action } from '#types/actions';
 import type { Move } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
@@ -15,10 +16,6 @@ import type { Tracker } from '#types/tracker';
 
 function isTileTracker(tracker: Tracker): tracker is TileTracker {
     return 'tiles' in tracker && 'movesTotal' in tracker;
-}
-
-function isBoardIndex(n: number | undefined): n is BoardIndex {
-    return n !== undefined && (n | 0) === n && n >= 0 && n <= 7;
 }
 
 function isCastleRookLeg(action: Action): boolean {

@@ -51,11 +51,6 @@ export interface StatsField {
     currentPiece: TilePiece | null;
 }
 
-export type BoardIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
-
-/** Fixed row/column indices for the 8×8 tile grid. */
-export const BOARD_INDICES: readonly BoardIndex[] = [0, 1, 2, 3, 4, 5, 6, 7];
-
 export type TileRow = [
     StatsField,
     StatsField,

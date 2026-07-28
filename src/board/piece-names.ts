@@ -1,6 +1,5 @@
+import { isBoardIndex } from '#board/board-coords';
 import type { ChessPiece } from '#types/game';
-
-import type { BoardIndex } from './board-coords';
 
 /**
  * Canonical starting-position piece names used across board replay, tile tracking,
@@ -15,10 +14,6 @@ export const PAWN_TEMPLATE = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'] as
 
 /** Starting back-rank piece names by file: Ra, Nb, Bc, Qd, Ke, Bf, Ng, Rh. */
 export const PIECE_TEMPLATE = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'] as const;
-
-function isBoardIndex(n: number | undefined): n is BoardIndex {
-    return n !== undefined && (n | 0) === n && n >= 0 && n <= 7;
-}
 
 /**
  * Return the standard starting piece on `coords`, or null for empty ranks.
