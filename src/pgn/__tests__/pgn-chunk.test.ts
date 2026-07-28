@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 
 import { parseGamesFromLines } from '#pgn/game-assembler';
-import { readLinesFast } from '#pgn/line-reader';
+import { readLines } from '#pgn/line-reader';
 import { chunkEndsWithCompleteGame, readPgnChunks, type PgnChunkConfig } from '#pgn/pgn-chunks';
 
 import { fixturePath, repeatPgn, cleanupTmpPgns } from '../../../test/helpers/fixtures';
@@ -30,8 +30,8 @@ describe('readPgnChunks', () => {
         const path = fixturePath('comments-singleline');
         const lineGames: { moves: string[] }[] = [];
         let game: { moves: string[] } = { moves: [] };
-        for await (const line of readLinesFast(path)) {
-            if (!line.length || line.startsWith('[')) continue;
+        await readLines(path, (line) => {
+            if (!line.length || line.startsWith('[')) return;
             const cleaned = line.replace(/\{.*?\}|\(.*?\)/g, '');
             const matched = cleaned.match(/[RNBQKOa-h][^\s?!#+]+/g) ?? [];
             game.moves.push(...matched);
@@ -39,7 +39,7 @@ describe('readPgnChunks', () => {
                 lineGames.push(game);
                 game = { moves: [] };
             }
-        }
+        });
 
         const chunkGames = [];
         for await (const chunk of readPgnChunks(path, { targetBytes: 1 })) {

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { readLinesFast } from '#pgn/line-reader';
+import { readLines } from '#pgn/line-reader';
 
 const FIXTURES_DIR = join(new URL('../../../test/fixtures', import.meta.url).pathname);
 const CRLF_FIXTURE = join(FIXTURES_DIR, 'crlf-endings.pgn');
@@ -17,13 +17,13 @@ async function writeTmpPgn(name: string, content: string): Promise<string> {
 
 async function collectLines(path: string): Promise<string[]> {
     const lines: string[] = [];
-    for await (const line of readLinesFast(path)) {
+    await readLines(path, (line) => {
         lines.push(line);
-    }
+    });
     return lines;
 }
 
-describe('readLinesFast', () => {
+describe('readLines', () => {
     it('reassembles a line split across read chunks', async () => {
         const longLine = 'x'.repeat(70 * 1024);
         const path = await writeTmpPgn('long-line.pgn', longLine);
@@ -33,12 +33,12 @@ describe('readLinesFast', () => {
         expect(lines).toEqual([longLine]);
     });
 
-    it('preserves empty lines and trailing newline', async () => {
+    it('preserves empty lines (readline omits a phantom line after the final newline)', async () => {
         const path = await writeTmpPgn('empty-lines.pgn', 'a\n\nb\n');
 
         const lines = await collectLines(path);
 
-        expect(lines).toEqual(['a', '', 'b', '']);
+        expect(lines).toEqual(['a', '', 'b']);
     });
 
     it('strips CRLF line endings', async () => {
@@ -60,7 +60,18 @@ describe('readLinesFast', () => {
             '',
             '1. e4 1... e5 ',
             '2. Nf3 1-0',
-            '',
         ]);
+    });
+
+    it('stops early when the handler returns false', async () => {
+        const path = await writeTmpPgn('early-stop.pgn', 'a\nb\nc\nd\n');
+        const lines: string[] = [];
+
+        await readLines(path, (line) => {
+            lines.push(line);
+            if (line === 'b') return false;
+        });
+
+        expect(lines).toEqual(['a', 'b']);
     });
 });

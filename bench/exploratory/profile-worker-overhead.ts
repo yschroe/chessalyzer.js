@@ -11,7 +11,7 @@ import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 
-import { readLinesFast } from '#pgn/line-reader';
+import { readLines } from '#pgn/line-reader';
 
 import { findLargestPgn } from '../lib/pgn-fixture';
 import { formatSeconds } from '../lib/timing';
@@ -24,16 +24,16 @@ const N_BATCHES = 20;
 
 const batches: { moves: string[] }[] = [];
 let game: { moves: string[] } = { moves: [] };
-for await (const line of readLinesFast(pgn.path)) {
-    if (!line || !line.length || line.charCodeAt(0) === 91) continue;
+await readLines(pgn.path, (line) => {
+    if (!line || !line.length || line.charCodeAt(0) === 91) return;
     const m = line.match(MOVE_REGEX);
     if (m) for (let i = 0; i < m.length; i += 1) game.moves.push(m[i]!);
     if (RESULT_REGEX.test(line)) {
         batches.push(game);
         game = { moves: [] };
-        if (batches.length >= BATCH * N_BATCHES) break;
+        if (batches.length >= BATCH * N_BATCHES) return false;
     }
-}
+});
 
 const batchGroups: { moves: string[] }[][] = [];
 for (let i = 0; i < batches.length; i += BATCH) {
