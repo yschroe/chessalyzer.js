@@ -23,14 +23,14 @@ const TrackerList: Record<string, new () => BaseTracker> = Object.fromEntries(
 /** Reused analysis configs indexed by `idxConfig` from incoming batch messages. */
 const cfgCache: GameProcessorAnalysisConfig[] = [];
 
-/** Check if a module has a default export. */
-function hasDefaultExport(tracker: unknown): tracker is { default: unknown } {
-    return typeof tracker !== 'object' || tracker === null || !('default' in tracker);
+/** Check if a dynamic import resolved to a module with a default export. */
+function hasDefaultExport(module: unknown): module is { default: unknown } {
+    return typeof module === 'object' && module !== null && 'default' in module;
 }
 
-/** Check if a module's default export is a tracker class. */
-function isTrackerClass(tracker: unknown): tracker is new () => BaseTracker {
-    return typeof tracker === 'function' && tracker !== null && 'default' in tracker;
+/** Check if a value is a constructable tracker class. */
+function isTrackerClass(value: unknown): value is new () => BaseTracker {
+    return typeof value === 'function';
 }
 
 /**
