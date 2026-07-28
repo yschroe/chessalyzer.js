@@ -104,5 +104,5 @@ printTimedResults(results, { stddev: true, cv: true, movesPerSec: results.map((r
 
 const sample = results[0]!;
 console.log(
-    `\nOutput: ${sample.games.toLocaleString()} games, ${sample.moves.toLocaleString()} moves (${formatSeconds(sample.meanMs)} mean)`,
+    `\nOutput: ${sample.games.toLocaleString()} games, ${sample.moves.toLocaleString()} moves (${formatSeconds(sample.meanMs)}s mean)`,
 );
