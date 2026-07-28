@@ -4,7 +4,6 @@ import { getCachedCfg, initWorkerTrackers, resetCfg } from '#core/worker-tracker
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import { decodePgnChunkBytes } from '#pgn/pgn-chunks';
 import GameReplayer from '#replay/game-replayer';
-import { resolveReplayMode } from '#replay/replay-policy';
 import type { WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
 
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- workerData is untyped at worker entry; shape validated at use sites
@@ -19,6 +18,10 @@ const ready = initWorkerTrackers(initData);
 
 function isPgnParseOnly(idxConfig: number): boolean {
     return initData?.configs[idxConfig]?.pgnParseOnly ?? false;
+}
+
+function getReplayMode(idxConfig: number): import('#replay/replay-policy').ReplayMode {
+    return initData?.configs[idxConfig]?.replayMode ?? 'skip';
 }
 
 /** Assemble games from a PGN chunk and replay/analyze them. */
@@ -38,7 +41,7 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
     resetCfg(cfg);
 
     const hasTrackers = cfg.trackers.game.length > 0 || cfg.trackers.move.length > 0;
-    const replayMode = resolveReplayMode(cfg.trackers.move.length > 0);
+    const replayMode = getReplayMode(msg.idxConfig);
     const maxGames = msg.remainingGames ?? Infinity;
     const games = parseGamesFromLines(lines, {
         parseHeaders: msg.parseHeaders,

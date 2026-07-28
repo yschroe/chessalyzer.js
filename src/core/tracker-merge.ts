@@ -1,6 +1,5 @@
 import { collectError } from '#core/analyze-errors';
 import GameReplayer from '#replay/game-replayer';
-import { resolveReplayMode } from '#replay/replay-policy';
 import type { GameAndMoveCount } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { Game } from '#types/game';
@@ -59,7 +58,7 @@ function mergeParsedGamesOnMain(
 ): void {
     if (cfg.isDone) return;
 
-    const replayMode = resolveReplayMode(cfg.trackers.move.length > 0);
+    const replayMode = cfg.replayMode;
 
     for (const game of parsedGames) {
         if (cfg.isDone) break;

@@ -14,7 +14,9 @@ describe('WorkerPool', () => {
     });
 
     it('does not spawn workers until the first runTask', () => {
-        pool = new WorkerPool(8, workerPath, { configs: [{ trackerData: [] }] });
+        pool = new WorkerPool(8, workerPath, {
+            configs: [{ trackerData: [], replayMode: 'skip' }],
+        });
         expect(pool.workers.length).toBe(0);
     });
 });

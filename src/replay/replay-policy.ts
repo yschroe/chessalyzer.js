@@ -22,3 +22,18 @@ export function resolveReplayMode(hasMoveTrackers: boolean): ReplayMode {
     if (SKIP_REPLAY_WITHOUT_MOVE_TRACKERS) return 'skip';
     return 'board';
 }
+
+/**
+ * Apply an optional user {@link ReplayMode} override from {@link AnalyzeOptions.replay}.
+ * Move trackers require `'actions'`; omitting `userReplay` defers to {@link resolveReplayMode}.
+ */
+export function resolveEffectiveReplayMode(
+    hasMoveTrackers: boolean,
+    userReplay?: ReplayMode,
+): ReplayMode {
+    if (userReplay === undefined) return resolveReplayMode(hasMoveTrackers);
+    if (hasMoveTrackers && userReplay !== 'actions') {
+        throw new Error('Move trackers require replay: "actions"');
+    }
+    return userReplay;
+}

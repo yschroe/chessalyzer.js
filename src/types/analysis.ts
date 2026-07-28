@@ -1,11 +1,12 @@
+import type { ReplayMode } from '#replay/replay-policy';
 import type { AnalyzeError } from '#types/errors';
-import type { Game } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 import type { Tracker } from '#types/tracker';
 
 /** Options for a single filtered analysis run. */
 export interface AnalyzeRun {
     trackers?: Tracker[];
-    filter?: (game: Game) => boolean;
+    filter?: (game: ParsedGame) => boolean;
     maxGames?: number;
 }
 
@@ -24,8 +25,18 @@ export interface WorkerOptions {
 /** Options passed to {@link analyzePGN}. */
 export interface AnalyzeOptions {
     trackers?: Tracker[];
-    filter?: (game: Game) => boolean;
+    filter?: (game: ParsedGame) => boolean;
     maxGames?: number;
+    /**
+     * Parse tag-pair headers. When omitted, inferred from filter and game trackers.
+     * Filters and game trackers still force header parsing even when set to `false`.
+     */
+    headers?: boolean;
+    /**
+     * Board replay mode. Default inferred from trackers (see {@link resolveReplayMode}).
+     * Move trackers require `'actions'`.
+     */
+    replay?: ReplayMode;
     /**
      * Parallel filtered analyses of the same file.
      * Top-level trackers/filter/maxGames are ignored when set.

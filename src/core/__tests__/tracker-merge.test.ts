@@ -24,6 +24,7 @@ function baseConfig(
         processedGames: 0,
         skippedGames: 0,
         errors: [],
+        replayMode: 'skip',
         ...overrides,
     };
 }

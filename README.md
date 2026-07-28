@@ -100,7 +100,24 @@ flowchart TB
 
 **Industry note:** “PGN parser” means stage 2 only (cf. chessops `parsePgn`). Raw file → legal moves requires **PGN parse + replay**.
 
-Internally today: I/O uses `readLines` / `readPgnChunks`; PGN parse uses `GameAssembler` and `movetext` (`parseHeaders` for tag pairs); replay uses `GameReplayer`, `SanApplier`, and `SanDecoder` (`ReplayMode`: `'skip' | 'board' | 'actions'`); analyze is `analyzePGN` with trackers. A standalone `parsePGN` export is planned for v4 (Sprint 11).
+Public entry points: **`parsePGN`** (stage 2 only), **`analyzePGN`** (I/O + parse + optional replay + trackers). Internally, both share `GameAssembler` / `readLines`; multithreaded analyze uses worker chunks instead of loading all games.
+
+```javascript
+import { parsePGN, analyzePGN, GameTracker } from 'chessalyzer.js';
+
+// PGN parse only — no board replay
+const games = await parsePGN('<pathToPgnFile>', { headers: true, maxGames: 100 });
+// games[0].moves — mainline SAN strings
+
+// Full pipeline with explicit replay mode
+await analyzePGN('<pathToPgnFile>', {
+    trackers: [new GameTracker()],
+    headers: true, // optional; inferred from filter/game trackers when omitted
+    replay: 'board', // 'skip' | 'board' | 'actions' — move trackers require 'actions'
+});
+```
+
+On `analyzePGN`, `headers` defaults to inferred behavior (on when a filter or game tracker needs tag pairs). Setting `headers: false` still parses headers when a filter or game tracker requires them.
 
 ### Performance tiers
 

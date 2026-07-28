@@ -6,7 +6,7 @@ This document orients coding agents working on **chessalyzer.js** — a TypeScri
 
 Chessalyzer.js parses large PGN databases and runs user-defined **trackers** over each game (move-level or game-level statistics). It is designed for throughput on multi-core machines.
 
-**Main entry point:** `analyzePGN(path, options?)` in [`src/core/analyze.ts`](src/core/analyze.ts).
+**Main entry points:** `parsePGN(path, options?)` in [`src/pgn/parse-pgn.ts`](src/pgn/parse-pgn.ts) (stage 2 only); `analyzePGN(path, options?)` in [`src/core/analyze.ts`](src/core/analyze.ts) (full pipeline).
 
 **Pipeline (high level):**
 
@@ -19,20 +19,20 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 **Key directories:**
 
-| Path                 | Purpose                                                                              |
-| -------------------- | ------------------------------------------------------------------------------------ |
-| `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers)                   |
-| `src/pgn/`           | I/O, chunking, PGN parse (game assembly, movetext SAN extraction)                    |
+| Path                 | Purpose                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers)                     |
+| `src/pgn/`           | I/O, chunking, PGN parse (game assembly, movetext SAN extraction)                      |
 | `src/replay/`        | Replay — SAN decode + apply (`GameReplayer`, `ReplayMode`, `SanApplier`, `SanDecoder`) |
-| `src/types/`         | Public analysis types (`analysis.ts`) vs processor runtime (`analysis-runtime.ts`)   |
-| `src/tracker/`       | Built-in and base tracker implementations                                            |
-| `bench/`             | Callable performance benchmarks (`bench-*.ts`)                                       |
-| `bench/atomic/`      | Atomic micro-benchmark implementations                                               |
-| `bench/lib/`         | Shared bench utilities (fixtures, timing, PGN resolution)                            |
-| `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)                                          |
-| `test/`              | Integration tests, fixtures, corpus (unit tests live in `src/**/__tests__/`)         |
-| `pgn/`               | Local large PGN files for manual/bench runs (gitignored)                             |
-| `manual-tests/`      | Release smoke tests against the built package                                        |
+| `src/types/`         | Public analysis types (`analysis.ts`) vs processor runtime (`analysis-runtime.ts`)     |
+| `src/tracker/`       | Built-in and base tracker implementations                                              |
+| `bench/`             | Callable performance benchmarks (`bench-*.ts`)                                         |
+| `bench/atomic/`      | Atomic micro-benchmark implementations                                                 |
+| `bench/lib/`         | Shared bench utilities (fixtures, timing, PGN resolution)                              |
+| `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)                                            |
+| `test/`              | Integration tests, fixtures, corpus (unit tests live in `src/**/__tests__/`)           |
+| `pgn/`               | Local large PGN files for manual/bench runs (gitignored)                               |
+| `manual-tests/`      | Release smoke tests against the built package                                          |
 
 **Runtime:** Node ≥ 22 or Bun. Tests and benches are typically run with Bun.
 
@@ -40,10 +40,12 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 `analyzePGN` picks one of two internal paths:
 
-1. **Single-threaded** — `workers: false`. Main thread: I/O (`readLines`) → PGN parse (`GameAssembler`) → replay (`GameReplayer`, mode from `resolveReplayMode`) → analyze (trackers).
+1. **Single-threaded** — `workers: false`. Main thread: I/O (`readLines`) → PGN parse (`GameAssembler`) → replay (`GameReplayer`, mode from per-config `replayMode`) → analyze (trackers).
 2. **Multithreaded (worker-chunk)** — default. Main thread: I/O + chunking (`readPgnChunks`) → workers PGN-parse once per chunk. Without a `filter`, workers also replay and merge tracker state. With a `filter`, workers return parsed games and the main thread applies the JS predicate and replay (trackers stay on the main thread for that run). `maxGames` is enforced on workers when there is no filter, and on the main thread after filtering when there is.
 
-**Replay mode:** `resolveReplayMode(hasMoveTrackers)` returns `'skip' | 'board' | 'actions'`. `'board'` = decode + play on board without building `Action[]`; `'actions'` = decode + `Action[]` for move trackers. Count-only runs (no move trackers) skip board replay by default (`SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = true` in [`src/replay/replay-policy.ts`](src/replay/replay-policy.ts)). Move trackers always get `'actions'`; game-only trackers get `'board'` when replay runs. Flip the constant to `false` to always replay SAN (e.g. to surface replay errors on count-only runs).
+**Replay mode:** Default from `resolveReplayMode(hasMoveTrackers)`; override via `AnalyzeOptions.replay` (`resolveEffectiveReplayMode`). Move trackers require `'actions'`. Per-config `replayMode` is stored at normalization and passed to workers via `WorkerInitData`. Count-only runs skip board replay by default (`SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = true` in [`src/replay/replay-policy.ts`](src/replay/replay-policy.ts)).
+
+**Parse headers:** `AnalyzeOptions.headers` maps to processor `parseHeaders`; when omitted, inferred from filter/game trackers. Filters and game trackers force header parsing even when `headers: false`.
 
 ## Performance
 

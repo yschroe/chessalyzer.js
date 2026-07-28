@@ -2,14 +2,13 @@ import { EventEmitter } from 'node:events';
 import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
 
-import { normalizeAnalysisConfigs } from '#core/analysis-config';
+import { normalizeAnalysisConfigs, type NormalizeAnalysisOptions } from '#core/analysis-config';
 import { createWorkerResultHandler, finishTrackers } from '#core/tracker-merge';
 import WorkerPool from '#core/worker-pool';
 import { GameAssembler } from '#pgn/game-assembler';
 import { readLines } from '#pgn/line-reader';
 import { readPgnChunks } from '#pgn/pgn-chunks';
 import GameReplayer from '#replay/game-replayer';
-import { resolveReplayMode } from '#replay/replay-policy';
 import type {
     AnalysisConfig,
     GameAndMoveCount,
@@ -68,8 +67,9 @@ class GameProcessor {
         configs: AnalysisConfig[],
         multithreadCfg: MultithreadConfig | null,
         onError: 'abort' | 'skip-game' = 'abort',
+        normalizeOptions?: NormalizeAnalysisOptions,
     ) {
-        const normalized = normalizeAnalysisConfigs(configs, multithreadCfg);
+        const normalized = normalizeAnalysisConfigs(configs, multithreadCfg, normalizeOptions);
         this.configs = normalized.configs;
         this.parseHeaders = normalized.parseHeaders;
         this.multithreadConfig = multithreadCfg;
@@ -94,6 +94,7 @@ class GameProcessor {
             configs: this.configs.map((cfg) => ({
                 trackerData: cfg.trackerData,
                 pgnParseOnly: cfg.config.hasFilter,
+                replayMode: cfg.replayMode,
             })),
             onError: this.onError,
         };
@@ -170,7 +171,7 @@ class GameProcessor {
                     gameReplayer.processGame(
                         game,
                         cfg,
-                        resolveReplayMode(cfg.trackers.move.length > 0),
+                        cfg.replayMode,
                         cfg.processedGames + cfg.skippedGames,
                         this.onError,
                     );

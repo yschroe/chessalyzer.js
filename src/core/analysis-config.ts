@@ -1,12 +1,26 @@
+import { resolveEffectiveReplayMode } from '#replay/replay-policy';
+import type { ReplayMode } from '#replay/replay-policy';
 import type { AnalyzeOptions } from '#types/analysis';
 import type { AnalysisConfig, MultithreadConfig } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull, GameProcessorConfig } from '#types/analysis-runtime';
+import type { Game } from '#types/game';
 import type { Tracker } from '#types/tracker';
 
 /** Normalized analysis run: per-config runtime state plus path-selection flags. */
 export interface NormalizedAnalysisRun {
     configs: GameProcessorAnalysisConfigFull[];
     parseHeaders: boolean;
+}
+
+/** Options threaded from public {@link AnalyzeOptions} into processor normalization. */
+export interface NormalizeAnalysisOptions {
+    headers?: boolean;
+    replay?: ReplayMode;
+}
+
+function resolveParseHeaders(explicit: boolean | undefined, inferred: boolean): boolean {
+    if (explicit !== undefined) return explicit || inferred;
+    return inferred;
 }
 
 function resolveWorkerModule(tracker: { constructor: unknown }): string {
@@ -27,7 +41,7 @@ function resolveTrackerId(tracker: Tracker): string {
 }
 
 function normalizeProcessorConfig(
-    filter: ((game: import('#types/game').Game) => boolean) | undefined,
+    filter: ((game: Game) => boolean) | undefined,
     maxGames: number | undefined,
 ): {
     config: GameProcessorConfig;
@@ -47,7 +61,7 @@ function normalizeProcessorConfig(
 
 function toAnalysisConfig(
     trackers: AnalysisConfig['trackers'],
-    filter: ((game: import('#types/game').Game) => boolean) | undefined,
+    filter: ((game: Game) => boolean) | undefined,
     maxGames: number | undefined,
 ): AnalysisConfig {
     return {
@@ -66,6 +80,8 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
     configs: AnalysisConfig[];
     multithreadCfg: MultithreadConfig | null;
     onError: 'abort' | 'skip-game';
+    headers?: boolean;
+    replay?: ReplayMode;
 } {
     const opts = options ?? {};
 
@@ -73,11 +89,14 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
         opts.workers === false ? null : (opts.workers ?? {});
 
     const onError = opts.onError ?? 'abort';
+    const { headers, replay } = opts;
 
     if (opts.runs && opts.runs.length > 0) {
         return {
             multithreadCfg,
             onError,
+            headers,
+            replay,
             configs: opts.runs.map((run) =>
                 toAnalysisConfig(run.trackers, run.filter, run.maxGames),
             ),
@@ -87,6 +106,8 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
     return {
         multithreadCfg,
         onError,
+        headers,
+        replay,
         configs: [toAnalysisConfig(opts.trackers, opts.filter, opts.maxGames)],
     };
 }
@@ -98,8 +119,9 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
 export function normalizeAnalysisConfigs(
     configs: AnalysisConfig[],
     _multithreadCfg: MultithreadConfig | null,
+    options?: NormalizeAnalysisOptions,
 ): NormalizedAnalysisRun {
-    let parseHeaders = false;
+    let inferredHeaders = false;
     const normalized: GameProcessorAnalysisConfigFull[] = [];
 
     for (const cfg of configs) {
@@ -107,7 +129,7 @@ export function normalizeAnalysisConfigs(
             cfg.config?.filter,
             cfg.config?.maxGames,
         );
-        if (needsHeader) parseHeaders = true;
+        if (needsHeader) inferredHeaders = true;
 
         const tempCfg: GameProcessorAnalysisConfigFull = {
             trackers: { move: [], game: [] },
@@ -119,6 +141,7 @@ export function normalizeAnalysisConfigs(
             errors: [],
             readGames: 0,
             isDone: false,
+            replayMode: 'skip',
         };
 
         if (cfg.trackers) {
@@ -127,7 +150,7 @@ export function normalizeAnalysisConfigs(
                     tempCfg.trackers.move.push(tracker);
                 } else if (tracker.type === 'game') {
                     tempCfg.trackers.game.push(tracker);
-                    parseHeaders = true;
+                    inferredHeaders = true;
                 }
 
                 tempCfg.trackerData.push({
@@ -138,8 +161,16 @@ export function normalizeAnalysisConfigs(
             }
         }
 
+        tempCfg.replayMode = resolveEffectiveReplayMode(
+            tempCfg.trackers.move.length > 0,
+            options?.replay,
+        );
+
         normalized.push(tempCfg);
     }
 
-    return { configs: normalized, parseHeaders };
+    return {
+        configs: normalized,
+        parseHeaders: resolveParseHeaders(options?.headers, inferredHeaders),
+    };
 }

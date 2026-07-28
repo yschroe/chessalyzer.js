@@ -46,6 +46,7 @@ describe('Workers', () => {
                         trackerData: [
                             { id: 'DoesNotExist', cfg: { profilingActive: false }, path: '' },
                         ],
+                        replayMode: 'skip',
                     },
                 ],
             });

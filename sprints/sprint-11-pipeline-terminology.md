@@ -172,20 +172,17 @@ Replace overloaded / misleading names:
 
 ### Phase 4 — Public `parsePGN` & compose `analyzePGN`
 
-- [ ] **Export `parsePGN(path, options?)`**
+- [x] **Export `parsePGN(path, options?)`**
     - Single-threaded: `readLines` → `GameAssembler`
-    - Optional: async iterator variant for streaming consumers
     - Options: `headers`, `maxGames` only (no replay, no trackers)
-- [ ] **Export `ParsedGame`** (public alias or replacement for internal `Game` in public docs)
-- [ ] **Refactor `analyzePGN`** to compose:
-    1. I/O + optional worker chunking
-    2. PGN parse (shared with `parsePGN`)
-    3. Replay when `replay !== 'skip'`
-    4. Trackers
-- [ ] **Explicit `replay` option on `AnalyzePgnOptions`**
+    - Async iterator deferred to Sprint 09
+- [x] **Export `ParsedGame`** (public alias for internal `Game`)
+- [x] **Refactor `analyzePGN`** to share parse/replay resolution with `parsePGN` (via `normalizeAnalysisConfigs`; preserves worker chunking)
+- [x] **Explicit `replay` option on `AnalyzeOptions`**
     - Default: current `resolveReplayMode` behavior
-    - Document interaction with move trackers (`'actions'` required when move trackers present)
-- [ ] **Update [`src/index.ts`](../src/index.ts)** and package `exports` for subpaths if implemented
+    - Move trackers require `'actions'`
+- [x] **Update [`src/index.ts`](../src/index.ts)** — export `parsePGN`, `ParsedGame`, `ReplayMode`
+- Subpath exports deferred to Phase 6
 
 ### Phase 5 — Tests, corpus, integration
 
@@ -217,7 +214,7 @@ Low priority if renames are complete; do only when subpath exports are added.
 | Replay values                   | `'none'`                         | `'board'`                                                       |
 | `replay-policy.ts`              | `resolveReplayPolicy`            | `resolveReplayMode`                                             |
 | `san-to-actions.ts`             | class `SanToActions`, `.parse()` | `SanDecoder`, `.decodeSan()`                                    |
-| `san-applier.ts`                | class `SanApplier`, `.apply()`   | unchanged (Phase 3.1 reverted interim `SanPlayer`)            |
+| `san-applier.ts`                | class `SanApplier`, `.apply()`   | unchanged (Phase 3.1 reverted interim `SanPlayer`)              |
 | Docs / bench                    | tokenize, read-in                | PGN parse, I/O                                                  |
 | Sprint 09 draft API             | `tokenize \| parse` modes        | **`parsePGN` only** (headers flag); no separate “tokenize” mode |
 

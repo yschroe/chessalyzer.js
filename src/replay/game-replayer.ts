@@ -1,9 +1,9 @@
 import { collectError, createReplayError, toAbortError } from '#core/analyze-errors';
 import { isReplayFailure } from '#replay/replay-failure';
 import type { ReplayMode } from '#replay/replay-policy';
+import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
 import SanDecoder from '#replay/san-decoder';
-import SanApplier from '#replay/san-applier';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { Game } from '#types/game';
 import type { PlayerColor } from '#types/tokens';

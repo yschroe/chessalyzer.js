@@ -31,12 +31,22 @@ Docs and benchmarks use industry-aligned stage names: **I/O → PGN parse → re
 - `san-to-actions.ts` / `SanToActions.parse()` → `san-decoder.ts` / `SanDecoder.decodeSan()`
 - `SanApplier` / `apply()` kept on `san-applier.ts` (Phase 3.1 reverted interim `SanPlayer` / `play()` naming)
 
-**Planned (Phase 4+):**
+**Applied in Phase 4 (public parse API):**
 
-| Pre-sprint / legacy                                 | v4 target                | Sprint phase |
-| --------------------------------------------------- | ------------------------ | ------------ |
-| Public `headers` option                             | alias for `parseHeaders` | Phase 4      |
-| `analyzePGN` composes `parsePGN` + replay + analyze | explicit pipeline        | Phase 4      |
+- Export `parsePGN(path, options?)` — single-threaded PGN parse (`readLines` + `GameAssembler`); options `headers`, `maxGames`
+- Export `ParsedGame` (alias for `Game`) and `ParsePgnOptions`
+- Export `ReplayMode`; `AnalyzeOptions.headers` and `AnalyzeOptions.replay` for explicit pipeline control
+- `analyzePGN` shares parse/replay resolution with `parsePGN` via `normalizeAnalysisConfigs` (does not call `parsePGN` internally — preserves streaming/worker chunking)
+
+**Deferred:**
+
+| Item                            | Sprint    |
+| ------------------------------- | --------- |
+| `streamParsePGN` async iterator | Sprint 09 |
+| Package subpath exports         | Phase 6   |
+| Integration `parse-pgn.test.ts` | Phase 5   |
+
+**Planned (Phase 5+):**
 
 ### Changes
 
