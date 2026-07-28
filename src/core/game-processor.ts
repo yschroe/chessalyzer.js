@@ -160,7 +160,7 @@ class GameProcessor {
         const gameReplayer = new GameReplayer();
         const gameAssembler = new GameAssembler({ readInHeader: this.readInHeader });
 
-        await readLines(path, (line) => {
+        await readLines(path, (line): void | false => {
             const game = gameAssembler.processLine(line);
             if (!game) return;
 

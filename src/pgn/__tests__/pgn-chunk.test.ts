@@ -80,7 +80,9 @@ describe('readPgnChunks', () => {
     it('emits a complete game before an incomplete trailing game with default chunk size', async () => {
         const chunks = await collectChunks(fixturePath('corrupt'), {});
         expect(chunks).toHaveLength(1);
-        const games = parseGamesFromLines(chunks[0]!.text.split('\n'), { readInHeader: true });
+        const [chunk] = chunks;
+        expect(chunk).toBeDefined();
+        const games = parseGamesFromLines(chunk.text.split('\n'), { readInHeader: true });
         expect(games).toHaveLength(1);
         expect(games[0]?.Result).toBe('1-0');
     });

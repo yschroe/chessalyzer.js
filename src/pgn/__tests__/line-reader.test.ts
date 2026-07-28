@@ -67,7 +67,7 @@ describe('readLines', () => {
         const path = await writeTmpPgn('early-stop.pgn', 'a\nb\nc\nd\n');
         const lines: string[] = [];
 
-        await readLines(path, (line) => {
+        await readLines(path, (line): void | false => {
             lines.push(line);
             if (line === 'b') return false;
         });
