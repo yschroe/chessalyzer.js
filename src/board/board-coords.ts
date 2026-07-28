@@ -9,6 +9,9 @@ const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
 
 export type BoardIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
+/** Fixed row/column indices for the 8×8 board. */
+export const BOARD_INDICES: readonly BoardIndex[] = [0, 1, 2, 3, 4, 5, 6, 7];
+
 /** Indexed by `file * 8 + rankIndex` (rank `'1'`…`'8'` → 0…7). Values are shared — do not mutate. */
 const algebraicToCoordsTable: number[][] = Array.from({ length: 64 }, (_, i) => {
     const file = (i / 8) | 0;
@@ -16,9 +19,9 @@ const algebraicToCoordsTable: number[][] = Array.from({ length: 64 }, (_, i) => 
     return [7 - rank, file];
 });
 
-/** Check if a number is a valid board index (integer and between 0 and 7) */
-function isBoardIndex(n: number): n is BoardIndex {
-    return (n | 0) === n && n >= 0 && n <= 7;
+/** True if `n` is an integer board index in `0…7`. */
+export function isBoardIndex(n: number | undefined): n is BoardIndex {
+    return n !== undefined && (n | 0) === n && n >= 0 && n <= 7;
 }
 
 /**
@@ -45,6 +48,6 @@ export function algebraicToCoordsAt(san: string, end: number): number[] {
 /** Convert internal `[row, col]` to algebraic notation (e.g. `[6, 4]` → `'e2'`). */
 export function coordsToAlgebraic(coords: number[]): string {
     const [row, col] = coords;
-    if (col === undefined || row === undefined || !isBoardIndex(col)) return '';
+    if (row === undefined || !isBoardIndex(col)) return '';
     return `${FILES[col]}${8 - row}`;
 }

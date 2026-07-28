@@ -1,15 +1,14 @@
+import { BOARD_INDICES, isBoardIndex, type BoardIndex } from '#board/board-coords';
 import {
-    BOARD_INDICES,
     PAWN_TEMPLATE,
     PIECE_TEMPLATE,
     TileStats,
     TilePiece,
-    type BoardIndex,
     type ColorBucket,
     type StatsField,
     type TileGrid,
     type TileRow,
-} from './tile-tracker-types';
+} from '#trackers/tile/tile-tracker-types';
 
 function namedStats(cell: StatsField, color: 'b' | 'w', name: string): TileStats {
     const bucket = cell[color][name];
@@ -197,12 +196,8 @@ export function resetTileGrid(tiles: TileGrid): void {
 /** Resolve dynamic board coords to a grid cell when indices are in range. */
 export function tileCellAt(tiles: TileGrid, coords: number[]): StatsField | undefined {
     const [row, col] = coords;
-    if (row === undefined || col === undefined || !isBoardIndex(row) || !isBoardIndex(col)) {
+    if (!isBoardIndex(row) || !isBoardIndex(col)) {
         return undefined;
     }
     return tiles[row][col];
-}
-
-function isBoardIndex(n: number): n is BoardIndex {
-    return (n | 0) === n && n >= 0 && n <= 7;
 }

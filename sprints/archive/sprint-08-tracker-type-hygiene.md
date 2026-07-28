@@ -14,10 +14,10 @@ Finish remaining contributor ergonomics after v4 tracker renames (file renames a
 - [x] **Public tracker counter names** — `GameTracker.games`, `TileTracker.movesGame` / `movesTotal`
 - [x] **README API fixes** — `generateHeatmap`, `results`, `games`, `movesTotal`
 
-- [ ] **Deduplicate `BoardIndex` / `isBoardIndex`**
+- [x] **Deduplicate `BoardIndex` / `isBoardIndex`**
     - Consolidate copies in [`src/board/board-coords.ts`](../src/board/board-coords.ts), tile tracker types, piece-names, tile-grid
 
-- [ ] **Document custom tracker MT contract**
+- [x] **Document custom tracker MT contract**
     - `static trackerId`, `static workerModule = import.meta.url`, `merge()` requirements
     - File: README or AGENTS.md
 

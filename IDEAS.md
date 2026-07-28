@@ -160,12 +160,12 @@ Still open:
 
 ## Multithreading & workers
 
-**Shipped:** lazy worker pool, tracker config once per worker via `workerData`, `trackerId` + `workerModule` for custom trackers.
+**Shipped:** lazy worker pool, tracker config once per worker via `workerData`, `trackerId` + `workerModule` for custom trackers; MT contract documented in README + AGENTS.md.
 
 Still open:
 
 - Defer result merging until pool drain (see CHANGELOG Unreleased Ideas)
-- Document or replace custom tracker `workerModule` dynamic import with a registration API
+- Replace custom tracker `workerModule` dynamic import with a registration API (optional ergonomics)
 
 ---
 
