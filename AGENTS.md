@@ -10,7 +10,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 **Pipeline (high level):**
 
-1. **Line reading** — `readLinesFast` in `src/pgn/line-reader.ts` and `readPgnChunks` in `src/pgn/pgn-chunks.ts` stream the file with minimal overhead.
+1. **Line reading** — `readLines` / `openLineStream` in `src/pgn/line-reader.ts` (readline `'line'` events) and `readPgnChunks` in `src/pgn/pgn-chunks.ts` stream the file with minimal overhead.
 2. **Chunking (multithreaded mode)** — the main thread splits the PGN into byte-sized chunks aligned to complete games and dispatches them to workers.
 3. **Assemble** — workers tokenize movetext and build game objects (`src/pgn/`).
 4. **Replay** — SAN is applied to a board (`src/replay/`), with explicit policy `'none' | 'actions'` (or `'skip'` when gated).
@@ -39,7 +39,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 `analyzePGN` picks one of two internal paths:
 
-1. **Single-threaded** — `workers: false`. Main thread: `readLinesFast` → `GameAssembler` → `GameReplayer` (policy from `resolveReplayPolicy`).
+1. **Single-threaded** — `workers: false`. Main thread: `readLines` → `GameAssembler` → `GameReplayer` (policy from `resolveReplayPolicy`).
 2. **Multithreaded (worker-chunk)** — default. Main thread: `readPgnChunks` → workers assemble once per chunk. Without a `filter`, workers also replay and merge tracker state. With a `filter`, workers return parsed games and the main thread applies the JS predicate and replay (trackers stay on the main thread for that run). `maxGames` is enforced on workers when there is no filter, and on the main thread after filtering when there is.
 
 **Replay policy:** `resolveReplayPolicy(hasMoveTrackers)` returns `'skip' | 'none' | 'actions'`. Count-only runs (no move trackers) skip board replay by default (`SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = true` in `src/replay/replay-policy.ts`). Move trackers always get `'actions'`; game-only trackers get `'none'` when replay runs. Flip the constant to `false` to always replay SAN (e.g. to surface replay errors on count-only runs).
@@ -52,7 +52,7 @@ Examples of deliberate choices:
 
 - **Manual `Symbol.asyncIterator` instead of `async function*`** in `readPgnChunks` (~7–10% faster than async generators on large files).
 - **`Array.concat` vs `push`** in specific hot loops where benchmarks showed a win. Run `npm run bench:atomic -- array` before changing append patterns.
-- **Fixed-size circular-buffer queue** in `readLinesFast` (Node-style `FixedQueue`) to avoid shift-from-array costs.
+- **Readline `'line'` events instead of `for await`** in `openLineStream` / `readLines` — sync push handlers beat async-iterator pull on large PGNs; `await` only at chunk boundaries in `readPgnChunks`. See `bench/exploratory/line-reader-readline.ts`. Do not reintroduce per-line async iteration for “cleaner” ergonomics.
 - **Worker-side parsing** with transferable UTF-8 chunk bytes to minimize main-thread work and copying.
 - **Minimal dependencies** — only `chalk` in production.
 
@@ -76,7 +76,7 @@ Examples of deliberate choices:
 
 - `bench-chunk-sizes.ts` — chunk size × worker count sweep
 - `profile-bottlenecks-node.ts` — staged pipeline profile
-- `line-reader-readline.ts` — readline vs `readLinesFast`
+- `line-reader-readline.ts` — readline events vs `for await` vs `readLines` / `readPgnChunks`
 - `bench-worker-overhead.ts` — worker pool startup cost
 
 **Perf bench env vars:**

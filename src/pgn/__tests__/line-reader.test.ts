@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { readLines } from '#pgn/line-reader';
+import { openLineStream, readLines } from '#pgn/line-reader';
 
 const FIXTURES_DIR = join(new URL('../../../test/fixtures', import.meta.url).pathname);
 const CRLF_FIXTURE = join(FIXTURES_DIR, 'crlf-endings.pgn');
@@ -73,5 +73,34 @@ describe('readLines', () => {
         });
 
         expect(lines).toEqual(['a', 'b']);
+    });
+});
+
+describe('openLineStream', () => {
+    it('supports pause and resume without dropping lines', async () => {
+        const path = await writeTmpPgn('pause-resume.pgn', 'a\nb\nc\nd\n');
+        const seen: string[] = [];
+
+        await new Promise<void>((resolve, reject) => {
+            let pausedAfterB = false;
+            const stream = openLineStream(path, {
+                onLine: (line) => {
+                    seen.push(line);
+                    if (line === 'b' && !pausedAfterB) {
+                        pausedAfterB = true;
+                        stream.pause();
+                        queueMicrotask(() => {
+                            stream.resume();
+                        });
+                    }
+                },
+                onClose: () => {
+                    resolve();
+                },
+                onError: reject,
+            });
+        });
+
+        expect(seen).toEqual(['a', 'b', 'c', 'd']);
     });
 });
