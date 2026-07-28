@@ -69,7 +69,7 @@ async function bench(nWorkers: number, label: string, transfer = false) {
                     const msg = {
                         pgnChunkBytes: gamesToChunkBytes(games),
                         idxConfig: 0,
-                        readInHeader: false,
+                        parseHeaders: false,
                     };
                     if (transfer) {
                         w.postMessage(msg, [msg.pgnChunkBytes.buffer]);

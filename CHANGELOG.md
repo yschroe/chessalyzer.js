@@ -16,18 +16,21 @@
 
 #### Pipeline terminology (Sprint 11)
 
-Docs and benchmarks now use industry-aligned stage names: **I/O → PGN parse → replay → analyze**. See [README Pipeline section](./README.md#pipeline) and [Sprint 11](sprints/sprint-11-pipeline-terminology.md).
+Docs and benchmarks use industry-aligned stage names: **I/O → PGN parse → replay → analyze**. See [README Pipeline section](./README.md#pipeline) and [Sprint 11](sprints/sprint-11-pipeline-terminology.md).
 
-Upcoming code/API renames before v4 release (not yet applied in Phase 1):
+**Applied in Phase 2 (internal renames):**
 
-| Pre-sprint / legacy              | v4 target                                | Sprint phase   |
-| -------------------------------- | ---------------------------------------- | -------------- |
-| `readInHeader`                   | `parseHeaders` / public `headers` option | Phase 2        |
-| `parseOnly` (worker)             | `pgnParseOnly`                           | Phase 2        |
-| `ReplayPolicy 'none'`            | `ReplayMode 'board'`                     | Phase 3        |
-| `SanToActions.parse()`           | `SanDecoder.decodeSan()`                 | Phase 3        |
-| Docs “tokenize” (SAN extraction) | **PGN parse**                            | Phase 1 (docs) |
-| `movetext-tokenizer.ts`          | `movetext.ts`                            | Phase 2        |
+- `movetext-tokenizer.ts` → `movetext.ts`
+- `readInHeader` → `parseHeaders` (`ParseGamesOptions`, worker tasks, `GameProcessor`)
+- `parseOnly` (worker) → `pgnParseOnly`
+
+**Planned (Phase 3+):**
+
+| Pre-sprint / legacy     | v4 target                | Sprint phase |
+| ----------------------- | ------------------------ | ------------ |
+| `ReplayPolicy 'none'`   | `ReplayMode 'board'`     | Phase 3      |
+| `SanToActions.parse()`  | `SanDecoder.decodeSan()` | Phase 3      |
+| Public `headers` option | alias for `parseHeaders` | Phase 4      |
 
 ### Changes
 

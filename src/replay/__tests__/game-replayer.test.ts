@@ -126,7 +126,7 @@ describe('GameReplayer', () => {
         it('replays pawn promotion', () => {
             const [promoGame] = parseGamesFromLines(
                 readFileSync(fixturePath('promotion'), 'utf8').split('\n'),
-                { readInHeader: false },
+                { parseHeaders: false },
             );
             const board = boardAfterSans(promoGame?.moves ?? []);
 

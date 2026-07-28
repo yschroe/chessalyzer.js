@@ -55,7 +55,7 @@ describe('Workers', () => {
                 {
                     pgnChunkBytes: minimalChunkBytes,
                     idxConfig: 0,
-                    readInHeader: false,
+                    parseHeaders: false,
                 },
                 10_000,
             );

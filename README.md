@@ -100,7 +100,7 @@ flowchart TB
 
 **Industry note:** “PGN parser” means stage 2 only (cf. chessops `parsePgn`). Raw file → legal moves requires **PGN parse + replay**.
 
-Internally today: I/O uses `readLines` / `readPgnChunks`; PGN parse uses `GameAssembler` and `movetext-tokenizer`; replay uses `GameReplayer`, `SanApplier`, and `SanToActions`; analyze is `analyzePGN` with trackers. A standalone `parsePGN` export is planned for v4 (Sprint 11).
+Internally today: I/O uses `readLines` / `readPgnChunks`; PGN parse uses `GameAssembler` and `movetext` (`parseHeaders` for tag pairs); replay uses `GameReplayer`, `SanApplier`, and `SanToActions`; analyze is `analyzePGN` with trackers. A standalone `parsePGN` export is planned for v4 (Sprint 11).
 
 ### Performance tiers
 

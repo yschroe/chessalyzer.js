@@ -1,12 +1,12 @@
 /**
- * PGN movetext tokenization — regexes and helpers for individual lines.
+ * PGN movetext helpers for structural parse (SAN extraction, comments, results).
  *
  * Used by {@link GameAssembler} and chunk boundary detection while streaming a PGN
  * file. Each physical line may contain headers, movetext, comments, or a game result;
  * these helpers isolate that logic from batching and worker dispatch.
  *
- * Note: `MOVE_REGEX` is tuned for V8's regex engine; a hand-rolled tokenizer was
- * tested and regressed multi-thread throughput because tokenization runs on the main thread.
+ * Note: `MOVE_REGEX` is tuned for V8's regex engine; a hand-rolled extractor was
+ * tested and regressed multi-thread throughput because PGN parse runs on the main thread.
  */
 
 /** Matches `[Key "Value"]` header tags. */
@@ -49,7 +49,7 @@ export function stripComments(line: string): string {
     return line.replaceAll(COMMENT_REGEX, '');
 }
 
-/** Extract SAN move tokens from a movetext line. Returns null when no moves are present. */
+/** Extract SAN tokens from one movetext line. Returns null when no moves are present. */
 export function extractMoves(line: string): string[] | null {
     return line.match(MOVE_REGEX);
 }

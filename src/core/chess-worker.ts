@@ -17,17 +17,17 @@ const gameReplayer = new GameReplayer();
 /** Tracker config is read once from workerData; batches only carry PGN chunks. */
 const ready = initWorkerTrackers(initData);
 
-function isParseOnly(idxConfig: number): boolean {
-    return initData?.configs[idxConfig]?.parseOnly ?? false;
+function isPgnParseOnly(idxConfig: number): boolean {
+    return initData?.configs[idxConfig]?.pgnParseOnly ?? false;
 }
 
 /** Assemble games from a PGN chunk and replay/analyze them. */
 function processBatch(msg: WorkerTaskData): WorkerMessage {
     const lines = decodePgnChunkBytes(msg.pgnChunkBytes).split('\n');
 
-    if (isParseOnly(msg.idxConfig)) {
+    if (isPgnParseOnly(msg.idxConfig)) {
         return {
-            parsedGames: parseGamesFromLines(lines, { readInHeader: true }),
+            parsedGames: parseGamesFromLines(lines, { parseHeaders: true }),
             idxConfig: msg.idxConfig,
             games: 0,
             moves: 0,
@@ -41,7 +41,7 @@ function processBatch(msg: WorkerTaskData): WorkerMessage {
     const replay = resolveReplayPolicy(cfg.trackers.move.length > 0);
     const maxGames = msg.remainingGames ?? Infinity;
     const games = parseGamesFromLines(lines, {
-        readInHeader: msg.readInHeader,
+        parseHeaders: msg.parseHeaders,
         maxGames,
     });
 

@@ -135,15 +135,15 @@ Replace overloaded / misleading names:
 
 ### Phase 2 — PGN parse layer renames
 
-- [ ] **Rename file** [`movetext-tokenizer.ts`](../src/pgn/movetext-tokenizer.ts) → `movetext.ts`
+- [x] **Rename file** [`movetext-tokenizer.ts`](../src/pgn/movetext-tokenizer.ts) → `movetext.ts`
     - Update all imports (`#pgn/movetext`)
     - File header: “movetext helpers for PGN parse (SAN extraction, comments, results)”
-- [ ] **Rename options on assembler**
+- [x] **Rename options on assembler**
     - `ParseGamesOptions.readInHeader` → `parseHeaders: boolean`
     - Keep `parseGamesFromLines` and `GameAssembler` (industry-aligned)
-- [ ] **Optional clarity renames** (same file, same hot path — bench if touching loops):
+- [x] **Optional clarity renames** (same file, same hot path — bench if touching loops):
     - `extractMoves` → `extractSanFromLine` (or keep `extractMoves` with updated JSDoc: “extract SAN tokens from one movetext line”)
-- [ ] **Worker / config wiring**
+- [x] **Worker / config wiring**
     - `readInHeader` → `parseHeaders` in [`analysis-config.ts`](../src/core/analysis-config.ts), [`worker.ts`](../src/types/worker.ts), [`game-processor.ts`](../src/core/game-processor.ts), [`chess-worker.ts`](../src/core/chess-worker.ts)
     - `parseOnly` → `pgnParseOnly`
     - `parsedGames` → keep or rename to `assembledGames` (prefer **`parsedGames`** — matches “PGN parse” output)

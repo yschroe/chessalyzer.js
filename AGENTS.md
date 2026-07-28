@@ -11,7 +11,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 **Pipeline (high level):**
 
 1. **I/O** — `readLines` / `openLineStream` in [`src/pgn/line-reader.ts`](src/pgn/line-reader.ts) and `readPgnChunks` in [`src/pgn/pgn-chunks.ts`](src/pgn/pgn-chunks.ts) stream the file with minimal overhead. In multithreaded mode, chunking splits the PGN into byte-sized batches aligned to complete games for worker dispatch (parallel I/O, not a semantic stage).
-2. **PGN parse** — structural parse: tag pairs, mainline SAN strings, game boundaries (`GameAssembler`, [`movetext-tokenizer.ts`](src/pgn/movetext-tokenizer.ts); file → `movetext.ts` in Sprint 11 Phase 2).
+2. **PGN parse** — structural parse: tag pairs, mainline SAN strings, game boundaries (`GameAssembler`, [`movetext.ts`](src/pgn/movetext.ts)).
 3. **Replay** — SAN decode + play on a board ([`src/replay/`](src/replay/)), policy `'skip' | 'none' | 'actions'`.
 4. **Analyze** — [`GameProcessor`](src/core/game-processor.ts) runs configured trackers ([`src/tracker/`](src/tracker/)).
 

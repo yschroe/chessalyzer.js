@@ -60,7 +60,7 @@ async function awaitWorkerPoolDone(workerPool: WorkerPool, gate: FatalErrorGate)
  */
 class GameProcessor {
     configs: GameProcessorAnalysisConfigFull[];
-    readInHeader: boolean;
+    parseHeaders: boolean;
     multithreadConfig: MultithreadConfig | null;
     readonly onError: 'abort' | 'skip-game';
 
@@ -71,7 +71,7 @@ class GameProcessor {
     ) {
         const normalized = normalizeAnalysisConfigs(configs, multithreadCfg);
         this.configs = normalized.configs;
-        this.readInHeader = normalized.readInHeader;
+        this.parseHeaders = normalized.parseHeaders;
         this.multithreadConfig = multithreadCfg;
         this.onError = onError;
     }
@@ -93,7 +93,7 @@ class GameProcessor {
         const workerInitData: WorkerInitData = {
             configs: this.configs.map((cfg) => ({
                 trackerData: cfg.trackerData,
-                parseOnly: cfg.config.hasFilter,
+                pgnParseOnly: cfg.config.hasFilter,
             })),
             onError: this.onError,
         };
@@ -134,7 +134,7 @@ class GameProcessor {
                     const task: WorkerTaskData = {
                         pgnChunkBytes,
                         idxConfig,
-                        readInHeader: cfg.config.hasFilter ? true : this.readInHeader,
+                        parseHeaders: cfg.config.hasFilter ? true : this.parseHeaders,
                     };
 
                     if (!cfg.config.hasFilter && cfg.config.maxGames !== Infinity) {
@@ -158,7 +158,7 @@ class GameProcessor {
 
     private async processPGNOnMainThread(path: string): Promise<GameAndMoveCount[]> {
         const gameReplayer = new GameReplayer();
-        const gameAssembler = new GameAssembler({ readInHeader: this.readInHeader });
+        const gameAssembler = new GameAssembler({ parseHeaders: this.parseHeaders });
 
         await readLines(path, (line): void | false => {
             const game = gameAssembler.processLine(line);

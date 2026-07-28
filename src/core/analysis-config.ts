@@ -6,7 +6,7 @@ import type { Tracker } from '#types/tracker';
 /** Normalized analysis run: per-config runtime state plus path-selection flags. */
 export interface NormalizedAnalysisRun {
     configs: GameProcessorAnalysisConfigFull[];
-    readInHeader: boolean;
+    parseHeaders: boolean;
 }
 
 function resolveWorkerModule(tracker: { constructor: unknown }): string {
@@ -99,7 +99,7 @@ export function normalizeAnalysisConfigs(
     configs: AnalysisConfig[],
     _multithreadCfg: MultithreadConfig | null,
 ): NormalizedAnalysisRun {
-    let readInHeader = false;
+    let parseHeaders = false;
     const normalized: GameProcessorAnalysisConfigFull[] = [];
 
     for (const cfg of configs) {
@@ -107,7 +107,7 @@ export function normalizeAnalysisConfigs(
             cfg.config?.filter,
             cfg.config?.maxGames,
         );
-        if (needsHeader) readInHeader = true;
+        if (needsHeader) parseHeaders = true;
 
         const tempCfg: GameProcessorAnalysisConfigFull = {
             trackers: { move: [], game: [] },
@@ -127,7 +127,7 @@ export function normalizeAnalysisConfigs(
                     tempCfg.trackers.move.push(tracker);
                 } else if (tracker.type === 'game') {
                     tempCfg.trackers.game.push(tracker);
-                    readInHeader = true;
+                    parseHeaders = true;
                 }
 
                 tempCfg.trackerData.push({
@@ -141,5 +141,5 @@ export function normalizeAnalysisConfigs(
         normalized.push(tempCfg);
     }
 
-    return { configs: normalized, readInHeader };
+    return { configs: normalized, parseHeaders };
 }

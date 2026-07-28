@@ -6,20 +6,20 @@ import type { AnalysisConfig } from '#types/analysis-runtime';
 describe('normalizeAnalysisConfigs', () => {
     const baseCfg: AnalysisConfig = { trackers: [] };
 
-    it('sets readInHeader when filter is present', () => {
-        const { readInHeader } = normalizeAnalysisConfigs(
+    it('sets parseHeaders when filter is present', () => {
+        const { parseHeaders } = normalizeAnalysisConfigs(
             [{ ...baseCfg, config: { filter: () => true } }],
             {},
         );
-        expect(readInHeader).toBe(true);
+        expect(parseHeaders).toBe(true);
     });
 
-    it('sets readInHeader when maxGames is finite', () => {
-        const { readInHeader } = normalizeAnalysisConfigs(
+    it('sets parseHeaders false when maxGames is finite without filter', () => {
+        const { parseHeaders } = normalizeAnalysisConfigs(
             [{ ...baseCfg, config: { maxGames: 10 } }],
             {},
         );
-        expect(readInHeader).toBe(false);
+        expect(parseHeaders).toBe(false);
     });
 
     it('normalizes maxGames on each config', () => {

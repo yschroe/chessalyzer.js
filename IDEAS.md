@@ -91,7 +91,7 @@ Beyond the minimal internal `Game` type (`moves: string[]`, optional `Result` / 
 
 ### Partial / implicit
 
-- **Headers** — only read when a game tracker or filter is present (`readInHeader` is internal)
+- **Headers** — only parsed when a game tracker or filter is present (`parseHeaders` is internal)
 - **Promotions, en passant, castling** — handled in replay path for standard chess
 - **Move suffixes** `+`, `#`, `?`, `!` — stripped from SAN tokens before replay
 
@@ -126,13 +126,13 @@ Ideas:
 
 Today several behaviors are hardcoded or inferred:
 
-| Behavior          | Today                                  | Could become                                          |
-| ----------------- | -------------------------------------- | ----------------------------------------------------- |
-| Read headers      | Auto if filter / game tracker          | `parseConfig.headers: true \| false \| 'filter-only'` |
-| Worker-side parse | Auto when filter present (`parseOnly`) | Explicit `parseLocation: 'main' \| 'worker'`          |
-| Comment handling  | Always strip                           | `'strip' \| 'preserve' \| 'parse-commands'`           |
-| Variations        | Always strip (parens)                  | `'strip' \| 'mainline-only' \| 'tree'`                |
-| Error policy      | `'abort'` or `'skip-game'` (shipped)   | `'skip-move'`, richer collect modes                   |
+| Behavior          | Today                                     | Could become                                          |
+| ----------------- | ----------------------------------------- | ----------------------------------------------------- |
+| Read headers      | Auto if filter / game tracker             | `parseConfig.headers: true \| false \| 'filter-only'` |
+| Worker-side parse | Auto when filter present (`pgnParseOnly`) | Explicit `parseLocation: 'main' \| 'worker'`          |
+| Comment handling  | Always strip                              | `'strip' \| 'preserve' \| 'parse-commands'`           |
+| Variations        | Always strip (parens)                     | `'strip' \| 'mainline-only' \| 'tree'`                |
+| Error policy      | `'abort'` or `'skip-game'` (shipped)      | `'skip-move'`, richer collect modes                   |
 
 ---
 
@@ -201,7 +201,7 @@ If the goal is “PGN library” rather than “batch analyzer only”, a reason
 
 ## Related issues in code today
 
-| Location                        | Note                                                                               |
-| ------------------------------- | ---------------------------------------------------------------------------------- |
-| `src/pgn/movetext-tokenizer.ts` | RAVs and comments share the same strip regex; → `movetext.ts` in Sprint 11 Phase 2 |
-| `src/replay/replay-policy.ts`   | `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` defaults true (count-only skip)                |
+| Location                      | Note                                                                |
+| ----------------------------- | ------------------------------------------------------------------- |
+| `src/pgn/movetext.ts`         | RAVs and comments share the same strip regex                        |
+| `src/replay/replay-policy.ts` | `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS` defaults true (count-only skip) |
