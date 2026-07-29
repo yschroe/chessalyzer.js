@@ -1,3 +1,7 @@
+/**
+ * Micro-benchmark runner (tinybench). For wall-clock e2e timing use `timing.ts`
+ * (`runTimed`, `timeAsync`) instead.
+ */
 import { Bench, type Task } from 'tinybench';
 
 export interface BenchCase {

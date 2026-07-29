@@ -16,22 +16,20 @@
  *   BENCH_WARMUP=0         Skip the warmup run
  *   BENCH_PGN_REPEATS=2    Concatenate the largest pgn/*.pgn this many times
  */
-import { performance } from 'node:perf_hooks';
-
 import { analyzePGN } from '#core/analyze';
 
 import { resolvePerfPgn } from './lib/pgn-fixture';
 import { getRuntimeLabel } from './lib/report';
-import {
-    computeTimingStats,
-    formatSeconds,
-    printTimedResults,
-    type TimedRunResult,
-} from './lib/timing';
+import { formatSeconds, printTimedResults, runTimed, type TimedRunResult } from './lib/timing';
 
 const RUNS = Number(process.env.BENCH_RUNS ?? 2);
 const WARMUP = process.env.BENCH_WARMUP !== '0';
 const isSingleThreaded = process.argv.includes('single-threaded');
+
+interface AnalyzeSample {
+    games: number;
+    moves: number;
+}
 
 interface ScenarioResult extends TimedRunResult {
     games: number;
@@ -39,45 +37,39 @@ interface ScenarioResult extends TimedRunResult {
     meanMps: number;
 }
 
-async function runScenario(
+async function runAnalyzeScenario(
     label: string,
     path: string,
     singlethreaded: boolean,
 ): Promise<ScenarioResult> {
-    const analyze = async () => {
-        const t0 = performance.now();
-        const result = await analyzePGN(path, singlethreaded ? { workers: false } : undefined);
-        const ms = performance.now() - t0;
-        return {
-            ms,
-            games: result.games,
-            moves: result.moves,
-            mps: Math.round(result.moves / (ms / 1000)),
-        };
-    };
-
-    if (WARMUP) await analyze();
-
-    const times: number[] = [];
-    let games = 0;
-    let moves = 0;
-    let mpsTotal = 0;
-
-    for (let i = 0; i < RUNS; i += 1) {
-        console.log(`Running ${label}... (${i + 1} of ${RUNS})`);
-        const result = await analyze();
-        times.push(result.ms);
-        games = result.games;
-        moves = result.moves;
-        mpsTotal += result.mps;
-    }
-
-    return {
+    const config = singlethreaded ? ({ workers: false } as const) : undefined;
+    const timed = await runTimed<AnalyzeSample>(
         label,
-        ...computeTimingStats(times),
-        games,
-        moves,
-        meanMps: Math.round(mpsTotal / RUNS),
+        async () => {
+            const result = await analyzePGN(path, config);
+            return {
+                games: result.games,
+                moves: result.moves,
+            };
+        },
+        { runs: RUNS, warmup: WARMUP },
+    );
+
+    const mpsTotal = timed.samples.reduce(
+        (sum, sample) => sum + Math.round(sample.value.moves / (sample.ms / 1000)),
+        0,
+    );
+
+    const last = timed.samples.at(-1)!.value;
+    return {
+        label: timed.label,
+        meanMs: timed.meanMs,
+        stddevMs: timed.stddevMs,
+        minMs: timed.minMs,
+        cvPct: timed.cvPct,
+        games: last.games,
+        moves: last.moves,
+        meanMps: Math.round(mpsTotal / timed.samples.length),
     };
 }
 
@@ -93,7 +85,7 @@ console.log(`Size: ${(fixture.bytes / (1024 * 1024)).toFixed(1)} MiB`);
 console.log(`Runs: ${RUNS}${WARMUP ? ' (+ warmup)' : ''}`);
 
 const results = [
-    await runScenario(
+    await runAnalyzeScenario(
         isSingleThreaded ? 'single-threaded' : 'multithreaded',
         fixture.path,
         isSingleThreaded,

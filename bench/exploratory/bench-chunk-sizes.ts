@@ -4,13 +4,12 @@
  * Run: bun bench/exploratory/bench-chunk-sizes.ts
  */
 import { availableParallelism } from 'node:os';
-import { performance } from 'node:perf_hooks';
 
 import { analyzePGN } from '#core/analyze';
 
 import { findLargestPgn } from '../lib/pgn-fixture';
 import { getRuntimeLabel } from '../lib/report';
-import { formatSeconds } from '../lib/timing';
+import { formatSeconds, timeAsync } from '../lib/timing';
 
 const pgn = findLargestPgn();
 const MB = 1024 * 1024;
@@ -18,15 +17,15 @@ const chunkSizes = [2 * MB, 4 * MB, 8 * MB, 16 * MB];
 const workerCounts = [Math.max(1, availableParallelism() - 1), availableParallelism()];
 
 async function bench(label: string, multithreadCfg: { targetBytes: number; workerCount: number }) {
-    const t0 = performance.now();
-    const result = await analyzePGN(pgn.path, {
-        trackers: [],
-        workers: {
-            targetBytes: multithreadCfg.targetBytes,
-            workerCount: multithreadCfg.workerCount,
-        },
-    });
-    const ms = performance.now() - t0;
+    const { ms, result } = await timeAsync(() =>
+        analyzePGN(pgn.path, {
+            trackers: [],
+            workers: {
+                targetBytes: multithreadCfg.targetBytes,
+                workerCount: multithreadCfg.workerCount,
+            },
+        }),
+    );
     const mps = Math.round(result.moves / (ms / 1000)).toLocaleString();
     console.log(`${label.padEnd(28)} ${formatSeconds(ms).padStart(9)}s  ${mps} moves/s`);
     return result.moves / ms;
