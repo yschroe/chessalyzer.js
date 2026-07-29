@@ -9,6 +9,7 @@ import type { AnalyzeOptions, AnalyzeResult, AnalyzeRunResult } from '#types/ana
 import type { AnalyzeError } from '#types/errors';
 import type { HeatmapData } from '#types/tracker';
 
+/** Build {@link AnalyzeResult} from raw counts and duration. */
 function buildAnalyzeResult(
     counts: {
         games: number;

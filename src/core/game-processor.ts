@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import { EventEmitter } from 'node:events';
 import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
@@ -86,14 +87,17 @@ class GameProcessor {
      * @returns Count of processed games and moves.
      */
     async processPGN(path: string): Promise<GameAndMoveCount[]> {
-        if (this.multithreadConfig !== null) {
-            return this.processPGNWithWorkers(path);
+        if (!this.multithreadConfig) {
+            return this.processPGNOnMainThread(path);
         }
 
-        return this.processPGNOnMainThread(path);
+        return this.processPGNWithWorkers(path);
     }
 
+    /** Process PGN with worker threads. */
     private async processPGNWithWorkers(path: string): Promise<GameAndMoveCount[]> {
+        assert(this.multithreadConfig, 'Multithread configuration is required');
+
         const workerInitData: WorkerInitData = {
             configs: this.configs.map((cfg) => ({
                 trackerData: cfg.trackerData,
@@ -105,9 +109,9 @@ class GameProcessor {
         const workerPool = new WorkerPool(this.resolveWorkerCount(), WORKER_PATH, workerInitData);
 
         const chunkConfig = {
-            targetBytes: this.multithreadConfig!.targetBytes,
-            maxLines: this.multithreadConfig!.maxLines,
-            minLines: this.multithreadConfig!.minLines,
+            targetBytes: this.multithreadConfig.targetBytes,
+            maxLines: this.multithreadConfig.maxLines,
+            minLines: this.multithreadConfig.minLines,
         };
 
         const gameReplayer = new GameReplayer();
@@ -173,6 +177,7 @@ class GameProcessor {
         }
     }
 
+    /** Process PGN on the main thread. */
     private async processPGNOnMainThread(path: string): Promise<GameAndMoveCount[]> {
         const gameReplayer = new GameReplayer();
         const gameAssembler = new GameAssembler({ parseHeaders: this.parseHeaders });
@@ -202,6 +207,7 @@ class GameProcessor {
         return finishTrackers(this.configs);
     }
 
+    /** Resolve the number of worker threads to use. */
     private resolveWorkerCount(): number {
         const configured = this.multithreadConfig?.workerCount;
         if (configured !== undefined) return Math.max(1, configured);
