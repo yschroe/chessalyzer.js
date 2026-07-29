@@ -10,7 +10,7 @@ jobs:
     name: '🔠 Linting check'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
 
       - name: 🔠 Lint project
@@ -20,7 +20,7 @@ jobs:
     name: '✂️ Dependency check'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
 
       - name: Check for unused dependencies
@@ -30,7 +30,7 @@ jobs:
     name: '🔍 Typecheck'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
 
       - name: Typecheck project
@@ -40,7 +40,7 @@ jobs:
     name: '🧪 Tests'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
 
       - name: Run tests
