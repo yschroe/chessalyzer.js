@@ -5,16 +5,14 @@
  *
  * Run: bun bench/exploratory/profile-worker-overhead.ts
  */
-import { createReadStream } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 
 import { readLines } from '#io/line-reader';
 
 import { findLargestPgn } from '../lib/pgn-fixture';
-import { formatSeconds } from '../lib/timing';
+import { formatSeconds, timeAsync } from '../lib/timing';
 
 const pgn = findLargestPgn();
 const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
@@ -54,31 +52,31 @@ const chunkGroups = batchGroups.map(gamesToChunkBytes);
 async function bench(nWorkers: number, label: string, transfer = false) {
     const workers = Array.from({ length: nWorkers }, () => new Worker(workerPath));
     let wi = 0;
-    const t0 = performance.now();
-    await Promise.all(
-        batchGroups.map(
-            (games) =>
-                new Promise<void>((resolve, reject) => {
-                    const w = workers[wi++ % nWorkers]!;
-                    const onMsg = () => {
-                        w.off('message', onMsg);
-                        resolve();
-                    };
-                    w.on('message', onMsg);
-                    w.on('error', reject);
-                    const msg = {
-                        pgnChunkBytes: gamesToChunkBytes(games),
-                        configs: [{ idxConfig: 0, parseHeaders: false }],
-                    };
-                    if (transfer) {
-                        w.postMessage(msg, [msg.pgnChunkBytes.buffer]);
-                    } else {
-                        w.postMessage(msg);
-                    }
-                }),
+    const { ms } = await timeAsync(() =>
+        Promise.all(
+            batchGroups.map(
+                (games) =>
+                    new Promise<void>((resolve, reject) => {
+                        const w = workers[wi++ % nWorkers]!;
+                        const onMsg = () => {
+                            w.off('message', onMsg);
+                            resolve();
+                        };
+                        w.on('message', onMsg);
+                        w.on('error', reject);
+                        const msg = {
+                            pgnChunkBytes: gamesToChunkBytes(games),
+                            configs: [{ idxConfig: 0, parseHeaders: false }],
+                        };
+                        if (transfer) {
+                            w.postMessage(msg, [msg.pgnChunkBytes.buffer]);
+                        } else {
+                            w.postMessage(msg);
+                        }
+                    }),
+            ),
         ),
     );
-    const ms = performance.now() - t0;
     for (const w of workers) await w.terminate();
     const totalMoves = batchGroups.reduce(
         (a, b) => a + b.reduce((x, g) => x + g.moves.length, 0),
@@ -90,11 +88,10 @@ async function bench(nWorkers: number, label: string, transfer = false) {
 }
 
 {
-    const t0 = performance.now();
-    for (const chunk of chunkGroups) structuredClone(chunk);
-    console.log(
-        `${'structuredClone (chunk only)'.padEnd(32)} ${formatSeconds(performance.now() - t0).padStart(9)}s`,
-    );
+    const { ms } = await timeAsync(async () => {
+        for (const chunk of chunkGroups) structuredClone(chunk);
+    });
+    console.log(`${'structuredClone (chunk only)'.padEnd(32)} ${formatSeconds(ms).padStart(9)}s`);
 }
 
 await bench(8, 'worker RT (string clone)');

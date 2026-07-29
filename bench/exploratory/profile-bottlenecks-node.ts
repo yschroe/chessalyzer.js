@@ -5,7 +5,6 @@
  */
 import { createReadStream } from 'node:fs';
 import { availableParallelism } from 'node:os';
-import { performance } from 'node:perf_hooks';
 
 import { analyzePGN } from '#core/analyze';
 import { readLines } from '#io/line-reader';
@@ -15,7 +14,8 @@ import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { AnalyzeOptions } from '#types/analysis';
 
 import { findLargestPgn } from '../lib/pgn-fixture';
-import { formatSeconds } from '../lib/timing';
+import { getRuntimeLabel } from '../lib/report';
+import { formatSeconds, timeAsync } from '../lib/timing';
 
 const pgn = findLargestPgn();
 const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;
@@ -27,57 +27,61 @@ const mps = (moves: number, ms: number) => Math.round(moves / (ms / 1000)).toLoc
 const pct = (part: number, total: number) => `${((part / total) * 100).toFixed(1)}%`;
 
 async function stageRawBytes() {
-    const t0 = performance.now();
-    let bytes = 0;
-    for await (const chunk of createReadStream(pgn.path)) bytes += chunk.length;
-    return { ms: performance.now() - t0, bytes };
+    const { ms, result: bytes } = await timeAsync(async () => {
+        let total = 0;
+        for await (const chunk of createReadStream(pgn.path)) total += chunk.length;
+        return total;
+    });
+    return { ms, bytes };
 }
 
 async function stageLineReader() {
-    const t0 = performance.now();
-    let lines = 0;
-    await readLines(pgn.path, () => {
-        lines += 1;
+    const { ms, result: lines } = await timeAsync(async () => {
+        let count = 0;
+        await readLines(pgn.path, () => {
+            count += 1;
+        });
+        return count;
     });
-    return { ms: performance.now() - t0, lines };
+    return { ms, lines };
 }
 
 async function stagePgnParse(readHeader: boolean) {
-    const t0 = performance.now();
-    let games = 0;
-    let moves = 0;
-    let game: { moves: string[]; [key: string]: unknown } = { moves: [] };
+    const { ms, result } = await timeAsync(async () => {
+        let games = 0;
+        let moves = 0;
+        let game: { moves: string[]; [key: string]: unknown } = { moves: [] };
 
-    await readLines(pgn.path, (line) => {
-        if (!line) return;
-        if (line === '') return;
-        if (line.startsWith('[')) {
-            if (readHeader) {
-                const m = HEADER_REGEX.exec(line);
-                if (m) game[m[1]!] = m[2];
+        await readLines(pgn.path, (line) => {
+            if (!line) return;
+            if (line === '') return;
+            if (line.startsWith('[')) {
+                if (readHeader) {
+                    const m = HEADER_REGEX.exec(line);
+                    if (m) game[m[1]!] = m[2];
+                }
+                return;
             }
-            return;
-        }
-        const cleaned = line.replaceAll(COMMENT_REGEX, '');
-        const matched = cleaned.match(MOVE_REGEX) ?? [];
-        game.moves.push(...matched);
-        if (RESULT_REGEX.test(cleaned)) {
-            games += 1;
-            moves += game.moves.length;
-            game = { moves: [] };
-        }
+            const cleaned = line.replaceAll(COMMENT_REGEX, '');
+            const matched = cleaned.match(MOVE_REGEX) ?? [];
+            game.moves.push(...matched);
+            if (RESULT_REGEX.test(cleaned)) {
+                games += 1;
+                moves += game.moves.length;
+                game = { moves: [] };
+            }
+        });
+        return { games, moves };
     });
-    return { ms: performance.now() - t0, games, moves };
+    return { ms, games: result.games, moves: result.moves };
 }
 
 async function api(options: AnalyzeOptions) {
-    const t0 = performance.now();
-    const result = await analyzePGN(pgn.path, options);
-    const ms = performance.now() - t0;
+    const { ms, result } = await timeAsync(() => analyzePGN(pgn.path, options));
     return { ms, cntGames: result.games, cntMoves: result.moves, mps: result.movesPerSecond };
 }
 
-console.log(`Runtime: node ${process.version}`);
+console.log(`Runtime: ${getRuntimeLabel()}`);
 console.log(`CPUs: ${availableParallelism()}`);
 console.log(`PGN: ${pgn.path}\n`);
 

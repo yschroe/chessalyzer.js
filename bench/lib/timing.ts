@@ -1,4 +1,9 @@
-export interface TimingStats {
+import { performance } from 'node:perf_hooks';
+
+const DEFAULT_RUNS = Number(process.env.BENCH_RUNS ?? 2);
+const DEFAULT_WARMUP = process.env.BENCH_WARMUP !== '0';
+
+interface TimingStats {
     meanMs: number;
     stddevMs: number;
     minMs: number;
@@ -9,11 +14,66 @@ export interface TimedRunResult extends TimingStats {
     label: string;
 }
 
+interface TimedSample<T> {
+    ms: number;
+    value: T;
+}
+
+export interface RunTimedResult<T> extends TimedRunResult {
+    samples: TimedSample<T>[];
+}
+
+export interface RunTimedOptions {
+    runs?: number;
+    warmup?: boolean;
+    /** Log `Running ${label}... (i of N)` each iteration (default true). */
+    progress?: boolean;
+}
+
+export interface TimedAsyncResult<T> {
+    ms: number;
+    result: T;
+}
+
 export function formatSeconds(ms: number): string {
     return (ms / 1000).toFixed(3);
 }
 
-export function computeTimingStats(times: number[]): TimingStats {
+/** Measure wall-clock duration of one async call. */
+export async function timeAsync<T>(fn: () => Promise<T>): Promise<TimedAsyncResult<T>> {
+    const t0 = performance.now();
+    const result = await fn();
+    return { ms: performance.now() - t0, result };
+}
+
+/** Run an async function N times with optional warmup; aggregate wall-clock stats. */
+export async function runTimed<T>(
+    label: string,
+    fn: () => Promise<T>,
+    options: RunTimedOptions = {},
+): Promise<RunTimedResult<T>> {
+    const runs = options.runs ?? DEFAULT_RUNS;
+    const warmup = options.warmup ?? DEFAULT_WARMUP;
+    const progress = options.progress ?? true;
+
+    if (warmup) await fn();
+
+    const samples: TimedSample<T>[] = [];
+    for (let i = 0; i < runs; i += 1) {
+        if (progress) console.log(`Running ${label}... (${i + 1} of ${runs})`);
+        const { ms, result } = await timeAsync(fn);
+        samples.push({ ms, value: result });
+    }
+
+    const times = samples.map((sample) => sample.ms);
+    return {
+        label,
+        ...computeTimingStats(times),
+        samples,
+    };
+}
+
+function computeTimingStats(times: number[]): TimingStats {
     const meanMs = times.reduce((sum, ms) => sum + ms, 0) / times.length;
     const variance =
         times.reduce((sum, ms) => sum + (ms - meanMs) ** 2, 0) / Math.max(times.length - 1, 1);

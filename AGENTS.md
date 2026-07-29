@@ -29,7 +29,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 | `src/trackers/`      | Built-in and base tracker implementations                                              |
 | `bench/`             | Callable performance benchmarks (`bench-*.ts`)                                         |
 | `bench/atomic/`      | Atomic micro-benchmark implementations                                                 |
-| `bench/lib/`         | Shared bench utilities (fixtures, timing, PGN resolution)                              |
+| `bench/lib/`         | Shared bench utilities — see **Bench lib** below                                       |
 | `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)                                            |
 | `test/`              | Integration tests, fixtures, corpus (unit tests live in `src/**/__tests__/`)           |
 | `pgn/`               | Local large PGN files for manual/bench runs (gitignored)                               |
@@ -101,6 +101,13 @@ Examples of deliberate choices:
 - `BENCH_WARMUP=0` — skip warmup iteration
 
 Pass `single-threaded` to `bench-perf` to benchmark only the single-threaded path.
+
+**Bench lib** (`bench/lib/`):
+
+- `harness.ts` + `report.ts` — atomic micro-benchmarks (tinybench ops/s); used by `bench/atomic/`
+- `timing.ts` — wall-clock timing (`runTimed`, `timeAsync`, `printTimedResults`); used by `bench-perf` and exploratory scripts
+- `pgn-fixture.ts` — resolve large PGN paths for e2e benches (`resolvePerfPgn`, `findLargestPgn`)
+- `fixtures.ts` — synthetic move/line data for atomic micro-benches
 
 **Manual release smoke tests** (built package, smaller file):
 
