@@ -99,8 +99,11 @@ class GameProcessor {
         const gameReplayer = new GameReplayer();
         const gameAssembler = new GameAssembler({ parseHeaders: this.parseHeaders });
 
+        // Read in lines and process them one by one.
+        // Runs until `false` is returned by the handler.
         await readLines(path, (line) => {
             const game = gameAssembler.processLine(line);
+            // Continue with the next line if no full game was read-in yet.
             if (!game) return;
 
             for (const cfg of this.configs) {
