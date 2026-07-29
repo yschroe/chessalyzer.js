@@ -3,7 +3,7 @@ import { performance } from 'node:perf_hooks';
 const DEFAULT_RUNS = Number(process.env.BENCH_RUNS ?? 2);
 const DEFAULT_WARMUP = process.env.BENCH_WARMUP !== '0';
 
-export interface TimingStats {
+interface TimingStats {
     meanMs: number;
     stddevMs: number;
     minMs: number;
@@ -14,7 +14,7 @@ export interface TimedRunResult extends TimingStats {
     label: string;
 }
 
-export interface TimedSample<T> {
+interface TimedSample<T> {
     ms: number;
     value: T;
 }
@@ -73,7 +73,7 @@ export async function runTimed<T>(
     };
 }
 
-export function computeTimingStats(times: number[]): TimingStats {
+function computeTimingStats(times: number[]): TimingStats {
     const meanMs = times.reduce((sum, ms) => sum + ms, 0) / times.length;
     const variance =
         times.reduce((sum, ms) => sum + (ms - meanMs) ** 2, 0) / Math.max(times.length - 1, 1);
