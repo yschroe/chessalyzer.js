@@ -11,10 +11,9 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 const dryRun = process.argv.includes('--dry-run');
-const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
-const { version } = pkg;
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
 
-const args = ['publish', '--access', 'public'];
+const args = [];
 if (dryRun) {
     args.push('--dry-run');
 }
@@ -24,10 +23,6 @@ if (prereleaseId) {
     args.push('--tag', prereleaseId);
 }
 
-if (pkg.publishConfig?.provenance && !dryRun) {
-    args.push('--provenance');
-}
-
-const cmd = `npm ${args.join(' ')}`;
+const cmd = `npm publish ${args.join(' ')}`;
 console.log(`> ${cmd}`);
 execSync(cmd, { stdio: 'inherit' });

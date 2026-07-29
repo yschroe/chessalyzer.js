@@ -56,10 +56,6 @@
             "import": "./lib/trackers.js"
         }
     },
-    "publishConfig": {
-        "access": "public",
-        "provenance": true
-    },
     "scripts": {
         "build": "bun scripts/create-bundle.ts",
         "test": "bun test",
