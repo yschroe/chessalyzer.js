@@ -11,7 +11,10 @@
     },
     "rules": {
         // Array.from({ length: 10 }) is slower than new Array(10)
-        "unicorn/no-new-array": "off"
+        "unicorn/no-new-array": "off",
+
+        // Superseded by "noImplicitReturns" in tsconfig.json
+        "typescript/consistent-return": "off"
     },
     "ignorePatterns": ["manual-tests", "bench"]
 }

@@ -94,6 +94,38 @@ class GameProcessor {
         return this.processPGNWithWorkers(path);
     }
 
+    /** Process PGN on the main thread. */
+    private async processPGNOnMainThread(path: string): Promise<GameAndMoveCount[]> {
+        const gameReplayer = new GameReplayer();
+        const gameAssembler = new GameAssembler({ parseHeaders: this.parseHeaders });
+
+        await readLines(path, (line) => {
+            const game = gameAssembler.processLine(line);
+            if (!game) return;
+
+            for (const cfg of this.configs) {
+                if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
+                    cfg.readGames += 1;
+                    gameReplayer.processGame(
+                        game,
+                        cfg,
+                        cfg.replayMode,
+                        cfg.processedGames + cfg.skippedGames,
+                        this.onError,
+                    );
+                    if (cfg.readGames === cfg.config.maxGames) {
+                        cfg.isDone = true;
+                        if (this.configs.every((c) => c.isDone)) return false;
+                    }
+                }
+            }
+
+            return;
+        });
+
+        return finishTrackers(this.configs);
+    }
+
     /** Process PGN with worker threads. */
     private async processPGNWithWorkers(path: string): Promise<GameAndMoveCount[]> {
         assert(this.multithreadConfig, 'Multithread configuration is required');
@@ -175,36 +207,6 @@ class GameProcessor {
             // Always terminate workers so the process can exit after success or failure.
             await workerPool.close();
         }
-    }
-
-    /** Process PGN on the main thread. */
-    private async processPGNOnMainThread(path: string): Promise<GameAndMoveCount[]> {
-        const gameReplayer = new GameReplayer();
-        const gameAssembler = new GameAssembler({ parseHeaders: this.parseHeaders });
-
-        await readLines(path, (line): void | false => {
-            const game = gameAssembler.processLine(line);
-            if (!game) return;
-
-            for (const cfg of this.configs) {
-                if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
-                    cfg.readGames += 1;
-                    gameReplayer.processGame(
-                        game,
-                        cfg,
-                        cfg.replayMode,
-                        cfg.processedGames + cfg.skippedGames,
-                        this.onError,
-                    );
-                    if (cfg.readGames === cfg.config.maxGames) {
-                        cfg.isDone = true;
-                        if (this.configs.every((c) => c.isDone)) return false;
-                    }
-                }
-            }
-        });
-
-        return finishTrackers(this.configs);
     }
 
     /** Resolve the number of worker threads to use. */
