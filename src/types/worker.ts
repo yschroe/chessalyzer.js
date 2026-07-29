@@ -1,3 +1,4 @@
+import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
 import type { Game } from '#types/game';
 import type { Tracker, TrackerConfig } from '#types/tracker';
@@ -8,7 +9,7 @@ export interface WorkerInitData {
         trackerData: { id: string; cfg: TrackerConfig; path?: string }[];
         /** When true, worker assembles games and returns them for main-thread filter/replay. */
         pgnParseOnly?: boolean;
-        replayMode: import('#replay/replay-mode').ReplayMode;
+        replayMode: ReplayMode;
     }[];
     onError?: 'abort' | 'skip-game';
 }

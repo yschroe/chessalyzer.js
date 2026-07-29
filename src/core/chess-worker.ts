@@ -9,6 +9,7 @@ import {
 import { decodePgnChunkBytes } from '#io/pgn-chunks';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
+import type { ReplayMode } from '#replay/replay-mode';
 import type { Game } from '#types/game';
 import type {
     WorkerBatchTask,
@@ -38,7 +39,7 @@ function isPgnParseOnly(idxConfig: number): boolean {
     return initData?.configs[idxConfig]?.pgnParseOnly ?? false;
 }
 
-function getReplayMode(idxConfig: number): import('#replay/replay-mode').ReplayMode {
+function getReplayMode(idxConfig: number): ReplayMode {
     return initData?.configs[idxConfig]?.replayMode ?? 'skip';
 }
 

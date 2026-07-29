@@ -1,3 +1,4 @@
+import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
 import type { Game } from '#types/game';
 import type { Tracker, TrackerConfig } from '#types/tracker';
@@ -47,7 +48,7 @@ export interface GameProcessorAnalysisConfig {
 export interface GameProcessorAnalysisConfigFull extends GameProcessorAnalysisConfig {
     config: GameProcessorConfig;
     trackerData: { id: string; cfg: TrackerConfig; path: string }[];
-    replayMode: import('#replay/replay-mode').ReplayMode;
+    replayMode: ReplayMode;
     readGames: number;
     isDone: boolean;
 }
