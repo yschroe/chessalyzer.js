@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { analyzePGN } from 'chessalyzer.js';
 import { PieceTracker, TileTracker } from 'chessalyzer.js/trackers';
 
+import type { WorkerMessage } from '#types/worker';
+
 import WorkerPool from '../../src/core/worker-pool';
 import { fixturePath } from '../helpers/fixtures';
 
@@ -17,7 +19,7 @@ function runTaskWithTimeout(
     pool: WorkerPool,
     task: Parameters<WorkerPool['runTask']>[0],
     timeoutMs: number,
-): Promise<{ err: Error | null; result: import('../../src/types/worker').WorkerMessage | null }> {
+): Promise<{ err: Error | null; result: WorkerMessage | null }> {
     return new Promise((resolve, reject) => {
         const timer = setTimeout(
             () => reject(new Error('WorkerPool callback timed out')),

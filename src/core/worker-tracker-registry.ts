@@ -1,3 +1,5 @@
+import assert from 'node:assert';
+
 import { BaseTracker } from '#trackers/base-tracker';
 import { GameTracker } from '#trackers/game-tracker';
 import { PieceTracker } from '#trackers/piece-tracker';
@@ -99,9 +101,7 @@ function createAnalysisCfg(
 
     for (const tracker of trackerData) {
         const TrackerClass = TrackerList[tracker.id];
-        if (!TrackerClass) {
-            throw new Error(`Unknown tracker "${tracker.id}"`);
-        }
+        assert(TrackerClass, `Unknown tracker "${tracker.id}"`);
 
         const instance: BaseTracker = new TrackerClass();
         instance.cfg = tracker.cfg;
@@ -124,8 +124,7 @@ export function resetCfgBatchCounters(cfg: GameProcessorAnalysisConfig): void {
 /** Cached config for the given analysis index. */
 export function getCachedCfg(idxConfig: number): GameProcessorAnalysisConfig {
     const cfg = cfgCache[idxConfig];
-    if (!cfg) {
-        throw new Error(`Invalid analysis config index: ${idxConfig}`);
-    }
+    assert(cfg, `Invalid analysis config index: ${idxConfig}`);
+
     return cfg;
 }

@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import { EventEmitter } from 'node:events';
 import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
@@ -13,12 +14,8 @@ import { readLines } from '#io/line-reader';
 import { readPgnChunks } from '#io/pgn-chunks';
 import { GameAssembler } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
-import type {
-    AnalysisConfig,
-    GameAndMoveCount,
-    GameProcessorAnalysisConfigFull,
-    MultithreadConfig,
-} from '#types/analysis-runtime';
+import type { AnalyzeRun, WorkerOptions } from '#types/analysis';
+import type { GameAndMoveCount, GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { WorkerBatchTask, WorkerInitData, WorkerTaskConfigEntry } from '#types/worker';
 
 /** Path to the worker file. */
@@ -64,16 +61,16 @@ async function awaitWorkerPoolDone(workerPool: WorkerPool, gate: FatalErrorGate)
 class GameProcessor {
     configs: GameProcessorAnalysisConfigFull[];
     parseHeaders: boolean;
-    multithreadConfig: MultithreadConfig | null;
+    multithreadConfig: WorkerOptions | null;
     readonly onError: 'abort' | 'skip-game';
 
     constructor(
-        configs: AnalysisConfig[],
-        multithreadCfg: MultithreadConfig | null,
+        runs: AnalyzeRun[],
+        multithreadCfg: WorkerOptions | null,
         onError: 'abort' | 'skip-game' = 'abort',
         normalizeOptions?: NormalizeAnalysisOptions,
     ) {
-        const normalized = normalizeAnalysisConfigs(configs, multithreadCfg, normalizeOptions);
+        const normalized = normalizeAnalysisConfigs(runs, normalizeOptions);
         this.configs = normalized.configs;
         this.parseHeaders = normalized.parseHeaders;
         this.multithreadConfig = multithreadCfg;
@@ -86,14 +83,52 @@ class GameProcessor {
      * @returns Count of processed games and moves.
      */
     async processPGN(path: string): Promise<GameAndMoveCount[]> {
-        if (this.multithreadConfig !== null) {
-            return this.processPGNWithWorkers(path);
+        if (!this.multithreadConfig) {
+            return this.processPGNOnMainThread(path);
         }
 
-        return this.processPGNOnMainThread(path);
+        return this.processPGNWithWorkers(path);
     }
 
+    /** Process PGN on the main thread. */
+    private async processPGNOnMainThread(path: string): Promise<GameAndMoveCount[]> {
+        const gameReplayer = new GameReplayer();
+        const gameAssembler = new GameAssembler({ parseHeaders: this.parseHeaders });
+
+        // Read in lines and process them one by one.
+        // Runs until `false` is returned by the handler.
+        await readLines(path, (line) => {
+            const game = gameAssembler.processLine(line);
+            // Continue with the next line if no full game was read-in yet.
+            if (!game) return;
+
+            for (const cfg of this.configs) {
+                if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
+                    cfg.readGames += 1;
+                    gameReplayer.processGame(
+                        game,
+                        cfg,
+                        cfg.replayMode,
+                        cfg.processedGames + cfg.skippedGames,
+                        this.onError,
+                    );
+                    if (cfg.readGames === cfg.config.maxGames) {
+                        cfg.isDone = true;
+                        if (this.configs.every((c) => c.isDone)) return false;
+                    }
+                }
+            }
+
+            return;
+        });
+
+        return finishTrackers(this.configs);
+    }
+
+    /** Process PGN with worker threads. */
     private async processPGNWithWorkers(path: string): Promise<GameAndMoveCount[]> {
+        assert(this.multithreadConfig, 'Multithread configuration is required');
+
         const workerInitData: WorkerInitData = {
             configs: this.configs.map((cfg) => ({
                 trackerData: cfg.trackerData,
@@ -105,9 +140,9 @@ class GameProcessor {
         const workerPool = new WorkerPool(this.resolveWorkerCount(), WORKER_PATH, workerInitData);
 
         const chunkConfig = {
-            targetBytes: this.multithreadConfig!.targetBytes,
-            maxLines: this.multithreadConfig!.maxLines,
-            minLines: this.multithreadConfig!.minLines,
+            targetBytes: this.multithreadConfig.targetBytes,
+            maxLines: this.multithreadConfig.maxLines,
+            minLines: this.multithreadConfig.minLines,
         };
 
         const gameReplayer = new GameReplayer();
@@ -173,35 +208,7 @@ class GameProcessor {
         }
     }
 
-    private async processPGNOnMainThread(path: string): Promise<GameAndMoveCount[]> {
-        const gameReplayer = new GameReplayer();
-        const gameAssembler = new GameAssembler({ parseHeaders: this.parseHeaders });
-
-        await readLines(path, (line): void | false => {
-            const game = gameAssembler.processLine(line);
-            if (!game) return;
-
-            for (const cfg of this.configs) {
-                if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
-                    cfg.readGames += 1;
-                    gameReplayer.processGame(
-                        game,
-                        cfg,
-                        cfg.replayMode,
-                        cfg.processedGames + cfg.skippedGames,
-                        this.onError,
-                    );
-                    if (cfg.readGames === cfg.config.maxGames) {
-                        cfg.isDone = true;
-                        if (this.configs.every((c) => c.isDone)) return false;
-                    }
-                }
-            }
-        });
-
-        return finishTrackers(this.configs);
-    }
-
+    /** Resolve the number of worker threads to use. */
     private resolveWorkerCount(): number {
         const configured = this.multithreadConfig?.workerCount;
         if (configured !== undefined) return Math.max(1, configured);

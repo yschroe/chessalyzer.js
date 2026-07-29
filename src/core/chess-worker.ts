@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import { parentPort, workerData } from 'node:worker_threads';
 
 import {
@@ -8,6 +9,8 @@ import {
 import { decodePgnChunkBytes } from '#io/pgn-chunks';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
+import type { ReplayMode } from '#replay/replay-mode';
+import type { Game } from '#types/game';
 import type {
     WorkerBatchTask,
     WorkerConfigResult,
@@ -17,6 +20,10 @@ import type {
     WorkerTaskData,
 } from '#types/worker';
 import { isWorkerFlushTask } from '#types/worker';
+
+assert(parentPort, 'Worker was initialized on main thread, aborting.');
+// Bind parentPort to a local variable so it is detected as non-null in the handlers as well.
+const port = parentPort;
 
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- workerData is untyped at worker entry; shape validated at use sites
 const initData = workerData as WorkerInitData | undefined;
@@ -32,7 +39,7 @@ function isPgnParseOnly(idxConfig: number): boolean {
     return initData?.configs[idxConfig]?.pgnParseOnly ?? false;
 }
 
-function getReplayMode(idxConfig: number): import('#replay/replay-mode').ReplayMode {
+function getReplayMode(idxConfig: number): ReplayMode {
     return initData?.configs[idxConfig]?.replayMode ?? 'skip';
 }
 
@@ -50,7 +57,7 @@ function computeParseMaxGames(configs: WorkerTaskConfigEntry[]): number {
 
 function processReplayConfig(
     entry: WorkerTaskConfigEntry,
-    parsedGames: ReturnType<typeof parseGamesFromLines>,
+    parsedGames: Game[],
 ): WorkerConfigResult {
     const cfg = getCachedCfg(entry.idxConfig);
     resetCfgBatchCounters(cfg);
@@ -139,11 +146,11 @@ function handleTask(msg: WorkerTaskData): WorkerMessage {
     return processBatch(msg);
 }
 
-parentPort!.on('message', (msg: WorkerTaskData) => {
+port.on('message', (msg: WorkerTaskData) => {
     void ready
         .then(() => handleTask(msg))
         // oxlint-disable-next-line unicorn/require-post-message-target-origin -- Node worker_threads MessagePort has no targetOrigin
-        .then((result) => parentPort!.postMessage(result))
+        .then((result) => port.postMessage(result))
         .catch((e: unknown) => {
             // Return errors to the main thread instead of throwing — unhandled worker
             // rejections would otherwise leave the pool waiting indefinitely.
@@ -153,6 +160,6 @@ parentPort!.on('message', (msg: WorkerTaskData) => {
                 error: message,
             };
             // oxlint-disable-next-line unicorn/require-post-message-target-origin -- Node worker_threads MessagePort has no targetOrigin
-            parentPort!.postMessage(errorResult);
+            port.postMessage(errorResult);
         });
 });

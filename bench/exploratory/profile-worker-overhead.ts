@@ -24,6 +24,7 @@ const batches: { moves: string[] }[] = [];
 let game: { moves: string[] } = { moves: [] };
 await readLines(pgn.path, (line) => {
     if (!line || !line.length || line.charCodeAt(0) === 91) return;
+
     const m = line.match(MOVE_REGEX);
     if (m) for (let i = 0; i < m.length; i += 1) game.moves.push(m[i]!);
     if (RESULT_REGEX.test(line)) {
@@ -31,6 +32,8 @@ await readLines(pgn.path, (line) => {
         game = { moves: [] };
         if (batches.length >= BATCH * N_BATCHES) return false;
     }
+
+    return;
 });
 
 const batchGroups: { moves: string[] }[][] = [];
