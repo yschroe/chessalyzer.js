@@ -1,7 +1,6 @@
 import { resolveEffectiveReplayMode } from '#replay/replay-mode';
 import type { ReplayMode } from '#replay/replay-mode';
-import type { AnalyzeOptions } from '#types/analysis';
-import type { AnalysisConfig, MultithreadConfig } from '#types/analysis-runtime';
+import type { AnalyzeOptions, AnalyzeRun, WorkerOptions } from '#types/analysis';
 import type { GameProcessorAnalysisConfigFull, GameProcessorConfig } from '#types/analysis-runtime';
 import type { Game } from '#types/game';
 import type { Tracker } from '#types/tracker';
@@ -59,33 +58,19 @@ function normalizeProcessorConfig(
     };
 }
 
-function toAnalysisConfig(
-    trackers: AnalysisConfig['trackers'],
-    filter: ((game: Game) => boolean) | undefined,
-    maxGames: number | undefined,
-): AnalysisConfig {
-    return {
-        trackers,
-        config: {
-            filter,
-            maxGames,
-        },
-    };
-}
-
 /**
  * Convert public {@link AnalyzeOptions} into processor inputs.
  */
 export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
-    configs: AnalysisConfig[];
-    multithreadCfg: MultithreadConfig | null;
+    runs: AnalyzeRun[];
+    multithreadCfg: WorkerOptions | null;
     onError: 'abort' | 'skip-game';
     headers?: boolean;
     replay?: ReplayMode;
 } {
     const opts = options ?? {};
 
-    const multithreadCfg: MultithreadConfig | null =
+    const multithreadCfg: WorkerOptions | null =
         opts.workers === false ? null : (opts.workers ?? {});
 
     const onError = opts.onError ?? 'abort';
@@ -97,9 +82,7 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
             onError,
             headers,
             replay,
-            configs: opts.runs.map((run) =>
-                toAnalysisConfig(run.trackers, run.filter, run.maxGames),
-            ),
+            runs: opts.runs,
         };
     }
 
@@ -108,27 +91,23 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
         onError,
         headers,
         replay,
-        configs: [toAnalysisConfig(opts.trackers, opts.filter, opts.maxGames)],
+        runs: [{ trackers: opts.trackers, filter: opts.filter, maxGames: opts.maxGames }],
     };
 }
 
 /**
- * Convert user {@link AnalysisConfig}s into processor runtime state and path flags.
+ * Convert {@link AnalyzeRun}s into processor runtime state and path flags.
  * Side-effect free: callers assign the returned fields onto {@link GameProcessor}.
  */
 export function normalizeAnalysisConfigs(
-    configs: AnalysisConfig[],
-    _multithreadCfg: MultithreadConfig | null,
+    runs: AnalyzeRun[],
     options?: NormalizeAnalysisOptions,
 ): NormalizedAnalysisRun {
     let inferredHeaders = false;
     const normalized: GameProcessorAnalysisConfigFull[] = [];
 
-    for (const cfg of configs) {
-        const { config, needsHeader } = normalizeProcessorConfig(
-            cfg.config?.filter,
-            cfg.config?.maxGames,
-        );
+    for (const run of runs) {
+        const { config, needsHeader } = normalizeProcessorConfig(run.filter, run.maxGames);
         if (needsHeader) inferredHeaders = true;
 
         const tempCfg: GameProcessorAnalysisConfigFull = {
@@ -144,8 +123,8 @@ export function normalizeAnalysisConfigs(
             replayMode: 'skip',
         };
 
-        if (cfg.trackers) {
-            for (const tracker of cfg.trackers) {
+        if (run.trackers) {
+            for (const tracker of run.trackers) {
                 if (tracker.type === 'move') {
                     tempCfg.trackers.move.push(tracker);
                 } else if (tracker.type === 'game') {

@@ -14,12 +14,8 @@ import { readLines } from '#io/line-reader';
 import { readPgnChunks } from '#io/pgn-chunks';
 import { GameAssembler } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
-import type {
-    AnalysisConfig,
-    GameAndMoveCount,
-    GameProcessorAnalysisConfigFull,
-    MultithreadConfig,
-} from '#types/analysis-runtime';
+import type { AnalyzeRun, WorkerOptions } from '#types/analysis';
+import type { GameAndMoveCount, GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { WorkerBatchTask, WorkerInitData, WorkerTaskConfigEntry } from '#types/worker';
 
 /** Path to the worker file. */
@@ -65,16 +61,16 @@ async function awaitWorkerPoolDone(workerPool: WorkerPool, gate: FatalErrorGate)
 class GameProcessor {
     configs: GameProcessorAnalysisConfigFull[];
     parseHeaders: boolean;
-    multithreadConfig: MultithreadConfig | null;
+    multithreadConfig: WorkerOptions | null;
     readonly onError: 'abort' | 'skip-game';
 
     constructor(
-        configs: AnalysisConfig[],
-        multithreadCfg: MultithreadConfig | null,
+        runs: AnalyzeRun[],
+        multithreadCfg: WorkerOptions | null,
         onError: 'abort' | 'skip-game' = 'abort',
         normalizeOptions?: NormalizeAnalysisOptions,
     ) {
-        const normalized = normalizeAnalysisConfigs(configs, multithreadCfg, normalizeOptions);
+        const normalized = normalizeAnalysisConfigs(runs, normalizeOptions);
         this.configs = normalized.configs;
         this.parseHeaders = normalized.parseHeaders;
         this.multithreadConfig = multithreadCfg;

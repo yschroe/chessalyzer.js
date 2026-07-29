@@ -63,8 +63,8 @@ export async function analyzePGN(
     pathToPgn: string,
     options?: AnalyzeOptions,
 ): Promise<AnalyzeResult> {
-    const { configs, multithreadCfg, onError, headers, replay } = normalizeAnalyzeOptions(options);
-    const gameProcessor = new GameProcessor(configs, multithreadCfg, onError, { headers, replay });
+    const { runs, multithreadCfg, onError, headers, replay } = normalizeAnalyzeOptions(options);
+    const gameProcessor = new GameProcessor(runs, multithreadCfg, onError, { headers, replay });
 
     const t0 = performance.now();
     const counts = await gameProcessor.processPGN(pathToPgn);
