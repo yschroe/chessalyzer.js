@@ -10,8 +10,11 @@ export interface ParsedMove {
 }
 
 /**
- * Internal assembler output — mainline SAN strings without per-move object allocation.
- * Convert to {@link ParsedGame} at public API boundaries via {@link toParsedGame}.
+ * Internal assembler / analyze hot-path game shape — mainline SAN strings without per-move object allocation.
+ *
+ * Public APIs use {@link ParsedGame} (`ParsedMove[]`). Convert at boundaries via {@link toParsedGame}.
+ * Do not replace with `ParsedMove[]` on this path: board replay regresses badly (per-move `.san` + GC);
+ * see AGENTS.md Performance — settled in v4 alpha API hardening.
  */
 export interface AssembledGame {
     moves: string[];
