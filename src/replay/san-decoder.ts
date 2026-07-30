@@ -103,10 +103,7 @@ export default class SanDecoder {
 
         if (promotesTo) {
             if (!isPromotionToken(promotesTo)) {
-                throw new ReplayFailure(
-                    'UnknownToken',
-                    `Unknown promotion piece in SAN: ${san}`,
-                );
+                throw new ReplayFailure('UnknownToken', `Unknown promotion piece in SAN: ${san}`);
             }
             const promo = this.ctx.promoteAction;
             promo.san = san;

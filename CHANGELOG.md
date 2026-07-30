@@ -7,42 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Version 4 is a fresh coat of paint: a simpler API, faster runs, and imports that match how you actually use the library.
+None.
+
+## [4.0.0-alpha.0] 2026-07-30
+
+Version 4 is a complete redesign: a simpler API, faster runs, and imports that match how you actually use the library.
 
 ### Highlights
 
-- **`analyzePGN` and `printHeatmap`** replace the static `Chessalyzer` class. One options object, one clear entry point.
-- **`parsePGN` and `streamParsePGN`** on `chessalyzer.js/pgn` when you only need the games (headers and SAN strings) without running trackers.
+- **`analyzePGN`** replaces the static `Chessalyzer` class and is directly exported via the main entry point.
+- New parse-only API: **`parsePGN` and `streamParsePGN`** on `chessalyzer.js/pgn` when you only need the games (headers and SAN strings) without running trackers.
 - **Subpath imports** — `chessalyzer.js/pgn`, `/trackers`, `/io`, `/replay` — so you pull in only what you need.
-- **Faster by default** — count-only runs skip board replay (~10% on large files), workers start lazily, and multi-run analyses parse each chunk once instead of re-reading the file.
+- **Friendlier data shapes** — parsed moves arrive as simple `{ san }` objects (with room to grow later), and board actions use readable squares like `'e4'` instead of numeric indices. Castling and en passant are marked clearly when they happen.
+- **Leaner trackers** — the `Tracker` contract stays small (`track`, optional hooks, `merge`); heatmaps and profiling live on `BaseTracker` if you need them.
+- **Faster by default** — parse-only and trackerless runs skip board replay (~10% on large files), workers start lazily, and multi-run analyses parse each chunk once instead of re-reading the file.
 - **`TileTracker`** now counts castling as one move.
-- **Replay errors** — abort on the first bad game by default; use `onError: 'skip-game'` to keep going and collect a summary (handy for big Lichess dumps).
+- **Replay errors** — abort on the first bad game by default; use `onError: 'skip-game'` to keep going and collect a summary (handy for big PGN dumps).
 
 ### Upgrading from v3
 
-- Import `analyzePGN` and `printHeatmap` directly instead of `Chessalyzer.analyzePGN(...)`.
+- Import `analyzePGN` (and `printHeatmap`) directly instead of `Chessalyzer.analyzePGN(...)`.
 - Pass all options in one object: `analyzePGN(path, { trackers, filter, maxGames, runs, workers })`.
 - For single-threaded mode, use `{ workers: false }` instead of passing `null` as a third argument.
-- Results use the unified `AnalyzeResult` shape: `games`, `moves`, `movesPerSecond`, `runs`, `durationMs`.
+- Results use the unified `AnalyzeResult` shape: `gameCount`, `moveCount`, `movesPerSecond`, `runs`, `durationMs`.
 - Compare multiple analyses with `runs: [...]` instead of passing an array of configs.
-- Custom trackers: rename `add()` to `merge()`, and for multithreading add `static trackerId` and `static workerModule = import.meta.url`.
+- Custom trackers: rename `add()` to `merge()`, and for multithreading add `static trackerId` and `static workerModule = import.meta.url`. The tracker interface itself is slimmer now — heatmaps stay on `BaseTracker`.
 - Tracker stats renamed for consistency: `GameTracker.cntGames` → `games`; `TileTracker.cntMovesGame` / `cntMovesTotal` → `movesGame` / `movesTotal`.
 - Import built-in trackers by name from `chessalyzer.js/trackers` (`GameTracker`, `PieceTracker`, `TileTracker`). Base classes and types live there too.
-- `parsePGN` moved to `chessalyzer.js/pgn`; the root package export is analyze-only.
+- `parsePGN` moved to `chessalyzer.js/pgn`; the root package export is analyze-only. Parsed moves are now `{ san }` objects rather than bare strings.
+- If you read action coordinates in a move tracker, expect algebraic squares (`'e1'`, `'e4'`, …) on `from` / `to` / `on`, plus optional `castle` / `enPassant` flags.
+- A few renames and tidy-ups: the tile helper is `MoveCoords` (was `Move`), `GameResult` is a union type, and `errorsTruncated` is a boolean. Handy types also ship from the root, `/trackers`, and `/replay` — see the README.
 - Removed deprecated `workers.batchSize` option.
-- **Alpha API hardening:** `ParsedGame.moves` is `ParsedMove[]`; `Action` coords are `Square` strings; `Move` tile helper renamed to `MoveCoords`; `GameResult` union; `errorsTruncated` is `boolean`; slim `Tracker` interface with `merge(unknown)`; expanded type exports (see README).
-
-### Alpha API contract (v4)
-
-- **`ParsedGame.moves`** — `ParsedMove[]` (`{ san: string }`), extensible for future NAG/comment fields. The analyze hot path keeps internal `string[]` movetext and materializes objects only at public boundaries (parse APIs, filters, game trackers).
-- **`Action` coordinates** — interned algebraic `Square` strings (`'e1'`, `'e4'`, …) on `from` / `to` / `on`. Optional `castle` / `enPassant` markers on move/capture actions.
-- **`Tracker` interface** — slim contract (`type`, `track`, optional `nextGame` / `finish` / `merge`). Heatmap helpers and profiling live on `BaseTracker` only.
-- **Types exported** from root: `AnalyzeSharedOptions`, `AnalyzeSingleRunOptions`, `GameFilter`, `HeatmapData`, etc. From `/trackers`: `PlayerColor`, `Piece`, tile cell types, `MoveCoords`. From `/replay`: `Square`, `BaseAction`, coord helpers.
 
 ### Under the hood
 
 - Internals reorganized into `io`, `pgn`, `replay`, and `trackers` modules with consistent pipeline terminology (I/O → PGN parse → replay → analyze). See the [README Pipeline section](./README.md#pipeline).
 - Multithreaded `filter` and `maxGames` share the worker-chunk path; JavaScript `filter` callbacks still run on the main thread.
+- The analyze hot path still keeps movetext as plain strings internally and only builds `{ san }` objects at public boundaries (parse APIs, filters, game trackers).
 
 ## [3.0.6] - 2024-03-17
 
