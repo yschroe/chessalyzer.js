@@ -69,9 +69,6 @@
         "bench:atomic": "tsx bench/bench-atomic.ts",
         "bench:atomic:bun": "bun bench/bench-atomic.ts",
         "bump": "bumpp",
-        "bump:preview": "bumpp --no-push",
-        "bump:alpha": "bumpp --prerelease alpha",
-        "bump:alpha:preview": "bumpp --prerelease alpha --no-push",
         "release:notes": "node scripts/release-notes.mjs",
         "release:pack": "node scripts/npm-publish.mjs --dry-run"
     },
