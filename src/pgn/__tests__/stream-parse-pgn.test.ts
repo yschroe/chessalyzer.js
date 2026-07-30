@@ -26,8 +26,8 @@ describe('streamParsePGN', () => {
         const games = await collectStream(fixturePath('lichess-headers'));
 
         expect(games).toHaveLength(1);
-        expect(games[0]?.White).toBeUndefined();
-        expect(games[0]?.Result).toBe('1-0');
+        expect(games[0]?.headers).toBeUndefined();
+        expect(games[0]?.result).toBe('1-0');
         expect(games[0]?.moves.length).toBeGreaterThan(0);
     });
 
@@ -35,9 +35,9 @@ describe('streamParsePGN', () => {
         const games = await collectStream(fixturePath('lichess-headers'), { headers: true });
 
         expect(games).toHaveLength(1);
-        expect(games[0]?.White).toBe('TestWhite');
-        expect(games[0]?.Black).toBe('TestBlack');
-        expect(games[0]?.ECO).toBe('C20');
+        expect(games[0]?.headers?.White).toBe('TestWhite');
+        expect(games[0]?.headers?.Black).toBe('TestBlack');
+        expect(games[0]?.headers?.ECO).toBe('C20');
     });
 
     it('stops at maxGames', async () => {
@@ -50,7 +50,7 @@ describe('streamParsePGN', () => {
         const games = await collectStream(fixturePath('corrupt'), { headers: true });
 
         expect(games).toHaveLength(1);
-        expect(games[0]?.Result).toBe('1-0');
+        expect(games[0]?.result).toBe('1-0');
     });
 
     it('supports early break via return()', async () => {

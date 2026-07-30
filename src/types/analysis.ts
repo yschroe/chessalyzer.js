@@ -1,6 +1,6 @@
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
-import type { ParsedGame } from '#types/parse-pgn';
+import type { ParsePgnOptions, ParsedGame } from '#types/parse-pgn';
 import type { Tracker } from '#types/tracker';
 
 /** Options for a single filtered analysis run. */
@@ -22,34 +22,42 @@ export interface WorkerOptions {
     minLines?: number;
 }
 
-/** Options passed to {@link analyzePGN}. */
-export interface AnalyzeOptions {
-    trackers?: Tracker[];
-    filter?: (game: ParsedGame) => boolean;
-    maxGames?: number;
+/** Shared analyze options for single-run and multi-run calls. */
+export interface AnalyzeSharedOptions extends Omit<ParsePgnOptions, 'headers'> {
     /**
-     * Parse tag-pair headers. When omitted, inferred from filter and game trackers.
-     * Filters and game trackers still force header parsing even when set to `false`.
+     * Parse tag-pair headers. Default `'auto'` infers from game trackers.
+     * `false` disables header parsing; throws when a game tracker is present.
      */
-    headers?: boolean;
+    headers?: boolean | 'auto';
     /**
      * Board replay mode. Default inferred from trackers (see {@link resolveReplayMode}).
      * Move trackers require `'actions'`.
      */
     replay?: ReplayMode;
-    /**
-     * Parallel filtered analyses of the same file.
-     * Top-level trackers/filter/maxGames are ignored when set.
-     */
-    runs?: AnalyzeRun[];
     /** Default: multithreaded with library defaults. `false` = single-threaded. */
     workers?: false | WorkerOptions;
     /**
-     * How to handle replay/parse failures per game.
+     * How to handle replay failures per game.
      * Default `'abort'` stops on the first bad game; `'skip-game'` continues and collects errors.
      */
     onError?: 'abort' | 'skip-game';
 }
+
+/** Single-run {@link analyzePGN} options. */
+export interface AnalyzeSingleRunOptions extends AnalyzeSharedOptions {
+    trackers?: Tracker[];
+    filter?: (game: ParsedGame) => boolean;
+    maxGames?: number;
+    runs?: undefined;
+}
+
+/** Multi-run {@link analyzePGN} options. */
+export interface AnalyzeMultiRunOptions extends AnalyzeSharedOptions {
+    runs: [AnalyzeRun, ...AnalyzeRun[]];
+}
+
+/** Options passed to {@link analyzePGN}. */
+export type AnalyzeOptions = AnalyzeSingleRunOptions | AnalyzeMultiRunOptions;
 
 /** Per-run counters returned from {@link analyzePGN}. */
 export interface AnalyzeRunResult {

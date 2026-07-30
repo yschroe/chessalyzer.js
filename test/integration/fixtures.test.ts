@@ -4,7 +4,7 @@ import { analyzePGN } from 'chessalyzer.js';
 import { GameTracker, PieceTracker, TileTracker } from 'chessalyzer.js/trackers';
 
 import type { AnalyzeResult } from '../../src/types/analysis';
-import type { Game } from '../../src/types/game';
+import type { ParsedGame } from '../../src/types/parse-pgn';
 import {
     allFixtureIds,
     cleanupTmpPgns,
@@ -68,7 +68,7 @@ describe('Fixtures', () => {
 
         it('filters by result (single-threaded)', async () => {
             const data = await analyzePGN(fixturePath('results-mix'), {
-                filter: (game: Game) => game.Result === '1-0',
+                filter: (game: ParsedGame) => game.result === '1-0',
                 workers: false,
             });
             expect(data.games).toBe(3);
@@ -76,7 +76,7 @@ describe('Fixtures', () => {
 
         it('filters by result (multithreaded)', async () => {
             const data = await analyzePGN(fixturePath('results-mix'), {
-                filter: (game: Game) => game.Result === '1-0',
+                filter: (game: ParsedGame) => game.result === '1-0',
             });
             expect(data.games).toBe(3);
         });
@@ -84,7 +84,7 @@ describe('Fixtures', () => {
         it('combines filter and count (single-threaded)', async () => {
             const data = await analyzePGN(fixturePath('results-mix'), {
                 maxGames: 2,
-                filter: (game: Game) => game.Result === '0-1',
+                filter: (game: ParsedGame) => game.result === '0-1',
                 workers: false,
             });
             expect(data.games).toBe(2);
@@ -93,7 +93,7 @@ describe('Fixtures', () => {
         it('combines filter and count (multithreaded)', async () => {
             const data = await analyzePGN(fixturePath('results-mix'), {
                 maxGames: 2,
-                filter: (game: Game) => game.Result === '0-1',
+                filter: (game: ParsedGame) => game.result === '0-1',
             });
             expect(data.games).toBe(2);
         });
@@ -141,7 +141,7 @@ describe('Fixtures', () => {
                     { trackers: [allGames] },
                     {
                         trackers: [whiteWins],
-                        filter: (game: Game) => game.Result === '1-0',
+                        filter: (game: ParsedGame) => game.result === '1-0',
                     },
                 ],
             });

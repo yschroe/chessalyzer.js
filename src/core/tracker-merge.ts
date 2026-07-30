@@ -2,7 +2,7 @@ import { collectError } from '#core/analyze-errors';
 import GameReplayer from '#replay/game-replayer';
 import type { GameAndMoveCount } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
-import type { Game } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 import type { WorkerConfigResult, WorkerMessage } from '#types/worker';
 
 /**
@@ -78,7 +78,7 @@ export function mergeWorkerTrackerFlush(
 /** Apply filter, replay, and counters for games parsed on workers (JS filter path). */
 function mergeParsedGamesOnMain(
     cfg: GameProcessorAnalysisConfigFull,
-    parsedGames: Game[],
+    parsedGames: ParsedGame[],
     gameReplayer: GameReplayer,
     onError: 'abort' | 'skip-game',
 ): void {

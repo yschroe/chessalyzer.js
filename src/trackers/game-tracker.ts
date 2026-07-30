@@ -1,5 +1,5 @@
 import { GameTrackerBase } from '#trackers/base-tracker';
-import type { Game } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 import type { Tracker } from '#types/tracker';
 
 function isGameTracker(tracker: Tracker): tracker is GameTracker {
@@ -50,9 +50,9 @@ class GameTracker extends GameTrackerBase {
         this.ECO = {};
     }
 
-    override trackGame(game: Game) {
+    override trackGame(game: ParsedGame) {
         this.games += 1;
-        switch (game.Result) {
+        switch (game.result) {
             case '1-0':
                 this.results.white += 1;
                 break;
@@ -68,7 +68,7 @@ class GameTracker extends GameTrackerBase {
             default:
                 break;
         }
-        const eco = game.ECO;
+        const eco = game.headers?.ECO;
         if (eco !== undefined) {
             if (this.ECO[eco] !== undefined) {
                 this.ECO[eco] += 1;

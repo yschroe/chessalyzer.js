@@ -9,12 +9,12 @@ const data = await analyzePGN('./pgn/asorted-games.pgn', {
         {
             trackers: [tileTracker],
             maxGames: 2000,
-            filter: (game) => game.Result === '0-1',
+            filter: (game) => game.result === '0-1',
         },
         {
             trackers: [tileTracker2],
             maxGames: 2000,
-            filter: (game) => game.Result === '1-0',
+            filter: (game) => game.result === '1-0',
         },
     ],
 });

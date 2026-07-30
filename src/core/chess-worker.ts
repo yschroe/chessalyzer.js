@@ -10,7 +10,7 @@ import { decodePgnChunkBytes } from '#io/pgn-chunks';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
 import type { ReplayMode } from '#replay/replay-mode';
-import type { Game } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 import type {
     WorkerBatchTask,
     WorkerConfigResult,
@@ -57,7 +57,7 @@ function computeParseMaxGames(configs: WorkerTaskConfigEntry[]): number {
 
 function processReplayConfig(
     entry: WorkerTaskConfigEntry,
-    parsedGames: Game[],
+    parsedGames: ParsedGame[],
 ): WorkerConfigResult {
     const cfg = getCachedCfg(entry.idxConfig);
     resetCfgBatchCounters(cfg);

@@ -22,7 +22,7 @@ describe('Custom tracker', () => {
         const tracker = new CustomGameTracker();
         const data = await analyzePGN(fixturePath('results-mix'), {
             trackers: [tracker],
-            filter: (game) => game.Result === '1-0',
+            filter: (game) => game.result === '1-0',
         });
 
         expect(data.games).toBe(3);

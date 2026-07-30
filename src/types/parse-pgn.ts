@@ -1,4 +1,11 @@
-import type { Game } from '#types/game';
+/** Stage-2 output: mainline SAN strings + optional result and tag-pair headers. */
+export interface ParsedGame {
+    moves: string[];
+    /** Game result from movetext (and/or Result tag when headers are parsed). */
+    result?: string;
+    /** Tag-pair headers; present only when header parsing is enabled. */
+    headers?: Readonly<Record<string, string>>;
+}
 
 /** Options for {@link parsePGN}. */
 export interface ParsePgnOptions {
@@ -6,6 +13,3 @@ export interface ParsePgnOptions {
     headers?: boolean;
     maxGames?: number;
 }
-
-/** Stage-2 output: mainline SAN strings + optional tag-pair fields. */
-export type ParsedGame = Game;

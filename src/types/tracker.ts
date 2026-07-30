@@ -1,5 +1,6 @@
 import type { Action } from '#types/actions';
-import type { Game, SquareData } from '#types/game';
+import type { SquareData } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 
 /** Optional runtime flags attached to tracker instances. */
 export interface TrackerConfig {
@@ -24,7 +25,7 @@ export interface Tracker {
     time: number;
     t0: number;
     heatmapPresets?: Record<string, HeatmapPresetEntry> | null;
-    analyze: (arg: Game | Action[]) => void;
+    analyze: (arg: ParsedGame | Action[]) => void;
     generateHeatmap: (
         fun: string | HeatmapAnalysisFunc,
         square?: string | number[],
@@ -36,7 +37,7 @@ export interface Tracker {
         square?: string | number[],
         optData?: unknown,
     ) => HeatmapData;
-    track: (arg: Game | Action[]) => void;
+    track: (arg: ParsedGame | Action[]) => void;
     nextGame?: () => void;
     finish?: () => void;
     merge?: (arg: Tracker) => void;

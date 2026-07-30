@@ -17,8 +17,8 @@ describe('parsePGN', () => {
         const games = await parsePGN(fixturePath('lichess-headers'));
 
         expect(games).toHaveLength(1);
-        expect(games[0]?.White).toBeUndefined();
-        expect(games[0]?.Result).toBe('1-0');
+        expect(games[0]?.headers).toBeUndefined();
+        expect(games[0]?.result).toBe('1-0');
         expect(games[0]?.moves.length).toBeGreaterThan(0);
     });
 
@@ -26,9 +26,9 @@ describe('parsePGN', () => {
         const games = await parsePGN(fixturePath('lichess-headers'), { headers: true });
 
         expect(games).toHaveLength(1);
-        expect(games[0]?.White).toBe('TestWhite');
-        expect(games[0]?.Black).toBe('TestBlack');
-        expect(games[0]?.ECO).toBe('C20');
+        expect(games[0]?.headers?.White).toBe('TestWhite');
+        expect(games[0]?.headers?.Black).toBe('TestBlack');
+        expect(games[0]?.headers?.ECO).toBe('C20');
     });
 
     it('returns mainline SAN strings only (no board replay)', async () => {
@@ -49,7 +49,7 @@ describe('parsePGN', () => {
         const games = await parsePGN(fixturePath('corrupt'), { headers: true });
 
         expect(games).toHaveLength(1);
-        expect(games[0]?.Result).toBe('1-0');
+        expect(games[0]?.result).toBe('1-0');
     });
 
     for (const id of allFixtureIds) {

@@ -1,6 +1,6 @@
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
-import type { Game } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 import type { Tracker, TrackerConfig } from '#types/tracker';
 
 /** One-time worker bootstrap: tracker class names, cfg, optional module paths. */
@@ -46,7 +46,7 @@ export interface WorkerConfigResult {
     skippedGames?: number;
     errors?: AnalyzeError[];
     /** Parsed games when {@link WorkerInitData.configs} entry has `pgnParseOnly: true`. */
-    parsedGames?: Game[];
+    parsedGames?: ParsedGame[];
 }
 
 /** Worker → main result: one or more config results, or a batch-level error. */

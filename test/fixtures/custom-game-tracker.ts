@@ -1,5 +1,5 @@
 import { GameTrackerBase } from 'chessalyzer.js/trackers';
-import type { Game, Tracker } from 'chessalyzer.js/trackers';
+import type { ParsedGame, Tracker } from 'chessalyzer.js/trackers';
 
 function isCustomGameTracker(tracker: Tracker): tracker is CustomGameTracker {
     return 'wins' in tracker && Array.isArray(tracker.wins);
@@ -21,9 +21,9 @@ export default class CustomGameTracker extends GameTrackerBase {
         this.time += tracker.time;
     }
 
-    trackGame(game: Game) {
+    trackGame(game: ParsedGame) {
         this.games += 1;
-        switch (game.Result) {
+        switch (game.result) {
             case '1-0':
                 this.wins[0] += 1;
                 break;

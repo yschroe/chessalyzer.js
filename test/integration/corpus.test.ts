@@ -6,7 +6,7 @@ import { analyzePGN } from 'chessalyzer.js';
 import { GameTracker, PieceTracker, isTrackedPiece } from 'chessalyzer.js/trackers';
 
 import type { AnalyzeResult } from '../../src/types/analysis';
-import type { Game } from '../../src/types/game';
+import type { ParsedGame } from '../../src/types/parse-pgn';
 import type { HeatmapAnalysisFunc } from '../../src/types/tracker';
 import { corpusPath, getCorpusEntry } from '../helpers/fixtures';
 
@@ -46,7 +46,7 @@ if (corpusAvailable) {
 
             it('filters by result', async () => {
                 const data = await analyzePGN(path, {
-                    filter: (game: Game) => game.Result === '1-0',
+                    filter: (game: ParsedGame) => game.result === '1-0',
                 });
                 expect(data.games).toBe(entry.expected.filters.whiteWins);
             });
@@ -54,7 +54,7 @@ if (corpusAvailable) {
             it('combines filter and count', async () => {
                 const data = await analyzePGN(path, {
                     maxGames: 500,
-                    filter: (game: Game) => game.Result === '0-1',
+                    filter: (game: ParsedGame) => game.result === '0-1',
                 });
                 expect(data.games).toBe(500);
             });
@@ -71,16 +71,17 @@ if (corpusAvailable) {
                 const gameTracker = new GameTracker();
                 const pieceTracker = new PieceTracker();
                 const data = await analyzePGN(path, {
+                    headers: true,
                     runs: [
                         {
                             trackers: [gameTracker],
                             maxGames: entry.expected.multiConfig.highRatedGames,
-                            filter: (game: Game) => Number(game.WhiteElo) > 1500,
+                            filter: (game: ParsedGame) => Number(game.headers?.WhiteElo) > 1500,
                         },
                         {
                             trackers: [pieceTracker],
                             maxGames: entry.expected.multiConfig.lowRatedGames,
-                            filter: (game: Game) => Number(game.WhiteElo) < 1500,
+                            filter: (game: ParsedGame) => Number(game.headers?.WhiteElo) < 1500,
                         },
                     ],
                 });
@@ -134,7 +135,7 @@ if (corpusAvailable) {
                     await analyzePGN(path, {
                         trackers: [gameTracker],
                         maxGames: entry.golden.gameTracker.filterWhiteWins,
-                        filter: (game: Game) => game.Result === '1-0',
+                        filter: (game: ParsedGame) => game.result === '1-0',
                     });
                 });
 

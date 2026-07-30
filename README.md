@@ -120,12 +120,12 @@ for await (const game of streamParsePGN('<pathToPgnFile>', { headers: true })) {
 // Full pipeline with explicit replay mode
 await analyzePGN('<pathToPgnFile>', {
     trackers: [new GameTracker()],
-    headers: true, // optional; inferred from filter/game trackers when omitted
+    headers: true, // optional; default 'auto' enables headers when game trackers are present
     replay: 'board', // 'skip' | 'board' | 'actions' — move trackers require 'actions'
 });
 ```
 
-On `analyzePGN`, `headers` defaults to inferred behavior (on when a filter or game tracker needs tag pairs). Setting `headers: false` still parses headers when a filter or game tracker requires them.
+On `analyzePGN`, `headers` defaults to `'auto'` (tag pairs parsed when a game tracker is present). Set `headers: true` when a filter reads tag pairs such as `WhiteElo`. `headers: false` disables header parsing and throws if a game tracker is configured.
 
 Subpath imports (pipeline stages + trackers):
 
@@ -174,12 +174,13 @@ printHeatmap(heatmapData);
 
 ## Filtering
 
-You can also filter the PGN file for specific criteria, e.g. only evaluate games where `WhiteElo > 2000`:
+You can also filter the PGN file for specific criteria, e.g. only evaluate games where `WhiteElo > 2000` (set `headers: true` when the filter reads tag pairs):
 
 ```javascript
 await analyzePGN('<pathToPgnFile>', {
     trackers: [tileTracker],
-    filter: (game) => Number(game.WhiteElo) > 2000,
+    headers: true,
+    filter: (game) => Number(game.headers?.WhiteElo) > 2000,
 });
 ```
 
@@ -192,15 +193,16 @@ const tileT1 = new TileTracker();
 const tileT2 = new TileTracker();
 
 await analyzePGN('<pathToPgnFile>', {
+    headers: true,
     runs: [
         {
             trackers: [tileT1],
-            filter: (game) => Number(game.WhiteElo) > 2000,
+            filter: (game) => Number(game.headers?.WhiteElo) > 2000,
             maxGames: 1000,
         },
         {
             trackers: [tileT2],
-            filter: (game) => Number(game.WhiteElo) < 1200,
+            filter: (game) => Number(game.headers?.WhiteElo) < 1200,
             maxGames: 1000,
         },
     ],
@@ -350,7 +352,7 @@ Derive from `MoveTracker` (move-level) or `GameTrackerBase` (game-level). For mu
 
 See [`manual-tests/custom-game-tracker.ts`](manual-tests/custom-game-tracker.ts) for a minimal game-level example.
 
-- `track(data)`: called per half-move (`Action[]`) or per game (`Game` with headers + `moves`)
+- `track(data)`: called per half-move (`Action[]`) or per game (`ParsedGame` with `moves`, optional `result`, optional `headers`)
 - `merge(tracker)`: required for multithreading (see example below)
 
 Example skeleton:
@@ -373,7 +375,7 @@ Import bases and types from the trackers subpath:
 
 ```javascript
 import { GameTrackerBase, MoveTracker } from 'chessalyzer.js/trackers';
-import type { Game, Tracker } from 'chessalyzer.js/trackers';
+import type { ParsedGame, Tracker } from 'chessalyzer.js/trackers';
 ```
 
 Example merge for the built-in GameTracker:

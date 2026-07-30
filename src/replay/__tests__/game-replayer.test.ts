@@ -9,7 +9,7 @@ import SanContext from '#replay/san-context';
 import { MoveTracker } from '#trackers/base-tracker';
 import type { Action } from '#types/actions';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
-import type { Game } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 
 import { fixturePath } from '../../../test/helpers/fixtures';
 
@@ -23,8 +23,8 @@ function emptyCfg(): GameProcessorAnalysisConfig {
     };
 }
 
-function game(moves: string[], result = '1-0'): Game {
-    return { moves, Result: result };
+function game(moves: string[], result = '1-0'): ParsedGame {
+    return { moves, result };
 }
 
 /** Same SanApplier path GameReplayer uses for `'board'` mode. */

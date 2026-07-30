@@ -2,7 +2,7 @@ import { performance } from 'node:perf_hooks';
 
 import { generateComparisonHeatmap, generateHeatmap } from '#trackers/heatmap-utils';
 import type { Action } from '#types/actions';
-import type { Game } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 import type {
     HeatmapAnalysisFunc,
     HeatmapData,
@@ -34,13 +34,13 @@ class BaseTracker implements Tracker {
         this.heatmapPresets = {};
     }
 
-    analyze(data: Game | Action[]) {
+    analyze(data: ParsedGame | Action[]) {
         if (this.cfg.profilingActive) this.t0 = performance.now();
         this.track(data);
         if (this.cfg.profilingActive) this.time += performance.now() - this.t0;
     }
 
-    track(_data: Game | Action[]) {
+    track(_data: ParsedGame | Action[]) {
         throw new Error('Your tracker must implement a track(...) method!');
     }
 
@@ -93,7 +93,7 @@ export abstract class MoveTracker extends BaseTracker {
         super('move');
     }
 
-    override track(data: Game | Action[]): void {
+    override track(data: ParsedGame | Action[]): void {
         if (Array.isArray(data)) this.trackMoves(data);
     }
 
@@ -101,7 +101,7 @@ export abstract class MoveTracker extends BaseTracker {
     abstract override merge(other: Tracker): void;
 }
 
-/** Abstract base for game-level trackers (receive {@link Game} after each game). */
+/** Abstract base for game-level trackers (receive {@link ParsedGame} after each game). */
 export abstract class GameTrackerBase extends BaseTracker {
     override readonly type = 'game' as const;
 
@@ -109,11 +109,11 @@ export abstract class GameTrackerBase extends BaseTracker {
         super('game');
     }
 
-    override track(data: Game | Action[]): void {
+    override track(data: ParsedGame | Action[]): void {
         if (!Array.isArray(data)) this.trackGame(data);
     }
 
-    abstract trackGame(game: Game): void;
+    abstract trackGame(game: ParsedGame): void;
     abstract override merge(other: Tracker): void;
 }
 

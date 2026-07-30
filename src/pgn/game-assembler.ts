@@ -1,5 +1,5 @@
 import { extractMoves, isGameResultLine, parseHeaderTag, stripComments } from '#pgn/movetext';
-import type { Game } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 
 export interface ParseGamesOptions {
     parseHeaders: boolean;
@@ -7,16 +7,17 @@ export interface ParseGamesOptions {
 }
 
 /**
- * Incremental assembler that turns PGN lines into complete {@link Game} objects.
+ * Incremental assembler that turns PGN lines into complete {@link ParsedGame} objects.
  * Filtering is applied by the caller after {@link processLine} returns a game.
  */
 export class GameAssembler {
-    private game: Game = { moves: [] };
+    private game: ParsedGame = { moves: [] };
+    private headers: Record<string, string> | undefined;
 
     constructor(private readonly options: ParseGamesOptions) {}
 
     /** Process one physical line; returns a completed game at game boundaries, else null. */
-    processLine(line: string): Game | null {
+    processLine(line: string): ParsedGame | null {
         if (line === '') return null;
 
         if (line.startsWith('[')) {
@@ -24,7 +25,8 @@ export class GameAssembler {
             const header = parseHeaderTag(line);
             if (header) {
                 const [key, value] = header;
-                Object.assign(this.game, { [key]: value });
+                if (!this.headers) this.headers = {};
+                this.headers[key] = value;
             }
             return null;
         }
@@ -37,10 +39,18 @@ export class GameAssembler {
         }
 
         if (isGameResultLine(cleanedLine)) {
-            const completed = this.game;
+            const completed: ParsedGame = { moves: this.game.moves };
             const resultMatch = cleanedLine.match(/(1-0|0-1|1\/2-1\/2)\s*$/);
-            if (resultMatch) completed.Result = resultMatch[1];
+            if (resultMatch) {
+                completed.result = resultMatch[1];
+            } else if (this.headers?.Result !== undefined) {
+                completed.result = this.headers.Result;
+            }
+            if (this.headers) {
+                completed.headers = { ...this.headers };
+            }
             this.game = { moves: [] };
+            this.headers = undefined;
             return completed;
         }
 
@@ -49,9 +59,12 @@ export class GameAssembler {
 }
 
 /** Assemble a sequence of PGN lines into complete games (for worker-side batch parsing). */
-export function parseGamesFromLines(lines: Iterable<string>, options: ParseGamesOptions): Game[] {
+export function parseGamesFromLines(
+    lines: Iterable<string>,
+    options: ParseGamesOptions,
+): ParsedGame[] {
     const assembler = new GameAssembler(options);
-    const games: Game[] = [];
+    const games: ParsedGame[] = [];
     const maxGames = options.maxGames ?? Infinity;
 
     for (const line of lines) {

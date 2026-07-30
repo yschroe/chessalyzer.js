@@ -84,7 +84,7 @@ describe('readPgnChunks', () => {
         expect(chunk).toBeDefined();
         const games = parseGamesFromLines(chunk.text.split('\n'), { parseHeaders: true });
         expect(games).toHaveLength(1);
-        expect(games[0]?.Result).toBe('1-0');
+        expect(games[0]?.result).toBe('1-0');
     });
 });
 

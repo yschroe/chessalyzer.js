@@ -1,16 +1,33 @@
 import { describe, expect, it } from 'bun:test';
 
-import { normalizeAnalysisConfigs } from '#core/analysis-config';
+import { normalizeAnalysisConfigs, normalizeAnalyzeOptions } from '#core/analysis-config';
 import { GameTracker } from '#trackers/game-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { AnalyzeRun } from '#types/analysis';
 
+describe('normalizeAnalyzeOptions', () => {
+    it('rejects empty runs', () => {
+        expect(() => normalizeAnalyzeOptions({ runs: [] })).toThrow(
+            'runs must contain at least one entry',
+        );
+    });
+
+    it('rejects runs combined with top-level trackers', () => {
+        expect(() =>
+            normalizeAnalyzeOptions({
+                runs: [{ trackers: [new TileTracker()] }],
+                trackers: [new TileTracker()],
+            }),
+        ).toThrow('Cannot set both runs and top-level trackers');
+    });
+});
+
 describe('normalizeAnalysisConfigs', () => {
     const baseRun: AnalyzeRun = { trackers: [] };
 
-    it('sets parseHeaders when filter is present', () => {
+    it('does not parse headers when only a filter is present', () => {
         const { parseHeaders } = normalizeAnalysisConfigs([{ ...baseRun, filter: () => true }]);
-        expect(parseHeaders).toBe(true);
+        expect(parseHeaders).toBe(false);
     });
 
     it('sets parseHeaders false when maxGames is finite without filter', () => {
@@ -23,14 +40,13 @@ describe('normalizeAnalysisConfigs', () => {
         expect(parseHeaders).toBe(true);
     });
 
-    it('forces headers when filter needs them even if headers: false', () => {
-        const { parseHeaders } = normalizeAnalysisConfigs([{ ...baseRun, filter: () => true }], {
-            headers: false,
-        });
-        expect(parseHeaders).toBe(true);
+    it('throws when headers: false with a game tracker', () => {
+        expect(() =>
+            normalizeAnalysisConfigs([{ trackers: [new GameTracker()] }], { headers: false }),
+        ).toThrow('headers: false cannot be used with game trackers');
     });
 
-    it('honors explicit headers: false when no filter or game tracker', () => {
+    it('honors explicit headers: false when no game tracker', () => {
         const { parseHeaders } = normalizeAnalysisConfigs([baseRun], { headers: false });
         expect(parseHeaders).toBe(false);
     });
@@ -64,7 +80,7 @@ describe('normalizeAnalysisConfigs', () => {
 
     it('marks hasFilter when a user filter is provided', () => {
         const { configs } = normalizeAnalysisConfigs([
-            { ...baseRun, filter: (g) => g.Result === '1-0' },
+            { ...baseRun, filter: (g) => g.result === '1-0' },
         ]);
         expect(configs[0]?.config.hasFilter).toBe(true);
     });

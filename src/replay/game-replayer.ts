@@ -5,7 +5,7 @@ import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
 import SanDecoder from '#replay/san-decoder';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
-import type { Game } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 import type { PlayerColor } from '#types/tokens';
 import type { Tracker } from '#types/tracker';
 
@@ -44,7 +44,7 @@ class GameReplayer {
      * @param onError `'abort'` throws on replay failure; `'skip-game'` records and continues.
      */
     processGame(
-        game: Game,
+        game: ParsedGame,
         analysisCfg: GameProcessorAnalysisConfig,
         replayMode: ReplayMode,
         gameIndex: number,
@@ -87,7 +87,7 @@ class GameReplayer {
 
     /** Replay movetext onto the board; optionally emit actions for move trackers. Returns false when skipped. */
     private replayMoves(
-        game: Game,
+        game: ParsedGame,
         moveTrackers: Tracker[],
         replayMode: ReplayMode,
         gameIndex: number,

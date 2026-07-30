@@ -16,10 +16,10 @@ describe('GameAssembler', () => {
         });
 
         expect(games).toHaveLength(1);
-        expect(games[0]?.White).toBe('TestWhite');
-        expect(games[0]?.Black).toBe('TestBlack');
-        expect(games[0]?.Result).toBe('1-0');
-        expect(games[0]?.ECO).toBe('C20');
+        expect(games[0]?.headers?.White).toBe('TestWhite');
+        expect(games[0]?.headers?.Black).toBe('TestBlack');
+        expect(games[0]?.result).toBe('1-0');
+        expect(games[0]?.headers?.ECO).toBe('C20');
     });
 
     it('ignores headers when parseHeaders is false', () => {
@@ -28,8 +28,8 @@ describe('GameAssembler', () => {
         });
 
         expect(games).toHaveLength(1);
-        expect(games[0]?.White).toBeUndefined();
-        expect(games[0]?.Result).toBe('1-0');
+        expect(games[0]?.headers).toBeUndefined();
+        expect(games[0]?.result).toBe('1-0');
         expect(games[0]?.moves.length).toBeGreaterThan(0);
     });
 
@@ -37,7 +37,7 @@ describe('GameAssembler', () => {
         const games = parseGamesFromLines(linesFromFixture('corrupt'), { parseHeaders: true });
 
         expect(games).toHaveLength(1);
-        expect(games[0]?.Result).toBe('1-0');
+        expect(games[0]?.result).toBe('1-0');
     });
 
     it('stops at maxGames', () => {
@@ -72,6 +72,6 @@ describe('GameAssembler', () => {
         const completed = assembler.processLine('2. Nf3 1-0');
         expect(completed).not.toBeNull();
         expect(completed?.moves).toEqual(['e4', 'e5', 'Nf3']);
-        expect(completed?.Result).toBe('1-0');
+        expect(completed?.result).toBe('1-0');
     });
 });
