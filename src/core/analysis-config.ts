@@ -63,8 +63,19 @@ function resolveTrackerId(tracker: Tracker, multithreaded: boolean): string {
     return id;
 }
 
+function isMergeMethod(value: unknown): value is (arg: Tracker) => void {
+    return typeof value === 'function';
+}
+
+function getTrackerMergeMethod(tracker: Tracker): ((arg: Tracker) => void) | undefined {
+    const proto = Object.getPrototypeOf(tracker);
+    if (proto === null || typeof proto !== 'object') return undefined;
+    const merge = Reflect.get(proto, 'merge');
+    return isMergeMethod(merge) ? merge : undefined;
+}
+
 function assertMultithreadTracker(tracker: Tracker, id: string, path: string): void {
-    const mergeFn = (Object.getPrototypeOf(tracker) as { merge?: (arg: Tracker) => void }).merge;
+    const mergeFn = getTrackerMergeMethod(tracker);
     if (!mergeFn || mergeFn === BaseTracker.prototype.merge) {
         throw new Error(`Tracker "${id}" must implement merge(...) for multithreaded analysis`);
     }

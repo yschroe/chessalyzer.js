@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'bun:test';
 
 import { normalizeAnalysisConfigs, normalizeAnalyzeOptions } from '#core/analysis-config';
+import { MoveTracker } from '#trackers/base-tracker';
 import { GameTracker } from '#trackers/game-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
-import type { AnalyzeRun } from '#types/analysis';
+import type { AnalyzeOptions, AnalyzeRun } from '#types/analysis';
 
 describe('normalizeAnalyzeOptions', () => {
     it('rejects empty runs', () => {
-        expect(() => normalizeAnalyzeOptions({ runs: [] })).toThrow(
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- invalid input for runtime guard
+        expect(() => normalizeAnalyzeOptions({ runs: [] } as unknown as AnalyzeOptions)).toThrow(
             'runs must contain at least one entry',
         );
     });
@@ -17,7 +19,7 @@ describe('normalizeAnalyzeOptions', () => {
             normalizeAnalyzeOptions({
                 runs: [{ trackers: [new TileTracker()] }],
                 trackers: [new TileTracker()],
-            }),
+            } as AnalyzeOptions),
         ).toThrow('Cannot set both runs and top-level trackers');
     });
 });
@@ -88,5 +90,37 @@ describe('normalizeAnalysisConfigs', () => {
     it('returns one normalized config per run', () => {
         const { configs } = normalizeAnalysisConfigs([baseRun]);
         expect(configs).toHaveLength(1);
+    });
+
+    it('does not require trackerId for single-threaded analysis', () => {
+        const tracker = new TileTracker();
+        const { configs } = normalizeAnalysisConfigs([{ trackers: [tracker] }], {
+            multithreaded: false,
+        });
+        expect(configs[0]?.trackerData).toEqual([]);
+    });
+
+    it('requires trackerId for multithreaded analysis', () => {
+        class LocalTracker extends MoveTracker {
+            override trackMoves() {}
+        }
+        expect(() =>
+            normalizeAnalysisConfigs([{ trackers: [new LocalTracker()] }], {
+                multithreaded: true,
+            }),
+        ).toThrow('static trackerId');
+    });
+
+    it('requires merge for multithreaded analysis', () => {
+        class BareTracker extends MoveTracker {
+            static override trackerId = 'BareTracker';
+            static override workerModule = import.meta.url;
+            override trackMoves() {}
+        }
+        expect(() =>
+            normalizeAnalysisConfigs([{ trackers: [new BareTracker()] }], {
+                multithreaded: true,
+            }),
+        ).toThrow('must implement merge');
     });
 });

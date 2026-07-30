@@ -12,7 +12,7 @@ export default class CustomGameTracker extends BaseGameTracker {
     wins = [0, 0, 0];
     games = 0;
 
-    merge(tracker: Tracker) {
+    override merge(tracker: Tracker) {
         if (!isCustomGameTracker(tracker)) return;
         this.wins[0] += tracker.wins[0];
         this.wins[1] += tracker.wins[1];
@@ -21,7 +21,7 @@ export default class CustomGameTracker extends BaseGameTracker {
         this.time += tracker.time;
     }
 
-    trackGame(game: ParsedGame) {
+    override trackGame(game: ParsedGame) {
         this.games += 1;
         switch (game.result) {
             case '1-0':

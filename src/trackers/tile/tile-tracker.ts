@@ -4,7 +4,6 @@ import HeatmapPresets from '#trackers/heatmaps/tile-heatmaps';
 import {
     createTileGrid,
     mergeCellStats,
-    resetTileGrid,
     setStartingPiece,
     tileCellAt,
 } from '#trackers/tile/tile-grid';
@@ -63,14 +62,6 @@ class TileTracker extends MoveTracker {
                 mergeCellStats(this.tiles[row][col], tracker.tiles[row][col]);
             }
         }
-    }
-
-    /** Clear per-batch counters and restore grid for worker instance reuse. */
-    resetWorkerBatch() {
-        this.time = 0;
-        this.movesGame = 0;
-        this.movesTotal = 0;
-        resetTileGrid(this.tiles);
     }
 
     override trackMoves(data: Action[]) {

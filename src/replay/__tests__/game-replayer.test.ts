@@ -57,11 +57,11 @@ describe('GameReplayer', () => {
             class ActionCounter extends MoveTracker {
                 actionCount = 0;
 
-                trackMoves(actions: Action[]) {
+                override trackMoves(actions: Action[]) {
                     this.actionCount += actions.length;
                 }
 
-                merge() {}
+                override merge() {}
             }
 
             const counter = new ActionCounter();
