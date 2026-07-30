@@ -29,7 +29,7 @@ A JavaScript library for batch analyzing chess games.
 - Filter games (e.g. only analyze games where WhiteElo > 1800)
 - Fully modular, track only the stats you need to preserve performance
 - Generate heatmaps out of the generated data
-- It's fast and highly parallelized: Processes ~25M moves/s on an Apple M1 (PGN parse only; no board replay or validation)
+- It's fast and highly parallelized: Processes ~20M moves/s on an Apple M1 (PGN parse only; no board replay or validation)
 - Handles big files easily
 - Just one dependency (chalk)
 

@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Version 4 is a complete reshape: a simpler API, faster runs, and imports that match how you actually use the library.
+None.
+
+## [4.0.0-alpha.0] 2026-07-30
+
+Version 4 is a complete redesign: a simpler API, faster runs, and imports that match how you actually use the library.
 
 ### Highlights
 
