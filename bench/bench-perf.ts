@@ -30,9 +30,12 @@ import { formatSeconds, printTimedResults, runTimed, type TimedRunResult } from 
 const RUNS = Number(process.env.BENCH_RUNS ?? 2);
 const WARMUP = process.env.BENCH_WARMUP !== '0';
 const isSingleThreaded = process.argv.includes('single-threaded');
+const replayModes = process.argv.slice(2).filter((arg) => !arg.startsWith('--'));
 
 /** Count-only replay modes exercised by this bench (no move trackers). */
-const SCENARIOS = ['skip', 'board'] as const satisfies readonly ReplayMode[];
+const SCENARIOS = (
+    replayModes.length > 0 ? replayModes : ['skip', 'board']
+) as readonly ReplayMode[];
 
 interface AnalyzeSample {
     games: number;
