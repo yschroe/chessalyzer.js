@@ -10,5 +10,7 @@ bench/.cache/
 # built library
 /lib
 
+/playground
+
 # generated at release time
 RELEASE_BODY.md
