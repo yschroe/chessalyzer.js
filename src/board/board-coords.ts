@@ -54,7 +54,8 @@ export function algebraicToCoords(square: string): BoardCoord | undefined {
 export function algebraicToCoordsAt(san: string, end: number): BoardCoord {
     const file = san.charCodeAt(end - 2) - 97;
     const rank = san.charCodeAt(end - 1) - 49;
-    return algebraicToCoordsTable[file * 8 + rank];
+    // Caller guarantees a valid square in the trailing SAN characters (table always covers 0..63).
+    return algebraicToCoordsTable[file * 8 + rank]!;
 }
 
 /** Convert internal `[row, col]` to algebraic notation (e.g. `[6, 4]` → `'e2'`). */

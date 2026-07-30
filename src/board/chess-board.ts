@@ -5,9 +5,6 @@ import type { Action, MoveAction, CaptureAction, PromoteAction } from '#types/ac
 import type { ChessPiece } from '#types/game';
 import type { PieceToken, PlayerColor } from '#types/tokens';
 
-/** Dense 64-byte board; index invariant 0..63 from on-board row/col. */
-type TileBytes = Uint8Array & { [index: number]: number };
-
 /** Bit mask for the color of a piece. */
 const COLOR_BIT_MASK = 0b10000000;
 /** Bit mask for the index of a piece. */
@@ -64,7 +61,8 @@ class ChessBoard {
         'Pg',
         'Ph',
     ];
-    private tiles: TileBytes;
+    /** Dense 64-byte board; index always 0..63 for on-board row/col (reads use `!`). */
+    private tiles: Uint8Array;
     private pieces: { w: PiecePositions; b: PiecePositions };
     /** Names for promoted pawns; indexed by (pieceIdx - pieceLookupList.length - 1). */
     private promotedPieces: {
@@ -99,12 +97,12 @@ class ChessBoard {
 
     /** True if square holds a pawn (standard piece indices 9–16). */
     isPawnAt(row: number, col: number): boolean {
-        const idx = this.tiles[row * 8 + col] & PIECE_INDEX_BIT_MASK;
+        const idx = this.tiles[row * 8 + col]! & PIECE_INDEX_BIT_MASK;
         return idx >= 9 && idx <= 16;
     }
 
     getPieceNameAt(row: number, col: number): string | null {
-        const pieceNumber = this.tiles[row * 8 + col];
+        const pieceNumber = this.tiles[row * 8 + col]!;
         if (pieceNumber === 0) return null;
 
         const color: PlayerColor = pieceNumber & COLOR_BIT_MASK ? 'b' : 'w';
@@ -126,7 +124,7 @@ class ChessBoard {
     }
 
     getPieceColorAt(row: number, col: number): PlayerColor | null {
-        const pieceNumber = this.tiles[row * 8 + col];
+        const pieceNumber = this.tiles[row * 8 + col]!;
         if (pieceNumber === 0) return null;
         return pieceNumber & COLOR_BIT_MASK ? 'b' : 'w';
     }
@@ -175,7 +173,7 @@ class ChessBoard {
     moveByToken(player: PlayerColor, tokenChar: number, from: BoardCoord, to: BoardCoord): void {
         const fromIdx = from[0] * 8 + from[1];
         const toIdx = to[0] * 8 + to[1];
-        this.tiles[toIdx] = this.tiles[fromIdx];
+        this.tiles[toIdx] = this.tiles[fromIdx]!;
         this.tiles[fromIdx] = 0;
         this.pieces[player].moveByChar(tokenChar, from, to);
     }
@@ -191,7 +189,7 @@ class ChessBoard {
      */
     captureAt(player: PlayerColor, on: BoardCoord): void {
         const onIdx = on[0] * 8 + on[1];
-        const pieceNumber = this.tiles[onIdx];
+        const pieceNumber = this.tiles[onIdx]!;
         if (pieceNumber === 0) return;
 
         this.tiles[onIdx] = 0;

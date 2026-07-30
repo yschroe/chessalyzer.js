@@ -9,7 +9,7 @@ export default class CustomGameTracker extends BaseGameTracker {
     static override trackerId = 'CustomGameTracker';
     static override workerModule = import.meta.url;
 
-    wins = [0, 0, 0];
+    wins: [number, number, number] = [0, 0, 0];
     games = 0;
 
     override merge(tracker: Tracker) {

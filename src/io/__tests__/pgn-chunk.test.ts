@@ -82,6 +82,7 @@ describe('readPgnChunks', () => {
         expect(chunks).toHaveLength(1);
         const [chunk] = chunks;
         expect(chunk).toBeDefined();
+        if (!chunk) return;
         const games = parseGamesFromLines(chunk.text.split('\n'), { parseHeaders: true });
         expect(games).toHaveLength(1);
         expect(games[0]?.result).toBe('1-0');
