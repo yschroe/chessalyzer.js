@@ -69,7 +69,7 @@ Every PGN file goes through four steps:
 
 1. **I/O** — read the file from disk (as lines, or as byte-sized chunks in multithreaded mode).
 2. **PGN parse** — extract headers, mainline move strings (SAN), and game results. No board involved yet — this is the fastest step if you just want the raw game data.
-3. **Replay** — decode each SAN string and play it on an internal board. Needed whenever your trackers care about *where* pieces are, not just *what* was played.
+3. **Replay** — decode each SAN string and play it on an internal board. Needed whenever your trackers care about _where_ pieces are, not just _what_ was played.
 4. **Analyze** — run your trackers and accumulate statistics.
 
 When people say "PGN parser," they usually mean step 2 only. Turning a file into actual legal moves takes **PGN parse + replay**.

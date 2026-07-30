@@ -5,6 +5,10 @@
  * manual-tests/test-release-singlethreaded.ts (single-threaded), but uses a
  * larger cached PGN fixture so startup overhead is a smaller share of runtime.
  *
+ * Scenarios (no trackers):
+ *   - skip  — PGN parse + counts only (default analyzePGN path)
+ *   - board — same plus internal board replay (`replay: 'board'`)
+ *
  * Run:
  *   npm run bench:perf
  *   npm run bench:perf:bun
@@ -17,6 +21,7 @@
  *   BENCH_PGN_REPEATS=2    Concatenate the largest pgn/*.pgn this many times
  */
 import { analyzePGN } from '#core/analyze';
+import type { ReplayMode } from '#replay/replay-mode';
 
 import { resolvePerfPgn } from './lib/pgn-fixture';
 import { getRuntimeLabel } from './lib/report';
@@ -25,6 +30,9 @@ import { formatSeconds, printTimedResults, runTimed, type TimedRunResult } from 
 const RUNS = Number(process.env.BENCH_RUNS ?? 2);
 const WARMUP = process.env.BENCH_WARMUP !== '0';
 const isSingleThreaded = process.argv.includes('single-threaded');
+
+/** Count-only replay modes exercised by this bench (no move trackers). */
+const SCENARIOS = ['skip', 'board'] as const satisfies readonly ReplayMode[];
 
 interface AnalyzeSample {
     games: number;
@@ -41,8 +49,12 @@ async function runAnalyzeScenario(
     label: string,
     path: string,
     singlethreaded: boolean,
+    replay: (typeof SCENARIOS)[number],
 ): Promise<ScenarioResult> {
-    const config = singlethreaded ? ({ workers: false } as const) : undefined;
+    const config = {
+        replay,
+        ...(singlethreaded ? ({ workers: false } as const) : {}),
+    };
     const timed = await runTimed<AnalyzeSample>(
         label,
         async () => {
@@ -74,6 +86,7 @@ async function runAnalyzeScenario(
 }
 
 const fixture = await resolvePerfPgn();
+const threading = isSingleThreaded ? 'single-threaded' : 'multithreaded';
 
 console.log('Chessalyzer end-to-end performance');
 console.log(`Runtime: ${getRuntimeLabel()}`);
@@ -83,18 +96,25 @@ console.log(
 );
 console.log(`Size: ${(fixture.bytes / (1024 * 1024)).toFixed(1)} MiB`);
 console.log(`Runs: ${RUNS}${WARMUP ? ' (+ warmup)' : ''}`);
+console.log(`Path: ${threading}`);
 
-const results = [
-    await runAnalyzeScenario(
-        isSingleThreaded ? 'single-threaded' : 'multithreaded',
-        fixture.path,
-        isSingleThreaded,
-    ),
-];
+const results: ScenarioResult[] = [];
+for (const replay of SCENARIOS) {
+    results.push(
+        await runAnalyzeScenario(
+            `${threading} · replay mode: ${replay}`,
+            fixture.path,
+            isSingleThreaded,
+            replay,
+        ),
+    );
+}
 
 printTimedResults(results, { stddev: true, cv: true, movesPerSec: results.map((r) => r.meanMps) });
 
-const sample = results[0]!;
-console.log(
-    `\nOutput: ${sample.games.toLocaleString()} games, ${sample.moves.toLocaleString()} moves (${formatSeconds(sample.meanMs)}s mean)`,
-);
+console.log('');
+for (const sample of results) {
+    console.log(
+        `${sample.label}: ${sample.games.toLocaleString()} games, ${sample.moves.toLocaleString()} moves (${formatSeconds(sample.meanMs)}s mean)`,
+    );
+}
