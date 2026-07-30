@@ -6,6 +6,7 @@ export type {
     AnalyzeRunResult,
     WorkerOptions,
 } from '#types/analysis';
+export type { ReplayMode } from '#replay/replay-mode';
 export type {
     AnalyzeError,
     AnalyzeErrorCode,

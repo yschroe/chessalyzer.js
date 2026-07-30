@@ -1,3 +1,4 @@
+import type { BoardCoord, MutableBoardCoord } from '#board/board-coords';
 import PiecePositions from '#board/piece-positions';
 import type { Action, MoveAction, CaptureAction, PromoteAction } from '#types/actions';
 import type { ChessPiece } from '#types/game';
@@ -83,11 +84,11 @@ class ChessBoard {
     }
 
     /** Hot-path helper: piece name only, no object allocation. */
-    getPieceNameOnCoords(coords: readonly number[]): string | null {
+    getPieceNameOnCoords(coords: BoardCoord): string | null {
         return this.getPieceNameAt(coords[0], coords[1]);
     }
 
-    isEmpty(coords: readonly number[]): boolean {
+    isEmpty(coords: BoardCoord): boolean {
         return this.tiles[coords[0] * 8 + coords[1]] === 0;
     }
 
@@ -130,7 +131,7 @@ class ChessBoard {
     }
 
     /** Returns the king's live `[row, col]` reference (always exactly one king per side). */
-    getKingPosition(player: PlayerColor): number[] {
+    getKingPosition(player: PlayerColor): MutableBoardCoord {
         return this.pieces[player].K[0] ?? [0, 0];
     }
 
@@ -138,7 +139,7 @@ class ChessBoard {
      * Live position list for a piece token. Used by {@link PieceFinder}.
      * Do not mutate the outer array (push/splice); coordinate values are updated in place.
      */
-    getPositionsForToken(player: PlayerColor, token: PieceToken): number[][] {
+    getPositionsForToken(player: PlayerColor, token: PieceToken): MutableBoardCoord[] {
         return this.pieces[player].listForToken(token);
     }
 
@@ -162,7 +163,7 @@ class ChessBoard {
         }
     }
 
-    movePiece(player: PlayerColor, piece: string, from: number[], to: number[]): void {
+    movePiece(player: PlayerColor, piece: string, from: BoardCoord, to: BoardCoord): void {
         this.moveByToken(player, piece.charCodeAt(0), from, to);
     }
 
@@ -170,12 +171,7 @@ class ChessBoard {
      * Move using SAN piece token char code ('N'=78, 'P'=80, …).
      * Updates both the tile array and the piece position index in one step.
      */
-    moveByToken(
-        player: PlayerColor,
-        tokenChar: number,
-        from: readonly number[],
-        to: readonly number[],
-    ): void {
+    moveByToken(player: PlayerColor, tokenChar: number, from: BoardCoord, to: BoardCoord): void {
         const fromIdx = from[0] * 8 + from[1];
         const toIdx = to[0] * 8 + to[1];
         this.tiles[toIdx] = this.tiles[fromIdx];
@@ -183,7 +179,7 @@ class ChessBoard {
         this.pieces[player].moveByChar(tokenChar, from, to);
     }
 
-    capturePiece(player: PlayerColor, takenPiece: string, on: readonly number[]): void {
+    capturePiece(player: PlayerColor, takenPiece: string, on: BoardCoord): void {
         this.pieces[player === 'w' ? 'b' : 'w'].capture(takenPiece, on);
         this.tiles[on[0] * 8 + on[1]] = 0;
     }
@@ -192,7 +188,7 @@ class ChessBoard {
      * Capture whatever occupies `on`: clear tile, then update the opponent's piece list.
      * Pawns are cleared from tiles only — they are not in {@link PiecePositions}.
      */
-    captureAt(player: PlayerColor, on: readonly number[]): void {
+    captureAt(player: PlayerColor, on: BoardCoord): void {
         const onIdx = on[0] * 8 + on[1];
         const pieceNumber = this.tiles[onIdx];
         if (pieceNumber === 0) return;
@@ -215,7 +211,7 @@ class ChessBoard {
      * Replace the pawn on `on` with a promoted piece.
      * Assigns a new tile index beyond the standard lookup table and records the name.
      */
-    promotePiece(player: PlayerColor, on: readonly number[], to: string): void {
+    promotePiece(player: PlayerColor, on: BoardCoord, to: string): void {
         const onIdx = on[0] * 8 + on[1];
 
         const pieceNumber =

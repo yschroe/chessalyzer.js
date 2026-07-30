@@ -3,11 +3,11 @@ import { describe, it, beforeAll, expect } from 'bun:test';
 // Optional golden regression tests against the large corpus (test/corpus/).
 // Skipped automatically when corpus files are not present locally.
 import { analyzePGN } from 'chessalyzer.js';
+import type { AnalyzeResult } from 'chessalyzer.js';
 import { GameTracker, PieceTracker, isTrackedPiece } from 'chessalyzer.js/trackers';
+import type { HeatmapAnalysisFunc } from 'chessalyzer.js/trackers';
+import type { ParsedGame } from 'chessalyzer.js/trackers';
 
-import type { AnalyzeResult } from '../../src/types/analysis';
-import type { ParsedGame } from '../../src/types/parse-pgn';
-import type { HeatmapAnalysisFunc } from '../../src/types/tracker';
 import { corpusPath, getCorpusEntry } from '../helpers/fixtures';
 
 const pgnPath = await corpusPath('asorted');

@@ -282,12 +282,14 @@ The function you create for heatmap generation gets passed up to four parameters
 2. `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The `generateHeatmap(...)` function loops over every square of the board to calculate a heat map value for each tile. `sqrData` is an object with the following entries:
 
     ```typescript
+    import type { BoardCoord, SquareData } from 'chessalyzer.js/trackers';
+
     interface SquareData {
         // The square in algebraic notation (e.g. 'a2').
         alg: string;
 
-        // The square in board coordinates (e.g. [6,0]).
-        coords: number[];
+        // The square in board coordinates as [row, col] (row 0 = rank 8, col 0 = a-file).
+        coords: BoardCoord;
 
         // The piece that starts at the passed square. If no piece starts at the passed square, piece is null.
         piece: {
@@ -353,6 +355,7 @@ Derive from `MoveTracker` (move-level) or `BaseGameTracker` (game-level). Single
 See [`manual-tests/custom-game-tracker.ts`](manual-tests/custom-game-tracker.ts) for a minimal game-level example.
 
 - `track(data)`: called per half-move (`Action[]`) or per game (`ParsedGame` with `moves`, optional `result`, optional `headers`)
+- **Castling** yields two `move` actions (king leg, then rook leg) in one `Action[]` batch — `TileTracker` counts castling as one move for `movesTotal`, but move trackers see both legs
 - `merge(tracker)`: required for multithreading (see example below)
 
 Example skeleton:
@@ -371,11 +374,23 @@ export default class MyTracker extends BaseGameTracker {
 }
 ```
 
-Import bases and types from the trackers subpath:
+Import bases and types from the trackers subpath (Action variants are also on `chessalyzer.js/replay`):
 
 ```javascript
 import { BaseGameTracker, MoveTracker } from 'chessalyzer.js/trackers';
-import type { ParsedGame, Tracker } from 'chessalyzer.js/trackers';
+import type {
+    Action,
+    BoardCoord,
+    CaptureAction,
+    HeatmapAnalysisFunc,
+    HeatmapPresetEntry,
+    MoveAction,
+    ParsedGame,
+    PromoteAction,
+    SquareData,
+    Tracker,
+    TrackerConfig,
+} from 'chessalyzer.js/trackers';
 ```
 
 Example merge for the built-in GameTracker:

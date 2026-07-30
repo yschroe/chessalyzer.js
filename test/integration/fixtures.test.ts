@@ -1,10 +1,10 @@
 import { describe, it, beforeAll, afterAll, expect } from 'bun:test';
 
 import { analyzePGN } from 'chessalyzer.js';
+import type { AnalyzeResult } from 'chessalyzer.js';
 import { GameTracker, PieceTracker, TileTracker } from 'chessalyzer.js/trackers';
+import type { ParsedGame } from 'chessalyzer.js/trackers';
 
-import type { AnalyzeResult } from '../../src/types/analysis';
-import type { ParsedGame } from '../../src/types/parse-pgn';
 import {
     allFixtureIds,
     cleanupTmpPgns,

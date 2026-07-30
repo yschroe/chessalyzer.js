@@ -1,4 +1,4 @@
-import { BOARD_INDICES, isBoardIndex, type BoardIndex } from '#board/board-coords';
+import { BOARD_INDICES, isBoardIndex, type BoardCoord, type BoardIndex } from '#board/board-coords';
 import {
     PAWN_TEMPLATE,
     PIECE_TEMPLATE,
@@ -194,7 +194,7 @@ export function resetTileGrid(tiles: TileGrid): void {
 }
 
 /** Resolve dynamic board coords to a grid cell when indices are in range. */
-export function tileCellAt(tiles: TileGrid, coords: number[]): StatsField | undefined {
+export function tileCellAt(tiles: TileGrid, coords: BoardCoord): StatsField | undefined {
     const [row, col] = coords;
     if (!isBoardIndex(row) || !isBoardIndex(col)) {
         return undefined;

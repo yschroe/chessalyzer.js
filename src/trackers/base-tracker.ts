@@ -1,5 +1,6 @@
 import { performance } from 'node:perf_hooks';
 
+import type { BoardCoord } from '#board/board-coords';
 import { generateComparisonHeatmap, generateHeatmap } from '#trackers/heatmap-utils';
 import type { Action } from '#types/actions';
 import type { ParsedGame } from '#types/parse-pgn';
@@ -60,7 +61,7 @@ class BaseTracker implements Tracker {
 
     generateHeatmap(
         analysisFunc: string | HeatmapAnalysisFunc,
-        square?: string | number[],
+        square?: string | BoardCoord,
         optData?: unknown,
     ): HeatmapData {
         return generateHeatmap(this, this.resolveHeatmapFunc(analysisFunc), square, optData);
@@ -69,7 +70,7 @@ class BaseTracker implements Tracker {
     generateComparisonHeatmap(
         compData: Tracker,
         analysisFunc: string | HeatmapAnalysisFunc,
-        square?: string | number[],
+        square?: string | BoardCoord,
         optData?: unknown,
     ): HeatmapData {
         return generateComparisonHeatmap(

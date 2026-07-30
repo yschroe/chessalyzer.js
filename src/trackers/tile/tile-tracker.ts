@@ -1,4 +1,4 @@
-import { BOARD_INDICES, isBoardIndex } from '#board/board-coords';
+import { BOARD_INDICES, isBoardIndex, type BoardCoord } from '#board/board-coords';
 import { MoveTracker } from '#trackers/base-tracker';
 import HeatmapPresets from '#trackers/heatmaps/tile-heatmaps';
 import {
@@ -158,7 +158,7 @@ class TileTracker extends MoveTracker {
      * Record capture stats on `pos` for taker and taken.
      * Taken piece occupation is flushed before clearing the square.
      */
-    processCapture(pos: number[], player: string, takingPiece: string, takenPiece: string): void {
+    processCapture(pos: BoardCoord, player: string, takingPiece: string, takenPiece: string): void {
         const cell = tileCellAt(this.tiles, pos);
         const bucket = playerBucket(player);
         if (!cell || !bucket) return;
@@ -184,7 +184,7 @@ class TileTracker extends MoveTracker {
      * Add `(movesGame - lastMovedOn)` to wasOn for the piece currently on `pos`.
      * Measures how many half-moves the piece occupied the square since it arrived.
      */
-    addOccupation(pos: number[]): void {
+    addOccupation(pos: BoardCoord): void {
         const cell = tileCellAt(this.tiles, pos);
         if (!cell) return;
 

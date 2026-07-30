@@ -1,3 +1,4 @@
+import type { BoardCoord, MutableBoardCoord } from '#board/board-coords';
 import type ChessBoard from '#board/chess-board';
 import { ReplayFailure } from '#replay/replay-failure';
 import type { PieceToken, PlayerColor } from '#types/tokens';
@@ -38,7 +39,7 @@ function moveNotFoundFailure(
  */
 export default class PieceFinder {
     /** Reused buffer for candidate filtering — avoids per-move array allocation. */
-    private readonly filterBuf: number[][] = [];
+    private readonly filterBuf: MutableBoardCoord[] = [];
 
     constructor(private readonly board: ChessBoard) {}
 
@@ -49,13 +50,13 @@ export default class PieceFinder {
      * @param tokenChar ASCII code of piece letter (e.g. 'N' → 78).
      */
     findPiece(
-        toPosition: readonly number[],
+        toPosition: BoardCoord,
         mustBeInRow: number | null,
         mustBeInCol: number | null,
         token: PieceToken,
         tokenChar: number,
         player: PlayerColor,
-    ): number[] {
+    ): MutableBoardCoord {
         const [tarRow, tarCol] = toPosition;
         if (tarRow === undefined || tarCol === undefined) {
             throw moveNotFoundFailure(token, player, -1, -1);
@@ -153,11 +154,7 @@ export default class PieceFinder {
      * edge; if an enemy queen/rook/bishop can attack through the vacated `from` square,
      * the move is rejected.
      */
-    private checkCheck(
-        from: readonly number[],
-        to: readonly number[],
-        player: PlayerColor,
-    ): boolean {
+    private checkCheck(from: BoardCoord, to: BoardCoord, player: PlayerColor): boolean {
         const opColor = player === 'w' ? 'b' : 'w';
         const king = this.board.getKingPosition(player);
         const [kingRow, kingCol] = king;

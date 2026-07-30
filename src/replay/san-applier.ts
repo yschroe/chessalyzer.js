@@ -1,4 +1,4 @@
-import { algebraicToCoordsAt } from '#board/board-coords';
+import { algebraicToCoordsAt, type BoardCoord } from '#board/board-coords';
 import { ReplayFailure } from '#replay/replay-failure';
 import type SanContext from '#replay/san-context';
 import type { PieceToken } from '#types/tokens';
@@ -104,7 +104,7 @@ export default class SanApplier {
         }
         const restLen = restEnd - 1;
 
-        let from: number[];
+        let from: BoardCoord;
         if (restLen === 2) {
             from = algebraicToCoordsAt(san, restEnd);
         } else if (restLen === 1) {

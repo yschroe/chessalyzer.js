@@ -1,3 +1,4 @@
+import type { BoardCoord } from '#board/board-coords';
 import type { Action } from '#types/actions';
 import type { SquareData } from '#types/game';
 import type { ParsedGame } from '#types/parse-pgn';
@@ -28,13 +29,13 @@ export interface Tracker {
     analyze: (arg: ParsedGame | Action[]) => void;
     generateHeatmap: (
         fun: string | HeatmapAnalysisFunc,
-        square?: string | number[],
+        square?: string | BoardCoord,
         optData?: unknown,
     ) => HeatmapData;
     generateComparisonHeatmap: (
         compData: Tracker,
         fun: string | HeatmapAnalysisFunc,
-        square?: string | number[],
+        square?: string | BoardCoord,
         optData?: unknown,
     ) => HeatmapData;
     track: (arg: ParsedGame | Action[]) => void;
