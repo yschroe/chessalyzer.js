@@ -1,9 +1,10 @@
 import { BaseGameTracker } from '#trackers/base-tracker';
 import type { ParsedGame } from '#types/parse-pgn';
-import type { Tracker } from '#types/tracker';
 
-function isGameTracker(tracker: Tracker): tracker is GameTracker {
-    return 'results' in tracker && 'ECO' in tracker;
+function isGameTracker(tracker: unknown): tracker is GameTracker {
+    return (
+        typeof tracker === 'object' && tracker !== null && 'results' in tracker && 'ECO' in tracker
+    );
 }
 
 class GameTracker extends BaseGameTracker {
@@ -21,7 +22,7 @@ class GameTracker extends BaseGameTracker {
         this.ECO = {};
     }
 
-    override merge(tracker: Tracker) {
+    override merge(tracker: unknown) {
         if (!isGameTracker(tracker)) return;
 
         this.results.white += tracker.results.white;
@@ -69,7 +70,7 @@ class GameTracker extends BaseGameTracker {
         }
     }
 
-    finish() {
+    override finish() {
         this.ECO = Object.keys(this.ECO)
             .toSorted()
             .reduce<Record<string, number>>((a, c) => {

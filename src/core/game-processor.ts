@@ -16,6 +16,7 @@ import { GameAssembler } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
 import type { AnalyzeRun, WorkerOptions } from '#types/analysis';
 import type { GameAndMoveCount, GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
+import { toParsedGame } from '#types/parse-pgn';
 import type { WorkerBatchTask, WorkerInitData, WorkerTaskConfigEntry } from '#types/worker';
 
 /** Path to the worker file. */
@@ -106,7 +107,10 @@ class GameProcessor {
             if (!game) return;
 
             for (const cfg of this.configs) {
-                if (!cfg.isDone && (!cfg.config.hasFilter || cfg.config.filter(game))) {
+                if (
+                    !cfg.isDone &&
+                    (!cfg.config.hasFilter || cfg.config.filter(toParsedGame(game)))
+                ) {
                     cfg.readGames += 1;
                     gameReplayer.processGame(
                         game,

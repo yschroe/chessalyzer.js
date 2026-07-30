@@ -30,6 +30,14 @@ Version 4 is a fresh coat of paint: a simpler API, faster runs, and imports that
 - Import built-in trackers by name from `chessalyzer.js/trackers` (`GameTracker`, `PieceTracker`, `TileTracker`). Base classes and types live there too.
 - `parsePGN` moved to `chessalyzer.js/pgn`; the root package export is analyze-only.
 - Removed deprecated `workers.batchSize` option.
+- **Alpha API hardening:** `ParsedGame.moves` is `ParsedMove[]`; `Action` coords are `Square` strings; `Move` tile helper renamed to `MoveCoords`; `GameResult` union; `errorsTruncated` is `boolean`; slim `Tracker` interface with `merge(unknown)`; expanded type exports (see README).
+
+### Alpha API contract (v4)
+
+- **`ParsedGame.moves`** — `ParsedMove[]` (`{ san: string }`), extensible for future NAG/comment fields. The analyze hot path keeps internal `string[]` movetext and materializes objects only at public boundaries (parse APIs, filters, game trackers).
+- **`Action` coordinates** — interned algebraic `Square` strings (`'e1'`, `'e4'`, …) on `from` / `to` / `on`. Optional `castle` / `enPassant` markers on move/capture actions.
+- **`Tracker` interface** — slim contract (`type`, `track`, optional `nextGame` / `finish` / `merge`). Heatmap helpers and profiling live on `BaseTracker` only.
+- **Types exported** from root: `AnalyzeSharedOptions`, `AnalyzeSingleRunOptions`, `GameFilter`, `HeatmapData`, etc. From `/trackers`: `PlayerColor`, `Piece`, tile cell types, `MoveCoords`. From `/replay`: `Square`, `BaseAction`, coord helpers.
 
 ### Under the hood
 

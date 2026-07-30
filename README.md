@@ -100,11 +100,11 @@ import { GameTracker } from 'chessalyzer.js/trackers';
 
 // Just the games — no board replay
 const games = await parsePGN('<pathToPgnFile>', { headers: true, maxGames: 100 });
-// games[0].moves — mainline SAN strings
+// games[0].moves — mainline {@link ParsedMove} objects (`move.san` is the SAN token)
 
 // Same, but one game at a time (easier on memory for huge files)
 for await (const game of streamParsePGN('<pathToPgnFile>', { headers: true })) {
-    // game.moves — mainline SAN strings
+    // game.moves[i].san — mainline SAN strings
 }
 
 // Full pipeline
@@ -189,8 +189,10 @@ await analyzePGN('<pathToPgnFile>', {
 });
 
 let func = (data, loopSqrData) => {
-    const { coords } = loopSqrData;
-    let val = data.tiles[coords[0]][coords[1]].w.wasOn;
+    const { square } = loopSqrData;
+    const row = 7 - (square.charCodeAt(1) - 49);
+    const col = square.charCodeAt(0) - 97;
+    let val = data.tiles[row][col].w.wasOn;
     val = (val * 100) / data.movesTotal;
     return val;
 };
@@ -335,9 +337,11 @@ Want to track something the built-ins do not cover? Create your own tracker by e
 
 For single-threaded analysis, implement `trackMoves` or `trackGame` and you are done. For multithreading, you need three small extras:
 
-1. Put the tracker in its **own module** with a **default export**.
+1. Put the tracker in its **own module** with a **default export** (zero-arg constructor).
 2. Add **`static trackerId = 'YourUniqueId'`** and **`static workerModule = import.meta.url`** so workers can find and load your class.
-3. Implement **`merge(tracker)`** to add the worker's batch stats into yours. The argument is a plain object (not an instance of your class), so duck-type it rather than using `instanceof`.
+3. Implement **`merge(tracker)`** to add the worker's batch stats into yours. The argument is a plain object after structured clone — duck-type it (`unknown`); do **not** use `instanceof`.
+
+**Move trackers:** `SanDecoder` returns a reused `Action[]` buffer each half-move. Copy fields you need to retain across moves; scalar fields (`san`, `piece`, …) are overwritten on the next decode.
 
 See [`manual-tests/custom-game-tracker.ts`](manual-tests/custom-game-tracker.ts) for a minimal working example.
 
@@ -365,13 +369,18 @@ Import bases and types from the trackers subpath:
 import { BaseGameTracker, MoveTracker } from 'chessalyzer.js/trackers';
 import type {
     Action,
-    BoardCoord,
+    BaseAction,
     CaptureAction,
+    GameFilter,
     HeatmapAnalysisFunc,
     HeatmapPresetEntry,
     MoveAction,
+    MoveCoords,
     ParsedGame,
+    ParsedMove,
+    PlayerColor,
     PromoteAction,
+    Square,
     SquareData,
     Tracker,
     TrackerConfig,

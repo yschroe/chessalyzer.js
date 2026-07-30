@@ -1,8 +1,13 @@
 import { BaseGameTracker } from 'chessalyzer.js/trackers';
-import type { ParsedGame, Tracker } from 'chessalyzer.js/trackers';
+import type { ParsedGame } from 'chessalyzer.js/trackers';
 
-function isCustomGameTracker(tracker: Tracker): tracker is CustomGameTracker {
-    return 'wins' in tracker && Array.isArray(tracker.wins);
+function isCustomGameTracker(tracker: unknown): tracker is CustomGameTracker {
+    return (
+        typeof tracker === 'object' &&
+        tracker !== null &&
+        'wins' in tracker &&
+        Array.isArray(tracker.wins)
+    );
 }
 
 export default class CustomGameTracker extends BaseGameTracker {
@@ -12,7 +17,7 @@ export default class CustomGameTracker extends BaseGameTracker {
     wins: [number, number, number] = [0, 0, 0];
     games = 0;
 
-    override merge(tracker: Tracker) {
+    override merge(tracker: unknown) {
         if (!isCustomGameTracker(tracker)) return;
         this.wins[0] += tracker.wins[0];
         this.wins[1] += tracker.wins[1];

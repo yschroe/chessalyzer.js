@@ -2,9 +2,8 @@ import { MoveTracker } from '#trackers/base-tracker';
 import HeatmapPresets from '#trackers/heatmaps/piece-heatmaps';
 import type { Action } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
-import type { Tracker } from '#types/tracker';
 
-type Piece =
+export type Piece =
     | 'Pa'
     | 'Pb'
     | 'Pc'
@@ -73,7 +72,7 @@ class PieceTracker extends MoveTracker {
         ) as PieceStatsMap;
     }
 
-    override merge(tracker: Tracker) {
+    override merge(tracker: unknown) {
         if (!isPieceTracker(tracker)) return;
 
         this.time += tracker.time;
@@ -110,8 +109,8 @@ class PieceTracker extends MoveTracker {
     }
 }
 
-function isPieceTracker(tracker: Tracker): tracker is PieceTracker {
-    return 'b' in tracker && 'w' in tracker;
+function isPieceTracker(tracker: unknown): tracker is PieceTracker {
+    return typeof tracker === 'object' && tracker !== null && 'b' in tracker && 'w' in tracker;
 }
 
 export { PieceTracker };

@@ -1,5 +1,6 @@
 /**
  * Board replay mode for one game (string discriminant — no allocations).
+ * Union is open — new modes may be added without a major version bump.
  * - `skip` — no board replay (PGN parse + game trackers + counts only)
  * - `board` — SAN decode + apply on board ({@link SanApplier}); no {@link Action} objects
  * - `actions` — SAN decode + {@link Action}[] for move trackers ({@link SanDecoder})

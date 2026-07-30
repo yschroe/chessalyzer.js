@@ -13,7 +13,7 @@ export default {
         description: 'Tile <loopSqrData> had a piece on it for X% of all moves.',
         calc: (data: unknown, loopSqrData: SquareData) => {
             if (!isTileTracker(data)) return 0;
-            const cell = tileCellAt(data.tiles, loopSqrData.coords);
+            const cell = tileCellAt(data.tiles, loopSqrData.square);
             if (!cell) return 0;
             let val = cell.w.wasOn + cell.b.wasOn;
             val = (val * 100) / data.movesTotal;
@@ -26,7 +26,7 @@ export default {
         description: 'Tile <loopSqrData> had a white piece on it for X% of all moves.',
         calc: (data: unknown, loopSqrData: SquareData) => {
             if (!isTileTracker(data)) return 0;
-            const cell = tileCellAt(data.tiles, loopSqrData.coords);
+            const cell = tileCellAt(data.tiles, loopSqrData.square);
             if (!cell) return 0;
             let val = cell.w.wasOn;
             val = (val * 100) / data.movesTotal;
@@ -39,7 +39,7 @@ export default {
         description: 'Tile X had a black piece on it for Y% of all moves.',
         calc: (data: unknown, loopSqrData: SquareData) => {
             if (!isTileTracker(data)) return 0;
-            const cell = tileCellAt(data.tiles, loopSqrData.coords);
+            const cell = tileCellAt(data.tiles, loopSqrData.square);
             if (!cell) return 0;
             let val = cell.b.wasOn;
             val = (val * 100) / data.movesTotal;
@@ -55,7 +55,7 @@ export default {
             const { piece } = loopSqrData;
 
             let val = 0;
-            const cell = tileCellAt(data.tiles, sqrData.coords);
+            const cell = tileCellAt(data.tiles, sqrData.square);
             if (piece && cell) {
                 const pieceStats = cell[piece.color][piece.name];
                 val = pieceStats?.wasOn ?? 0;
@@ -70,7 +70,7 @@ export default {
         description: 'Count of Pieces that were taken on each tile.',
         calc: (data: unknown, loopSqrData: SquareData) => {
             if (!isTileTracker(data)) return 0;
-            const cell = tileCellAt(data.tiles, loopSqrData.coords);
+            const cell = tileCellAt(data.tiles, loopSqrData.square);
             if (!cell) return 0;
             const val = cell.b.wasCapturedOn + cell.w.wasCapturedOn;
             return val;
@@ -83,9 +83,9 @@ export default {
         calc: (data: unknown, loopSqrData: SquareData, sqrData?: SquareData) => {
             if (!isTileTracker(data) || !sqrData) return 0;
             const { piece } = sqrData;
-            const { coords } = loopSqrData;
+            const { square } = loopSqrData;
             let val = 0;
-            const cell = tileCellAt(data.tiles, coords);
+            const cell = tileCellAt(data.tiles, square);
             if (piece && cell) {
                 const pieceStats = cell[piece.color][piece.name];
                 val = pieceStats?.movedTo ?? 0;

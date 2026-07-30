@@ -1,4 +1,4 @@
-import { algebraicToCoordsAt, writeBoardCoord, type BoardCoord } from '#board/board-coords';
+import { algebraicToCoordsAt, coordsToSquare } from '#board/board-coords';
 import { ReplayFailure } from '#replay/replay-failure';
 import type SanContext from '#replay/san-context';
 import type { Action } from '#types/actions';
@@ -72,6 +72,12 @@ export default class SanDecoder {
             cap.player = player;
             cap.takingPiece = board.getPieceNameOnCoords(from);
             cap.takenPiece = board.getPieceNameOnCoords(takenOn);
+            cap.on = coordsToSquare(takenOn[0], takenOn[1]);
+            if (offset !== 0) {
+                cap.enPassant = true;
+            } else {
+                delete cap.enPassant;
+            }
             actions.push(cap);
         } else {
             for (let i = 1; i <= 2; i += 1) {
@@ -88,14 +94,16 @@ export default class SanDecoder {
         mov.san = san;
         mov.player = player;
         mov.piece = board.getPieceNameOnCoords(from);
-        writeBoardCoord(this.ctx.toBuf, toRow, toCol);
+        mov.from = coordsToSquare(from[0], from[1]);
+        mov.to = coordsToSquare(toRow, toCol);
+        delete mov.castle;
         actions.push(mov);
 
         if (promotesTo) {
             const promo = this.ctx.promoteAction;
             promo.san = san;
             promo.player = player;
-            writeBoardCoord(this.ctx.takenOnBuf, toRow, toCol);
+            promo.on = coordsToSquare(toRow, toCol);
             promo.to = promotesTo;
             actions.push(promo);
         }
@@ -126,7 +134,7 @@ export default class SanDecoder {
         }
         const restLen = restEnd - 1;
 
-        let from: BoardCoord;
+        let from;
         if (restLen === 2) {
             from = algebraicToCoordsAt(san, restEnd);
         } else if (restLen === 1) {
@@ -153,9 +161,10 @@ export default class SanDecoder {
             const cap = this.ctx.captureAction;
             cap.san = san;
             cap.player = player;
-            writeBoardCoord(this.ctx.takenOnBuf, toRow, toCol);
+            cap.on = coordsToSquare(toRow, toCol);
             cap.takingPiece = piece;
             cap.takenPiece = board.getPieceNameOnCoords(to);
+            delete cap.enPassant;
             actions.push(cap);
         }
 
@@ -163,8 +172,9 @@ export default class SanDecoder {
         mov.san = san;
         mov.player = player;
         mov.piece = piece;
-        writeBoardCoord(this.ctx.fromBuf, fromRow, fromCol);
-        writeBoardCoord(this.ctx.toBuf, toRow, toCol);
+        mov.from = coordsToSquare(fromRow, fromCol);
+        mov.to = coordsToSquare(toRow, toCol);
+        delete mov.castle;
         actions.push(mov);
 
         return actions;
@@ -179,17 +189,60 @@ export default class SanDecoder {
         actions.length = 0;
 
         const player = this.ctx.activePlayer;
-        const row = player === 'w' ? 7 : 0;
 
-        if (san.length === 3) {
+        if (player === 'w') {
+            if (san.length === 3) {
+                actions.push(
+                    {
+                        type: 'move',
+                        san,
+                        player,
+                        piece: 'Ke',
+                        from: 'e1',
+                        to: 'g1',
+                        castle: 'kingside',
+                    },
+                    { type: 'move', san, player, piece: 'Rh', from: 'h1', to: 'f1' },
+                );
+            } else {
+                actions.push(
+                    {
+                        type: 'move',
+                        san,
+                        player,
+                        piece: 'Ke',
+                        from: 'e1',
+                        to: 'c1',
+                        castle: 'queenside',
+                    },
+                    { type: 'move', san, player, piece: 'Ra', from: 'a1', to: 'd1' },
+                );
+            }
+        } else if (san.length === 3) {
             actions.push(
-                { type: 'move', san, player, piece: 'Ke', from: [row, 4], to: [row, 6] },
-                { type: 'move', san, player, piece: 'Rh', from: [row, 7], to: [row, 5] },
+                {
+                    type: 'move',
+                    san,
+                    player,
+                    piece: 'Ke',
+                    from: 'e8',
+                    to: 'g8',
+                    castle: 'kingside',
+                },
+                { type: 'move', san, player, piece: 'Rh', from: 'h8', to: 'f8' },
             );
         } else {
             actions.push(
-                { type: 'move', san, player, piece: 'Ke', from: [row, 4], to: [row, 2] },
-                { type: 'move', san, player, piece: 'Ra', from: [row, 0], to: [row, 3] },
+                {
+                    type: 'move',
+                    san,
+                    player,
+                    piece: 'Ke',
+                    from: 'e8',
+                    to: 'c8',
+                    castle: 'queenside',
+                },
+                { type: 'move', san, player, piece: 'Ra', from: 'a8', to: 'd8' },
             );
         }
 
