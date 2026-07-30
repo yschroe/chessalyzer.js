@@ -5,11 +5,12 @@
  * Lookup tables precompute all 64 squares so hot SAN parsing avoids allocations.
  */
 
-import type { MutableBoardCoord } from '#board/mutable-board-coord';
-
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
 
 export type BoardIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+/** Mutable `[row, col]` for in-place updates (piece lists, pooled replay buffers). Internal only. */
+export type MutableBoardCoord = [row: number, col: number];
 
 /** Read-only board square — public APIs and {@link Action} coord fields. */
 export type BoardCoord = readonly [row: number, col: number];
