@@ -104,8 +104,8 @@ for (const file of files) {
         // oxlint-disable-next-line eslint/no-await-in-loop -- sequential fixture analysis for readable logs and lower memory use
         const result = await analyzePGN(path, analyzeOpts);
         const expected: ManifestExpected = {
-            games: result.games,
-            moves: result.moves,
+            games: result.gameCount,
+            moves: result.moveCount,
         };
         if ((result.skippedGames ?? 0) > 0) {
             expected.skippedGames = result.skippedGames;
@@ -122,7 +122,7 @@ for (const file of files) {
         };
 
         const skipped = expected.skippedGames ? `, ${expected.skippedGames} skipped` : '';
-        console.log(`${id}: ${result.games} games, ${result.moves} moves${skipped}`);
+        console.log(`${id}: ${result.gameCount} games, ${result.moveCount} moves${skipped}`);
     } catch (err) {
         if (prior) {
             fixtures[id] = { ...prior, file };

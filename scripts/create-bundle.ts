@@ -17,7 +17,14 @@ const result = await Bun.build({
     target: 'node',
     splitting: true,
     naming: '[name].[ext]',
-    plugins: [dts()],
+    plugins: [
+        dts({
+            output: {
+                // Do not export internal-only types (MutableBoardCoord, etc.)
+                exportReferencedTypes: false,
+            },
+        }),
+    ],
     external: ['chalk'],
 });
 

@@ -53,14 +53,14 @@ import { TileTracker } from 'chessalyzer.js/trackers';
 
 ```javascript
 const result = await analyzePGN('<pathToPgnFile>', { trackers: [new TileTracker()] });
-console.log(result.games, result.moves, result.movesPerSecond);
+console.log(result.gameCount, result.moveCount, result.movesPerSecond);
 ```
 
 4. Check out the examples or the [docs](https://yschroe.github.io/chessalyzer.js/).
 
 # How it works
 
-Chessalyzer.js runs **PGN parse**, optional **replay**, and **analyze** (trackers) over each game. See [Pipeline](#pipeline) for stage definitions. The main entry points are `analyzePGN` (batch analysis) and `printHeatmap` (terminal preview). Move trackers receive move-level `Action[]` data; game trackers receive header fields. Statistics accumulate in place on each tracker instance.
+Chessalyzer.js runs **PGN parse**, optional **replay**, and **analyze** (trackers) over each game. See [Pipeline](#pipeline) for stage definitions. The main entry points are `analyzePGN` (batch analysis) and `printHeatmap` (terminal preview). Move trackers receive move-level `Action[]` data; game trackers receive header fields. Statistics accumulate in place on tracker instances; `result.runs[i].trackers` holds the same refs you passed in.
 
 # Pipeline
 
@@ -120,12 +120,13 @@ for await (const game of streamParsePGN('<pathToPgnFile>', { headers: true })) {
 // Full pipeline with explicit replay mode
 await analyzePGN('<pathToPgnFile>', {
     trackers: [new GameTracker()],
-    headers: true, // optional; inferred from filter/game trackers when omitted
+    headers: true, // optional; default 'auto' enables headers when game trackers are present
     replay: 'board', // 'skip' | 'board' | 'actions' — move trackers require 'actions'
+    validation: 'trust', // default; 'validate' reserved (not implemented)
 });
 ```
 
-On `analyzePGN`, `headers` defaults to inferred behavior (on when a filter or game tracker needs tag pairs). Setting `headers: false` still parses headers when a filter or game tracker requires them.
+On `analyzePGN`, `headers` defaults to `'auto'` (tag pairs parsed when a game tracker is present). Set `headers: true` when a filter reads tag pairs such as `WhiteElo`. `headers: false` disables header parsing and throws if a game tracker is configured.
 
 Subpath imports (pipeline stages + trackers):
 
@@ -133,7 +134,7 @@ Subpath imports (pipeline stages + trackers):
 import { readLines, readPgnChunks } from 'chessalyzer.js/io';
 import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
 import { resolveReplayMode } from 'chessalyzer.js/replay';
-import { TileTracker, GameTrackerBase } from 'chessalyzer.js/trackers';
+import { TileTracker, BaseGameTracker } from 'chessalyzer.js/trackers';
 ```
 
 ### Performance tiers
@@ -174,14 +175,18 @@ printHeatmap(heatmapData);
 
 ## Filtering
 
-You can also filter the PGN file for specific criteria, e.g. only evaluate games where `WhiteElo > 2000`:
+You can filter games with a JavaScript predicate, e.g. only evaluate games where `WhiteElo > 2000` (set `headers: true` when the filter reads tag pairs):
 
 ```javascript
 await analyzePGN('<pathToPgnFile>', {
+    workers: false,
     trackers: [tileTracker],
-    filter: (game) => Number(game.WhiteElo) > 2000,
+    headers: true,
+    filter: (game) => Number(game.headers?.WhiteElo) > 2000,
 });
 ```
+
+**`filter` requires `workers: false`.** Filter functions are ordinary JavaScript callbacks — they cannot run inside worker threads. The library throws at config time if you pass a `filter` while the default worker pool is enabled. Use single-threaded analysis for filtered runs; leave `workers` at its default when you do not need a filter.
 
 ## Compare Analyses
 
@@ -192,15 +197,17 @@ const tileT1 = new TileTracker();
 const tileT2 = new TileTracker();
 
 await analyzePGN('<pathToPgnFile>', {
+    workers: false,
+    headers: true,
     runs: [
         {
             trackers: [tileT1],
-            filter: (game) => Number(game.WhiteElo) > 2000,
+            filter: (game) => Number(game.headers?.WhiteElo) > 2000,
             maxGames: 1000,
         },
         {
             trackers: [tileT2],
-            filter: (game) => Number(game.WhiteElo) < 1200,
+            filter: (game) => Number(game.headers?.WhiteElo) < 1200,
             maxGames: 1000,
         },
     ],
@@ -241,7 +248,7 @@ await analyzePGN('<pathToPgnFile>', { workers: false });
 
 ## Error handling
 
-By default, `analyzePGN` **aborts on the first replay failure** (illegal or unparseable SAN). The library does not log to the console — callers decide how to handle errors:
+By default, `analyzePGN` **aborts on the first replay failure** (illegal or unparseable SAN during board replay). `onError` is a **replay error policy** — it does not apply to PGN structural parse issues. The library does not log to the console — callers decide how to handle errors:
 
 ```javascript
 import { analyzePGN, getAnalyzeError, isReplayError } from 'chessalyzer.js';
@@ -263,10 +270,12 @@ For large batch runs over mostly trusted exports (e.g. Lichess database dumps), 
 
 ```javascript
 const result = await analyzePGN('<pathToPgnFile>', { onError: 'skip-game' });
-console.log(result.games, result.skippedGames, result.errors);
+console.log(result.gameCount, result.skippedGames, result.errors, result.errorsTruncated);
 ```
 
-`result.errors` contains up to 100 typed replay errors (`gameIndex`, `moveIndex`, `san`, `reason`). Use default `abort` for untrusted or small inputs where a failure should stop the run immediately.
+`result.errors` contains up to 100 typed **replay** errors (`gameIndex`, `moveIndex`, `san`, `reason`). When more than 100 games fail, `result.errorsTruncated` is `true` and only the first 100 errors are returned. Use default `abort` for untrusted or small inputs where a failure should stop the run immediately.
+
+Today's replay assumes trustworthy PGN (`validation: 'trust'`, the default). `validation: 'validate'` is reserved for a future legality-checking mode and is not implemented yet.
 
 ##### Important
 
@@ -280,12 +289,14 @@ The function you create for heatmap generation gets passed up to four parameters
 2. `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The `generateHeatmap(...)` function loops over every square of the board to calculate a heat map value for each tile. `sqrData` is an object with the following entries:
 
     ```typescript
+    import type { BoardCoord, SquareData } from 'chessalyzer.js/trackers';
+
     interface SquareData {
         // The square in algebraic notation (e.g. 'a2').
         alg: string;
 
-        // The square in board coordinates (e.g. [6,0]).
-        coords: number[];
+        // The square in board coordinates as [row, col] (row 0 = rank 8, col 0 = a-file).
+        coords: BoardCoord;
 
         // The piece that starts at the passed square. If no piece starts at the passed square, piece is null.
         piece: {
@@ -341,7 +352,7 @@ chessalyzer.js comes with three built-in trackers, which can be directly importe
 
 ## Custom Trackers
 
-Derive from `MoveTracker` (move-level) or `GameTrackerBase` (game-level). For multithreaded analysis, custom trackers must live in a **separate module** and follow this contract:
+Derive from `MoveTracker` (move-level) or `BaseGameTracker` (game-level). Single-threaded analysis only requires `trackMoves` / `trackGame`. For multithreaded analysis, custom trackers must live in a **separate module** and follow this contract:
 
 1. **Default export** — the tracker class
 2. **`static trackerId = 'YourUniqueId'`** — stable ID (minification-safe; used to match worker instances)
@@ -350,13 +361,14 @@ Derive from `MoveTracker` (move-level) or `GameTrackerBase` (game-level). For mu
 
 See [`manual-tests/custom-game-tracker.ts`](manual-tests/custom-game-tracker.ts) for a minimal game-level example.
 
-- `track(data)`: called per half-move (`Action[]`) or per game (`Game` with headers + `moves`)
+- `track(data)`: called per half-move (`Action[]`) or per game (`ParsedGame` with `moves`, optional `result`, optional `headers`)
+- **Castling** yields two `move` actions (king leg, then rook leg) in one `Action[]` batch — `TileTracker` counts castling as one move for `movesTotal`, but move trackers see both legs
 - `merge(tracker)`: required for multithreading (see example below)
 
 Example skeleton:
 
 ```javascript
-export default class MyTracker extends GameTrackerBase {
+export default class MyTracker extends BaseGameTracker {
     static trackerId = 'MyTracker';
     static workerModule = import.meta.url;
 
@@ -369,11 +381,23 @@ export default class MyTracker extends GameTrackerBase {
 }
 ```
 
-Import bases and types from the trackers subpath:
+Import bases and types from the trackers subpath (Action variants are also on `chessalyzer.js/replay`):
 
 ```javascript
-import { GameTrackerBase, MoveTracker } from 'chessalyzer.js/trackers';
-import type { Game, Tracker } from 'chessalyzer.js/trackers';
+import { BaseGameTracker, MoveTracker } from 'chessalyzer.js/trackers';
+import type {
+    Action,
+    BoardCoord,
+    CaptureAction,
+    HeatmapAnalysisFunc,
+    HeatmapPresetEntry,
+    MoveAction,
+    ParsedGame,
+    PromoteAction,
+    SquareData,
+    Tracker,
+    TrackerConfig,
+} from 'chessalyzer.js/trackers';
 ```
 
 Example merge for the built-in GameTracker:

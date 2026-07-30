@@ -86,17 +86,6 @@ class PieceTracker extends MoveTracker {
         }
     }
 
-    resetWorkerBatch() {
-        this.time = 0;
-
-        for (const piece of pieceList) {
-            for (const piece2 of pieceList) {
-                this.w[piece][piece2] = 0;
-                this.b[piece][piece2] = 0;
-            }
-        }
-    }
-
     override trackMoves(data: Action[]) {
         for (const action of data) {
             if (action.type === 'capture') {

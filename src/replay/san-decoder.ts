@@ -1,4 +1,4 @@
-import { algebraicToCoordsAt } from '#board/board-coords';
+import { algebraicToCoordsAt, writeBoardCoord, type BoardCoord } from '#board/board-coords';
 import { ReplayFailure } from '#replay/replay-failure';
 import type SanContext from '#replay/san-context';
 import type { Action } from '#types/actions';
@@ -70,7 +70,6 @@ export default class SanDecoder {
             const cap = this.ctx.captureAction;
             cap.san = san;
             cap.player = player;
-            cap.on = takenOn;
             cap.takingPiece = board.getPieceNameOnCoords(from);
             cap.takenPiece = board.getPieceNameOnCoords(takenOn);
             actions.push(cap);
@@ -89,17 +88,14 @@ export default class SanDecoder {
         mov.san = san;
         mov.player = player;
         mov.piece = board.getPieceNameOnCoords(from);
-        mov.from = from;
-        mov.to[0] = toRow;
-        mov.to[1] = toCol;
+        writeBoardCoord(this.ctx.toBuf, toRow, toCol);
         actions.push(mov);
 
         if (promotesTo) {
             const promo = this.ctx.promoteAction;
             promo.san = san;
             promo.player = player;
-            promo.on[0] = toRow;
-            promo.on[1] = toCol;
+            writeBoardCoord(this.ctx.takenOnBuf, toRow, toCol);
             promo.to = promotesTo;
             actions.push(promo);
         }
@@ -130,7 +126,7 @@ export default class SanDecoder {
         }
         const restLen = restEnd - 1;
 
-        let from: number[];
+        let from: BoardCoord;
         if (restLen === 2) {
             from = algebraicToCoordsAt(san, restEnd);
         } else if (restLen === 1) {
@@ -150,13 +146,14 @@ export default class SanDecoder {
         }
 
         const piece = board.getPieceNameOnCoords(from);
+        const [fromRow, fromCol] = from;
+        const [toRow, toCol] = to;
 
         if (capture) {
             const cap = this.ctx.captureAction;
             cap.san = san;
             cap.player = player;
-            cap.on[0] = to[0];
-            cap.on[1] = to[1];
+            writeBoardCoord(this.ctx.takenOnBuf, toRow, toCol);
             cap.takingPiece = piece;
             cap.takenPiece = board.getPieceNameOnCoords(to);
             actions.push(cap);
@@ -166,9 +163,8 @@ export default class SanDecoder {
         mov.san = san;
         mov.player = player;
         mov.piece = piece;
-        mov.from = from;
-        mov.to[0] = to[0];
-        mov.to[1] = to[1];
+        writeBoardCoord(this.ctx.fromBuf, fromRow, fromCol);
+        writeBoardCoord(this.ctx.toBuf, toRow, toCol);
         actions.push(mov);
 
         return actions;

@@ -1,6 +1,6 @@
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
-import type { Game } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 import type { Tracker, TrackerConfig } from '#types/tracker';
 
 /** @internal Raw game/move counters from the processor. */
@@ -14,7 +14,7 @@ export interface GameAndMoveCount {
 /** Normalized per-config processor state (filter, game limit). */
 export interface GameProcessorConfig {
     hasFilter: boolean;
-    filter: (game: Game) => boolean;
+    filter: (game: ParsedGame) => boolean;
     maxGames: number;
 }
 

@@ -91,8 +91,8 @@ describe('Workers', () => {
                 ),
             ]);
 
-            expect(data.games).toBe(1);
-            expect(data.moves).toBe(15);
+            expect(data.gameCount).toBe(1);
+            expect(data.moveCount).toBe(15);
             expect(tileTracker.movesTotal).toBeGreaterThan(0);
         });
     });

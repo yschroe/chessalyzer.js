@@ -5,12 +5,13 @@ import chalk from 'chalk';
 import { normalizeAnalyzeOptions } from '#core/analysis-config';
 import { collectError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
 import GameProcessor from '#core/game-processor';
-import type { AnalyzeOptions, AnalyzeResult, AnalyzeRunResult } from '#types/analysis';
+import type { AnalyzeOptions, AnalyzeResult, AnalyzeRun, AnalyzeRunResult } from '#types/analysis';
 import type { AnalyzeError } from '#types/errors';
 import type { HeatmapData } from '#types/tracker';
 
-/** Build {@link AnalyzeResult} from raw counts and duration. */
-function buildAnalyzeResult(
+/** Build {@link AnalyzeResult} from raw counts and duration. @internal Exported for unit tests. */
+export function buildAnalyzeResult(
+    inputRuns: AnalyzeRun[],
     counts: {
         games: number;
         moves: number;
@@ -19,20 +20,22 @@ function buildAnalyzeResult(
     }[],
     durationMs: number,
 ): AnalyzeResult {
-    const runs: AnalyzeRunResult[] = counts.map(({ games, moves }) => ({
-        games,
-        moves,
-        movesPerSecond: durationMs > 0 ? Math.round(moves / (durationMs / 1000)) : 0,
+    const runs: AnalyzeRunResult[] = counts.map(({ games, moves }, index) => ({
+        gameCount: games,
+        moveCount: moves,
+        trackers: inputRuns[index]?.trackers ?? [],
     }));
 
-    const games = runs.reduce((sum, run) => sum + run.games, 0);
-    const moves = runs.reduce((sum, run) => sum + run.moves, 0);
+    const gameCount = runs.reduce((sum, run) => sum + run.gameCount, 0);
+    const moveCount = runs.reduce((sum, run) => sum + run.moveCount, 0);
     const skippedGames = counts.reduce((sum, c) => sum + (c.skippedGames ?? 0), 0);
 
     const errors: AnalyzeError[] = [];
+    let totalErrorCount = 0;
     for (const c of counts) {
         if (c.errors) {
             for (const err of c.errors) {
+                totalErrorCount += 1;
                 collectError(errors, err);
             }
         }
@@ -40,9 +43,9 @@ function buildAnalyzeResult(
 
     const result: AnalyzeResult = {
         durationMs,
-        games,
-        moves,
-        movesPerSecond: durationMs > 0 ? Math.round(moves / (durationMs / 1000)) : 0,
+        gameCount,
+        moveCount,
+        movesPerSecond: durationMs > 0 ? Math.round(moveCount / (durationMs / 1000)) : 0,
         runs,
     };
 
@@ -50,7 +53,10 @@ function buildAnalyzeResult(
         result.skippedGames = skippedGames;
     }
     if (errors.length > 0) {
-        result.errors = errors.slice(0, MAX_COLLECTED_ERRORS);
+        result.errors = errors;
+    }
+    if (totalErrorCount > MAX_COLLECTED_ERRORS) {
+        result.errorsTruncated = true;
     }
 
     return result;
@@ -69,7 +75,7 @@ export async function analyzePGN(
     const t0 = performance.now();
     const counts = await gameProcessor.processPGN(pathToPgn);
     const durationMs = performance.now() - t0;
-    return buildAnalyzeResult(counts, durationMs);
+    return buildAnalyzeResult(runs, counts, durationMs);
 }
 
 /** Print {@link HeatmapData} to the terminal. */

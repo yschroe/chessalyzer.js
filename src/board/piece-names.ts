@@ -1,4 +1,4 @@
-import { isBoardIndex } from '#board/board-coords';
+import { isBoardIndex, type BoardCoord } from '#board/board-coords';
 import type { ChessPiece } from '#types/game';
 
 /**
@@ -22,7 +22,7 @@ export const PIECE_TEMPLATE = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'] a
  * Used by heatmaps for “starting piece on this square” context; promoted pieces
  * are not represented here.
  */
-export function getStartingPiece(coords: number[]): ChessPiece | null {
+export function getStartingPiece(coords: BoardCoord): ChessPiece | null {
     const [row, col] = coords;
     if (!isBoardIndex(row) || !isBoardIndex(col)) return null;
 

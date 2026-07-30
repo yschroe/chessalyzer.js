@@ -1,5 +1,7 @@
+import type { BoardCoord } from '#board/board-coords';
 import type { Action } from '#types/actions';
-import type { Game, SquareData } from '#types/game';
+import type { SquareData } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 
 /** Optional runtime flags attached to tracker instances. */
 export interface TrackerConfig {
@@ -8,7 +10,7 @@ export interface TrackerConfig {
 
 /**
  * Contract implemented by {@link BaseTracker} and custom user trackers.
- * Move trackers receive {@link Action}[]; game trackers receive {@link Game}.
+ * Move trackers receive {@link Action}[]; game trackers receive {@link ParsedGame}.
  */
 /** Built-in or custom heatmap preset definition attached to a tracker. */
 export interface HeatmapPresetEntry {
@@ -24,24 +26,22 @@ export interface Tracker {
     time: number;
     t0: number;
     heatmapPresets?: Record<string, HeatmapPresetEntry> | null;
-    analyze: (arg: Game | Action[]) => void;
+    analyze: (arg: ParsedGame | Action[]) => void;
     generateHeatmap: (
         fun: string | HeatmapAnalysisFunc,
-        square?: string | number[],
+        square?: string | BoardCoord,
         optData?: unknown,
     ) => HeatmapData;
     generateComparisonHeatmap: (
         compData: Tracker,
         fun: string | HeatmapAnalysisFunc,
-        square?: string | number[],
+        square?: string | BoardCoord,
         optData?: unknown,
     ) => HeatmapData;
-    track: (arg: Game | Action[]) => void;
+    track: (arg: ParsedGame | Action[]) => void;
     nextGame?: () => void;
     finish?: () => void;
     merge?: (arg: Tracker) => void;
-    /** Clear per-batch state when a worker reuses tracker instances. */
-    resetWorkerBatch?: () => void;
 }
 
 /** 8×8 numeric grid plus value range for rendering. */

@@ -3,11 +3,11 @@ import { describe, it, beforeAll, expect } from 'bun:test';
 // Optional golden regression tests against the large corpus (test/corpus/).
 // Skipped automatically when corpus files are not present locally.
 import { analyzePGN } from 'chessalyzer.js';
+import type { AnalyzeResult } from 'chessalyzer.js';
 import { GameTracker, PieceTracker, isTrackedPiece } from 'chessalyzer.js/trackers';
+import type { HeatmapAnalysisFunc } from 'chessalyzer.js/trackers';
+import type { ParsedGame } from 'chessalyzer.js/trackers';
 
-import type { AnalyzeResult } from '../../src/types/analysis';
-import type { Game } from '../../src/types/game';
-import type { HeatmapAnalysisFunc } from '../../src/types/tracker';
 import { corpusPath, getCorpusEntry } from '../helpers/fixtures';
 
 const pgnPath = await corpusPath('asorted');
@@ -30,33 +30,35 @@ if (corpusAvailable) {
             });
 
             it('processed all games in the corpus file', () => {
-                expect(data.games).toBe(entry.expected.games);
+                expect(data.gameCount).toBe(entry.expected.games);
             });
 
             it('processed all moves in the corpus file', () => {
-                expect(data.moves).toBe(entry.expected.moves);
+                expect(data.moveCount).toBe(entry.expected.moves);
             });
         });
 
         describe('Filtering', () => {
             it('limits by maxGames', async () => {
                 const data = await analyzePGN(path, { maxGames: 100 });
-                expect(data.games).toBe(100);
+                expect(data.gameCount).toBe(100);
             });
 
             it('filters by result', async () => {
                 const data = await analyzePGN(path, {
-                    filter: (game: Game) => game.Result === '1-0',
+                    workers: false,
+                    filter: (game: ParsedGame) => game.result === '1-0',
                 });
-                expect(data.games).toBe(entry.expected.filters.whiteWins);
+                expect(data.gameCount).toBe(entry.expected.filters.whiteWins);
             });
 
             it('combines filter and count', async () => {
                 const data = await analyzePGN(path, {
+                    workers: false,
                     maxGames: 500,
-                    filter: (game: Game) => game.Result === '0-1',
+                    filter: (game: ParsedGame) => game.result === '0-1',
                 });
-                expect(data.games).toBe(500);
+                expect(data.gameCount).toBe(500);
             });
         });
 
@@ -64,34 +66,36 @@ if (corpusAvailable) {
             it('runs a single tracker across the full corpus', async () => {
                 const gameTracker = new GameTracker();
                 const data = await analyzePGN(path, { trackers: [gameTracker] });
-                expect(data.games).toBe(entry.expected.games);
+                expect(data.gameCount).toBe(entry.expected.games);
             });
 
             it('runs multiple configs with different filters', async () => {
                 const gameTracker = new GameTracker();
                 const pieceTracker = new PieceTracker();
                 const data = await analyzePGN(path, {
+                    workers: false,
+                    headers: true,
                     runs: [
                         {
                             trackers: [gameTracker],
                             maxGames: entry.expected.multiConfig.highRatedGames,
-                            filter: (game: Game) => Number(game.WhiteElo) > 1500,
+                            filter: (game: ParsedGame) => Number(game.headers?.WhiteElo) > 1500,
                         },
                         {
                             trackers: [pieceTracker],
                             maxGames: entry.expected.multiConfig.lowRatedGames,
-                            filter: (game: Game) => Number(game.WhiteElo) < 1500,
+                            filter: (game: ParsedGame) => Number(game.headers?.WhiteElo) < 1500,
                         },
                     ],
                 });
-                expect(data.runs[0]?.games).toBe(entry.expected.multiConfig.highRatedGames);
-                expect(data.runs[1]?.games).toBe(entry.expected.multiConfig.lowRatedGames);
+                expect(data.runs[0]?.gameCount).toBe(entry.expected.multiConfig.highRatedGames);
+                expect(data.runs[1]?.gameCount).toBe(entry.expected.multiConfig.lowRatedGames);
             });
 
             it('runs in single-threaded mode', async () => {
                 const data = await analyzePGN(path, { workers: false });
-                expect(data.games).toBe(entry.expected.games);
-                expect(data.moves).toBe(entry.expected.moves);
+                expect(data.gameCount).toBe(entry.expected.games);
+                expect(data.moveCount).toBe(entry.expected.moves);
             });
         });
 
@@ -104,7 +108,7 @@ if (corpusAvailable) {
                 });
 
                 it('matches PGN parse game count', () => {
-                    expect(data.games).toBe(gameTracker.games);
+                    expect(data.gameCount).toBe(gameTracker.games);
                 });
 
                 it('sums result counts to total games', () => {
@@ -112,7 +116,7 @@ if (corpusAvailable) {
                         (a, c) => a + c,
                         0,
                     );
-                    expect(resultsSum).toBe(data.games);
+                    expect(resultsSum).toBe(data.gameCount);
                 });
             });
 
@@ -124,7 +128,7 @@ if (corpusAvailable) {
                 });
 
                 it('matches PGN parse game count', () => {
-                    expect(data.games).toBe(gameTracker.games);
+                    expect(data.gameCount).toBe(gameTracker.games);
                 });
             });
 
@@ -132,9 +136,10 @@ if (corpusAvailable) {
                 const gameTracker = new GameTracker();
                 beforeAll(async () => {
                     await analyzePGN(path, {
+                        workers: false,
                         trackers: [gameTracker],
                         maxGames: entry.golden.gameTracker.filterWhiteWins,
-                        filter: (game: Game) => game.Result === '1-0',
+                        filter: (game: ParsedGame) => game.result === '1-0',
                     });
                 });
 

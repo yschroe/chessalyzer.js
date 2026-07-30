@@ -1,8 +1,9 @@
 import { performance } from 'node:perf_hooks';
 
+import type { BoardCoord } from '#board/board-coords';
 import { generateComparisonHeatmap, generateHeatmap } from '#trackers/heatmap-utils';
 import type { Action } from '#types/actions';
-import type { Game } from '#types/game';
+import type { ParsedGame } from '#types/parse-pgn';
 import type {
     HeatmapAnalysisFunc,
     HeatmapData,
@@ -18,10 +19,10 @@ class BaseTracker implements Tracker {
     t0: number;
     heatmapPresets: Record<string, HeatmapPresetEntry> | null;
 
-    /** Stable ID for worker-side tracker lookup (minification-safe). */
+    /** Stable ID for worker-side tracker lookup (minification-safe). Required for multithreaded analysis. */
     static trackerId?: string;
 
-    /** Module URL for worker-side dynamic import of custom trackers. */
+    /** Module URL for worker-side dynamic import of custom trackers. Required for custom multithreaded trackers. */
     static workerModule?: string;
 
     constructor(type: 'move' | 'game') {
@@ -34,21 +35,18 @@ class BaseTracker implements Tracker {
         this.heatmapPresets = {};
     }
 
-    analyze(data: Game | Action[]) {
+    analyze(data: ParsedGame | Action[]) {
         if (this.cfg.profilingActive) this.t0 = performance.now();
         this.track(data);
         if (this.cfg.profilingActive) this.time += performance.now() - this.t0;
     }
 
-    track(_data: Game | Action[]) {
+    track(_data: ParsedGame | Action[]) {
         throw new Error('Your tracker must implement a track(...) method!');
     }
 
-    merge(_data: Tracker) {
-        throw new Error(
-            'Your tracker must implement merge(...) when using multithreaded analysis!',
-        );
-    }
+    /** Override when using multithreaded analysis to aggregate worker batch stats. */
+    merge(_data: Tracker) {}
 
     private resolveHeatmapFunc(analysisFunc: string | HeatmapAnalysisFunc): HeatmapAnalysisFunc {
         if (typeof analysisFunc !== 'string') return analysisFunc;
@@ -63,7 +61,7 @@ class BaseTracker implements Tracker {
 
     generateHeatmap(
         analysisFunc: string | HeatmapAnalysisFunc,
-        square?: string | number[],
+        square?: string | BoardCoord,
         optData?: unknown,
     ): HeatmapData {
         return generateHeatmap(this, this.resolveHeatmapFunc(analysisFunc), square, optData);
@@ -72,7 +70,7 @@ class BaseTracker implements Tracker {
     generateComparisonHeatmap(
         compData: Tracker,
         analysisFunc: string | HeatmapAnalysisFunc,
-        square?: string | number[],
+        square?: string | BoardCoord,
         optData?: unknown,
     ): HeatmapData {
         return generateComparisonHeatmap(
@@ -93,28 +91,26 @@ export abstract class MoveTracker extends BaseTracker {
         super('move');
     }
 
-    override track(data: Game | Action[]): void {
+    override track(data: ParsedGame | Action[]): void {
         if (Array.isArray(data)) this.trackMoves(data);
     }
 
     abstract trackMoves(actions: Action[]): void;
-    abstract override merge(other: Tracker): void;
 }
 
-/** Abstract base for game-level trackers (receive {@link Game} after each game). */
-export abstract class GameTrackerBase extends BaseTracker {
+/** Abstract base for game-level trackers (receive {@link ParsedGame} after each game). */
+export abstract class BaseGameTracker extends BaseTracker {
     override readonly type = 'game' as const;
 
     constructor() {
         super('game');
     }
 
-    override track(data: Game | Action[]): void {
+    override track(data: ParsedGame | Action[]): void {
         if (!Array.isArray(data)) this.trackGame(data);
     }
 
-    abstract trackGame(game: Game): void;
-    abstract override merge(other: Tracker): void;
+    abstract trackGame(game: ParsedGame): void;
 }
 
 export { BaseTracker };

@@ -5,16 +5,17 @@ const tileTracker = new TileTracker();
 const tileTracker2 = new TileTracker();
 
 const data = await analyzePGN('./pgn/asorted-games.pgn', {
+    workers: false,
     runs: [
         {
             trackers: [tileTracker],
             maxGames: 2000,
-            filter: (game) => game.Result === '0-1',
+            filter: (game) => game.result === '0-1',
         },
         {
             trackers: [tileTracker2],
             maxGames: 2000,
-            filter: (game) => game.Result === '1-0',
+            filter: (game) => game.result === '1-0',
         },
     ],
 });

@@ -1,10 +1,10 @@
 import { describe, it, beforeAll, afterAll, expect } from 'bun:test';
 
 import { analyzePGN } from 'chessalyzer.js';
+import type { AnalyzeResult } from 'chessalyzer.js';
 import { GameTracker, PieceTracker, TileTracker } from 'chessalyzer.js/trackers';
+import type { ParsedGame } from 'chessalyzer.js/trackers';
 
-import type { AnalyzeResult } from '../../src/types/analysis';
-import type { Game } from '../../src/types/game';
 import {
     allFixtureIds,
     cleanupTmpPgns,
@@ -34,8 +34,8 @@ describe('Fixtures', () => {
 
             it('parses the expected number of games and moves', () => {
                 const expected = getFixtureEntry(id).expected;
-                expect(data.games).toBe(expected.games);
-                expect(data.moves).toBe(expected.moves);
+                expect(data.gameCount).toBe(expected.games);
+                expect(data.moveCount).toBe(expected.moves);
                 if (expected.skippedGames !== undefined) {
                     expect(data.skippedGames).toBe(expected.skippedGames);
                 }
@@ -46,7 +46,7 @@ describe('Fixtures', () => {
     describe('corrupt fixture', () => {
         it('drops the incomplete trailing game', async () => {
             const data = await analyzePGN(fixturePath('corrupt'), { workers: false });
-            expect(data.games).toBe(1);
+            expect(data.gameCount).toBe(1);
         });
     });
 
@@ -56,46 +56,39 @@ describe('Fixtures', () => {
                 maxGames: 3,
                 workers: false,
             });
-            expect(data.games).toBe(3);
+            expect(data.gameCount).toBe(3);
         });
 
         it('limits by maxGames (multithreaded)', async () => {
             const data = await analyzePGN(fixturePath('results-mix'), {
                 maxGames: 3,
             });
-            expect(data.games).toBe(3);
+            expect(data.gameCount).toBe(3);
         });
 
         it('filters by result (single-threaded)', async () => {
             const data = await analyzePGN(fixturePath('results-mix'), {
-                filter: (game: Game) => game.Result === '1-0',
+                filter: (game: ParsedGame) => game.result === '1-0',
                 workers: false,
             });
-            expect(data.games).toBe(3);
+            expect(data.gameCount).toBe(3);
         });
 
-        it('filters by result (multithreaded)', async () => {
-            const data = await analyzePGN(fixturePath('results-mix'), {
-                filter: (game: Game) => game.Result === '1-0',
-            });
-            expect(data.games).toBe(3);
+        it('rejects filter without workers: false', () => {
+            return expect(
+                analyzePGN(fixturePath('results-mix'), {
+                    filter: (game: ParsedGame) => game.result === '1-0',
+                }),
+            ).rejects.toThrow('filter requires workers: false');
         });
 
         it('combines filter and count (single-threaded)', async () => {
             const data = await analyzePGN(fixturePath('results-mix'), {
                 maxGames: 2,
-                filter: (game: Game) => game.Result === '0-1',
+                filter: (game: ParsedGame) => game.result === '0-1',
                 workers: false,
             });
-            expect(data.games).toBe(2);
-        });
-
-        it('combines filter and count (multithreaded)', async () => {
-            const data = await analyzePGN(fixturePath('results-mix'), {
-                maxGames: 2,
-                filter: (game: Game) => game.Result === '0-1',
-            });
-            expect(data.games).toBe(2);
+            expect(data.gameCount).toBe(2);
         });
     });
 
@@ -103,16 +96,16 @@ describe('Fixtures', () => {
         it('processes many games from a repeated small fixture', async () => {
             const path = await repeatPgn('results-mix', 20);
             const data = await analyzePGN(path, { workers: false });
-            expect(data.games).toBe(fixtureExpected('results-mix').games * 20);
+            expect(data.gameCount).toBe(fixtureExpected('results-mix').games * 20);
         });
 
         it('keeps tracker counts consistent at scale', async () => {
             const path = await repeatPgn('results-mix', 50);
             const gameTracker = new GameTracker();
             const data = await analyzePGN(path, { trackers: [gameTracker], workers: false });
-            expect(data.games).toBe(gameTracker.games);
+            expect(data.gameCount).toBe(gameTracker.games);
             const resultsSum = Object.values(gameTracker.results).reduce((a, c) => a + c, 0);
-            expect(resultsSum).toBe(data.games);
+            expect(resultsSum).toBe(data.gameCount);
         });
     });
 
@@ -126,8 +119,8 @@ describe('Fixtures', () => {
                 runs: [{ trackers: [trackerA] }, { trackers: [trackerB] }],
             });
 
-            expect(data.runs[0]?.games).toBe(expected.games);
-            expect(data.runs[1]?.games).toBe(expected.games);
+            expect(data.runs[0]?.gameCount).toBe(expected.games);
+            expect(data.runs[1]?.gameCount).toBe(expected.games);
             expect(trackerA.games).toBe(expected.games);
             expect(trackerB.games).toBe(expected.games);
         });
@@ -137,17 +130,18 @@ describe('Fixtures', () => {
             const whiteWins = new GameTracker();
 
             const data = await analyzePGN(fixturePath('results-mix'), {
+                workers: false,
                 runs: [
                     { trackers: [allGames] },
                     {
                         trackers: [whiteWins],
-                        filter: (game: Game) => game.Result === '1-0',
+                        filter: (game: ParsedGame) => game.result === '1-0',
                     },
                 ],
             });
 
-            expect(data.runs[0]?.games).toBe(fixtureExpected('results-mix').games);
-            expect(data.runs[1]?.games).toBe(3);
+            expect(data.runs[0]?.gameCount).toBe(fixtureExpected('results-mix').games);
+            expect(data.runs[1]?.gameCount).toBe(3);
             expect(allGames.games).toBe(fixtureExpected('results-mix').games);
             expect(whiteWins.games).toBe(3);
         });
@@ -160,8 +154,8 @@ describe('Fixtures', () => {
                 runs: [{ trackers: [capped], maxGames: 2 }, { trackers: [full] }],
             });
 
-            expect(data.runs[0]?.games).toBe(2);
-            expect(data.runs[1]?.games).toBe(fixtureExpected('results-mix').games);
+            expect(data.runs[0]?.gameCount).toBe(2);
+            expect(data.runs[1]?.gameCount).toBe(fixtureExpected('results-mix').games);
             expect(capped.games).toBe(2);
             expect(full.games).toBe(fixtureExpected('results-mix').games);
         });
@@ -173,7 +167,7 @@ describe('Fixtures', () => {
             const data = await analyzePGN(fixturePath('lichess-headers'), {
                 trackers: [gameTracker],
             });
-            expect(data.games).toBe(1);
+            expect(data.gameCount).toBe(1);
             expect(gameTracker.games).toBe(1);
         });
 
@@ -182,8 +176,8 @@ describe('Fixtures', () => {
             const data = await analyzePGN(fixturePath('promotion'), {
                 trackers: [pieceTracker],
             });
-            expect(data.games).toBe(1);
-            expect(data.moves).toBeGreaterThan(0);
+            expect(data.gameCount).toBe(1);
+            expect(data.moveCount).toBeGreaterThan(0);
         });
     });
 
@@ -202,7 +196,7 @@ describe('Fixtures', () => {
                     ...(workers === false ? { workers: false } : {}),
                 });
 
-                expect(data.games).toBe(1);
+                expect(data.gameCount).toBe(1);
                 expect(tileTracker.movesTotal).toBe(golden.movesTotal);
                 const heat = tileTracker.generateHeatmap('TILE_OCC_ALL', 'e4');
                 expect(heat.map[4]?.[4]).toBe(golden.e4TileOccAll);

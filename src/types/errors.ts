@@ -1,3 +1,4 @@
+/** Error category on {@link AnalyzeError}. `'parse'` is reserved for future PGN parse failures. */
 export type AnalyzeErrorCode = 'replay' | 'parse';
 
 export interface AnalyzeError {
@@ -14,13 +15,6 @@ export interface ReplayError extends AnalyzeError {
     moveIndex?: number;
     san?: string;
     reason: ReplayErrorReason;
-}
-
-/** Reserved for future PGN parse failures. */
-export interface ParseError extends AnalyzeError {
-    code: 'parse';
-    gameIndex?: number;
-    reason: string;
 }
 
 export interface ReplayErrorContext {

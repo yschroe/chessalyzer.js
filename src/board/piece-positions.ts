@@ -1,3 +1,5 @@
+import type { BoardCoord } from '#board/board-coords';
+import type { MutableBoardCoord } from '#board/board-coords';
 import type { PieceToken, PlayerColor } from '#types/tokens';
 
 /**
@@ -11,23 +13,23 @@ import type { PieceToken, PlayerColor } from '#types/tokens';
  * Callers must not reassign or splice these arrays; only the numeric coordinates change.
  */
 export default class PiecePositions {
-    R: number[][] = [];
-    N: number[][] = [];
-    B: number[][] = [];
-    Q: number[][] = [];
-    K: number[][] = [];
+    R: MutableBoardCoord[] = [];
+    N: MutableBoardCoord[] = [];
+    B: MutableBoardCoord[] = [];
+    Q: MutableBoardCoord[] = [];
+    K: MutableBoardCoord[] = [];
 
     private readonly startRow: number;
 
     /** Pre-allocated coord pairs for the 16 starting pieces — reset() rewires the lists to these. */
-    private readonly ra: number[] = [0, 0];
-    private readonly rh: number[] = [0, 0];
-    private readonly nb: number[] = [0, 0];
-    private readonly ng: number[] = [0, 0];
-    private readonly bc: number[] = [0, 0];
-    private readonly bf: number[] = [0, 0];
-    private readonly qd: number[] = [0, 0];
-    private readonly ke: number[] = [0, 0];
+    private readonly ra: MutableBoardCoord = [0, 0];
+    private readonly rh: MutableBoardCoord = [0, 0];
+    private readonly nb: MutableBoardCoord = [0, 0];
+    private readonly ng: MutableBoardCoord = [0, 0];
+    private readonly bc: MutableBoardCoord = [0, 0];
+    private readonly bf: MutableBoardCoord = [0, 0];
+    private readonly qd: MutableBoardCoord = [0, 0];
+    private readonly ke: MutableBoardCoord = [0, 0];
 
     constructor(player: PlayerColor) {
         // Internal coords: row 0 = rank 8, row 7 = rank 1 (matches board tile layout).
@@ -72,7 +74,7 @@ export default class PiecePositions {
      * Live list of squares holding this piece type. May contain 0–2 entries (more after promotion).
      * @param token SAN piece letter (R/N/B/Q/K).
      */
-    listForToken(token: PieceToken): number[][] {
+    listForToken(token: PieceToken): MutableBoardCoord[] {
         switch (token) {
             case 'R':
                 return this.R;
@@ -90,7 +92,7 @@ export default class PiecePositions {
     }
 
     /** Map ASCII char code ('R'=82, 'N'=78, …) to the corresponding list. Returns null for pawns. */
-    private listForChar(tokenChar: number): number[][] | null {
+    private listForChar(tokenChar: number): MutableBoardCoord[] | null {
         switch (tokenChar) {
             case 82:
                 return this.R;
@@ -111,7 +113,7 @@ export default class PiecePositions {
      * Move the piece at `from` to `to` within the position list.
      * Pawns (char code 80 / 'P') are intentionally not tracked here.
      */
-    moveByChar(tokenChar: number, from: readonly number[], to: readonly number[]): void {
+    moveByChar(tokenChar: number, from: BoardCoord, to: BoardCoord): void {
         const list = this.listForChar(tokenChar);
         if (!list) return;
 
@@ -128,14 +130,14 @@ export default class PiecePositions {
         }
     }
 
-    move(pieceName: string, from: number[], to: number[]): void {
+    move(pieceName: string, from: BoardCoord, to: BoardCoord): void {
         this.moveByChar(pieceName.charCodeAt(0), from, to);
     }
 
     /**
      * Remove the piece at `on` from its type list (swap-with-last for O(1) removal).
      */
-    captureByChar(tokenChar: number, on: readonly number[]): void {
+    captureByChar(tokenChar: number, on: BoardCoord): void {
         const list = this.listForChar(tokenChar);
         if (!list) return;
 
@@ -153,12 +155,12 @@ export default class PiecePositions {
         }
     }
 
-    capture(takenPieceName: string, on: readonly number[]): void {
+    capture(takenPieceName: string, on: BoardCoord): void {
         this.captureByChar(takenPieceName.charCodeAt(0), on);
     }
 
     /** Register a newly promoted piece (gets a fresh `[row, col]` entry, not from the pre-allocated pool). */
-    promote(pieceName: string, on: readonly number[]): void {
+    promote(pieceName: string, on: BoardCoord): void {
         const list = this.listForChar(pieceName.charCodeAt(0));
         const [row, col] = on;
         if (!list || row === undefined || col === undefined) return;

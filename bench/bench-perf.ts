@@ -48,8 +48,8 @@ async function runAnalyzeScenario(
         async () => {
             const result = await analyzePGN(path, config);
             return {
-                games: result.games,
-                moves: result.moves,
+                games: result.gameCount,
+                moves: result.moveCount,
             };
         },
         { runs: RUNS, warmup: WARMUP },

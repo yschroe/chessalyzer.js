@@ -1,3 +1,4 @@
+import type { BoardCoord } from '#board/board-coords';
 import type { PlayerColor } from '#types/tokens';
 
 interface BaseAction {
@@ -9,21 +10,21 @@ interface BaseAction {
 export interface MoveAction extends BaseAction {
     type: 'move';
     piece: string | null;
-    from: number[];
-    to: number[];
+    from: BoardCoord;
+    to: BoardCoord;
 }
 
 export interface CaptureAction extends BaseAction {
     type: 'capture';
     takingPiece: string | null;
     takenPiece: string | null;
-    on: number[];
+    on: BoardCoord;
 }
 
 export interface PromoteAction extends BaseAction {
     type: 'promote';
     to: string;
-    on: number[];
+    on: BoardCoord;
 }
 
 export type Action = MoveAction | CaptureAction | PromoteAction;

@@ -64,7 +64,7 @@ Trust mode is the right default for batch stats on Lichess exports. Validate mod
 
 ### Output shapes (missing public types)
 
-Beyond the minimal internal `Game` type (`moves: string[]`, optional `Result` / `ECO`):
+Beyond the public {@link ParsedGame} shape (`moves`, optional `result` / `headers`):
 
 - **`ParsedGame`** — typed headers (`Map<string, string>` or record), mainline SAN list, game result, optional metadata
 - **`ReplayedGame`** — final FEN, move list as UCI/from-to, or `Action[]` per half-move
@@ -91,7 +91,7 @@ Beyond the minimal internal `Game` type (`moves: string[]`, optional `Result` / 
 
 ### Partial / implicit
 
-- **Headers** — only parsed when a game tracker or filter is present (`parseHeaders` is internal)
+- **Headers** — parsed when `headers: true` or a game tracker is present (`'auto'`); filters that read tag pairs need `headers: true`
 - **Promotions, en passant, castling** — handled in replay path for standard chess
 - **Move suffixes** `+`, `#`, `?`, `!` — stripped from SAN tokens before replay
 
@@ -126,13 +126,13 @@ Ideas:
 
 Today several behaviors are hardcoded or inferred:
 
-| Behavior          | Today                                     | Could become                                          |
-| ----------------- | ----------------------------------------- | ----------------------------------------------------- |
-| Read headers      | Auto if filter / game tracker             | `parseConfig.headers: true \| false \| 'filter-only'` |
-| Worker-side parse | Auto when filter present (`pgnParseOnly`) | Explicit `parseLocation: 'main' \| 'worker'`          |
-| Comment handling  | Always strip                              | `'strip' \| 'preserve' \| 'parse-commands'`           |
-| Variations        | Always strip (parens)                     | `'strip' \| 'mainline-only' \| 'tree'`                |
-| Error policy      | `'abort'` or `'skip-game'` (shipped)      | `'skip-move'`, richer collect modes                   |
+| Behavior         | Today                                       | Could become                                          |
+| ---------------- | ------------------------------------------- | ----------------------------------------------------- |
+| Read headers     | `'auto'` from game trackers only            | `parseConfig.headers: true \| false \| 'filter-only'` |
+| Game filter      | JS function only; requires `workers: false` | Serializable filter DSL (see below) for MT            |
+| Comment handling | Always strip                                | `'strip' \| 'preserve' \| 'parse-commands'`           |
+| Variations       | Always strip (parens)                       | `'strip' \| 'mainline-only' \| 'tree'`                |
+| Error policy     | `'abort'` or `'skip-game'` (shipped)        | `'skip-move'`, richer collect modes                   |
 
 ---
 
@@ -160,11 +160,57 @@ Still open:
 
 ## Multithreading & workers
 
-**Shipped:** lazy worker pool, tracker config once per worker via `workerData`, `trackerId` + `workerModule` for custom trackers; MT contract documented in README + AGENTS.md; deferred tracker merge at pool drain (Sprint 07).
+**Shipped:** lazy worker pool, tracker config once per worker via `workerData`, `trackerId` + `workerModule` for custom trackers; MT contract documented in README + AGENTS.md; deferred tracker merge at pool drain (Sprint 07). **JavaScript `filter` callbacks require `workers: false`** (v4) — they cannot be serialized to workers.
 
 Still open:
 
 - Replace custom tracker `workerModule` dynamic import with a registration API (optional ergonomics)
+
+### Serializable filters (MT-friendly)
+
+Today `filter` is a main-thread-only JS predicate (`(game: ParsedGame) => boolean`). That forces single-threaded analysis for any filtered run. For large PGNs, filtered stats (e.g. Elo band, result, date range) are a common use case and should not give up worker parallelism.
+
+**Direction:** add a **serializable filter** form that workers (or a shared pre-filter pass) can evaluate without shipping a closure:
+
+```ts
+// Hypothetical — not implemented
+type GameFilter =
+    | ((game: ParsedGame) => boolean) // main thread only; implies workers: false
+    | SerializableGameFilter;
+
+interface SerializableGameFilter {
+    /** Header tag predicate, e.g. { WhiteElo: { gt: 2000 } } */
+    headers?: Record<string, HeaderPredicate>;
+    result?: '1-0' | '0-1' | '1/2-1/2' | ('1-0' | '0-1' | '1/2-1/2')[];
+    minMoves?: number;
+    maxMoves?: number;
+}
+
+// Ideal UX: both shapes accepted on filter:
+analyzePGN(path, {
+    filter: (game) => Number(game.headers?.WhiteElo) > 2000, // ST
+});
+analyzePGN(path, {
+    filter: { headers: { WhiteElo: { gt: 2000 } } }, // MT OK
+});
+```
+
+**Dual-mode contract (target):**
+
+| Form                | Workers                                | Notes                                                          |
+| ------------------- | -------------------------------------- | -------------------------------------------------------------- |
+| JS function         | `workers: false` only (enforced today) | Full expressiveness; closure over outer scope                  |
+| Serializable object | Default worker pool OK                 | Fixed vocabulary; documented ops; no arbitrary code in workers |
+
+Normalization would branch on filter shape: functions → existing ST path; serializable → worker-safe eval (built-in interpreter, no `eval`). Header-based filters imply `headers: true` (or auto-infer when serializable filter references tags).
+
+**Open design questions:**
+
+- Predicate vocabulary — start minimal (`eq`, `gt`, `lt`, `in`, `and`/`or`) vs a small JSON-logic subset
+- Whether serializable filters run on workers during chunk replay or as a cheap post-parse gate before replay
+- Multi-run: mixed ST function filter on one run + serializable on another — likely reject or require all runs use the same filter class per call
+
+This keeps v4 honesty (no pretending JS filters are worker-native) while leaving a clear path to MT filtered analysis without breaking callers who already use function filters with `workers: false`.
 
 ---
 

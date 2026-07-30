@@ -42,18 +42,18 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 `analyzePGN` picks one of two internal paths:
 
 1. **Single-threaded** — `workers: false`. Main thread: I/O (`readLines`) → PGN parse (`GameAssembler`) → replay (`GameReplayer`, mode from per-config `replayMode`) → analyze (trackers).
-2. **Multithreaded (worker-chunk)** — default. Main thread: I/O + chunking (`readPgnChunks`) → workers PGN-parse once per chunk (once per chunk for all `runs` in a multi-run task). Without a `filter`, workers replay and accumulate tracker state; per-batch worker→main posts counts/errors only, tracker payloads flush at pool drain. With a `filter`, workers return parsed games and the main thread applies the JS predicate and replay (trackers stay on the main thread for that run). `maxGames` is enforced on workers when there is no filter, and on the main thread after filtering when there is.
+2. **Multithreaded (worker-chunk)** — default. Main thread: I/O + chunking (`readPgnChunks`) → workers PGN-parse once per chunk (once per chunk for all `runs` in a multi-run task). Workers replay and accumulate tracker state; per-batch worker→main posts counts/errors only, tracker payloads flush at pool drain. `maxGames` is enforced on workers. **JavaScript `filter` predicates require `workers: false`** (validated in `normalizeAnalyzeOptions`).
 
 **Replay mode:** Default from `resolveReplayMode(hasMoveTrackers)`; override via `AnalyzeOptions.replay` (`resolveEffectiveReplayMode`). Move trackers require `'actions'`. Per-config `replayMode` is stored at normalization and passed to workers via `WorkerInitData`. Count-only runs skip board replay by default (`SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = true` in [`src/replay/replay-mode.ts`](src/replay/replay-mode.ts)).
 
-**Parse headers:** `AnalyzeOptions.headers` maps to processor `parseHeaders`; when omitted, inferred from filter/game trackers. Filters and game trackers force header parsing even when `headers: false`.
+**Parse headers:** `AnalyzeOptions.headers` maps to processor `parseHeaders`; when omitted, inferred from game trackers only (`'auto'`). `headers: false` throws when a game tracker is present. Set `headers: true` when a filter reads tag pairs.
 
 ### Custom tracker multithreaded contract
 
 User-facing docs: [README Custom Trackers](README.md#custom-trackers). For MT (`workers` not `false`), custom trackers must:
 
 1. Live in a **separate module** with a **default export** of the tracker class.
-2. Set **`static trackerId = 'YourUniqueId'`** — stable ID used to match worker instances (minification-safe).
+2. Set **`static trackerId = 'YourUniqueId'`** — stable ID (minification-safe; required for multithreaded analysis only)
 3. Set **`static workerModule = import.meta.url`** — workers dynamically import that URL at startup ([`worker-tracker-registry.ts`](src/core/worker-tracker-registry.ts)).
 4. Implement **`merge(tracker)`** — aggregate worker batch stats into the main-thread instance. Duck-type the argument; do **not** use `instanceof` (worker payloads are plain objects after structured clone).
 

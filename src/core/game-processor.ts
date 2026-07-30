@@ -70,7 +70,10 @@ class GameProcessor {
         onError: 'abort' | 'skip-game' = 'abort',
         normalizeOptions?: NormalizeAnalysisOptions,
     ) {
-        const normalized = normalizeAnalysisConfigs(runs, normalizeOptions);
+        const normalized = normalizeAnalysisConfigs(runs, {
+            ...normalizeOptions,
+            multithreaded: multithreadCfg !== null,
+        });
         this.configs = normalized.configs;
         this.parseHeaders = normalized.parseHeaders;
         this.multithreadConfig = multithreadCfg;
@@ -132,6 +135,8 @@ class GameProcessor {
         const workerInitData: WorkerInitData = {
             configs: this.configs.map((cfg) => ({
                 trackerData: cfg.trackerData,
+                // Reserved for worker-safe serializable filters (IDEAS.md). Unreachable while JS
+                // `filter` requires `workers: false` — see assertFilterRequiresSingleThreaded.
                 pgnParseOnly: cfg.config.hasFilter,
                 replayMode: cfg.replayMode,
             })),

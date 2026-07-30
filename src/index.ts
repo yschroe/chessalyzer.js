@@ -4,13 +4,9 @@ export type {
     AnalyzeResult,
     AnalyzeRun,
     AnalyzeRunResult,
+    ReplayValidation,
     WorkerOptions,
 } from '#types/analysis';
-export type {
-    AnalyzeError,
-    AnalyzeErrorCode,
-    ParseError,
-    ReplayError,
-    ReplayErrorReason,
-} from '#types/errors';
+export type { ReplayMode } from '#replay/replay-mode';
+export type { AnalyzeError, AnalyzeErrorCode, ReplayError, ReplayErrorReason } from '#types/errors';
 export { getAnalyzeError, isReplayError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';

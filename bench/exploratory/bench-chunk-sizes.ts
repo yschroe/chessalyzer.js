@@ -26,9 +26,9 @@ async function bench(label: string, multithreadCfg: { targetBytes: number; worke
             },
         }),
     );
-    const mps = Math.round(result.moves / (ms / 1000)).toLocaleString();
+    const mps = Math.round(result.moveCount / (ms / 1000)).toLocaleString();
     console.log(`${label.padEnd(28)} ${formatSeconds(ms).padStart(9)}s  ${mps} moves/s`);
-    return result.moves / ms;
+    return result.moveCount / ms;
 }
 
 console.log(`Chunk size sweep (${getRuntimeLabel()})`);

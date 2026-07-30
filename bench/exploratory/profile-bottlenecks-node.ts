@@ -78,7 +78,12 @@ async function stagePgnParse(readHeader: boolean) {
 
 async function api(options: AnalyzeOptions) {
     const { ms, result } = await timeAsync(() => analyzePGN(pgn.path, options));
-    return { ms, cntGames: result.games, cntMoves: result.moves, mps: result.movesPerSecond };
+    return {
+        ms,
+        cntGames: result.gameCount,
+        cntMoves: result.moveCount,
+        mps: result.movesPerSecond,
+    };
 }
 
 console.log(`Runtime: ${getRuntimeLabel()}`);

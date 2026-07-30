@@ -1,4 +1,4 @@
-import { BOARD_INDICES, isBoardIndex, type BoardIndex } from '#board/board-coords';
+import { BOARD_INDICES, isBoardIndex, type BoardCoord, type BoardIndex } from '#board/board-coords';
 import {
     PAWN_TEMPLATE,
     PIECE_TEMPLATE,
@@ -9,14 +9,6 @@ import {
     type TileGrid,
     type TileRow,
 } from '#trackers/tile/tile-tracker-types';
-
-function namedStats(cell: StatsField, color: 'b' | 'w', name: string): TileStats {
-    const bucket = cell[color][name];
-    if (bucket) return bucket;
-    const created = new TileStats();
-    cell[color][name] = created;
-    return created;
-}
 
 function addNamedStats(dst: StatsField, src: StatsField, color: 'b' | 'w', name: string): void {
     const srcStats = src[color][name];
@@ -33,7 +25,7 @@ function addNamedStats(dst: StatsField, src: StatsField, color: 'b' | 'w', name:
  *
  * The tile grid is an 8×8 array of {@link StatsField} cells. Each cell contains
  * aggregate stats for black/white plus per-piece-name {@link TileStats} objects.
- * These helpers keep constructor / `add` / `resetWorkerBatch` / `nextGame` DRY.
+ * These helpers keep constructor / `add` / `nextGame` DRY.
  */
 
 /** Allocate a fresh 8×8 grid with zeroed stats and starting-position virtual pieces. */
@@ -122,43 +114,6 @@ export function setStartingPiece(tiles: TileGrid, row: BoardIndex, col: BoardInd
     }
 }
 
-/** Zero all counters on one cell (aggregate + per-piece). Does not touch `currentPiece`. */
-function zeroCellStats(cell: StatsField): void {
-    cell.b.movedTo = 0;
-    cell.b.wasOn = 0;
-    cell.b.capturedOn = 0;
-    cell.b.wasCapturedOn = 0;
-    cell.w.movedTo = 0;
-    cell.w.wasOn = 0;
-    cell.w.capturedOn = 0;
-    cell.w.wasCapturedOn = 0;
-
-    for (const name of PAWN_TEMPLATE) {
-        const bStats = namedStats(cell, 'b', name);
-        const wStats = namedStats(cell, 'w', name);
-        bStats.movedTo = 0;
-        bStats.wasOn = 0;
-        bStats.capturedOn = 0;
-        bStats.wasCapturedOn = 0;
-        wStats.movedTo = 0;
-        wStats.wasOn = 0;
-        wStats.capturedOn = 0;
-        wStats.wasCapturedOn = 0;
-    }
-    for (const name of PIECE_TEMPLATE) {
-        const bStats = namedStats(cell, 'b', name);
-        const wStats = namedStats(cell, 'w', name);
-        bStats.movedTo = 0;
-        bStats.wasOn = 0;
-        bStats.capturedOn = 0;
-        bStats.wasCapturedOn = 0;
-        wStats.movedTo = 0;
-        wStats.wasOn = 0;
-        wStats.capturedOn = 0;
-        wStats.wasCapturedOn = 0;
-    }
-}
-
 /**
  * Add `src` cell stats into `dst` (multithread merge).
  * Used when combining worker batch results on the main thread.
@@ -183,18 +138,8 @@ export function mergeCellStats(dst: StatsField, src: StatsField): void {
     }
 }
 
-/** Zero every cell and restore starting virtual pieces (worker batch reuse). */
-export function resetTileGrid(tiles: TileGrid): void {
-    for (const row of BOARD_INDICES) {
-        for (const col of BOARD_INDICES) {
-            zeroCellStats(tiles[row][col]);
-            setStartingPiece(tiles, row, col);
-        }
-    }
-}
-
 /** Resolve dynamic board coords to a grid cell when indices are in range. */
-export function tileCellAt(tiles: TileGrid, coords: number[]): StatsField | undefined {
+export function tileCellAt(tiles: TileGrid, coords: BoardCoord): StatsField | undefined {
     const [row, col] = coords;
     if (!isBoardIndex(row) || !isBoardIndex(col)) {
         return undefined;

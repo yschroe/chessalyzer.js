@@ -1,4 +1,5 @@
 import { algebraicToCoords, coordsToAlgebraic } from '#board/board-coords';
+import type { BoardCoord } from '#board/board-coords';
 import { getStartingPiece } from '#board/piece-names';
 import type { SquareData } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
@@ -6,8 +7,8 @@ import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
 
 const EMPTY_SQUARE_PIECE = { color: 'w' as PlayerColor, name: '' };
 
-function squareData(row: number, col: number, _refCoords: number[], _refAlg: string): SquareData {
-    const loopSqrCoords = [row, col];
+function squareData(row: number, col: number, _refCoords: BoardCoord, _refAlg: string): SquareData {
+    const loopSqrCoords: BoardCoord = [row, col];
     return {
         alg: coordsToAlgebraic(loopSqrCoords),
         coords: loopSqrCoords,
@@ -32,16 +33,17 @@ function squareData(row: number, col: number, _refCoords: number[], _refAlg: str
 export function generateHeatmap(
     data: unknown,
     fun: HeatmapAnalysisFunc,
-    square?: string | number[],
+    square?: string | BoardCoord,
     optData?: unknown,
 ): HeatmapData {
-    let sqrCoords: number[] = [];
+    let sqrCoords: BoardCoord = [0, 0];
     let sqrAlg = '';
 
     if (typeof square === 'string') {
-        sqrCoords = [...(algebraicToCoords(square) ?? [])];
+        const resolved = algebraicToCoords(square);
+        sqrCoords = resolved ? [resolved[0], resolved[1]] : [0, 0];
         sqrAlg = square;
-    } else if (Array.isArray(square)) {
+    } else if (square !== undefined) {
         sqrCoords = square;
         sqrAlg = coordsToAlgebraic(square);
     }
@@ -79,7 +81,7 @@ export function generateComparisonHeatmap(
     data1: unknown,
     data2: unknown,
     fun: HeatmapAnalysisFunc,
-    square?: string | number[],
+    square?: string | BoardCoord,
     optData?: unknown,
 ): HeatmapData {
     const map: number[][] = [];
