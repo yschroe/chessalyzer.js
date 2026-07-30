@@ -135,6 +135,8 @@ class GameProcessor {
         const workerInitData: WorkerInitData = {
             configs: this.configs.map((cfg) => ({
                 trackerData: cfg.trackerData,
+                // Reserved for worker-safe serializable filters (IDEAS.md). Unreachable while JS
+                // `filter` requires `workers: false` — see assertFilterRequiresSingleThreaded.
                 pgnParseOnly: cfg.config.hasFilter,
                 replayMode: cfg.replayMode,
             })),

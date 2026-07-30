@@ -75,7 +75,7 @@ export function mergeWorkerTrackerFlush(
     }
 }
 
-/** Apply filter, replay, and counters for games parsed on workers (JS filter path). */
+/** Reserved for worker-safe filters: apply JS filter + replay on main after worker parse. */
 function mergeParsedGamesOnMain(
     cfg: GameProcessorAnalysisConfigFull,
     parsedGames: ParsedGame[],

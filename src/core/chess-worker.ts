@@ -36,6 +36,7 @@ const gameReplayer = new GameReplayer();
 const ready = initWorkerTrackers(initData);
 
 function isPgnParseOnly(idxConfig: number): boolean {
+    // Reserved for serializable filters — false for all public analyzePGN paths today (Phase 6).
     return initData?.configs[idxConfig]?.pgnParseOnly ?? false;
 }
 

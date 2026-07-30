@@ -64,7 +64,7 @@ Trust mode is the right default for batch stats on Lichess exports. Validate mod
 
 ### Output shapes (missing public types)
 
-Beyond the minimal internal `Game` type (`moves: string[]`, optional `Result` / `ECO`):
+Beyond the public {@link ParsedGame} shape (`moves`, optional `result` / `headers`):
 
 - **`ParsedGame`** — typed headers (`Map<string, string>` or record), mainline SAN list, game result, optional metadata
 - **`ReplayedGame`** — final FEN, move list as UCI/from-to, or `Action[]` per half-move

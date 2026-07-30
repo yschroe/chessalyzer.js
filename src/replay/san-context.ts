@@ -1,5 +1,5 @@
-import type { MutableBoardCoord } from '#board/board-coords';
 import ChessBoard from '#board/chess-board';
+import type { MutableBoardCoord } from '#board/mutable-board-coord';
 import PieceFinder from '#replay/piece-finder';
 import type { Action, CaptureAction, MoveAction, PromoteAction } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';

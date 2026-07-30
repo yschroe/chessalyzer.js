@@ -10,14 +10,6 @@ import {
     type TileRow,
 } from '#trackers/tile/tile-tracker-types';
 
-function namedStats(cell: StatsField, color: 'b' | 'w', name: string): TileStats {
-    const bucket = cell[color][name];
-    if (bucket) return bucket;
-    const created = new TileStats();
-    cell[color][name] = created;
-    return created;
-}
-
 function addNamedStats(dst: StatsField, src: StatsField, color: 'b' | 'w', name: string): void {
     const srcStats = src[color][name];
     const dstStats = dst[color][name];
@@ -122,43 +114,6 @@ export function setStartingPiece(tiles: TileGrid, row: BoardIndex, col: BoardInd
     }
 }
 
-/** Zero all counters on one cell (aggregate + per-piece). Does not touch `currentPiece`. */
-function zeroCellStats(cell: StatsField): void {
-    cell.b.movedTo = 0;
-    cell.b.wasOn = 0;
-    cell.b.capturedOn = 0;
-    cell.b.wasCapturedOn = 0;
-    cell.w.movedTo = 0;
-    cell.w.wasOn = 0;
-    cell.w.capturedOn = 0;
-    cell.w.wasCapturedOn = 0;
-
-    for (const name of PAWN_TEMPLATE) {
-        const bStats = namedStats(cell, 'b', name);
-        const wStats = namedStats(cell, 'w', name);
-        bStats.movedTo = 0;
-        bStats.wasOn = 0;
-        bStats.capturedOn = 0;
-        bStats.wasCapturedOn = 0;
-        wStats.movedTo = 0;
-        wStats.wasOn = 0;
-        wStats.capturedOn = 0;
-        wStats.wasCapturedOn = 0;
-    }
-    for (const name of PIECE_TEMPLATE) {
-        const bStats = namedStats(cell, 'b', name);
-        const wStats = namedStats(cell, 'w', name);
-        bStats.movedTo = 0;
-        bStats.wasOn = 0;
-        bStats.capturedOn = 0;
-        bStats.wasCapturedOn = 0;
-        wStats.movedTo = 0;
-        wStats.wasOn = 0;
-        wStats.capturedOn = 0;
-        wStats.wasCapturedOn = 0;
-    }
-}
-
 /**
  * Add `src` cell stats into `dst` (multithread merge).
  * Used when combining worker batch results on the main thread.
@@ -180,16 +135,6 @@ export function mergeCellStats(dst: StatsField, src: StatsField): void {
     for (const name of PIECE_TEMPLATE) {
         addNamedStats(dst, src, 'b', name);
         addNamedStats(dst, src, 'w', name);
-    }
-}
-
-/** Zero every cell and restore starting virtual pieces (worker batch reuse). */
-export function resetTileGrid(tiles: TileGrid): void {
-    for (const row of BOARD_INDICES) {
-        for (const col of BOARD_INDICES) {
-            zeroCellStats(tiles[row][col]);
-            setStartingPiece(tiles, row, col);
-        }
     }
 }
 

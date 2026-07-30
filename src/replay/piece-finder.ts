@@ -1,5 +1,6 @@
-import type { BoardCoord, MutableBoardCoord } from '#board/board-coords';
+import type { BoardCoord } from '#board/board-coords';
 import type ChessBoard from '#board/chess-board';
+import type { MutableBoardCoord } from '#board/mutable-board-coord';
 import { ReplayFailure } from '#replay/replay-failure';
 import type { PieceToken, PlayerColor } from '#types/tokens';
 

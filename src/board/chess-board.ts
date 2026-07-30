@@ -1,4 +1,5 @@
-import type { BoardCoord, MutableBoardCoord } from '#board/board-coords';
+import type { BoardCoord } from '#board/board-coords';
+import type { MutableBoardCoord } from '#board/mutable-board-coord';
 import PiecePositions from '#board/piece-positions';
 import type { Action, MoveAction, CaptureAction, PromoteAction } from '#types/actions';
 import type { ChessPiece } from '#types/game';
