@@ -174,15 +174,18 @@ printHeatmap(heatmapData);
 
 ## Filtering
 
-You can also filter the PGN file for specific criteria, e.g. only evaluate games where `WhiteElo > 2000` (set `headers: true` when the filter reads tag pairs):
+You can filter games with a JavaScript predicate, e.g. only evaluate games where `WhiteElo > 2000` (set `headers: true` when the filter reads tag pairs):
 
 ```javascript
 await analyzePGN('<pathToPgnFile>', {
+    workers: false,
     trackers: [tileTracker],
     headers: true,
     filter: (game) => Number(game.headers?.WhiteElo) > 2000,
 });
 ```
+
+**`filter` requires `workers: false`.** Filter functions are ordinary JavaScript callbacks — they cannot run inside worker threads. The library throws at config time if you pass a `filter` while the default worker pool is enabled. Use single-threaded analysis for filtered runs; leave `workers` at its default when you do not need a filter.
 
 ## Compare Analyses
 
@@ -193,6 +196,7 @@ const tileT1 = new TileTracker();
 const tileT2 = new TileTracker();
 
 await analyzePGN('<pathToPgnFile>', {
+    workers: false,
     headers: true,
     runs: [
         {

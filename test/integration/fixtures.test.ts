@@ -74,11 +74,12 @@ describe('Fixtures', () => {
             expect(data.gameCount).toBe(3);
         });
 
-        it('filters by result (multithreaded)', async () => {
-            const data = await analyzePGN(fixturePath('results-mix'), {
-                filter: (game: ParsedGame) => game.result === '1-0',
-            });
-            expect(data.gameCount).toBe(3);
+        it('rejects filter without workers: false', () => {
+            return expect(
+                analyzePGN(fixturePath('results-mix'), {
+                    filter: (game: ParsedGame) => game.result === '1-0',
+                }),
+            ).rejects.toThrow('filter requires workers: false');
         });
 
         it('combines filter and count (single-threaded)', async () => {
@@ -86,14 +87,6 @@ describe('Fixtures', () => {
                 maxGames: 2,
                 filter: (game: ParsedGame) => game.result === '0-1',
                 workers: false,
-            });
-            expect(data.gameCount).toBe(2);
-        });
-
-        it('combines filter and count (multithreaded)', async () => {
-            const data = await analyzePGN(fixturePath('results-mix'), {
-                maxGames: 2,
-                filter: (game: ParsedGame) => game.result === '0-1',
             });
             expect(data.gameCount).toBe(2);
         });
@@ -137,6 +130,7 @@ describe('Fixtures', () => {
             const whiteWins = new GameTracker();
 
             const data = await analyzePGN(fixturePath('results-mix'), {
+                workers: false,
                 runs: [
                     { trackers: [allGames] },
                     {

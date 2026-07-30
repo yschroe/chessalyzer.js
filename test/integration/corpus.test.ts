@@ -46,6 +46,7 @@ if (corpusAvailable) {
 
             it('filters by result', async () => {
                 const data = await analyzePGN(path, {
+                    workers: false,
                     filter: (game: ParsedGame) => game.result === '1-0',
                 });
                 expect(data.gameCount).toBe(entry.expected.filters.whiteWins);
@@ -53,6 +54,7 @@ if (corpusAvailable) {
 
             it('combines filter and count', async () => {
                 const data = await analyzePGN(path, {
+                    workers: false,
                     maxGames: 500,
                     filter: (game: ParsedGame) => game.result === '0-1',
                 });
@@ -71,6 +73,7 @@ if (corpusAvailable) {
                 const gameTracker = new GameTracker();
                 const pieceTracker = new PieceTracker();
                 const data = await analyzePGN(path, {
+                    workers: false,
                     headers: true,
                     runs: [
                         {
@@ -133,6 +136,7 @@ if (corpusAvailable) {
                 const gameTracker = new GameTracker();
                 beforeAll(async () => {
                     await analyzePGN(path, {
+                        workers: false,
                         trackers: [gameTracker],
                         maxGames: entry.golden.gameTracker.filterWhiteWins,
                         filter: (game: ParsedGame) => game.result === '1-0',

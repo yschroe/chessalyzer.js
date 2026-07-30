@@ -3,9 +3,13 @@ import type { AnalyzeError } from '#types/errors';
 import type { ParsePgnOptions, ParsedGame } from '#types/parse-pgn';
 import type { Tracker } from '#types/tracker';
 
-/** Options for a single filtered analysis run. */
+/** Options for a single analysis run. */
 export interface AnalyzeRun {
     trackers?: Tracker[];
+    /**
+     * Per-game predicate. Requires {@link AnalyzeSharedOptions.workers} `false` — JavaScript
+     * filters run on the main thread only.
+     */
     filter?: (game: ParsedGame) => boolean;
     maxGames?: number;
 }
@@ -46,6 +50,9 @@ export interface AnalyzeSharedOptions extends Omit<ParsePgnOptions, 'headers'> {
 /** Single-run {@link analyzePGN} options. */
 export interface AnalyzeSingleRunOptions extends AnalyzeSharedOptions {
     trackers?: Tracker[];
+    /**
+     * Per-game predicate. Requires `workers: false` — JavaScript filters run on the main thread only.
+     */
     filter?: (game: ParsedGame) => boolean;
     maxGames?: number;
     runs?: undefined;

@@ -22,6 +22,31 @@ describe('normalizeAnalyzeOptions', () => {
             } as AnalyzeOptions),
         ).toThrow('Cannot set both runs and top-level trackers');
     });
+
+    it('rejects filter without workers: false', () => {
+        expect(() =>
+            normalizeAnalyzeOptions({
+                filter: () => true,
+            }),
+        ).toThrow('filter requires workers: false');
+    });
+
+    it('allows filter with workers: false', () => {
+        const { runs, multithreadCfg } = normalizeAnalyzeOptions({
+            workers: false,
+            filter: () => true,
+        });
+        expect(multithreadCfg).toBeNull();
+        expect(runs[0]?.filter).toBeDefined();
+    });
+
+    it('rejects filter in multi-run without workers: false', () => {
+        expect(() =>
+            normalizeAnalyzeOptions({
+                runs: [{ filter: () => true }, { trackers: [new TileTracker()] }],
+            }),
+        ).toThrow('filter requires workers: false');
+    });
 });
 
 describe('normalizeAnalysisConfigs', () => {

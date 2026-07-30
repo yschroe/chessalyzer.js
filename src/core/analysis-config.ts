@@ -99,6 +99,19 @@ function normalizeProcessorConfig(
     };
 }
 
+function assertFilterRequiresSingleThreaded(
+    runs: AnalyzeRun[],
+    multithreadCfg: WorkerOptions | null,
+): void {
+    if (multithreadCfg === null) return;
+    const hasFilter = runs.some((run) => run.filter !== undefined);
+    if (hasFilter) {
+        throw new Error(
+            'A JavaScript filter requires workers: false — filter predicates run on the main thread and cannot be used with the default worker pool',
+        );
+    }
+}
+
 function assertNoConflictingSingleRunFields(opts: AnalyzeMultiRunOptions): void {
     const extra = opts as AnalyzeMultiRunOptions & {
         trackers?: unknown;
@@ -139,6 +152,7 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
         if (opts.runs.length === 0) {
             throw new Error('runs must contain at least one entry');
         }
+        assertFilterRequiresSingleThreaded(opts.runs, multithreadCfg);
         return {
             multithreadCfg,
             onError,
@@ -148,12 +162,16 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
         };
     }
 
+    const runs: AnalyzeRun[] = [
+        { trackers: opts.trackers, filter: opts.filter, maxGames: opts.maxGames },
+    ];
+    assertFilterRequiresSingleThreaded(runs, multithreadCfg);
     return {
         multithreadCfg,
         onError,
         headers,
         replay,
-        runs: [{ trackers: opts.trackers, filter: opts.filter, maxGames: opts.maxGames }],
+        runs,
     };
 }
 

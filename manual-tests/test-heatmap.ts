@@ -5,6 +5,7 @@ const tileTracker = new TileTracker();
 const tileTracker2 = new TileTracker();
 
 const data = await analyzePGN('./pgn/asorted-games.pgn', {
+    workers: false,
     runs: [
         {
             trackers: [tileTracker],
