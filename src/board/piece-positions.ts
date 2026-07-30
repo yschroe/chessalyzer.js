@@ -148,7 +148,7 @@ export default class PiecePositions {
             if (!p) continue;
             if (p[0] === row && p[1] === col) {
                 const last = list.length - 1;
-                list[i] = list[last];
+                list[i] = list[last]!;
                 list.pop();
                 return;
             }
