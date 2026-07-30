@@ -1,15 +1,14 @@
 import { extractMoves, isGameResultLine, parseHeaderTag, stripComments } from '#pgn/movetext';
-import type { AssembledGame, GameResult } from '#types/parse-pgn';
+import type { AssembledGame } from '#types/parse-pgn';
+import { isGameResult } from '#types/parse-pgn';
 
 export interface ParseGamesOptions {
     parseHeaders: boolean;
     maxGames?: number;
 }
 
-const GAME_RESULT_RE = /^(1-0|0-1|1\/2-1\/2|\*)$/;
-
-function toGameResult(value: string): GameResult | undefined {
-    return GAME_RESULT_RE.test(value) ? (value as GameResult) : undefined;
+function toGameResult(value: string) {
+    return isGameResult(value) ? value : undefined;
 }
 
 /**
@@ -47,8 +46,8 @@ export class GameAssembler {
         if (isGameResultLine(cleanedLine)) {
             const completed: AssembledGame = { moves: this.game.moves };
             const resultMatch = cleanedLine.match(/(1-0|0-1|1\/2-1\/2)\s*$/);
-            if (resultMatch) {
-                completed.result = resultMatch[1] as GameResult;
+            if (resultMatch?.[1] !== undefined) {
+                completed.result = toGameResult(resultMatch[1]);
             } else if (this.headers?.Result !== undefined) {
                 completed.result = toGameResult(this.headers.Result);
             }

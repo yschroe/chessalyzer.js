@@ -92,7 +92,11 @@ describe('tracker merge', () => {
             batchTracker.games = 2;
 
             const cfg = baseConfig({
-                trackers: { game: [mainTracker as unknown as BaseTracker], move: [] },
+                trackers: {
+                    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixture uses built-package BaseGameTracker
+                    game: [mainTracker as unknown as BaseTracker],
+                    move: [],
+                },
                 config: { hasFilter: false, filter: () => true, maxGames: 10 },
             });
 
@@ -126,10 +130,18 @@ describe('tracker merge', () => {
             batchB.games = 2;
 
             const cfgA = baseConfig({
-                trackers: { game: [trackerA as unknown as BaseTracker], move: [] },
+                trackers: {
+                    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixture uses built-package BaseGameTracker
+                    game: [trackerA as unknown as BaseTracker],
+                    move: [],
+                },
             });
             const cfgB = baseConfig({
-                trackers: { game: [trackerB as unknown as BaseTracker], move: [] },
+                trackers: {
+                    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixture uses built-package BaseGameTracker
+                    game: [trackerB as unknown as BaseTracker],
+                    move: [],
+                },
             });
 
             const handler = createWorkerResultHandler([cfgA, cfgB], () => {

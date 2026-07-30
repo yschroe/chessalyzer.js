@@ -1,6 +1,11 @@
 /** Standard PGN game result tokens. */
 export type GameResult = '1-0' | '0-1' | '1/2-1/2' | '*';
 
+/** True when `value` is a standard PGN result token. */
+export function isGameResult(value: string): value is GameResult {
+    return value === '1-0' || value === '0-1' || value === '1/2-1/2' || value === '*';
+}
+
 /**
  * One half-move from parsed movetext.
  * Shape is intentionally minimal; future optional fields (`nags`, `comment`, `variations`) are additive.
