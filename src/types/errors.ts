@@ -16,7 +16,7 @@ export interface ReplayError extends AnalyzeError {
     reason: ReplayErrorReason;
 }
 
-/** Reserved for future PGN parse failures. */
+/** Reserved for future PGN parse failures — not exported until parse emits these. */
 export interface ParseError extends AnalyzeError {
     code: 'parse';
     gameIndex?: number;

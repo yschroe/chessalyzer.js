@@ -9,8 +9,8 @@ import type { AnalyzeOptions, AnalyzeResult, AnalyzeRun, AnalyzeRunResult } from
 import type { AnalyzeError } from '#types/errors';
 import type { HeatmapData } from '#types/tracker';
 
-/** Build {@link AnalyzeResult} from raw counts and duration. */
-function buildAnalyzeResult(
+/** Build {@link AnalyzeResult} from raw counts and duration. @internal Exported for unit tests. */
+export function buildAnalyzeResult(
     inputRuns: AnalyzeRun[],
     counts: {
         games: number;
@@ -31,9 +31,11 @@ function buildAnalyzeResult(
     const skippedGames = counts.reduce((sum, c) => sum + (c.skippedGames ?? 0), 0);
 
     const errors: AnalyzeError[] = [];
+    let totalErrorCount = 0;
     for (const c of counts) {
         if (c.errors) {
             for (const err of c.errors) {
+                totalErrorCount += 1;
                 collectError(errors, err);
             }
         }
@@ -51,7 +53,10 @@ function buildAnalyzeResult(
         result.skippedGames = skippedGames;
     }
     if (errors.length > 0) {
-        result.errors = errors.slice(0, MAX_COLLECTED_ERRORS);
+        result.errors = errors;
+    }
+    if (totalErrorCount > MAX_COLLECTED_ERRORS) {
+        result.errorsTruncated = true;
     }
 
     return result;

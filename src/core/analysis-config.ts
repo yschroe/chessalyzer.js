@@ -5,6 +5,7 @@ import type {
     AnalyzeMultiRunOptions,
     AnalyzeOptions,
     AnalyzeRun,
+    AnalyzeSharedOptions,
     WorkerOptions,
 } from '#types/analysis';
 import type { GameProcessorAnalysisConfigFull, GameProcessorConfig } from '#types/analysis-runtime';
@@ -129,6 +130,12 @@ function assertNoConflictingSingleRunFields(opts: AnalyzeMultiRunOptions): void 
     }
 }
 
+function assertValidationSupported(validation: AnalyzeSharedOptions['validation']): void {
+    if (validation === 'validate') {
+        throw new Error('validation: "validate" is not yet implemented');
+    }
+}
+
 /**
  * Convert public {@link AnalyzeOptions} into processor inputs.
  */
@@ -140,6 +147,8 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
     replay?: ReplayMode;
 } {
     const opts = options ?? {};
+
+    assertValidationSupported(opts.validation);
 
     const multithreadCfg: WorkerOptions | null =
         opts.workers === false ? null : (opts.workers ?? {});

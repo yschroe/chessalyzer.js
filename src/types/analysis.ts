@@ -1,3 +1,4 @@
+import type { PgnChunkConfig } from '#io/pgn-chunks';
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
 import type { ParsePgnOptions, ParsedGame } from '#types/parse-pgn';
@@ -14,17 +15,14 @@ export interface AnalyzeRun {
     maxGames?: number;
 }
 
-/** Worker thread chunking options. Pass `false` via {@link AnalyzeOptions.workers} to disable. */
-export interface WorkerOptions {
-    /** Target raw PGN chunk size in bytes before aligning to a game boundary. */
-    targetBytes?: number;
+/** Worker thread pool and PGN chunking. Pass `false` via {@link AnalyzeOptions.workers} to disable. */
+export interface WorkerOptions extends PgnChunkConfig {
     /** Worker thread count. Defaults to `os.availableParallelism()`. */
     workerCount?: number;
-    /** Safety cap on lines per chunk. */
-    maxLines?: number;
-    /** Minimum lines before a byte-target chunk may be emitted. */
-    minLines?: number;
 }
+
+/** Replay legality policy. `'trust'` is the default (assume well-formed PGN). */
+export type ReplayValidation = 'trust' | 'validate';
 
 /** Shared analyze options for single-run and multi-run calls. */
 export interface AnalyzeSharedOptions extends Omit<ParsePgnOptions, 'headers'> {
@@ -38,10 +36,16 @@ export interface AnalyzeSharedOptions extends Omit<ParsePgnOptions, 'headers'> {
      * Move trackers require `'actions'`.
      */
     replay?: ReplayMode;
+    /**
+     * Replay legality policy. Default `'trust'` (today’s behavior). Sibling to {@link replay} —
+     * does not change how moves are decoded, only whether legality is checked (future).
+     * `'validate'` is reserved and not yet implemented.
+     */
+    validation?: ReplayValidation;
     /** Default: multithreaded with library defaults. `false` = single-threaded. */
     workers?: false | WorkerOptions;
     /**
-     * How to handle replay failures per game.
+     * Replay error policy per game. Does not apply to PGN structural parse failures.
      * Default `'abort'` stops on the first bad game; `'skip-game'` continues and collects errors.
      */
     onError?: 'abort' | 'skip-game';
@@ -93,6 +97,8 @@ export interface AnalyzeResult {
     runs: AnalyzeRunResult[];
     /** Games skipped due to replay failure when `onError: 'skip-game'`. */
     skippedGames?: number;
-    /** First {@link MAX_COLLECTED_ERRORS} collected errors (skip-game or partial failure). */
+    /** Collected replay errors when `onError: 'skip-game'` (capped at 100). */
     errors?: AnalyzeError[];
+    /** Present when more than 100 replay errors occurred and {@link errors} was truncated. */
+    errorsTruncated?: true;
 }

@@ -122,6 +122,7 @@ await analyzePGN('<pathToPgnFile>', {
     trackers: [new GameTracker()],
     headers: true, // optional; default 'auto' enables headers when game trackers are present
     replay: 'board', // 'skip' | 'board' | 'actions' — move trackers require 'actions'
+    validation: 'trust', // default; 'validate' reserved (not implemented)
 });
 ```
 
@@ -247,7 +248,7 @@ await analyzePGN('<pathToPgnFile>', { workers: false });
 
 ## Error handling
 
-By default, `analyzePGN` **aborts on the first replay failure** (illegal or unparseable SAN). The library does not log to the console — callers decide how to handle errors:
+By default, `analyzePGN` **aborts on the first replay failure** (illegal or unparseable SAN during board replay). `onError` is a **replay error policy** — it does not apply to PGN structural parse issues. The library does not log to the console — callers decide how to handle errors:
 
 ```javascript
 import { analyzePGN, getAnalyzeError, isReplayError } from 'chessalyzer.js';
@@ -269,10 +270,12 @@ For large batch runs over mostly trusted exports (e.g. Lichess database dumps), 
 
 ```javascript
 const result = await analyzePGN('<pathToPgnFile>', { onError: 'skip-game' });
-console.log(result.gameCount, result.skippedGames, result.errors);
+console.log(result.gameCount, result.skippedGames, result.errors, result.errorsTruncated);
 ```
 
-`result.errors` contains up to 100 typed replay errors (`gameIndex`, `moveIndex`, `san`, `reason`). Use default `abort` for untrusted or small inputs where a failure should stop the run immediately.
+`result.errors` contains up to 100 typed **replay** errors (`gameIndex`, `moveIndex`, `san`, `reason`). When more than 100 games fail, `result.errorsTruncated` is `true` and only the first 100 errors are returned. Use default `abort` for untrusted or small inputs where a failure should stop the run immediately.
+
+Today's replay assumes trustworthy PGN (`validation: 'trust'`, the default). `validation: 'validate'` is reserved for a future legality-checking mode and is not implemented yet.
 
 ##### Important
 

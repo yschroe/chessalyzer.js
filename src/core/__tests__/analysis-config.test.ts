@@ -47,6 +47,16 @@ describe('normalizeAnalyzeOptions', () => {
             }),
         ).toThrow('filter requires workers: false');
     });
+
+    it('rejects validation: validate until implemented', () => {
+        expect(() => normalizeAnalyzeOptions({ validation: 'validate' })).toThrow(
+            'validation: "validate" is not yet implemented',
+        );
+    });
+
+    it('allows validation: trust (default replay behavior)', () => {
+        expect(() => normalizeAnalyzeOptions({ validation: 'trust' })).not.toThrow();
+    });
 });
 
 describe('normalizeAnalysisConfigs', () => {
