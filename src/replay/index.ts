@@ -9,3 +9,4 @@ export {
     squareToCoords,
 } from '#board/board-coords';
 export type { PlayerColor, PromotionToken } from '#types/tokens';
+export { isPromotionToken } from '#types/tokens';

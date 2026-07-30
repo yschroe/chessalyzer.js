@@ -2,7 +2,8 @@ import { algebraicToCoordsAt, coordsToSquare } from '#board/board-coords';
 import { ReplayFailure } from '#replay/replay-failure';
 import type SanContext from '#replay/san-context';
 import type { Action } from '#types/actions';
-import type { PieceToken, PromotionToken } from '#types/tokens';
+import type { PieceToken } from '#types/tokens';
+import { isPromotionToken } from '#types/tokens';
 
 const PIECE_TOKEN_BY_CHAR: Record<number, PieceToken | undefined> = {
     82: 'R',
@@ -101,11 +102,17 @@ export default class SanDecoder {
         actions.push(mov);
 
         if (promotesTo) {
+            if (!isPromotionToken(promotesTo)) {
+                throw new ReplayFailure(
+                    'UnknownToken',
+                    `Unknown promotion piece in SAN: ${san}`,
+                );
+            }
             const promo = this.ctx.promoteAction;
             promo.san = san;
             promo.player = player;
             promo.on = coordsToSquare(toRow, toCol);
-            promo.promotion = promotesTo as PromotionToken;
+            promo.promotion = promotesTo;
             actions.push(promo);
         }
 

@@ -54,7 +54,7 @@ class BaseTracker implements Tracker {
     /** Optional end-of-analysis hook (e.g. sort aggregated keys). */
     finish(): void {}
 
-    private resolveHeatmapFunc(analysisFunc: string | HeatmapAnalysisFunc): HeatmapAnalysisFunc {
+    private resolveHeatmapFunc<T>(analysisFunc: string | HeatmapAnalysisFunc<T>): HeatmapAnalysisFunc<T> {
         if (typeof analysisFunc !== 'string') return analysisFunc;
 
         if (!this.heatmapPresets || Object.keys(this.heatmapPresets).length === 0) {
@@ -70,12 +70,7 @@ class BaseTracker implements Tracker {
         square?: string | BoardCoord,
         optData?: unknown,
     ): HeatmapData {
-        return generateHeatmap(
-            this,
-            this.resolveHeatmapFunc(analysisFunc as string | HeatmapAnalysisFunc),
-            square,
-            optData,
-        );
+        return generateHeatmap(this, this.resolveHeatmapFunc(analysisFunc), square, optData);
     }
 
     generateComparisonHeatmap(
@@ -87,7 +82,7 @@ class BaseTracker implements Tracker {
         return generateComparisonHeatmap(
             this,
             compData,
-            this.resolveHeatmapFunc(analysisFunc as string | HeatmapAnalysisFunc),
+            this.resolveHeatmapFunc(analysisFunc),
             square,
             optData,
         );

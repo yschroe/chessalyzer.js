@@ -6,20 +6,26 @@ import { GameTracker } from '#trackers/game-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { AnalyzeOptions, AnalyzeRun } from '#types/analysis';
 
+/** Pass intentionally invalid options past the type checker for runtime-guard tests. */
+function invalidAnalyzeOptions(value: object): AnalyzeOptions {
+    return value;
+}
+
 describe('normalizeAnalyzeOptions', () => {
     it('rejects empty runs', () => {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- invalid input for runtime guard
-        expect(() => normalizeAnalyzeOptions({ runs: [] } as unknown as AnalyzeOptions)).toThrow(
+        expect(() => normalizeAnalyzeOptions(invalidAnalyzeOptions({ runs: [] }))).toThrow(
             'runs must contain at least one entry',
         );
     });
 
     it('rejects runs combined with top-level trackers', () => {
         expect(() =>
-            normalizeAnalyzeOptions({
-                runs: [{ trackers: [new TileTracker()] }],
-                trackers: [new TileTracker()],
-            } as unknown as AnalyzeOptions),
+            normalizeAnalyzeOptions(
+                invalidAnalyzeOptions({
+                    runs: [{ trackers: [new TileTracker()] }],
+                    trackers: [new TileTracker()],
+                }),
+            ),
         ).toThrow('Cannot set both runs and top-level trackers');
     });
 
@@ -50,7 +56,7 @@ describe('normalizeAnalyzeOptions', () => {
 
     it('rejects validation: validate until implemented', () => {
         expect(() =>
-            normalizeAnalyzeOptions({ validation: 'validate' } as unknown as AnalyzeOptions),
+            normalizeAnalyzeOptions(invalidAnalyzeOptions({ validation: 'validate' })),
         ).toThrow('validation: "validate" is not yet implemented');
     });
 
