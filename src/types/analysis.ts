@@ -59,20 +59,28 @@ export interface AnalyzeMultiRunOptions extends AnalyzeSharedOptions {
 /** Options passed to {@link analyzePGN}. */
 export type AnalyzeOptions = AnalyzeSingleRunOptions | AnalyzeMultiRunOptions;
 
-/** Per-run counters returned from {@link analyzePGN}. */
+/** Per-run counters and tracker instances returned from {@link analyzePGN}. */
 export interface AnalyzeRunResult {
-    games: number;
-    moves: number;
-    movesPerSecond: number;
+    /** Games processed in this run (after filter / maxGames). */
+    gameCount: number;
+    /** Half-moves replayed or counted in this run. */
+    moveCount: number;
+    /** Tracker instances passed for this run (stats accumulate in place on these refs). */
+    trackers: Tracker[];
 }
 
 /** Unified result shape from {@link analyzePGN}. */
 export interface AnalyzeResult {
     /** Wall time for the whole call in milliseconds. */
     durationMs: number;
-    /** Sum across runs. */
-    games: number;
-    moves: number;
+    /**
+     * Sum of {@link AnalyzeRunResult.gameCount} across runs.
+     * With a single run, equals that run's processed game count. With multiple `runs`, sums each pass over the file.
+     */
+    gameCount: number;
+    /** Sum of {@link AnalyzeRunResult.moveCount} across runs. */
+    moveCount: number;
+    /** Call-level throughput from total moves and {@link durationMs}. */
     movesPerSecond: number;
     /** One entry per run (length 1 when `runs` is omitted). */
     runs: AnalyzeRunResult[];

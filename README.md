@@ -53,14 +53,14 @@ import { TileTracker } from 'chessalyzer.js/trackers';
 
 ```javascript
 const result = await analyzePGN('<pathToPgnFile>', { trackers: [new TileTracker()] });
-console.log(result.games, result.moves, result.movesPerSecond);
+console.log(result.gameCount, result.moveCount, result.movesPerSecond);
 ```
 
 4. Check out the examples or the [docs](https://yschroe.github.io/chessalyzer.js/).
 
 # How it works
 
-Chessalyzer.js runs **PGN parse**, optional **replay**, and **analyze** (trackers) over each game. See [Pipeline](#pipeline) for stage definitions. The main entry points are `analyzePGN` (batch analysis) and `printHeatmap` (terminal preview). Move trackers receive move-level `Action[]` data; game trackers receive header fields. Statistics accumulate in place on each tracker instance.
+Chessalyzer.js runs **PGN parse**, optional **replay**, and **analyze** (trackers) over each game. See [Pipeline](#pipeline) for stage definitions. The main entry points are `analyzePGN` (batch analysis) and `printHeatmap` (terminal preview). Move trackers receive move-level `Action[]` data; game trackers receive header fields. Statistics accumulate in place on tracker instances; `result.runs[i].trackers` holds the same refs you passed in.
 
 # Pipeline
 
@@ -265,7 +265,7 @@ For large batch runs over mostly trusted exports (e.g. Lichess database dumps), 
 
 ```javascript
 const result = await analyzePGN('<pathToPgnFile>', { onError: 'skip-game' });
-console.log(result.games, result.skippedGames, result.errors);
+console.log(result.gameCount, result.skippedGames, result.errors);
 ```
 
 `result.errors` contains up to 100 typed replay errors (`gameIndex`, `moveIndex`, `san`, `reason`). Use default `abort` for untrusted or small inputs where a failure should stop the run immediately.

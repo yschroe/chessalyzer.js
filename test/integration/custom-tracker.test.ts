@@ -13,7 +13,7 @@ describe('Custom tracker', () => {
             trackers: [tracker],
         });
 
-        expect(data.games).toBe(expected.games);
+        expect(data.gameCount).toBe(expected.games);
         expect(tracker.games).toBe(expected.games);
         expect(tracker.wins[0] + tracker.wins[1] + tracker.wins[2]).toBe(expected.games);
     });
@@ -25,7 +25,7 @@ describe('Custom tracker', () => {
             filter: (game) => game.result === '1-0',
         });
 
-        expect(data.games).toBe(3);
+        expect(data.gameCount).toBe(3);
         expect(tracker.games).toBe(3);
         expect(tracker.wins[0]).toBe(3);
         expect(tracker.wins[1]).toBe(0);

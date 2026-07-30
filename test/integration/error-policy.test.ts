@@ -32,7 +32,7 @@ describe('Error policy', () => {
             trackers: [new PieceTracker()],
         });
 
-        expect(data.games).toBe(2);
+        expect(data.gameCount).toBe(2);
         expect(data.skippedGames).toBe(1);
         expect(data.errors?.length).toBe(1);
         expect(data.errors?.[0]?.code).toBe('replay');
@@ -48,7 +48,7 @@ describe('Error policy', () => {
             trackers: [new PieceTracker()],
         });
 
-        expect(data.games).toBe(2);
+        expect(data.gameCount).toBe(2);
         expect(data.skippedGames).toBe(1);
         expect(data.errors?.length).toBe(1);
     });
@@ -61,8 +61,8 @@ describe('Error policy', () => {
             onError: 'skip-game',
         });
 
-        expect(data.games).toBe(2);
+        expect(data.gameCount).toBe(2);
         expect(data.skippedGames).toBe(1);
-        expect(data.moves).toBe(32);
+        expect(data.moveCount).toBe(32);
     });
 });
