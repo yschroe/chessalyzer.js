@@ -5,7 +5,7 @@ import type {
     AnalyzeMultiRunOptions,
     AnalyzeOptions,
     AnalyzeRun,
-    AnalyzeSharedOptions,
+    ReplayValidation,
     WorkerOptions,
 } from '#types/analysis';
 import type { GameProcessorAnalysisConfigFull, GameProcessorConfig } from '#types/analysis-runtime';
@@ -130,8 +130,8 @@ function assertNoConflictingSingleRunFields(opts: AnalyzeMultiRunOptions): void 
     }
 }
 
-function assertValidationSupported(validation: AnalyzeSharedOptions['validation']): void {
-    if (validation === 'validate') {
+function assertValidationSupported(validation: ReplayValidation | undefined): void {
+    if ((validation as string | undefined) === 'validate') {
         throw new Error('validation: "validate" is not yet implemented');
     }
 }
@@ -224,6 +224,8 @@ export function normalizeAnalysisConfigs(
                 } else if (tracker.type === 'game') {
                     tempCfg.trackers.game.push(tracker);
                     needsHeaders = true;
+                } else {
+                    throw new Error(`Unknown tracker type: ${String(tracker.type)}`);
                 }
 
                 const id = resolveTrackerId(tracker, multithreaded);

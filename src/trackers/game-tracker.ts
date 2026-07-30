@@ -29,7 +29,6 @@ class GameTracker extends BaseGameTracker {
         this.results.black += tracker.results.black;
         this.results.draw += tracker.results.draw;
         this.games += tracker.games;
-        this.time += tracker.time;
 
         for (const key of Object.keys(tracker.ECO)) {
             const ecoCount = tracker.ECO[key];

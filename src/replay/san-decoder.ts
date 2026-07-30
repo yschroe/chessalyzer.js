@@ -2,7 +2,7 @@ import { algebraicToCoordsAt, coordsToSquare } from '#board/board-coords';
 import { ReplayFailure } from '#replay/replay-failure';
 import type SanContext from '#replay/san-context';
 import type { Action } from '#types/actions';
-import type { PieceToken } from '#types/tokens';
+import type { PieceToken, PromotionToken } from '#types/tokens';
 
 const PIECE_TOKEN_BY_CHAR: Record<number, PieceToken | undefined> = {
     82: 'R',
@@ -73,6 +73,7 @@ export default class SanDecoder {
             cap.takingPiece = board.getPieceNameOnCoords(from);
             cap.takenPiece = board.getPieceNameOnCoords(takenOn);
             cap.on = coordsToSquare(takenOn[0], takenOn[1]);
+            cap.from = coordsToSquare(from[0], from[1]);
             if (offset !== 0) {
                 cap.enPassant = true;
             } else {
@@ -104,7 +105,7 @@ export default class SanDecoder {
             promo.san = san;
             promo.player = player;
             promo.on = coordsToSquare(toRow, toCol);
-            promo.to = promotesTo;
+            promo.promotion = promotesTo as PromotionToken;
             actions.push(promo);
         }
 
@@ -164,6 +165,7 @@ export default class SanDecoder {
             cap.on = coordsToSquare(toRow, toCol);
             cap.takingPiece = piece;
             cap.takenPiece = board.getPieceNameOnCoords(to);
+            cap.from = coordsToSquare(fromRow, fromCol);
             delete cap.enPassant;
             actions.push(cap);
         }
@@ -202,7 +204,15 @@ export default class SanDecoder {
                         to: 'g1',
                         castle: 'kingside',
                     },
-                    { type: 'move', san, player, piece: 'Rh', from: 'h1', to: 'f1' },
+                    {
+                        type: 'move',
+                        san,
+                        player,
+                        piece: 'Rh',
+                        from: 'h1',
+                        to: 'f1',
+                        castle: 'kingside',
+                    },
                 );
             } else {
                 actions.push(
@@ -215,7 +225,15 @@ export default class SanDecoder {
                         to: 'c1',
                         castle: 'queenside',
                     },
-                    { type: 'move', san, player, piece: 'Ra', from: 'a1', to: 'd1' },
+                    {
+                        type: 'move',
+                        san,
+                        player,
+                        piece: 'Ra',
+                        from: 'a1',
+                        to: 'd1',
+                        castle: 'queenside',
+                    },
                 );
             }
         } else if (san.length === 3) {
@@ -229,7 +247,15 @@ export default class SanDecoder {
                     to: 'g8',
                     castle: 'kingside',
                 },
-                { type: 'move', san, player, piece: 'Rh', from: 'h8', to: 'f8' },
+                {
+                    type: 'move',
+                    san,
+                    player,
+                    piece: 'Rh',
+                    from: 'h8',
+                    to: 'f8',
+                    castle: 'kingside',
+                },
             );
         } else {
             actions.push(
@@ -242,7 +268,15 @@ export default class SanDecoder {
                     to: 'c8',
                     castle: 'queenside',
                 },
-                { type: 'move', san, player, piece: 'Ra', from: 'a8', to: 'd8' },
+                {
+                    type: 'move',
+                    san,
+                    player,
+                    piece: 'Ra',
+                    from: 'a8',
+                    to: 'd8',
+                    castle: 'queenside',
+                },
             );
         }
 

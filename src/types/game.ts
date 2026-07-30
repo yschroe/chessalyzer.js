@@ -15,7 +15,7 @@ export interface ChessPiece {
 
 /** Context for one square when evaluating heatmap preset functions. */
 export interface SquareData {
-    alg: string;
     square: Square;
-    piece: { color: PlayerColor; name: string };
+    /** Starting piece on this square, or `null` when the square is empty in the initial position. */
+    piece: { color: PlayerColor; name: string } | null;
 }

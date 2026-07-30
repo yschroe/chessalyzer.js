@@ -1,5 +1,5 @@
 import type { Square } from '#board/board-coords';
-import type { PlayerColor } from '#types/tokens';
+import type { PlayerColor, PromotionToken } from '#types/tokens';
 
 /** Shared fields on replay {@link Action} variants. */
 export interface BaseAction {
@@ -10,6 +10,11 @@ export interface BaseAction {
 
 export interface MoveAction extends BaseAction {
     type: 'move';
+    /**
+     * Internal piece name from the starting layout (`'Pa'`, `'Nb'`, …) or a promoted-pawn
+     * name with a digit suffix. `null` when the origin square has no piece (should not occur
+     * on a successfully decoded move).
+     */
     piece: string | null;
     from: Square;
     to: Square;
@@ -22,13 +27,15 @@ export interface CaptureAction extends BaseAction {
     takingPiece: string | null;
     takenPiece: string | null;
     on: Square;
+    /** Origin square of the capturing piece (en passant: differs from the paired move's `to`). */
+    from?: Square;
     /** True when the capture is en passant (pawn capture to an empty square). */
     enPassant?: true;
 }
 
 export interface PromoteAction extends BaseAction {
     type: 'promote';
-    to: string;
+    promotion: PromotionToken;
     on: Square;
 }
 

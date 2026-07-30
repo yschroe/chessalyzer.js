@@ -65,15 +65,12 @@ export function buildAnalyzeResult(
 /**
  * Analyze a PGN file with optional trackers, filters, and worker configuration.
  */
-export async function analyzePGN(
-    pathToPgn: string,
-    options?: AnalyzeOptions,
-): Promise<AnalyzeResult> {
+export async function analyzePGN(path: string, options?: AnalyzeOptions): Promise<AnalyzeResult> {
     const { runs, multithreadCfg, onError, headers, replay } = normalizeAnalyzeOptions(options);
     const gameProcessor = new GameProcessor(runs, multithreadCfg, onError, { headers, replay });
 
     const t0 = performance.now();
-    const counts = await gameProcessor.processPGN(pathToPgn);
+    const counts = await gameProcessor.processPGN(path);
     const durationMs = performance.now() - t0;
     return buildAnalyzeResult(runs, counts, durationMs);
 }

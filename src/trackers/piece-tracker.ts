@@ -75,8 +75,6 @@ class PieceTracker extends MoveTracker {
     override merge(tracker: unknown) {
         if (!isPieceTracker(tracker)) return;
 
-        this.time += tracker.time;
-
         for (const piece of pieceList) {
             for (const piece2 of pieceList) {
                 this.w[piece][piece2] += tracker.w[piece][piece2];

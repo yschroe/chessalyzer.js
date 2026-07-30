@@ -270,7 +270,7 @@ class ChessBoard {
     }
 
     private promote(action: PromoteAction): void {
-        this.promotePiece(action.player, squareToCoords(action.on), action.to);
+        this.promotePiece(action.player, squareToCoords(action.on), action.promotion);
     }
 }
 

@@ -19,7 +19,7 @@ describe('normalizeAnalyzeOptions', () => {
             normalizeAnalyzeOptions({
                 runs: [{ trackers: [new TileTracker()] }],
                 trackers: [new TileTracker()],
-            } as AnalyzeOptions),
+            } as unknown as AnalyzeOptions),
         ).toThrow('Cannot set both runs and top-level trackers');
     });
 
@@ -49,9 +49,9 @@ describe('normalizeAnalyzeOptions', () => {
     });
 
     it('rejects validation: validate until implemented', () => {
-        expect(() => normalizeAnalyzeOptions({ validation: 'validate' })).toThrow(
-            'validation: "validate" is not yet implemented',
-        );
+        expect(() =>
+            normalizeAnalyzeOptions({ validation: 'validate' } as unknown as AnalyzeOptions),
+        ).toThrow('validation: "validate" is not yet implemented');
     });
 
     it('allows validation: trust (default replay behavior)', () => {

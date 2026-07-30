@@ -46,7 +46,7 @@ export interface ParsePgnOptions {
 }
 
 /** Create a {@link ParsedMove} at the single monomorphic construction site. */
-export function createParsedMove(san: string): ParsedMove {
+function createParsedMove(san: string): ParsedMove {
     return { san };
 }
 

@@ -55,9 +55,9 @@ User-facing docs: [README Custom Trackers](README.md#custom-trackers). For MT (`
 1. Live in a **separate module** with a **default export** of the tracker class.
 2. Set **`static trackerId = 'YourUniqueId'`** — stable ID (minification-safe; required for multithreaded analysis only)
 3. Set **`static workerModule = import.meta.url`** — workers dynamically import that URL at startup ([`worker-tracker-registry.ts`](src/core/worker-tracker-registry.ts)).
-4. Implement **`merge(tracker)`** — aggregate worker batch stats into the main-thread instance. Duck-type the argument; do **not** use `instanceof` (worker payloads are plain objects after structured clone).
+4. Implement **`merge(tracker)`** — aggregate worker batch stats into the main-thread instance. Duck-type the argument; do **not** use `instanceof`. Only merge your own stats — framework-owned fields such as `time` are merged centrally after `merge` returns.
 
-Built-ins register via `trackerId` in the worker registry; customs are loaded from `workerModule`. See [`test/fixtures/custom-game-tracker.ts`](test/fixtures/custom-game-tracker.ts) and [`manual-tests/custom-game-tracker.ts`](manual-tests/custom-game-tracker.ts).
+Built-ins register via `trackerId` in the worker registry; customs are loaded from `workerModule`. `static workerModule = import.meta.url` requires an unbundled Node ≥ 22 or Bun runtime. Move trackers may override **`onGameEnd()`** for per-game flush hooks. See [`test/fixtures/custom-game-tracker.ts`](test/fixtures/custom-game-tracker.ts) and [`manual-tests/custom-game-tracker.ts`](manual-tests/custom-game-tracker.ts).
 
 ## Performance
 

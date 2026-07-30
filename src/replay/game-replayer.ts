@@ -76,13 +76,13 @@ class GameReplayer {
 
         if (!replayOk) {
             for (const tracker of moveTrackers) {
-                tracker.nextGame?.();
+                tracker.onGameEnd?.();
             }
             return;
         }
 
         for (const tracker of moveTrackers) {
-            tracker.nextGame?.();
+            tracker.onGameEnd?.();
         }
 
         analysisCfg.processedMoves += moves.length;

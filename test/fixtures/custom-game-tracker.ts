@@ -1,5 +1,5 @@
+import type { ParsedGame } from 'chessalyzer.js/pgn';
 import { BaseGameTracker } from 'chessalyzer.js/trackers';
-import type { ParsedGame } from 'chessalyzer.js/trackers';
 
 function isCustomGameTracker(tracker: unknown): tracker is CustomGameTracker {
     return (
@@ -23,7 +23,6 @@ export default class CustomGameTracker extends BaseGameTracker {
         this.wins[1] += tracker.wins[1];
         this.wins[2] += tracker.wins[2];
         this.games += tracker.games;
-        this.time += tracker.time;
     }
 
     override trackGame(game: ParsedGame) {

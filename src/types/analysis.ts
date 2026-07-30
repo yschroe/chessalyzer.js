@@ -9,6 +9,10 @@ export type GameFilter = (game: ParsedGame) => boolean;
 
 /** Options for a single analysis run. */
 export interface AnalyzeRun {
+    /**
+     * Tracker instances for this run. Must be {@link BaseTracker} subclasses at runtime
+     * (`MoveTracker`, `BaseGameTracker`, or built-ins from `chessalyzer.js/trackers`).
+     */
     trackers?: Tracker[];
     /**
      * Per-game predicate. Requires {@link AnalyzeSharedOptions.workers} `false` — JavaScript
@@ -26,9 +30,9 @@ export interface WorkerOptions extends PgnChunkConfig {
 
 /**
  * Replay legality policy. `'trust'` is the default (assume well-formed PGN).
- * Union is open — new modes may be added without a major version bump.
+ * Additional modes may be added without a major version bump.
  */
-export type ReplayValidation = 'trust' | 'validate';
+export type ReplayValidation = 'trust';
 
 /** Shared analyze options for single-run and multi-run calls. */
 export interface AnalyzeSharedOptions extends Omit<ParsePgnOptions, 'headers'> {
@@ -38,14 +42,13 @@ export interface AnalyzeSharedOptions extends Omit<ParsePgnOptions, 'headers'> {
      */
     headers?: boolean | 'auto';
     /**
-     * Board replay mode. Default inferred from trackers (see {@link resolveReplayMode}).
+     * Board replay mode. Default inferred from trackers.
      * Move trackers require `'actions'`.
      */
     replay?: ReplayMode;
     /**
      * Replay legality policy. Default `'trust'` (today’s behavior). Sibling to {@link replay} —
      * does not change how moves are decoded, only whether legality is checked (future).
-     * `'validate'` is reserved and not yet implemented.
      */
     validation?: ReplayValidation;
     /** Default: multithreaded with library defaults. `false` = single-threaded. */
@@ -59,6 +62,9 @@ export interface AnalyzeSharedOptions extends Omit<ParsePgnOptions, 'headers'> {
 
 /** Single-run {@link analyzePGN} options. */
 export interface AnalyzeSingleRunOptions extends AnalyzeSharedOptions {
+    /**
+     * Tracker instances for this run. Must be {@link BaseTracker} subclasses at runtime.
+     */
     trackers?: Tracker[];
     /**
      * Per-game predicate. Requires `workers: false` — JavaScript filters run on the main thread only.
@@ -71,6 +77,9 @@ export interface AnalyzeSingleRunOptions extends AnalyzeSharedOptions {
 /** Multi-run {@link analyzePGN} options. */
 export interface AnalyzeMultiRunOptions extends AnalyzeSharedOptions {
     runs: [AnalyzeRun, ...AnalyzeRun[]];
+    trackers?: undefined;
+    filter?: undefined;
+    maxGames?: undefined;
 }
 
 /** Options passed to {@link analyzePGN}. */

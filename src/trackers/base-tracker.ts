@@ -48,8 +48,8 @@ class BaseTracker implements Tracker {
     /** Override when using multithreaded analysis to aggregate worker batch stats. */
     merge(_data: unknown) {}
 
-    /** Optional per-game hook for move trackers (e.g. end-of-game flush). */
-    nextGame(): void {}
+    /** Optional per-game hook after each game (success or skip). */
+    onGameEnd(): void {}
 
     /** Optional end-of-analysis hook (e.g. sort aggregated keys). */
     finish(): void {}
@@ -66,23 +66,28 @@ class BaseTracker implements Tracker {
     }
 
     generateHeatmap(
-        analysisFunc: string | HeatmapAnalysisFunc,
+        analysisFunc: string | HeatmapAnalysisFunc<this>,
         square?: string | BoardCoord,
         optData?: unknown,
     ): HeatmapData {
-        return generateHeatmap(this, this.resolveHeatmapFunc(analysisFunc), square, optData);
+        return generateHeatmap(
+            this,
+            this.resolveHeatmapFunc(analysisFunc as string | HeatmapAnalysisFunc),
+            square,
+            optData,
+        );
     }
 
     generateComparisonHeatmap(
-        compData: Tracker,
-        analysisFunc: string | HeatmapAnalysisFunc,
+        compData: this,
+        analysisFunc: string | HeatmapAnalysisFunc<this>,
         square?: string | BoardCoord,
         optData?: unknown,
     ): HeatmapData {
         return generateComparisonHeatmap(
             this,
             compData,
-            this.resolveHeatmapFunc(analysisFunc),
+            this.resolveHeatmapFunc(analysisFunc as string | HeatmapAnalysisFunc),
             square,
             optData,
         );

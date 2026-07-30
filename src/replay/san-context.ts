@@ -64,7 +64,7 @@ export default class SanContext {
             san: '',
             player: 'w',
             on: 'a1',
-            to: '',
+            promotion: 'Q',
         };
     }
 
