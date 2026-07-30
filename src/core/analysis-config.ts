@@ -1,5 +1,6 @@
 import { resolveEffectiveReplayMode } from '#replay/replay-mode';
 import type { ReplayMode } from '#replay/replay-mode';
+import { BaseTracker } from '#trackers/base-tracker';
 import type {
     AnalyzeMultiRunOptions,
     AnalyzeOptions,
@@ -20,6 +21,8 @@ export interface NormalizedAnalysisRun {
 export interface NormalizeAnalysisOptions {
     headers?: boolean | 'auto';
     replay?: ReplayMode;
+    /** When true, custom trackers must provide trackerId, merge, and workerModule. */
+    multithreaded?: boolean;
 }
 
 function resolveParseHeaders(
@@ -44,15 +47,32 @@ function resolveWorkerModule(tracker: { constructor: unknown }): string {
     return ctor.workerModule ?? '';
 }
 
-function resolveTrackerId(tracker: Tracker): string {
+const BUILTIN_TRACKER_IDS = new Set(['GameTracker', 'PieceTracker', 'TileTracker']);
+
+function resolveTrackerId(tracker: Tracker, multithreaded: boolean): string {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- static trackerId lives on constructor, not Tracker instance type
     const id = (tracker.constructor as { trackerId?: string }).trackerId;
     if (!id) {
-        throw new Error(
-            'Tracker is missing static trackerId (required for multithreaded analysis)',
-        );
+        if (multithreaded) {
+            throw new Error(
+                'Tracker is missing static trackerId (required for multithreaded analysis)',
+            );
+        }
+        return '';
     }
     return id;
+}
+
+function assertMultithreadTracker(tracker: Tracker, id: string, path: string): void {
+    const mergeFn = (Object.getPrototypeOf(tracker) as { merge?: (arg: Tracker) => void }).merge;
+    if (!mergeFn || mergeFn === BaseTracker.prototype.merge) {
+        throw new Error(`Tracker "${id}" must implement merge(...) for multithreaded analysis`);
+    }
+    if (!BUILTIN_TRACKER_IDS.has(id) && !path) {
+        throw new Error(
+            `Custom tracker "${id}" must set static workerModule = import.meta.url for multithreaded analysis`,
+        );
+    }
 }
 
 function normalizeProcessorConfig(
@@ -135,6 +155,7 @@ export function normalizeAnalysisConfigs(
     options?: NormalizeAnalysisOptions,
 ): NormalizedAnalysisRun {
     let needsHeaders = false;
+    const multithreaded = options?.multithreaded ?? false;
     const normalized: GameProcessorAnalysisConfigFull[] = [];
 
     for (const run of runs) {
@@ -162,11 +183,16 @@ export function normalizeAnalysisConfigs(
                     needsHeaders = true;
                 }
 
-                tempCfg.trackerData.push({
-                    id: resolveTrackerId(tracker),
-                    cfg: tracker.cfg,
-                    path: resolveWorkerModule(tracker),
-                });
+                const id = resolveTrackerId(tracker, multithreaded);
+                const path = resolveWorkerModule(tracker);
+                if (multithreaded) {
+                    assertMultithreadTracker(tracker, id, path);
+                    tempCfg.trackerData.push({
+                        id,
+                        cfg: tracker.cfg,
+                        path,
+                    });
+                }
             }
         }
 

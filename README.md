@@ -133,7 +133,7 @@ Subpath imports (pipeline stages + trackers):
 import { readLines, readPgnChunks } from 'chessalyzer.js/io';
 import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
 import { resolveReplayMode } from 'chessalyzer.js/replay';
-import { TileTracker, GameTrackerBase } from 'chessalyzer.js/trackers';
+import { TileTracker, BaseGameTracker } from 'chessalyzer.js/trackers';
 ```
 
 ### Performance tiers
@@ -343,7 +343,7 @@ chessalyzer.js comes with three built-in trackers, which can be directly importe
 
 ## Custom Trackers
 
-Derive from `MoveTracker` (move-level) or `GameTrackerBase` (game-level). For multithreaded analysis, custom trackers must live in a **separate module** and follow this contract:
+Derive from `MoveTracker` (move-level) or `BaseGameTracker` (game-level). Single-threaded analysis only requires `trackMoves` / `trackGame`. For multithreaded analysis, custom trackers must live in a **separate module** and follow this contract:
 
 1. **Default export** — the tracker class
 2. **`static trackerId = 'YourUniqueId'`** — stable ID (minification-safe; used to match worker instances)
@@ -358,7 +358,7 @@ See [`manual-tests/custom-game-tracker.ts`](manual-tests/custom-game-tracker.ts)
 Example skeleton:
 
 ```javascript
-export default class MyTracker extends GameTrackerBase {
+export default class MyTracker extends BaseGameTracker {
     static trackerId = 'MyTracker';
     static workerModule = import.meta.url;
 
@@ -374,7 +374,7 @@ export default class MyTracker extends GameTrackerBase {
 Import bases and types from the trackers subpath:
 
 ```javascript
-import { GameTrackerBase, MoveTracker } from 'chessalyzer.js/trackers';
+import { BaseGameTracker, MoveTracker } from 'chessalyzer.js/trackers';
 import type { ParsedGame, Tracker } from 'chessalyzer.js/trackers';
 ```
 

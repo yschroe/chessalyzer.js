@@ -33,7 +33,7 @@ function addNamedStats(dst: StatsField, src: StatsField, color: 'b' | 'w', name:
  *
  * The tile grid is an 8×8 array of {@link StatsField} cells. Each cell contains
  * aggregate stats for black/white plus per-piece-name {@link TileStats} objects.
- * These helpers keep constructor / `add` / `resetWorkerBatch` / `nextGame` DRY.
+ * These helpers keep constructor / `add` / `nextGame` DRY.
  */
 
 /** Allocate a fresh 8×8 grid with zeroed stats and starting-position virtual pieces. */

@@ -18,10 +18,10 @@ class BaseTracker implements Tracker {
     t0: number;
     heatmapPresets: Record<string, HeatmapPresetEntry> | null;
 
-    /** Stable ID for worker-side tracker lookup (minification-safe). */
+    /** Stable ID for worker-side tracker lookup (minification-safe). Required for multithreaded analysis. */
     static trackerId?: string;
 
-    /** Module URL for worker-side dynamic import of custom trackers. */
+    /** Module URL for worker-side dynamic import of custom trackers. Required for custom multithreaded trackers. */
     static workerModule?: string;
 
     constructor(type: 'move' | 'game') {
@@ -44,11 +44,8 @@ class BaseTracker implements Tracker {
         throw new Error('Your tracker must implement a track(...) method!');
     }
 
-    merge(_data: Tracker) {
-        throw new Error(
-            'Your tracker must implement merge(...) when using multithreaded analysis!',
-        );
-    }
+    /** Override when using multithreaded analysis to aggregate worker batch stats. */
+    merge(_data: Tracker) {}
 
     private resolveHeatmapFunc(analysisFunc: string | HeatmapAnalysisFunc): HeatmapAnalysisFunc {
         if (typeof analysisFunc !== 'string') return analysisFunc;
@@ -98,11 +95,10 @@ export abstract class MoveTracker extends BaseTracker {
     }
 
     abstract trackMoves(actions: Action[]): void;
-    abstract override merge(other: Tracker): void;
 }
 
 /** Abstract base for game-level trackers (receive {@link ParsedGame} after each game). */
-export abstract class GameTrackerBase extends BaseTracker {
+export abstract class BaseGameTracker extends BaseTracker {
     override readonly type = 'game' as const;
 
     constructor() {
@@ -114,7 +110,6 @@ export abstract class GameTrackerBase extends BaseTracker {
     }
 
     abstract trackGame(game: ParsedGame): void;
-    abstract override merge(other: Tracker): void;
 }
 
 export { BaseTracker };

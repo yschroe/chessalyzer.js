@@ -1,11 +1,11 @@
-import { GameTrackerBase } from 'chessalyzer.js/trackers';
+import { BaseGameTracker } from 'chessalyzer.js/trackers';
 import type { ParsedGame, Tracker } from 'chessalyzer.js/trackers';
 
 function isCustomGameTracker(tracker: Tracker): tracker is CustomGameTracker {
     return 'wins' in tracker && Array.isArray(tracker.wins);
 }
 
-export default class CustomGameTracker extends GameTrackerBase {
+export default class CustomGameTracker extends BaseGameTracker {
     static override trackerId = 'CustomGameTracker';
     static override workerModule = import.meta.url;
 

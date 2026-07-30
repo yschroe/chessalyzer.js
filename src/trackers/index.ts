@@ -1,4 +1,4 @@
-export { BaseTracker, GameTrackerBase, MoveTracker } from '#trackers/base-tracker';
+export { BaseTracker, BaseGameTracker, MoveTracker } from '#trackers/base-tracker';
 export { GameTracker } from '#trackers/game-tracker';
 export { PieceTracker, isTrackedPiece } from '#trackers/piece-tracker';
 export { TileTracker } from '#trackers/tile/tile-tracker';

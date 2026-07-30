@@ -9,7 +9,7 @@ export interface TrackerConfig {
 
 /**
  * Contract implemented by {@link BaseTracker} and custom user trackers.
- * Move trackers receive {@link Action}[]; game trackers receive {@link Game}.
+ * Move trackers receive {@link Action}[]; game trackers receive {@link ParsedGame}.
  */
 /** Built-in or custom heatmap preset definition attached to a tracker. */
 export interface HeatmapPresetEntry {
@@ -41,8 +41,6 @@ export interface Tracker {
     nextGame?: () => void;
     finish?: () => void;
     merge?: (arg: Tracker) => void;
-    /** Clear per-batch state when a worker reuses tracker instances. */
-    resetWorkerBatch?: () => void;
 }
 
 /** 8×8 numeric grid plus value range for rendering. */

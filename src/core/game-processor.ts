@@ -70,7 +70,10 @@ class GameProcessor {
         onError: 'abort' | 'skip-game' = 'abort',
         normalizeOptions?: NormalizeAnalysisOptions,
     ) {
-        const normalized = normalizeAnalysisConfigs(runs, normalizeOptions);
+        const normalized = normalizeAnalysisConfigs(runs, {
+            ...normalizeOptions,
+            multithreaded: multithreadCfg !== null,
+        });
         this.configs = normalized.configs;
         this.parseHeaders = normalized.parseHeaders;
         this.multithreadConfig = multithreadCfg;

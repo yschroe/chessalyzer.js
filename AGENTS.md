@@ -53,7 +53,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 User-facing docs: [README Custom Trackers](README.md#custom-trackers). For MT (`workers` not `false`), custom trackers must:
 
 1. Live in a **separate module** with a **default export** of the tracker class.
-2. Set **`static trackerId = 'YourUniqueId'`** — stable ID used to match worker instances (minification-safe).
+2. Set **`static trackerId = 'YourUniqueId'`** — stable ID (minification-safe; required for multithreaded analysis only)
 3. Set **`static workerModule = import.meta.url`** — workers dynamically import that URL at startup ([`worker-tracker-registry.ts`](src/core/worker-tracker-registry.ts)).
 4. Implement **`merge(tracker)`** — aggregate worker batch stats into the main-thread instance. Duck-type the argument; do **not** use `instanceof` (worker payloads are plain objects after structured clone).
 
