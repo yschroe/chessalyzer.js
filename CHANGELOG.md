@@ -7,70 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Breaking changes (v4)
+Version 4 is a fresh coat of paint: a simpler API, faster runs, and imports that match how you actually use the library.
 
-- Replace static `Chessalyzer` class with module functions `analyzePGN` and `printHeatmap`.
-- Single options object: `analyzePGN(path, { trackers, filter, maxGames, runs, workers })`.
-- Single-threaded mode: `{ workers: false }` instead of passing `null` as a third argument.
-- Unified return type `AnalyzeResult` (`games`, `moves`, `movesPerSecond`, `runs`, `durationMs`).
-- Multi-run analyses via `runs: [...]` instead of passing an array of configs.
-- Tracker `add()` renamed to `merge()`; custom MT trackers use `static workerModule = import.meta.url` and `static trackerId`.
-- Export `MoveTracker`, `GameTrackerBase`, and public config/result types.
-- Built-in tracker stats aligned with `AnalyzeResult`: `GameTracker.cntGames` → `games`; `TileTracker.cntMovesGame` / `cntMovesTotal` → `movesGame` / `movesTotal`.
-- Tracker modules renamed: `game-tracker.ts`, `piece-tracker.ts`, `tile/tile-tracker.ts` (drop misleading `-base` suffix on concrete exports).
-- Public API split by subpath: root is analyze-only; `parsePGN` → `chessalyzer.js/pgn`; trackers → `chessalyzer.js/trackers` (named exports).
+### Highlights
 
-#### Pipeline terminology (Sprint 11)
+- **`analyzePGN` and `printHeatmap`** replace the static `Chessalyzer` class. One options object, one clear entry point.
+- **`parsePGN` and `streamParsePGN`** on `chessalyzer.js/pgn` when you only need the games (headers and SAN strings) without running trackers.
+- **Subpath imports** — `chessalyzer.js/pgn`, `/trackers`, `/io`, `/replay` — so you pull in only what you need.
+- **Faster by default** — count-only runs skip board replay (~10% on large files), workers start lazily, and multi-run analyses parse each chunk once instead of re-reading the file.
+- **`TileTracker`** now counts castling as one move.
+- **Replay errors** — abort on the first bad game by default; use `onError: 'skip-game'` to keep going and collect a summary (handy for big Lichess dumps).
 
-Docs and benchmarks use pipeline stage names: **I/O → PGN parse → replay → analyze**. See [README Pipeline section](./README.md#pipeline) and [Sprint 11](sprints/sprint-11-pipeline-terminology.md).
+### Upgrading from v3
 
-**Applied in Phase 2 (internal renames):**
+- Import `analyzePGN` and `printHeatmap` directly instead of `Chessalyzer.analyzePGN(...)`.
+- Pass all options in one object: `analyzePGN(path, { trackers, filter, maxGames, runs, workers })`.
+- For single-threaded mode, use `{ workers: false }` instead of passing `null` as a third argument.
+- Results use the unified `AnalyzeResult` shape: `games`, `moves`, `movesPerSecond`, `runs`, `durationMs`.
+- Compare multiple analyses with `runs: [...]` instead of passing an array of configs.
+- Custom trackers: rename `add()` to `merge()`, and for multithreading add `static trackerId` and `static workerModule = import.meta.url`.
+- Tracker stats renamed for consistency: `GameTracker.cntGames` → `games`; `TileTracker.cntMovesGame` / `cntMovesTotal` → `movesGame` / `movesTotal`.
+- Import built-in trackers by name from `chessalyzer.js/trackers` (`GameTracker`, `PieceTracker`, `TileTracker`). Base classes and types live there too.
+- `parsePGN` moved to `chessalyzer.js/pgn`; the root package export is analyze-only.
+- Removed deprecated `workers.batchSize` option.
 
-- `movetext-tokenizer.ts` → `movetext.ts`
-- `readInHeader` → `parseHeaders` (`ParseGamesOptions`, worker tasks, `GameProcessor`)
-- `parseOnly` (worker) → `pgnParseOnly`
+### Under the hood
 
-**Applied in Phase 3 (replay layer):**
-
-- `ReplayPolicy` → `ReplayMode`; `'none'` → `'board'`
-- `resolveReplayPolicy` → `resolveReplayMode`
-- `san-to-actions.ts` / `SanToActions.parse()` → `san-decoder.ts` / `SanDecoder.decodeSan()`
-- `SanApplier` / `apply()` kept on `san-applier.ts` (Phase 3.1 reverted interim `SanPlayer` / `play()` naming)
-
-**Applied in Phase 4 (public parse API):**
-
-- Export `parsePGN(path, options?)` — single-threaded PGN parse (`readLines` + `GameAssembler`); options `headers`, `maxGames`
-- Export `streamParsePGN(path, options?)` — async iterator of `ParsedGame` with backpressure (`openLineStream` + `GameAssembler`); same options as `parsePGN`
-- Export `ParsedGame` (alias for `Game`) and `ParsePgnOptions`
-- Export `ReplayMode`; `AnalyzeOptions.headers` and `AnalyzeOptions.replay` for explicit pipeline control
-- `analyzePGN` shares parse/replay resolution with `parsePGN` via `normalizeAnalysisConfigs` (does not call `parsePGN` internally — preserves streaming/worker chunking)
-
-**Applied in Phase 5 (tests):**
-
-- Integration suite `test/integration/parse-pgn.test.ts`; corpus wording; custom tracker filter path
-
-**Applied in Phase 6 (module layout):**
-
-- `src/io/` — `line-reader.ts`, `pgn-chunks.ts` (moved from `src/pgn/`)
-- `src/pgn/` — parse-only (`game-assembler`, `movetext`, `parse-pgn`)
-- Package subpath exports: `chessalyzer.js/io`, `chessalyzer.js/pgn`, `chessalyzer.js/replay`, `chessalyzer.js/trackers`, `chessalyzer.js/trackers`
-- Root export is analyze-only (`analyzePGN`, `printHeatmap`, error helpers/types); `parsePGN` lives on `/pgn`; trackers and tracker types on `/trackers`
-- Built-in trackers use named exports (`GameTracker`, `PieceTracker`, `TileTracker`, `BaseTracker`)
-- Internal folder renamed `src/tracker/` → `src/trackers/` (`#trackers/*` import alias)
-
-**Planned (Phase 5+):**
-
-### Changes
-
-- Worker pool spawns threads lazily on first task (up to configured `workerCount`).
-- Tracker config is sent once per worker via `workerData`, not per batch.
-- Multithreaded `filter` / `maxGames` use the worker-chunk path (single parse per chunk; no PGN re-encode). JS `filter` functions replay on the main thread.
-- Removed deprecated `workers.batchSize` option (legacy re-encode path).
-- Count-only runs (no move trackers) skip board replay by default (~10% throughput on large fixtures; Node, M-series, 2× Lichess 2014-09). Set `SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = false` in `replay-policy.ts` to always replay SAN.
-- Internal processor counters aligned with public `maxGames` naming; `@internal` types moved to `analysis-runtime.ts`.
-- `TileTracker` counts castling as one move (rook leg excluded from move counter).
-- Multithreaded `runs: [...]` dispatches one worker task per chunk (parse once, replay per run); zero-copy chunk transfer restored for multi-run.
-- Worker tracker state merges at pool drain (per-batch worker→main posts counts/errors only; flush merges tracker payloads once per worker).
+- Internals reorganized into `io`, `pgn`, `replay`, and `trackers` modules with consistent pipeline terminology (I/O → PGN parse → replay → analyze). See the [README Pipeline section](./README.md#pipeline).
+- Multithreaded `filter` and `maxGames` share the worker-chunk path; JavaScript `filter` callbacks still run on the main thread.
 
 ## [3.0.6] - 2024-03-17
 
