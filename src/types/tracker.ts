@@ -1,47 +1,37 @@
-import type { BoardCoord } from '#board/board-coords';
 import type { Action } from '#types/actions';
 import type { SquareData } from '#types/game';
 import type { ParsedGame } from '#types/parse-pgn';
 
-/** Optional runtime flags attached to tracker instances. */
+/**
+ * Contract implemented by {@link BaseTracker} and custom user trackers.
+ * Move trackers receive {@link Action}[]; game trackers receive {@link ParsedGame}.
+ *
+ * Multithreaded custom trackers must use a **zero-arg constructor**, set
+ * `static trackerId` and `static workerModule`, and implement {@link merge}.
+ */
+export interface Tracker {
+    type: 'move' | 'game';
+    track: (arg: ParsedGame | Action[]) => void;
+    nextGame?: () => void;
+    finish?: () => void;
+    /**
+     * Aggregate worker batch stats into this instance.
+     * Receives a plain object after structured clone — duck-type fields; do not use `instanceof`.
+     */
+    merge?: (arg: unknown) => void;
+}
+
+/** Optional runtime flags attached to tracker instances (on {@link BaseTracker} subclasses). */
 export interface TrackerConfig {
     profilingActive: boolean;
 }
 
-/**
- * Contract implemented by {@link BaseTracker} and custom user trackers.
- * Move trackers receive {@link Action}[]; game trackers receive {@link ParsedGame}.
- */
 /** Built-in or custom heatmap preset definition attached to a tracker. */
 export interface HeatmapPresetEntry {
     scope?: string;
     unit?: string;
     description?: string;
     calc: HeatmapAnalysisFunc;
-}
-
-export interface Tracker {
-    type: 'move' | 'game';
-    cfg: TrackerConfig;
-    time: number;
-    t0: number;
-    heatmapPresets?: Record<string, HeatmapPresetEntry> | null;
-    analyze: (arg: ParsedGame | Action[]) => void;
-    generateHeatmap: (
-        fun: string | HeatmapAnalysisFunc,
-        square?: string | BoardCoord,
-        optData?: unknown,
-    ) => HeatmapData;
-    generateComparisonHeatmap: (
-        compData: Tracker,
-        fun: string | HeatmapAnalysisFunc,
-        square?: string | BoardCoord,
-        optData?: unknown,
-    ) => HeatmapData;
-    track: (arg: ParsedGame | Action[]) => void;
-    nextGame?: () => void;
-    finish?: () => void;
-    merge?: (arg: Tracker) => void;
 }
 
 /** 8×8 numeric grid plus value range for rendering. */

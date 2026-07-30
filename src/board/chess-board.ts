@@ -1,3 +1,4 @@
+import { squareToCoords } from '#board/board-coords';
 import type { BoardCoord } from '#board/board-coords';
 import type { MutableBoardCoord } from '#board/board-coords';
 import PiecePositions from '#board/piece-positions';
@@ -255,16 +256,21 @@ class ChessBoard {
 
     private move(action: MoveAction): void {
         if (!action.piece) return;
-        this.movePiece(action.player, action.piece, action.from, action.to);
+        this.movePiece(
+            action.player,
+            action.piece,
+            squareToCoords(action.from),
+            squareToCoords(action.to),
+        );
     }
 
     private capture(action: CaptureAction): void {
         if (!action.takenPiece) return;
-        this.capturePiece(action.player, action.takenPiece, action.on);
+        this.capturePiece(action.player, action.takenPiece, squareToCoords(action.on));
     }
 
     private promote(action: PromoteAction): void {
-        this.promotePiece(action.player, action.on, action.to);
+        this.promotePiece(action.player, squareToCoords(action.on), action.to);
     }
 }
 

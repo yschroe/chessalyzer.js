@@ -9,7 +9,7 @@ import SanContext from '#replay/san-context';
 import { MoveTracker } from '#trackers/base-tracker';
 import type { Action } from '#types/actions';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
-import type { ParsedGame } from '#types/parse-pgn';
+import type { AssembledGame, GameResult } from '#types/parse-pgn';
 
 import { fixturePath } from '../../../test/helpers/fixtures';
 
@@ -23,7 +23,7 @@ function emptyCfg(): GameProcessorAnalysisConfig {
     };
 }
 
-function game(moves: string[], result = '1-0'): ParsedGame {
+function game(moves: string[], result: GameResult = '1-0'): AssembledGame {
     return { moves, result };
 }
 

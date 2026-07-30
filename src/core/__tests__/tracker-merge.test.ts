@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 
 import { createWorkerResultHandler, mergeWorkerTrackerFlush } from '#core/tracker-merge';
+import type { BaseTracker } from '#trackers/base-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { WorkerMessage } from '#types/worker';
@@ -91,7 +92,11 @@ describe('tracker merge', () => {
             batchTracker.games = 2;
 
             const cfg = baseConfig({
-                trackers: { game: [mainTracker], move: [] },
+                trackers: {
+                    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixture uses built-package BaseGameTracker
+                    game: [mainTracker as unknown as BaseTracker],
+                    move: [],
+                },
                 config: { hasFilter: false, filter: () => true, maxGames: 10 },
             });
 
@@ -124,8 +129,20 @@ describe('tracker merge', () => {
             batchA.games = 1;
             batchB.games = 2;
 
-            const cfgA = baseConfig({ trackers: { game: [trackerA], move: [] } });
-            const cfgB = baseConfig({ trackers: { game: [trackerB], move: [] } });
+            const cfgA = baseConfig({
+                trackers: {
+                    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixture uses built-package BaseGameTracker
+                    game: [trackerA as unknown as BaseTracker],
+                    move: [],
+                },
+            });
+            const cfgB = baseConfig({
+                trackers: {
+                    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixture uses built-package BaseGameTracker
+                    game: [trackerB as unknown as BaseTracker],
+                    move: [],
+                },
+            });
 
             const handler = createWorkerResultHandler([cfgA, cfgB], () => {
                 throw new Error('onFatal should not run');

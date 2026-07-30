@@ -1,4 +1,10 @@
-import { BOARD_INDICES, isBoardIndex, type BoardCoord } from '#board/board-coords';
+import {
+    BOARD_INDICES,
+    isBoardIndex,
+    squareCol,
+    squareRow,
+    type Square,
+} from '#board/board-coords';
 import { MoveTracker } from '#trackers/base-tracker';
 import HeatmapPresets from '#trackers/heatmaps/tile-heatmaps';
 import {
@@ -9,12 +15,16 @@ import {
 } from '#trackers/tile/tile-grid';
 import type { TileGrid } from '#trackers/tile/tile-tracker-types';
 import type { Action } from '#types/actions';
-import type { Move } from '#types/game';
+import type { MoveCoords } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
-import type { Tracker } from '#types/tracker';
 
-function isTileTracker(tracker: Tracker): tracker is TileTracker {
-    return 'tiles' in tracker && 'movesTotal' in tracker;
+function isTileTracker(tracker: unknown): tracker is TileTracker {
+    return (
+        typeof tracker === 'object' &&
+        tracker !== null &&
+        'tiles' in tracker &&
+        'movesTotal' in tracker
+    );
 }
 
 function isCastleRookLeg(action: Action): boolean {
@@ -50,7 +60,7 @@ class TileTracker extends MoveTracker {
     }
 
     /** Merge stats from a worker batch tracker into this (main-thread) instance. */
-    override merge(tracker: Tracker) {
+    override merge(tracker: unknown) {
         if (!isTileTracker(tracker)) return;
 
         this.time += tracker.time;
@@ -104,12 +114,12 @@ class TileTracker extends MoveTracker {
      * End-of-game hook: flush occupation time for pieces still on the board,
      * then reset virtual pieces to the next game's starting layout.
      */
-    nextGame() {
+    override nextGame() {
         for (const row of BOARD_INDICES) {
             for (const col of BOARD_INDICES) {
                 const { currentPiece } = this.tiles[row][col];
                 if (currentPiece !== null) {
-                    this.addOccupation([row, col]);
+                    this.addOccupationByRowCol(row, col);
                 }
                 setStartingPiece(this.tiles, row, col);
             }
@@ -122,9 +132,11 @@ class TileTracker extends MoveTracker {
      * Record a piece move: credit occupation on `from`, transfer virtual piece to `to`,
      * increment movedTo counters. Skips promoted pawns (names containing digits).
      */
-    processMove(move: Move, player: string, piece: string) {
-        const [fromRow, fromCol] = move.from;
-        const [toRow, toCol] = move.to;
+    processMove(move: MoveCoords, player: string, piece: string) {
+        const fromRow = squareRow(move.from);
+        const fromCol = squareCol(move.from);
+        const toRow = squareRow(move.to);
+        const toCol = squareCol(move.to);
         const bucket = playerBucket(player);
         if (
             !bucket ||
@@ -158,7 +170,7 @@ class TileTracker extends MoveTracker {
      * Record capture stats on `pos` for taker and taken.
      * Taken piece occupation is flushed before clearing the square.
      */
-    processCapture(pos: BoardCoord, player: string, takingPiece: string, takenPiece: string): void {
+    processCapture(pos: Square, player: string, takingPiece: string, takenPiece: string): void {
         const cell = tileCellAt(this.tiles, pos);
         const bucket = playerBucket(player);
         if (!cell || !bucket) return;
@@ -184,10 +196,13 @@ class TileTracker extends MoveTracker {
      * Add `(movesGame - lastMovedOn)` to wasOn for the piece currently on `pos`.
      * Measures how many half-moves the piece occupied the square since it arrived.
      */
-    addOccupation(pos: BoardCoord): void {
-        const cell = tileCellAt(this.tiles, pos);
-        if (!cell) return;
+    addOccupation(pos: Square): void {
+        this.addOccupationByRowCol(squareRow(pos), squareCol(pos));
+    }
 
+    private addOccupationByRowCol(row: number, col: number): void {
+        if (!isBoardIndex(row) || !isBoardIndex(col)) return;
+        const cell = this.tiles[row][col];
         const { currentPiece } = cell;
         if (currentPiece === null) return;
 

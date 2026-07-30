@@ -4,6 +4,9 @@ import type { AnalyzeError } from '#types/errors';
 import type { ParsePgnOptions, ParsedGame } from '#types/parse-pgn';
 import type { Tracker } from '#types/tracker';
 
+/** Per-game predicate for single-threaded analysis (`workers: false`). */
+export type GameFilter = (game: ParsedGame) => boolean;
+
 /** Options for a single analysis run. */
 export interface AnalyzeRun {
     trackers?: Tracker[];
@@ -11,7 +14,7 @@ export interface AnalyzeRun {
      * Per-game predicate. Requires {@link AnalyzeSharedOptions.workers} `false` — JavaScript
      * filters run on the main thread only.
      */
-    filter?: (game: ParsedGame) => boolean;
+    filter?: GameFilter;
     maxGames?: number;
 }
 
@@ -21,7 +24,10 @@ export interface WorkerOptions extends PgnChunkConfig {
     workerCount?: number;
 }
 
-/** Replay legality policy. `'trust'` is the default (assume well-formed PGN). */
+/**
+ * Replay legality policy. `'trust'` is the default (assume well-formed PGN).
+ * Union is open — new modes may be added without a major version bump.
+ */
 export type ReplayValidation = 'trust' | 'validate';
 
 /** Shared analyze options for single-run and multi-run calls. */
@@ -52,12 +58,12 @@ export interface AnalyzeSharedOptions extends Omit<ParsePgnOptions, 'headers'> {
 }
 
 /** Single-run {@link analyzePGN} options. */
-interface AnalyzeSingleRunOptions extends AnalyzeSharedOptions {
+export interface AnalyzeSingleRunOptions extends AnalyzeSharedOptions {
     trackers?: Tracker[];
     /**
      * Per-game predicate. Requires `workers: false` — JavaScript filters run on the main thread only.
      */
-    filter?: (game: ParsedGame) => boolean;
+    filter?: GameFilter;
     maxGames?: number;
     runs?: undefined;
 }
@@ -99,6 +105,6 @@ export interface AnalyzeResult {
     skippedGames?: number;
     /** Collected replay errors when `onError: 'skip-game'` (capped at 100). */
     errors?: AnalyzeError[];
-    /** Present when more than 100 replay errors occurred and {@link errors} was truncated. */
-    errorsTruncated?: true;
+    /** True when more than 100 replay errors occurred and {@link errors} was truncated. */
+    errorsTruncated?: boolean;
 }

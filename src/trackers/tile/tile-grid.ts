@@ -1,4 +1,11 @@
-import { BOARD_INDICES, isBoardIndex, type BoardCoord, type BoardIndex } from '#board/board-coords';
+import {
+    BOARD_INDICES,
+    isBoardIndex,
+    squareCol,
+    squareRow,
+    type BoardIndex,
+    type Square,
+} from '#board/board-coords';
 import {
     PAWN_TEMPLATE,
     PIECE_TEMPLATE,
@@ -138,9 +145,10 @@ export function mergeCellStats(dst: StatsField, src: StatsField): void {
     }
 }
 
-/** Resolve dynamic board coords to a grid cell when indices are in range. */
-export function tileCellAt(tiles: TileGrid, coords: BoardCoord): StatsField | undefined {
-    const [row, col] = coords;
+/** Resolve an interned {@link Square} to a grid cell when indices are in range. */
+export function tileCellAt(tiles: TileGrid, square: Square): StatsField | undefined {
+    const row = squareRow(square);
+    const col = squareCol(square);
     if (!isBoardIndex(row) || !isBoardIndex(col)) {
         return undefined;
     }

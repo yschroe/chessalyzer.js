@@ -2,7 +2,8 @@ import { collectError } from '#core/analyze-errors';
 import GameReplayer from '#replay/game-replayer';
 import type { GameAndMoveCount } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
-import type { ParsedGame } from '#types/parse-pgn';
+import type { AssembledGame } from '#types/parse-pgn';
+import { toParsedGame } from '#types/parse-pgn';
 import type { WorkerConfigResult, WorkerMessage } from '#types/worker';
 
 /**
@@ -78,7 +79,7 @@ export function mergeWorkerTrackerFlush(
 /** Reserved for worker-safe filters: apply JS filter + replay on main after worker parse. */
 function mergeParsedGamesOnMain(
     cfg: GameProcessorAnalysisConfigFull,
-    parsedGames: ParsedGame[],
+    parsedGames: AssembledGame[],
     gameReplayer: GameReplayer,
     onError: 'abort' | 'skip-game',
 ): void {
@@ -88,7 +89,7 @@ function mergeParsedGamesOnMain(
 
     for (const game of parsedGames) {
         if (cfg.isDone) break;
-        if (cfg.config.hasFilter && !cfg.config.filter(game)) continue;
+        if (cfg.config.hasFilter && !cfg.config.filter(toParsedGame(game))) continue;
 
         cfg.readGames += 1;
         gameReplayer.processGame(

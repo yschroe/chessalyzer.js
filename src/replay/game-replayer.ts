@@ -4,10 +4,11 @@ import type { ReplayMode } from '#replay/replay-mode';
 import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
 import SanDecoder from '#replay/san-decoder';
+import type { BaseTracker } from '#trackers/base-tracker';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
-import type { ParsedGame } from '#types/parse-pgn';
+import type { AssembledGame } from '#types/parse-pgn';
+import { toParsedGame } from '#types/parse-pgn';
 import type { PlayerColor } from '#types/tokens';
-import type { Tracker } from '#types/tracker';
 
 /**
  * Orchestrates per-game analysis: game trackers → optional SAN replay (decode + play) → counters.
@@ -44,14 +45,18 @@ class GameReplayer {
      * @param onError `'abort'` throws on replay failure; `'skip-game'` records and continues.
      */
     processGame(
-        game: ParsedGame,
+        game: AssembledGame,
         analysisCfg: GameProcessorAnalysisConfig,
         replayMode: ReplayMode,
         gameIndex: number,
         onError: 'abort' | 'skip-game',
     ): void {
-        for (const tracker of analysisCfg.trackers.game) {
-            tracker.analyze(game);
+        const gameTrackers = analysisCfg.trackers.game;
+        if (gameTrackers.length > 0) {
+            const parsed = toParsedGame(game);
+            for (const tracker of gameTrackers) {
+                tracker.analyze(parsed);
+            }
         }
 
         const { moves } = game;
@@ -87,8 +92,8 @@ class GameReplayer {
 
     /** Replay movetext onto the board; optionally emit actions for move trackers. Returns false when skipped. */
     private replayMoves(
-        game: ParsedGame,
-        moveTrackers: Tracker[],
+        game: AssembledGame,
+        moveTrackers: BaseTracker[],
         replayMode: ReplayMode,
         gameIndex: number,
         onError: 'abort' | 'skip-game',

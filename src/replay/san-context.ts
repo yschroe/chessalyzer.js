@@ -1,4 +1,3 @@
-import type { MutableBoardCoord } from '#board/board-coords';
 import ChessBoard from '#board/chess-board';
 import PieceFinder from '#replay/piece-finder';
 import type { Action, CaptureAction, MoveAction, PromoteAction } from '#types/actions';
@@ -19,13 +18,13 @@ export default class SanContext {
     activePlayer: PlayerColor = 'w';
 
     /** Reused `[row, col]` for the origin square — contents overwritten per move. */
-    readonly fromBuf: MutableBoardCoord = [0, 0];
+    readonly fromBuf: [number, number] = [0, 0];
 
-    /** Reused destination square buffer for pooled move actions. */
-    readonly toBuf: MutableBoardCoord = [0, 0];
+    /** Reused destination square buffer for internal board lookups. */
+    readonly toBuf: [number, number] = [0, 0];
 
-    /** Reused for en-passant capture square or as second coord buffer during castling. */
-    readonly takenOnBuf: MutableBoardCoord = [0, 0];
+    /** Reused for en-passant capture square during decode. */
+    readonly takenOnBuf: [number, number] = [0, 0];
 
     // --- Action pools (tracker path). Trackers consume actions synchronously. ---
 
@@ -47,15 +46,15 @@ export default class SanContext {
             san: '',
             player: 'w',
             piece: '',
-            from: this.fromBuf,
-            to: this.toBuf,
+            from: 'a1',
+            to: 'a1',
         };
 
         this.captureAction = {
             type: 'capture',
             san: '',
             player: 'w',
-            on: this.takenOnBuf,
+            on: 'a1',
             takingPiece: '',
             takenPiece: '',
         };
@@ -64,7 +63,7 @@ export default class SanContext {
             type: 'promote',
             san: '',
             player: 'w',
-            on: this.takenOnBuf,
+            on: 'a1',
             to: '',
         };
     }

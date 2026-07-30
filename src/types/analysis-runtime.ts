@@ -1,7 +1,8 @@
 import type { ReplayMode } from '#replay/replay-mode';
+import type { BaseTracker } from '#trackers/base-tracker';
 import type { AnalyzeError } from '#types/errors';
 import type { ParsedGame } from '#types/parse-pgn';
-import type { Tracker, TrackerConfig } from '#types/tracker';
+import type { TrackerConfig } from '#types/tracker';
 
 /** @internal Raw game/move counters from the processor. */
 export interface GameAndMoveCount {
@@ -20,7 +21,7 @@ export interface GameProcessorConfig {
 
 /** Runtime tracker buckets while processing one analysis config. */
 export interface GameProcessorAnalysisConfig {
-    trackers: { move: Tracker[]; game: Tracker[] };
+    trackers: { move: BaseTracker[]; game: BaseTracker[] };
     processedMoves: number;
     processedGames: number;
     skippedGames: number;

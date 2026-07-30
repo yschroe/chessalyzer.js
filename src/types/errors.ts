@@ -1,4 +1,8 @@
-/** Error category on {@link AnalyzeError}. `'parse'` is reserved for future PGN parse failures. */
+/**
+ * Error category on {@link AnalyzeError}.
+ * `'parse'` is reserved for future PGN parse failures.
+ * Union is open — new codes may be added without a major version bump.
+ */
 export type AnalyzeErrorCode = 'replay' | 'parse';
 
 export interface AnalyzeError {
@@ -7,6 +11,10 @@ export interface AnalyzeError {
     cause?: unknown;
 }
 
+/**
+ * Reason for a replay failure.
+ * Union is open — new reasons may be added without a major version bump.
+ */
 export type ReplayErrorReason = 'IllegalMove' | 'AmbiguousSan' | 'UnknownToken';
 
 export interface ReplayError extends AnalyzeError {

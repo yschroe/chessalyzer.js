@@ -35,8 +35,7 @@ describe('parsePGN', () => {
         const games = await parsePGN(fixturePath('basic-normal'));
 
         expect(games).toHaveLength(1);
-        expect(typeof games[0]?.moves[0]).toBe('string');
-        expect(games[0]?.moves[0]).toBe('e4');
+        expect(games[0]?.moves[0]?.san).toBe('e4');
     });
 
     it('stops at maxGames', async () => {

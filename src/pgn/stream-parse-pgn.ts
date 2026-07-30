@@ -1,8 +1,13 @@
 import { openLineStream, type LineStream } from '#io/line-reader';
 import { GameAssembler } from '#pgn/game-assembler';
-import type { ParsedGame, ParsePgnOptions } from '#types/parse-pgn';
+import type { ParsePgnOptions, ParsedGame } from '#types/parse-pgn';
+import { toParsedGame } from '#types/parse-pgn';
 
-type GameResult = { value: ParsedGame; done: false } | { value: undefined; done: true };
+function resolveStandaloneParseHeaders(headers?: boolean | 'auto'): boolean {
+    return headers === true;
+}
+
+type StreamGameResult = { value: ParsedGame; done: false } | { value: undefined; done: true };
 
 /**
  * Stream a PGN file as {@link ParsedGame} objects (stage 2 only — no board replay).
@@ -11,18 +16,18 @@ type GameResult = { value: ParsedGame; done: false } | { value: undefined; done:
  * pause/resume. Prefer {@link parsePGN} when you need all games in memory.
  */
 export function streamParsePGN(path: string, options?: ParsePgnOptions): AsyncIterable<ParsedGame> {
-    const parseHeaders = options?.headers ?? false;
+    const parseHeaders = resolveStandaloneParseHeaders(options?.headers);
     const maxGames = options?.maxGames ?? Infinity;
     const assembler = new GameAssembler({ parseHeaders, maxGames });
 
-    const pending: GameResult[] = [];
-    let waiter: ((result: GameResult) => void) | null = null;
+    const pending: StreamGameResult[] = [];
+    let waiter: ((result: StreamGameResult) => void) | null = null;
     let finished = false;
     let streamError: Error | null = null;
     let gamesDelivered = 0;
     let lines: LineStream;
 
-    const deliver = (result: GameResult): void => {
+    const deliver = (result: StreamGameResult): void => {
         if (waiter) {
             const resolve = waiter;
             waiter = null;
@@ -45,7 +50,7 @@ export function streamParsePGN(path: string, options?: ParsePgnOptions): AsyncIt
 
             gamesDelivered++;
             lines.pause();
-            deliver({ value: game, done: false });
+            deliver({ value: toParsedGame(game), done: false });
 
             if (gamesDelivered >= maxGames) {
                 lines.close();

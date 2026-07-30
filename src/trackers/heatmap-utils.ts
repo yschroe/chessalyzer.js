@@ -1,5 +1,11 @@
-import { algebraicToCoords, coordsToAlgebraic } from '#board/board-coords';
-import type { BoardCoord } from '#board/board-coords';
+import {
+    algebraicToCoords,
+    coordsToSquare,
+    squareCol,
+    squareRow,
+    type BoardCoord,
+    type Square,
+} from '#board/board-coords';
 import { getStartingPiece } from '#board/piece-names';
 import type { SquareData } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
@@ -7,11 +13,12 @@ import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
 
 const EMPTY_SQUARE_PIECE = { color: 'w' as PlayerColor, name: '' };
 
-function squareData(row: number, col: number, _refCoords: BoardCoord, _refAlg: string): SquareData {
+function squareData(row: number, col: number): SquareData {
+    const square = coordsToSquare(row, col);
     const loopSqrCoords: BoardCoord = [row, col];
     return {
-        alg: coordsToAlgebraic(loopSqrCoords),
-        coords: loopSqrCoords,
+        alg: square,
+        square,
         piece: getStartingPiece(loopSqrCoords) ?? EMPTY_SQUARE_PIECE,
     };
 }
@@ -36,22 +43,23 @@ export function generateHeatmap(
     square?: string | BoardCoord,
     optData?: unknown,
 ): HeatmapData {
-    let sqrCoords: BoardCoord = [0, 0];
-    let sqrAlg = '';
+    let refSquare: Square = 'a1';
 
     if (typeof square === 'string') {
         const resolved = algebraicToCoords(square);
-        sqrCoords = resolved ? [resolved[0], resolved[1]] : [0, 0];
-        sqrAlg = square;
+        if (resolved) {
+            refSquare = coordsToSquare(resolved[0], resolved[1]);
+        }
     } else if (square !== undefined) {
-        sqrCoords = square;
-        sqrAlg = coordsToAlgebraic(square);
+        refSquare = coordsToSquare(square[0], square[1]);
     }
 
+    const refRow = squareRow(refSquare);
+    const refCol = squareCol(refSquare);
     const sqrData: SquareData = {
-        alg: sqrAlg,
-        coords: sqrCoords,
-        piece: getStartingPiece(sqrCoords) ?? EMPTY_SQUARE_PIECE,
+        alg: refSquare,
+        square: refSquare,
+        piece: getStartingPiece([refRow, refCol]) ?? EMPTY_SQUARE_PIECE,
     };
 
     const map: number[][] = [];
@@ -61,7 +69,7 @@ export function generateHeatmap(
     for (let i = 0; i < 8; i += 1) {
         const dataRow: number[] = [];
         for (let j = 0; j < 8; j += 1) {
-            const loopSqrData = squareData(i, j, sqrCoords, sqrAlg);
+            const loopSqrData = squareData(i, j);
             const heatVal = fun(data, loopSqrData, sqrData, optData);
             dataRow.push(heatVal);
             max = Math.max(max, heatVal);

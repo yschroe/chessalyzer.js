@@ -46,7 +46,13 @@ class BaseTracker implements Tracker {
     }
 
     /** Override when using multithreaded analysis to aggregate worker batch stats. */
-    merge(_data: Tracker) {}
+    merge(_data: unknown) {}
+
+    /** Optional per-game hook for move trackers (e.g. end-of-game flush). */
+    nextGame(): void {}
+
+    /** Optional end-of-analysis hook (e.g. sort aggregated keys). */
+    finish(): void {}
 
     private resolveHeatmapFunc(analysisFunc: string | HeatmapAnalysisFunc): HeatmapAnalysisFunc {
         if (typeof analysisFunc !== 'string') return analysisFunc;
