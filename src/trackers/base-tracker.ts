@@ -54,7 +54,9 @@ class BaseTracker implements Tracker {
     /** Optional end-of-analysis hook (e.g. sort aggregated keys). */
     finish(): void {}
 
-    private resolveHeatmapFunc<T>(analysisFunc: string | HeatmapAnalysisFunc<T>): HeatmapAnalysisFunc<T> {
+    private resolveHeatmapFunc<T>(
+        analysisFunc: string | HeatmapAnalysisFunc<T>,
+    ): HeatmapAnalysisFunc<T> {
         if (typeof analysisFunc !== 'string') return analysisFunc;
 
         if (!this.heatmapPresets || Object.keys(this.heatmapPresets).length === 0) {
