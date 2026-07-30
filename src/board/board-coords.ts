@@ -28,12 +28,6 @@ export type MutableBoardCoord = [row: number, col: number];
 /** Read-only board square — internal APIs and coord conversion. */
 export type BoardCoord = readonly [row: number, col: number];
 
-/** Write into a reusable coord buffer (internal replay / piece lists). */
-export function writeBoardCoord(coord: MutableBoardCoord, row: number, col: number): void {
-    coord[0] = row;
-    coord[1] = col;
-}
-
 /** Fixed row/column indices for the 8×8 board. */
 export const BOARD_INDICES: readonly BoardIndex[] = [0, 1, 2, 3, 4, 5, 6, 7];
 
@@ -46,7 +40,7 @@ const algebraicToCoordsTable: BoardCoord[] = Array.from({ length: 64 }, (_, i) =
 
 // oxfmt-ignore
 /** Interned squares indexed by internal `row * 8 + col` (row 0 = rank 8). */
-export const SQUARES: readonly Square[] = [
+const SQUARES: readonly Square[] = [
     'a8', 'b8', 'c8', 'd8', 'e8', 'f8', 'g8', 'h8',
     'a7', 'b7', 'c7', 'd7', 'e7', 'f7', 'g7', 'h7',
     'a6', 'b6', 'c6', 'd6', 'e6', 'f6', 'g6', 'h6',
