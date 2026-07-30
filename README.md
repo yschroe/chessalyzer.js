@@ -112,7 +112,7 @@ await analyzePGN('<pathToPgnFile>', {
     trackers: [new GameTracker()],
     headers: true,
     replay: 'board', // 'skip' | 'board' | 'actions' — move trackers need 'actions'
-    validation: 'trust', // 'validate' is reserved for a future legality-checking mode
+    validation: 'trust',
 });
 ```
 
@@ -123,7 +123,6 @@ If you want to wire up individual stages yourself, subpath imports have you cove
 ```javascript
 import { readLines, readPgnChunks } from 'chessalyzer.js/io';
 import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
-import { resolveReplayMode } from 'chessalyzer.js/replay';
 import { TileTracker, BaseGameTracker } from 'chessalyzer.js/trackers';
 ```
 
@@ -188,7 +187,7 @@ await analyzePGN('<pathToPgnFile>', {
     ],
 });
 
-let func = (data, loopSqrData) => {
+let func = (data, loopSqrData, _sqrData) => {
     const { square } = loopSqrData;
     const row = 7 - (square.charCodeAt(1) - 49);
     const col = square.charCodeAt(0) - 97;
@@ -256,7 +255,7 @@ console.log(result.gameCount, result.skippedGames, result.errors, result.errorsT
 
 `result.errors` holds up to 100 typed replay errors (`gameIndex`, `moveIndex`, `san`, `reason`). If more than 100 games fail, `result.errorsTruncated` is `true`. The library never logs to the console for you — you decide what to do with the errors.
 
-Replay assumes trustworthy PGN by default (`validation: 'trust'`). A future `validation: 'validate'` mode for legality checking is planned but not implemented yet.
+Replay assumes trustworthy PGN by default (`validation: 'trust'`).
 
 ##### Important
 
@@ -267,25 +266,20 @@ To use a custom tracker with your multithreaded analysis please see the importan
 The function you create for heatmap generation gets passed up to four parameters (inside `generateHeatmap(...)`):
 
 1. `data`: The data that is the basis for the heatmap. Per default this data is the Tracker you called the `generateHeatmap(...)` function from itself.
-2. `loopSqrData`: Contains informations about the square the current heatmap value shall be calculated for. The `generateHeatmap(...)` function loops over every square of the board to calculate a heat map value for each tile. `sqrData` is an object with the following entries:
+2. `loopSqrData`: Information about the square the current heatmap value is calculated for. The `generateHeatmap(...)` function loops over every square of the board. `loopSqrData` has this shape:
 
     ```typescript
-    import type { BoardCoord, SquareData } from 'chessalyzer.js/trackers';
+    import type { Square, SquareData } from 'chessalyzer.js/trackers';
 
     interface SquareData {
-        // The square in algebraic notation (e.g. 'a2').
-        alg: string;
+        // Interned algebraic square (e.g. 'a2').
+        square: Square;
 
-        // The square in board coordinates as [row, col] (row 0 = rank 8, col 0 = a-file).
-        coords: BoardCoord;
-
-        // The piece that starts at the passed square. If no piece starts at the passed square, piece is null.
+        // Starting piece on this square, or null when the square is empty initially.
         piece: {
-            // Name of the piece (e.g. 'Pa' for the a-pawn).
-            name: string;
-            // Color of the piece ('b' or 'w').
-            color: string;
-        };
+            name: string; // e.g. 'Pa' for the a-pawn
+            color: 'b' | 'w';
+        } | null;
     }
     ```
 
@@ -339,13 +333,15 @@ For single-threaded analysis, implement `trackMoves` or `trackGame` and you are 
 
 1. Put the tracker in its **own module** with a **default export** (zero-arg constructor).
 2. Add **`static trackerId = 'YourUniqueId'`** and **`static workerModule = import.meta.url`** so workers can find and load your class.
-3. Implement **`merge(tracker)`** to add the worker's batch stats into yours. The argument is a plain object after structured clone — duck-type it (`unknown`); do **not** use `instanceof`.
+3. Implement **`merge(tracker)`** to add the worker's batch stats into yours. The argument is a plain object after structured clone — duck-type it (`unknown`); do **not** use `instanceof`. Framework-owned fields such as `time` are merged centrally — your `merge` only needs to combine your own stats.
 
-**Move trackers:** `SanDecoder` returns a reused `Action[]` buffer each half-move. Copy fields you need to retain across moves; scalar fields (`san`, `piece`, …) are overwritten on the next decode.
+**Multithreaded environments:** `static workerModule = import.meta.url` requires an unbundled Node ≥ 22 or Bun runtime (bundlers may rewrite `import.meta.url`).
+
+**Move trackers:** `SanDecoder` returns a reused `Action[]` buffer each half-move. Copy fields you need to retain across moves; scalar fields (`san`, `piece`, …) are overwritten on the next decode. Override **`onGameEnd()`** for per-game flush hooks (called after each game, including skipped games).
 
 See [`manual-tests/custom-game-tracker.ts`](manual-tests/custom-game-tracker.ts) for a minimal working example.
 
-Heads-up on castling: it produces two move actions (king leg, then rook leg) in one batch. `TileTracker` counts castling as one move for `movesTotal`, but your move tracker will see both legs.
+Heads-up on castling: it produces two move actions (king leg, then rook leg) in one batch. The rook leg carries the same `castle` flag. `TileTracker` counts castling as one move for `movesTotal`; your move tracker can skip rook legs via `action.castle` on the second leg.
 
 Example skeleton:
 
@@ -363,27 +359,29 @@ export default class MyTracker extends BaseGameTracker {
 }
 ```
 
-Import bases and types from the trackers subpath:
+Import bases and types from their canonical subpaths (each symbol has one export home):
 
 ```javascript
-import { BaseGameTracker, MoveTracker } from 'chessalyzer.js/trackers';
+import type { GameFilter } from 'chessalyzer.js';
+import type { ParsedGame, ParsedMove } from 'chessalyzer.js/pgn';
 import type {
     Action,
     BaseAction,
     CaptureAction,
-    GameFilter,
-    HeatmapAnalysisFunc,
-    HeatmapPresetEntry,
     MoveAction,
-    MoveCoords,
-    ParsedGame,
-    ParsedMove,
     PlayerColor,
     PromoteAction,
     Square,
-    SquareData,
-    Tracker,
-    TrackerConfig,
+} from 'chessalyzer.js/replay';
+import {
+    BaseGameTracker,
+    MoveTracker,
+    type HeatmapAnalysisFunc,
+    type HeatmapPresetEntry,
+    type MoveCoords,
+    type SquareData,
+    type Tracker,
+    type TrackerConfig,
 } from 'chessalyzer.js/trackers';
 ```
 
@@ -395,7 +393,6 @@ merge(tracker) {
     this.results.black += tracker.results.black;
     this.results.draw += tracker.results.draw;
     this.games += tracker.games;
-    this.time += tracker.time;
 }
 ```
 

@@ -28,7 +28,11 @@ function isTileTracker(tracker: unknown): tracker is TileTracker {
 }
 
 function isCastleRookLeg(action: Action): boolean {
-    return action.type === 'move' && (action.piece === 'Rh' || action.piece === 'Ra');
+    return (
+        action.type === 'move' &&
+        action.castle !== undefined &&
+        (action.piece === 'Rh' || action.piece === 'Ra')
+    );
 }
 
 function playerBucket(player: string): PlayerColor | undefined {
@@ -63,7 +67,6 @@ class TileTracker extends MoveTracker {
     override merge(tracker: unknown) {
         if (!isTileTracker(tracker)) return;
 
-        this.time += tracker.time;
         this.movesGame += tracker.movesGame;
         this.movesTotal += tracker.movesTotal;
 
@@ -75,19 +78,12 @@ class TileTracker extends MoveTracker {
     }
 
     override trackMoves(data: Action[]) {
-        let lastMoveSan: string | undefined;
-
         for (const action of data) {
             switch (action.type) {
                 case 'move': {
-                    const isRookCastleLeg =
-                        lastMoveSan !== undefined &&
-                        action.san === lastMoveSan &&
-                        isCastleRookLeg(action);
-                    if (!isRookCastleLeg) {
+                    if (!isCastleRookLeg(action)) {
                         this.movesGame += 1;
                     }
-                    lastMoveSan = action.san;
                     this.processMove(
                         { from: action.from, to: action.to },
                         action.player,
@@ -96,7 +92,6 @@ class TileTracker extends MoveTracker {
                     break;
                 }
                 case 'capture':
-                    lastMoveSan = undefined;
                     this.processCapture(
                         action.on,
                         action.player,
@@ -114,7 +109,7 @@ class TileTracker extends MoveTracker {
      * End-of-game hook: flush occupation time for pieces still on the board,
      * then reset virtual pieces to the next game's starting layout.
      */
-    override nextGame() {
+    override onGameEnd() {
         for (const row of BOARD_INDICES) {
             for (const col of BOARD_INDICES) {
                 const { currentPiece } = this.tiles[row][col];

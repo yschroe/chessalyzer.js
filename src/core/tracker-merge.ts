@@ -1,10 +1,21 @@
 import { collectError } from '#core/analyze-errors';
 import GameReplayer from '#replay/game-replayer';
+import type { BaseTracker } from '#trackers/base-tracker';
 import type { GameAndMoveCount } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { AssembledGame } from '#types/parse-pgn';
 import { toParsedGame } from '#types/parse-pgn';
 import type { WorkerConfigResult, WorkerMessage } from '#types/worker';
+
+function mergeTrackerPayload(tracker: BaseTracker, data: unknown): void {
+    tracker.merge?.(data);
+    if (typeof data === 'object' && data !== null && 'time' in data) {
+        const time = Reflect.get(data, 'time');
+        if (typeof time === 'number') {
+            tracker.time += time;
+        }
+    }
+}
 
 /**
  * Merge one worker batch into the matching main-thread config (trackers + counters).
@@ -23,14 +34,14 @@ function mergeWorkerResult(
         for (let i = 0; i < gameTrackers.length; i += 1) {
             const tracker = cfg.trackers.game[i];
             const data = gameTrackers[i];
-            if (tracker && data) tracker.merge?.(data);
+            if (tracker && data) mergeTrackerPayload(tracker, data);
         }
     }
     if (moveTrackers) {
         for (let i = 0; i < moveTrackers.length; i += 1) {
             const tracker = cfg.trackers.move[i];
             const data = moveTrackers[i];
-            if (tracker && data) tracker.merge?.(data);
+            if (tracker && data) mergeTrackerPayload(tracker, data);
         }
     }
     cfg.processedMoves += moves;
@@ -63,14 +74,14 @@ export function mergeWorkerTrackerFlush(
             for (let i = 0; i < configResult.gameTrackers.length; i += 1) {
                 const tracker = cfg.trackers.game[i];
                 const data = configResult.gameTrackers[i];
-                if (tracker && data) tracker.merge?.(data);
+                if (tracker && data) mergeTrackerPayload(tracker, data);
             }
         }
         if (configResult.moveTrackers) {
             for (let i = 0; i < configResult.moveTrackers.length; i += 1) {
                 const tracker = cfg.trackers.move[i];
                 const data = configResult.moveTrackers[i];
-                if (tracker && data) tracker.merge?.(data);
+                if (tracker && data) mergeTrackerPayload(tracker, data);
             }
         }
     }

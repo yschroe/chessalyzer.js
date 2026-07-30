@@ -20,8 +20,8 @@ export default {
         scope: 'specific',
         unit: '',
         description: 'Selected piece was taken by piece X Y times.',
-        calc: (data: unknown, loopSqrData: SquareData, sqrData?: SquareData) => {
-            if (!isPieceTracker(data) || !sqrData) return 0;
+        calc: (data: unknown, loopSqrData: SquareData, sqrData: SquareData) => {
+            if (!isPieceTracker(data)) return 0;
             const sqrPiece = sqrData.piece;
             const loopPiece = loopSqrData.piece;
             if (!sqrPiece || !loopPiece || loopPiece.color === sqrPiece.color) return 0;
@@ -32,8 +32,8 @@ export default {
         scope: 'specific',
         unit: '',
         description: 'Selected piece took piece X Y times.',
-        calc: (data: unknown, loopSqrData: SquareData, sqrData?: SquareData) => {
-            if (!isPieceTracker(data) || !sqrData) return 0;
+        calc: (data: unknown, loopSqrData: SquareData, sqrData: SquareData) => {
+            if (!isPieceTracker(data)) return 0;
             const sqrPiece = sqrData.piece;
             const loopPiece = loopSqrData.piece;
             if (!sqrPiece || !loopPiece || loopPiece.color === sqrPiece.color) return 0;

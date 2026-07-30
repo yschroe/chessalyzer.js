@@ -8,18 +8,14 @@ import {
 } from '#board/board-coords';
 import { getStartingPiece } from '#board/piece-names';
 import type { SquareData } from '#types/game';
-import type { PlayerColor } from '#types/tokens';
 import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
-
-const EMPTY_SQUARE_PIECE = { color: 'w' as PlayerColor, name: '' };
 
 function squareData(row: number, col: number): SquareData {
     const square = coordsToSquare(row, col);
     const loopSqrCoords: BoardCoord = [row, col];
     return {
-        alg: square,
         square,
-        piece: getStartingPiece(loopSqrCoords) ?? EMPTY_SQUARE_PIECE,
+        piece: getStartingPiece(loopSqrCoords),
     };
 }
 
@@ -29,7 +25,7 @@ function squareData(row: number, col: number): SquareData {
  * Each cell calls the provided `fun` with:
  * - `data` — tracker instance (or comparison baseline)
  * - `loopSqrData` — the square being evaluated
- * - `sqrData` — optional reference square (for relative presets)
+ * - `sqrData` — reference square (for relative presets)
  * - `optData` — caller-provided extra context
  */
 
@@ -37,9 +33,9 @@ function squareData(row: number, col: number): SquareData {
  * Evaluate `fun` at every square and collect min/max for normalization.
  * @param square Optional reference square as `'e4'` or `[row, col]` coords.
  */
-export function generateHeatmap(
-    data: unknown,
-    fun: HeatmapAnalysisFunc,
+export function generateHeatmap<T>(
+    data: T,
+    fun: HeatmapAnalysisFunc<T>,
     square?: string | BoardCoord,
     optData?: unknown,
 ): HeatmapData {
@@ -57,9 +53,8 @@ export function generateHeatmap(
     const refRow = squareRow(refSquare);
     const refCol = squareCol(refSquare);
     const sqrData: SquareData = {
-        alg: refSquare,
         square: refSquare,
-        piece: getStartingPiece([refRow, refCol]) ?? EMPTY_SQUARE_PIECE,
+        piece: getStartingPiece([refRow, refCol]),
     };
 
     const map: number[][] = [];
@@ -85,10 +80,10 @@ export function generateHeatmap(
  * Percentage-difference heatmap between two datasets.
  * Positive = `data1` higher; negative = `data2` higher; zero when either cell is 0.
  */
-export function generateComparisonHeatmap(
-    data1: unknown,
-    data2: unknown,
-    fun: HeatmapAnalysisFunc,
+export function generateComparisonHeatmap<T>(
+    data1: T,
+    data2: T,
+    fun: HeatmapAnalysisFunc<T>,
     square?: string | BoardCoord,
     optData?: unknown,
 ): HeatmapData {
