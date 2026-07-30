@@ -52,7 +52,7 @@ export interface AnalyzeSharedOptions extends Omit<ParsePgnOptions, 'headers'> {
 }
 
 /** Single-run {@link analyzePGN} options. */
-export interface AnalyzeSingleRunOptions extends AnalyzeSharedOptions {
+interface AnalyzeSingleRunOptions extends AnalyzeSharedOptions {
     trackers?: Tracker[];
     /**
      * Per-game predicate. Requires `workers: false` — JavaScript filters run on the main thread only.
