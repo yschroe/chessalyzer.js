@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Install chessalyzer.js and import the modules you need.
+description: Install chessalyzer and import the modules you need.
 ---
 
 ## Requirements
@@ -10,31 +10,31 @@ description: Install chessalyzer.js and import the modules you need.
 ## Install
 
 ```sh
-npm install chessalyzer.js
+npm install chessalyzer
 ```
 
 ## Imports
 
-The main entry point is `chessalyzer.js`. Subpath imports keep bundles focused:
+The main entry point is `chessalyzer`. Subpath imports keep bundles focused:
 
 ```javascript
-import { analyzePGN, printHeatmap } from 'chessalyzer.js';
-import { TileTracker } from 'chessalyzer.js/trackers';
-import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
+import { analyzePGN, printHeatmap } from 'chessalyzer';
+import { TileTracker } from 'chessalyzer/trackers';
+import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
 ```
 
-| Subpath                   | Use for                                |
-| ------------------------- | -------------------------------------- |
-| `chessalyzer.js`          | `analyzePGN`, heatmap helpers, filters |
-| `chessalyzer.js/trackers` | Built-in and base tracker classes      |
-| `chessalyzer.js/pgn`      | Parse-only PGN access                  |
-| `chessalyzer.js/replay`   | Replay action and square types         |
+| Subpath                | Use for                                |
+| ---------------------- | -------------------------------------- |
+| `chessalyzer`          | `analyzePGN`, heatmap helpers, filters |
+| `chessalyzer/trackers` | Built-in and base tracker classes      |
+| `chessalyzer/pgn`      | Parse-only PGN access                  |
+| `chessalyzer/replay`   | Replay action and square types         |
 
 ## Quick check
 
 ```javascript
-import { analyzePGN } from 'chessalyzer.js';
-import { TileTracker } from 'chessalyzer.js/trackers';
+import { analyzePGN } from 'chessalyzer';
+import { TileTracker } from 'chessalyzer/trackers';
 
 const tileTracker = new TileTracker();
 const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });

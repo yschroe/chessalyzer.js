@@ -1,8 +1,8 @@
 import { describe, it, expect, afterEach } from 'bun:test';
 import { join } from 'node:path';
 
-import { analyzePGN } from 'chessalyzer.js';
-import { PieceTracker, TileTracker } from 'chessalyzer.js/trackers';
+import { analyzePGN } from 'chessalyzer';
+import { PieceTracker, TileTracker } from 'chessalyzer/trackers';
 
 import type { WorkerMessage } from '#types/worker';
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
-import { analyzePGN } from 'chessalyzer.js';
+import { analyzePGN } from 'chessalyzer';
 
 import CustomGameTracker from '../fixtures/custom-game-tracker';
 import { fixtureExpected, fixturePath } from '../helpers/fixtures';

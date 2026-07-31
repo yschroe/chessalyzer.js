@@ -1,12 +1,12 @@
 # Agent guide
 
-This document orients coding agents working on **chessalyzer.js** — a TypeScript library for batch-analyzing chess PGN files.
+This document orients coding agents working on **chessalyzer** — a TypeScript library for batch-analyzing chess PGN files.
 
 ## Project overview
 
 Chessalyzer.js parses large PGN databases and runs user-defined **trackers** over each game (move-level or game-level statistics). It is designed for throughput on multi-core machines.
 
-**Main entry points:** `analyzePGN(path, options?)` in [`src/core/analyze.ts`](src/core/analyze.ts) (full pipeline); `parsePGN(path, options?)` in [`src/pgn/parse-pgn.ts`](src/pgn/parse-pgn.ts) via `chessalyzer.js/pgn`; trackers via `chessalyzer.js/trackers`.
+**Main entry points:** `analyzePGN(path, options?)` in [`src/core/analyze.ts`](src/core/analyze.ts) (full pipeline); `parsePGN(path, options?)` in [`src/pgn/parse-pgn.ts`](src/pgn/parse-pgn.ts) via `chessalyzer/pgn`; trackers via `chessalyzer/trackers`.
 
 **Pipeline (high level):**
 
@@ -120,7 +120,7 @@ Place large Lichess exports in `pgn/` (gitignored). The perf bench automatically
 ### Tests
 
 - **Unit tests** — colocated under `src/<module>/__tests__/` next to the code they cover (e.g. `src/core/__tests__/worker-pool.test.ts`). Prefer `#` import aliases.
-- **Integration tests** — `test/integration/` against the built package (`chessalyzer.js`). See [`test/README.md`](test/README.md) for fixtures vs corpus.
+- **Integration tests** — `test/integration/` against the built package (`chessalyzer`). See [`test/README.md`](test/README.md) for fixtures vs corpus.
 
 ```bash
 npm test

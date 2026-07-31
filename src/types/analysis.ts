@@ -11,7 +11,7 @@ export type GameFilter = (game: ParsedGame) => boolean;
 export interface AnalyzeRun {
     /**
      * Tracker instances for this run. Must be {@link BaseTracker} subclasses at runtime
-     * (`MoveTracker`, `BaseGameTracker`, or built-ins from `chessalyzer.js/trackers`).
+     * (`MoveTracker`, `BaseGameTracker`, or built-ins from `chessalyzer/trackers`).
      */
     trackers?: Tracker[];
     /**

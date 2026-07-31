@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- Removed `chessalyzer.js/io` and other internal-only symbols (board coord helpers, tile/piece internals, `MAX_COLLECTED_ERRORS`, etc.). Subpaths are now `chessalyzer.js`, `/pgn`, `/replay` (types), and `/trackers`.
+- Removed `chessalyzer/io` and other internal-only symbols (board coord helpers, tile/piece internals, `MAX_COLLECTED_ERRORS`, etc.). Subpaths are now `chessalyzer`, `/pgn`, `/replay` (types), and `/trackers`.
 
 ## [4.0.0-alpha.0] - 2026-07-30
 
@@ -24,8 +24,8 @@ Version 4 is a complete redesign: a simpler API, faster runs, and imports that m
 ### Highlights
 
 - **`analyzePGN`** replaces the static `Chessalyzer` class and is directly exported via the main entry point.
-- New parse-only API: **`parsePGN` and `streamParsePGN`** on `chessalyzer.js/pgn` when you only need the games (headers and SAN strings) without running trackers.
-- **Subpath imports** — `chessalyzer.js/pgn`, `/trackers`, `/io`, `/replay` — so you pull in only what you need.
+- New parse-only API: **`parsePGN` and `streamParsePGN`** on `chessalyzer/pgn` when you only need the games (headers and SAN strings) without running trackers.
+- **Subpath imports** — `chessalyzer/pgn`, `/trackers`, `/io`, `/replay` — so you pull in only what you need.
 - **Friendlier data shapes** — parsed moves arrive as simple `{ san }` objects (with room to grow later), and board actions use readable squares like `'e4'` instead of numeric indices. Castling and en passant are marked clearly when they happen.
 - **Leaner trackers** — the `Tracker` contract stays small (`track`, optional hooks, `merge`); heatmaps and profiling live on `BaseTracker` if you need them.
 - **Faster by default** — parse-only and trackerless runs skip board replay (~10% on large files), workers start lazily, and multi-run analyses parse each chunk once instead of re-reading the file.
@@ -41,8 +41,8 @@ Version 4 is a complete redesign: a simpler API, faster runs, and imports that m
 - Compare multiple analyses with `runs: [...]` instead of passing an array of configs.
 - Custom trackers: rename `add()` to `merge()`, and for multithreading add `static trackerId` and `static workerModule = import.meta.url`. The tracker interface itself is slimmer now — heatmaps stay on `BaseTracker`.
 - Tracker stats renamed for consistency: `GameTracker.cntGames` → `games`; `TileTracker.cntMovesGame` / `cntMovesTotal` → `movesGame` / `movesTotal`.
-- Import built-in trackers by name from `chessalyzer.js/trackers` (`GameTracker`, `PieceTracker`, `TileTracker`). Base classes and types live there too.
-- `parsePGN` moved to `chessalyzer.js/pgn`; the root package export is analyze-only. Parsed moves are now `{ san }` objects rather than bare strings.
+- Import built-in trackers by name from `chessalyzer/trackers` (`GameTracker`, `PieceTracker`, `TileTracker`). Base classes and types live there too.
+- `parsePGN` moved to `chessalyzer/pgn`; the root package export is analyze-only. Parsed moves are now `{ san }` objects rather than bare strings.
 - If you read action coordinates in a move tracker, expect algebraic squares (`'e1'`, `'e4'`, …) on `from` / `to` / `on`, plus optional `castle` / `enPassant` flags.
 - A few renames and tidy-ups: the tile helper is `MoveCoords` (was `Move`), `GameResult` is a union type, and `errorsTruncated` is a boolean. Handy types also ship from the root, `/trackers`, and `/replay` — see the README.
 - Removed deprecated `workers.batchSize` option.
@@ -109,7 +109,7 @@ Version 4 is a complete redesign: a simpler API, faster runs, and imports that m
 
 ### Changed
 
-- The count of additional needed threads in multithreaded mode is now determined dynamically. Instead of starting a new thread every time new games have been read in, chessalyzer.js now tries to reuse already started threads. This removes the overhead of needing to create a new worker thread every time, which results in a huge performance boost (around +25%).
+- The count of additional needed threads in multithreaded mode is now determined dynamically. Instead of starting a new thread every time new games have been read in, chessalyzer now tries to reuse already started threads. This removes the overhead of needing to create a new worker thread every time, which results in a huge performance boost (around +25%).
 
 ### Removed
 
@@ -120,7 +120,7 @@ Version 4 is a complete redesign: a simpler API, faster runs, and imports that m
 ### Added
 
 - Added support for PGN files in which the game moves are listed in multiple lines instead of one single line
-- You can now run different filters in parallel. For example you could configure chessalyzer.js in a way that Tracker1 tracks only PlayerA's games and Tracker2 tracks only PlayerB's games during the same run of analyzePGN(...). Before you needed to start two separate analyses with the different Trackers and filter settings.
+- You can now run different filters in parallel. For example you could configure chessalyzer in a way that Tracker1 tracks only PlayerA's games and Tracker2 tracks only PlayerB's games during the same run of analyzePGN(...). Before you needed to start two separate analyses with the different Trackers and filter settings.
 
 ### Changed
 
@@ -159,7 +159,7 @@ Version 4 is a complete redesign: a simpler API, faster runs, and imports that m
 ### Changed
 
 - Switched from line-by-line package to node.js native readline module. Makes read-in even faster now.
-- Changed import scheme from `const Chessalyzer = require('chessalyzer.js');` to `const { Chessalyzer, Tracker} = require('chessalyzer.js');`.
+- Changed import scheme from `const Chessalyzer = require('chessalyzer');` to `const { Chessalyzer, Tracker} = require('chessalyzer');`.
 
 ## [1.5.1] - xxxx-xx-xx
 
@@ -211,7 +211,7 @@ Version 4 is a complete redesign: a simpler API, faster runs, and imports that m
 
 ### Changed
 
-- Moved the worker-thread logic into a separate file instead of cloning the entire process for multi threading. This should make it easier to include chessalyzer.js in other projects, for example a REST server. Prior this change with active multithreading every time a new worker thread was created the whole server was cloned.
+- Moved the worker-thread logic into a separate file instead of cloning the entire process for multi threading. This should make it easier to include chessalyzer in other projects, for example a REST server. Prior this change with active multithreading every time a new worker thread was created the whole server was cloned.
 
 ### Fixed
 

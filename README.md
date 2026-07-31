@@ -1,8 +1,8 @@
-<img src="https://i.imgur.com/X7Q2xIx.png" style="height: 150px">
+# Chessalyzer
 
 A JavaScript library for batch analyzing chess games.
 
-[![npm version](https://badge.fury.io/js/chessalyzer.js.svg)](https://badge.fury.io/js/chessalyzer.js)
+[![npm version](https://badge.fury.io/js/chessalyzer.svg)](https://badge.fury.io/js/chessalyzer)
 
 # Index
 
@@ -38,14 +38,14 @@ A JavaScript library for batch analyzing chess games.
 1. Install package
 
 ```sh
-npm install chessalyzer.js
+npm install chessalyzer
 ```
 
 2. Import the library:
 
 ```javascript
-import { analyzePGN, printHeatmap } from 'chessalyzer.js';
-import { TileTracker } from 'chessalyzer.js/trackers';
+import { analyzePGN, printHeatmap } from 'chessalyzer';
+import { TileTracker } from 'chessalyzer/trackers';
 ```
 
 3. Use the library. See next chapters for examples.
@@ -55,11 +55,11 @@ const result = await analyzePGN('<pathToPgnFile>', { trackers: [new TileTracker(
 console.log(result.gameCount, result.moveCount, result.movesPerSecond);
 ```
 
-4. Check out the examples or the [docs](https://yschroe.github.io/chessalyzer.js/).
+4. Check out the examples or the [docs](https://yschroe.github.io/chessalyzer/).
 
 # How it works
 
-Give chessalyzer.js a PGN file and it takes care of the boring parts: reading the file, understanding each game, and replaying every move on an internal board. Along the way, your trackers collect exactly the statistics you asked for — nothing more, which is what keeps it fast. When the run finishes, the results are right where you left them: on the tracker instances you passed in.
+Give chessalyzer a PGN file and it takes care of the boring parts: reading the file, understanding each game, and replaying every move on an internal board. Along the way, your trackers collect exactly the statistics you asked for — nothing more, which is what keeps it fast. When the run finishes, the results are right where you left them: on the tracker instances you passed in.
 
 The main entry points are `analyzePGN` (batch analysis) and `printHeatmap` (a quick terminal preview). Move trackers receive per-move data; game trackers receive header fields like player names and ratings. See [Pipeline](#pipeline) if you want to dig into the stages.
 
@@ -94,9 +94,9 @@ flowchart TB
 You can stop after PGN parse if you do not need board replay, or run the full pipeline with `analyzePGN`:
 
 ```javascript
-import { analyzePGN } from 'chessalyzer.js';
-import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
-import { GameTracker } from 'chessalyzer.js/trackers';
+import { analyzePGN } from 'chessalyzer';
+import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
+import { GameTracker } from 'chessalyzer/trackers';
 
 // Just the games — no board replay
 const games = await parsePGN('<pathToPgnFile>', { headers: true, maxGames: 100 });
@@ -127,8 +127,8 @@ Count-only runs (no move trackers) skip board replay by default, which makes the
 Let's start with a basic example. Here we simply want to track the tile occupation (=how often did each tile have a piece on it) for the whole board. For this we can use the preconfigured TileTracker class from the library. Afterwards we want to create a heatmap out of the data to visualize the tile occupation. For this basic heatmap a preset is also provided:
 
 ```javascript
-import { analyzePGN, printHeatmap } from 'chessalyzer.js';
-import { TileTracker } from 'chessalyzer.js/trackers';
+import { analyzePGN, printHeatmap } from 'chessalyzer';
+import { TileTracker } from 'chessalyzer/trackers';
 
 const tileTracker = new TileTracker();
 
@@ -196,7 +196,7 @@ const heatmapData = tileT1.generateComparisonHeatmap(tileT2, func);
 
 ## Multithreaded analysis
 
-By default, chessalyzer.js uses Node.js [Worker Threads](https://nodejs.org/api/worker_threads.html) to read and analyze your PGN in parallel. You do not need to configure anything — it just works:
+By default, chessalyzer uses Node.js [Worker Threads](https://nodejs.org/api/worker_threads.html) to read and analyze your PGN in parallel. You do not need to configure anything — it just works:
 
 ```javascript
 await analyzePGN('<pathToPgnFile>', {
@@ -223,7 +223,7 @@ What happens when a game in your file has a broken or illegal move? You have two
 **Stop immediately** (the default) — great while developing or on small, trusted files. The run throws on the first replay failure, and you can inspect exactly which game and move caused it:
 
 ```javascript
-import { analyzePGN, getAnalyzeError, isReplayError } from 'chessalyzer.js';
+import { analyzePGN, getAnalyzeError, isReplayError } from 'chessalyzer';
 
 try {
     await analyzePGN('<pathToPgnFile>');
@@ -261,8 +261,8 @@ The function you create for heatmap generation gets passed up to four parameters
 2. `loopSqrData`: Information about the square the current heatmap value is calculated for. The `generateHeatmap(...)` function loops over every square of the board. `loopSqrData` has this shape:
 
     ```typescript
-    import type { Square } from 'chessalyzer.js/replay';
-    import type { SquareData } from 'chessalyzer.js/trackers';
+    import type { Square } from 'chessalyzer/replay';
+    import type { SquareData } from 'chessalyzer/trackers';
 
     interface SquareData {
         // Interned algebraic square (e.g. 'a2').
@@ -284,7 +284,7 @@ The function you create for heatmap generation gets passed up to four parameters
 
 ## Built-in
 
-chessalyzer.js comes with three built-in trackers, which can be directly imported into your script:
+chessalyzer comes with three built-in trackers, which can be directly imported into your script:
 
 `GameTracker`:
 
@@ -355,8 +355,8 @@ export default class MyTracker extends BaseGameTracker {
 Import bases and types from their canonical subpaths (each symbol has one export home):
 
 ```javascript
-import type { GameFilter } from 'chessalyzer.js';
-import type { ParsedGame, ParsedMove } from 'chessalyzer.js/pgn';
+import type { GameFilter } from 'chessalyzer';
+import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
 import type {
     Action,
     BaseAction,
@@ -365,7 +365,7 @@ import type {
     PlayerColor,
     PromoteAction,
     Square,
-} from 'chessalyzer.js/replay';
+} from 'chessalyzer/replay';
 import {
     BaseGameTracker,
     MoveTracker,
@@ -375,7 +375,7 @@ import {
     type SquareData,
     type Tracker,
     type TrackerConfig,
-} from 'chessalyzer.js/trackers';
+} from 'chessalyzer/trackers';
 ```
 
 Here is how the built-in `GameTracker` merges worker results:
@@ -391,7 +391,7 @@ merge(tracker) {
 
 # Heatmap Presets
 
-Instead of defining your own heatmap function you can also use the heatmap presets chessalyzer.js provides you via the Tile and Piece Trackers. You can access those presets by passing the SHORT_NAMEs of the following table as your first argument in `generateHeatmap(...)`, e.g. `<yourTileTrackerInstance>.generateHeatmap('TILE_OCC_BY_PIECE', 'a2')`.
+Instead of defining your own heatmap function you can also use the heatmap presets chessalyzer provides you via the Tile and Piece Trackers. You can access those presets by passing the SHORT_NAMEs of the following table as your first argument in `generateHeatmap(...)`, e.g. `<yourTileTrackerInstance>.generateHeatmap('TILE_OCC_BY_PIECE', 'a2')`.
 
 ### Tile Tracker
 
@@ -417,7 +417,7 @@ For a quick preview you can put your heatmap data into `printHeatmap(...)` to se
 
 <img src="https://i.imgur.com/THV7gwY.png" width="40%">
 
-But generally chessalyzer.js only provides the raw data of the analyses (yet? :)). If you want to visualize the data you will need a separate library. The following examples were created with my fork of [chessboard.js](https://github.com/PeterPain/heatboard.js) with added heatmap functionality.
+But generally chessalyzer only provides the raw data of the analyses (yet? :)). If you want to visualize the data you will need a separate library. The following examples were created with my fork of [chessboard.js](https://github.com/PeterPain/heatboard.js) with added heatmap functionality.
 
 White tile occupation  
 <img src="https://i.imgur.com/2naX1mg.png" width="30%">

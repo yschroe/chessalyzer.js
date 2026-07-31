@@ -29,13 +29,13 @@ export default class MyTracker extends BaseGameTracker {
 ## Imports
 
 ```javascript
-import type { GameFilter } from 'chessalyzer.js';
-import type { ParsedGame, ParsedMove } from 'chessalyzer.js/pgn';
-import type { Action, Square } from 'chessalyzer.js/replay';
+import type { GameFilter } from 'chessalyzer';
+import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
+import type { Action, Square } from 'chessalyzer/replay';
 import {
     BaseGameTracker,
     MoveTracker,
-} from 'chessalyzer.js/trackers';
+} from 'chessalyzer/trackers';
 ```
 
 ## Notes
@@ -45,6 +45,6 @@ import {
 - **Castling** produces two move actions (king leg, then rook leg). The rook leg carries the same `castle` flag.
 - Override **`onGameEnd()`** for per-game flush hooks.
 
-See [`manual-tests/custom-game-tracker.ts`](https://github.com/yschroe/chessalyzer.js/blob/main/manual-tests/custom-game-tracker.ts) for a minimal working example.
+See [`manual-tests/custom-game-tracker.ts`](https://github.com/yschroe/chessalyzer/blob/main/manual-tests/custom-game-tracker.ts) for a minimal working example.
 
 When using custom trackers with filters, pass `workers: false`. See [Multithreading](/docs/multithreading).

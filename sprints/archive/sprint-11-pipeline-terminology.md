@@ -71,10 +71,10 @@ Use these terms in code comments, public docs, CHANGELOG, and benchmark output. 
 
 Optional subpath exports (package.json `exports`):
 
-- `chessalyzer.js/io` — stage 1
-- `chessalyzer.js/pgn` — stage 2 types + `parsePGN`
-- `chessalyzer.js/replay` — stage 3 types + replay policy helpers
-- `chessalyzer.js` — `analyzePGN`, trackers, errors
+- `chessalyzer/io` — stage 1
+- `chessalyzer/pgn` — stage 2 types + `parsePGN`
+- `chessalyzer/replay` — stage 3 types + replay policy helpers
+- `chessalyzer` — `analyzePGN`, trackers, errors
 
 ### Types & options
 
@@ -197,7 +197,7 @@ Replace overloaded / misleading names:
 - [x] **`src/io/`** — `line-reader.ts`, `pgn-chunks.ts` (moved from `pgn/`)
 - [x] **`src/pgn/`** — parse-only: `game-assembler.ts`, `movetext.ts`, `parse-pgn.ts`
 - [x] **`#io/*` import alias**; internal imports updated (no re-export shims)
-- [x] Subpath exports: `chessalyzer.js/io`, `/pgn`, `/replay`
+- [x] Subpath exports: `chessalyzer/io`, `/pgn`, `/replay`
 
 ---
 

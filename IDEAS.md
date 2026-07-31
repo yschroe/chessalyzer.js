@@ -1,6 +1,6 @@
 # Ideas & future work
 
-Forward-looking notes on what chessalyzer.js does **not** do today, and plausible directions for extending it. This is not a committed roadmap — items may be reordered, dropped, or implemented differently.
+Forward-looking notes on what chessalyzer does **not** do today, and plausible directions for extending it. This is not a committed roadmap — items may be reordered, dropped, or implemented differently.
 
 For what exists now, see [README.md](./README.md) and [AGENTS.md](./AGENTS.md). **Pipeline naming:** [Sprint 11](sprints/sprint-11-pipeline-terminology.md) is the source of truth for stage terminology (I/O → PGN parse → replay → analyze).
 
@@ -225,7 +225,7 @@ This keeps v4 honesty (no pretending JS filters are worker-native) while leaving
 
 ## Ecosystem & packaging
 
-- **Subpath exports** — `chessalyzer.js/io`, `/pgn`, `/replay`, `/trackers` (shipped); optional `/board` later for advanced users without bloating the default import
+- **Subpath exports** — `chessalyzer/io`, `/pgn`, `/replay`, `/trackers` (shipped); optional `/board` later for advanced users without bloating the default import
 - **Browser build** — WASM or lightweight bundle if parse-only mode exists (no `worker_threads`)
 - **Write PGN** — out of scope today; only mentioned if parse tree exists
 
