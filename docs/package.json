@@ -7,11 +7,10 @@
         "dev": "waku dev",
         "build": "waku build",
         "start": "waku start",
-        "types:check": "tsc --noEmit",
+        "typecheck": "tsc --noEmit",
         "lint": "oxlint"
     },
     "dependencies": {
-        "cnfast": "^0.1.0",
         "fumadocs-core": "16.14.0",
         "fumadocs-mdx": "15.2.1",
         "fumadocs-ui": "npm:@fumadocs/base-ui@16.14.0",

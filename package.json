@@ -76,7 +76,8 @@
         "release:pack": "node scripts/npm-publish.mjs --dry-run",
         "docs:dev": "bun run --filter chessalyzer-docs dev",
         "docs:build": "bun run --filter chessalyzer-docs build",
-        "docs:start": "bun run --filter chessalyzer-docs start"
+        "docs:start": "bun run --filter chessalyzer-docs start",
+        "docs:typecheck": "bun run --filter chessalyzer-docs typecheck"
     },
     "dependencies": {
         "chalk": "^6.0.0"

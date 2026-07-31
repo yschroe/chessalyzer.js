@@ -1,11 +1,6 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import tailwindcss from '@tailwindcss/vite';
 import { fumadocsMdx } from 'fumadocs-mdx/vite';
 import { defineConfig } from 'waku/config';
-
-const root = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
     vite: {
@@ -16,10 +11,10 @@ export default defineConfig({
             alias: [
                 {
                     find: /^use-sync-external-store\/shim\/with-selector$/,
-                    replacement: path.join(
-                        root,
-                        'src/shims/use-sync-external-store-with-selector.ts',
-                    ),
+                    replacement: new URL(
+                        './src/shims/use-sync-external-store-with-selector.ts',
+                        import.meta.url,
+                    ).pathname,
                 },
             ],
         },
