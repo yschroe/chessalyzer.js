@@ -42,10 +42,6 @@
             "types": "./lib/index.d.ts",
             "import": "./lib/index.js"
         },
-        "./io": {
-            "types": "./lib/io.d.ts",
-            "import": "./lib/io.js"
-        },
         "./pgn": {
             "types": "./lib/pgn.d.ts",
             "import": "./lib/pgn.js"

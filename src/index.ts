@@ -1,4 +1,8 @@
+// Runtime
 export { analyzePGN, printHeatmap } from '#core/analyze';
+export { getAnalyzeError, isReplayError } from '#core/analyze-errors';
+
+// Types
 export type {
     AnalyzeMultiRunOptions,
     AnalyzeOptions,
@@ -8,8 +12,6 @@ export type {
     AnalyzeSharedOptions,
     AnalyzeSingleRunOptions,
     GameFilter,
-    ReplayValidation,
     WorkerOptions,
 } from '#types/analysis';
 export type { AnalyzeError, AnalyzeErrorCode, ReplayError, ReplayErrorReason } from '#types/errors';
-export { getAnalyzeError, isReplayError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';

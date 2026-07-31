@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Dropped the `chalk` dependency; `printHeatmap` uses ANSI truecolor escapes instead (zero production dependencies).
+- **Leaner public exports** — removed `chessalyzer.js/io` and other internal-only symbols (board coord helpers, tile/piece internals, `MAX_COLLECTED_ERRORS`, etc.). Subpaths are now `chessalyzer.js`, `/pgn`, `/replay` (types), and `/trackers`.
 
 ## [4.0.0-alpha.0] - 2026-07-30
 

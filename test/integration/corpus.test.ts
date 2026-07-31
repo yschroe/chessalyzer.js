@@ -5,8 +5,10 @@ import { describe, it, beforeAll, expect } from 'bun:test';
 import { analyzePGN } from 'chessalyzer.js';
 import type { AnalyzeResult } from 'chessalyzer.js';
 import type { ParsedGame } from 'chessalyzer.js/pgn';
-import { GameTracker, PieceTracker, isTrackedPiece } from 'chessalyzer.js/trackers';
+import { GameTracker, PieceTracker } from 'chessalyzer.js/trackers';
 import type { HeatmapAnalysisFunc } from 'chessalyzer.js/trackers';
+
+import { isTrackedPiece } from '#trackers/piece-tracker';
 
 import { corpusPath, getCorpusEntry } from '../helpers/fixtures';
 

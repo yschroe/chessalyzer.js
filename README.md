@@ -118,14 +118,6 @@ await analyzePGN('<pathToPgnFile>', {
 
 Set `headers: true` when your filter reads tag pairs like `WhiteElo`. By default, headers are parsed automatically when you use a game tracker (`'auto'`).
 
-If you want to wire up individual stages yourself, subpath imports have you covered:
-
-```javascript
-import { readLines, readPgnChunks } from 'chessalyzer.js/io';
-import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
-import { TileTracker, BaseGameTracker } from 'chessalyzer.js/trackers';
-```
-
 Count-only runs (no move trackers) skip board replay by default, which makes them noticeably faster. Benchmark scripts live in `bench/` if you want to measure things yourself.
 
 # Examples
@@ -269,7 +261,8 @@ The function you create for heatmap generation gets passed up to four parameters
 2. `loopSqrData`: Information about the square the current heatmap value is calculated for. The `generateHeatmap(...)` function loops over every square of the board. `loopSqrData` has this shape:
 
     ```typescript
-    import type { Square, SquareData } from 'chessalyzer.js/trackers';
+    import type { Square } from 'chessalyzer.js/replay';
+    import type { SquareData } from 'chessalyzer.js/trackers';
 
     interface SquareData {
         // Interned algebraic square (e.g. 'a2').
