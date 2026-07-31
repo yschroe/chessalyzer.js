@@ -6,6 +6,7 @@
     "scripts": {
         "dev": "waku dev",
         "build": "waku build",
+        "preview": "bunx serve dist/public",
         "start": "waku start",
         "typecheck": "tsc --noEmit",
         "lint": "oxlint"

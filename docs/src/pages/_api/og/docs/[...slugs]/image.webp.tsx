@@ -1,4 +1,5 @@
 import { generate as DefaultImage } from 'fumadocs-ui/og/takumi';
+import wasm from 'takumi-js/wasm';
 import { ImageResponse } from 'takumi-js/response';
 import { ApiContext } from 'waku/router';
 
@@ -16,6 +17,7 @@ export async function GET(_: Request, { params }: ApiContext<'/og/docs/[...slugs
             width: 1200,
             height: 630,
             format: 'webp',
+            module: wasm,
         },
     );
 }
