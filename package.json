@@ -19,6 +19,9 @@
         "type": "git",
         "url": "git+https://github.com/yschroe/chessalyzer.js.git"
     },
+    "workspaces": [
+        "docs"
+    ],
     "files": [
         "lib/**/*"
     ],
@@ -70,7 +73,10 @@
         "bench:atomic:bun": "bun bench/bench-atomic.ts",
         "bump": "bumpp",
         "release:notes": "node scripts/release-notes.mjs",
-        "release:pack": "node scripts/npm-publish.mjs --dry-run"
+        "release:pack": "node scripts/npm-publish.mjs --dry-run",
+        "docs:dev": "bun run --filter chessalyzer-docs dev",
+        "docs:build": "bun run --filter chessalyzer-docs build",
+        "docs:start": "bun run --filter chessalyzer-docs start"
     },
     "dependencies": {
         "chalk": "^6.0.0"
