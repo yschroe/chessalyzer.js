@@ -6,8 +6,8 @@ description: Turn tracker data into per-square values for preview or visualizati
 After running `analyzePGN`, trackers hold the raw statistics. **Heatmaps** map those stats to a value for each square on the board.
 
 ```javascript
-import { analyzePGN, printHeatmap } from 'chessalyzer.js';
-import { TileTracker } from 'chessalyzer.js/trackers';
+import { analyzePGN, printHeatmap } from 'chessalyzer';
+import { TileTracker } from 'chessalyzer/trackers';
 
 const tileTracker = new TileTracker();
 await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
@@ -18,7 +18,7 @@ printHeatmap(heatmapData);
 
 ## What you get
 
-`generateHeatmap` returns data you can pass to `printHeatmap` for a quick terminal preview, or feed into your own visualization library. chessalyzer.js provides the **data**, not chart components.
+`generateHeatmap` returns data you can pass to `printHeatmap` for a quick terminal preview, or feed into your own visualization library. chessalyzer provides the **data**, not chart components.
 
 ## Options
 

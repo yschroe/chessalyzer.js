@@ -10,7 +10,7 @@ What happens when a game has a broken or illegal move? Two strategies:
 Good while developing or on small, trusted files. The run throws on the first replay failure:
 
 ```javascript
-import { analyzePGN, getAnalyzeError, isReplayError } from 'chessalyzer.js';
+import { analyzePGN, getAnalyzeError, isReplayError } from 'chessalyzer';
 
 try {
     await analyzePGN('<pathToPgnFile>');

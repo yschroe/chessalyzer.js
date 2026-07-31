@@ -1,10 +1,10 @@
-export const appName = 'chessalyzer.js';
+export const appName = 'chessalyzer';
 export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';
 
 export const gitConfig = {
     user: 'yschroe',
-    repo: 'chessalyzer.js',
+    repo: 'chessalyzer',
     branch: 'main',
 };

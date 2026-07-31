@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
-import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
+import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
 
 import { allFixtureIds, fixtureExpected, fixturePath } from '../helpers/fixtures';
 

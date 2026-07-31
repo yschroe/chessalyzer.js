@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 import { join } from 'node:path';
 
-import { analyzePGN, getAnalyzeError, isReplayError } from 'chessalyzer.js';
-import { PieceTracker } from 'chessalyzer.js/trackers';
+import { analyzePGN, getAnalyzeError, isReplayError } from 'chessalyzer';
+import { PieceTracker } from 'chessalyzer/trackers';
 
 const badSanPath = join(import.meta.dirname, '../fixtures/bad-san-mid-file.pgn');
 

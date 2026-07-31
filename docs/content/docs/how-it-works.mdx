@@ -15,9 +15,9 @@ When people say "PGN parser," they usually mean step 2 only. Turning a file into
 ## Full pipeline vs parse-only
 
 ```javascript
-import { analyzePGN } from 'chessalyzer.js';
-import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
-import { GameTracker } from 'chessalyzer.js/trackers';
+import { analyzePGN } from 'chessalyzer';
+import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
+import { GameTracker } from 'chessalyzer/trackers';
 
 // Just the games — no board replay
 const games = await parsePGN('<pathToPgnFile>', { headers: true, maxGames: 100 });

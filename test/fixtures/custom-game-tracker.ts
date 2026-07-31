@@ -1,5 +1,5 @@
-import type { ParsedGame } from 'chessalyzer.js/pgn';
-import { BaseGameTracker } from 'chessalyzer.js/trackers';
+import type { ParsedGame } from 'chessalyzer/pgn';
+import { BaseGameTracker } from 'chessalyzer/trackers';
 
 function isCustomGameTracker(tracker: unknown): tracker is CustomGameTracker {
     return (

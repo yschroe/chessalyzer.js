@@ -6,8 +6,8 @@ description: Limit analysis to games that match a JavaScript predicate.
 You can filter games with a plain JavaScript function — for example, only analyze games where `WhiteElo > 2000`:
 
 ```javascript
-import { analyzePGN } from 'chessalyzer.js';
-import { TileTracker } from 'chessalyzer.js/trackers';
+import { analyzePGN } from 'chessalyzer';
+import { TileTracker } from 'chessalyzer/trackers';
 
 const tileTracker = new TileTracker();
 

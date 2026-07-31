@@ -3,7 +3,7 @@ title: Trackers
 description: Collect statistics during analysis — per move or per game.
 ---
 
-**Trackers** are how you define what chessalyzer.js measures. Pass them to `analyzePGN`; they accumulate stats as games are processed.
+**Trackers** are how you define what chessalyzer measures. Pass them to `analyzePGN`; they accumulate stats as games are processed.
 
 There are two kinds:
 
@@ -17,8 +17,8 @@ Move trackers need `replay: 'actions'`. Game trackers only need headers (set `he
 ## Usage
 
 ```javascript
-import { analyzePGN } from 'chessalyzer.js';
-import { TileTracker, GameTracker } from 'chessalyzer.js/trackers';
+import { analyzePGN } from 'chessalyzer';
+import { TileTracker, GameTracker } from 'chessalyzer/trackers';
 
 const tileTracker = new TileTracker();
 const gameTracker = new GameTracker();

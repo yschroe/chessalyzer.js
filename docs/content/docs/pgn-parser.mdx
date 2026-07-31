@@ -3,10 +3,10 @@ title: PGN parser
 description: Parse PGN files without running the full analysis pipeline.
 ---
 
-The `chessalyzer.js/pgn` module gives you parsed games without board replay — useful when you only need headers and move strings.
+The `chessalyzer/pgn` module gives you parsed games without board replay — useful when you only need headers and move strings.
 
 ```javascript
-import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
+import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
 
 // Load all games into memory
 const games = await parsePGN('<pathToPgnFile>', { headers: true, maxGames: 100 });

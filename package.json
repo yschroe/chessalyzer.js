@@ -1,5 +1,5 @@
 {
-    "name": "chessalyzer.js",
+    "name": "chessalyzer",
     "version": "4.0.0-alpha.1",
     "description": "A JavaScript library for batch analyzing chess games.",
     "keywords": [
@@ -9,15 +9,15 @@
         "heatmap",
         "pgn"
     ],
-    "homepage": "https://github.com/yschroe/chessalyzer.js",
+    "homepage": "https://github.com/yschroe/chessalyzer",
     "bugs": {
-        "url": "https://github.com/yschroe/chessalyzer.js/issues"
+        "url": "https://github.com/yschroe/chessalyzer/issues"
     },
     "license": "MIT",
     "author": "Yannik Schröder",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/yschroe/chessalyzer.js.git"
+        "url": "git+https://github.com/yschroe/chessalyzer.git"
     },
     "workspaces": [
         "docs"

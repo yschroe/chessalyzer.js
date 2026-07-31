@@ -1,5 +1,5 @@
-import { analyzePGN, printHeatmap } from 'chessalyzer.js';
-import { TileTracker } from 'chessalyzer.js/trackers';
+import { analyzePGN, printHeatmap } from 'chessalyzer';
+import { TileTracker } from 'chessalyzer/trackers';
 
 const tileTracker = new TileTracker();
 const tileTracker2 = new TileTracker();
