@@ -1,0 +1,47 @@
+---
+title: Comparing analyses
+description: Run multiple filtered cohorts and compare their heatmaps.
+---
+
+Use the `runs` option to analyze different game subsets in one pass — each run gets its own tracker instances and optional filter.
+
+This example compares tile occupation for high-rated vs low-rated white players (1000 games each):
+
+```javascript
+import { analyzePGN } from 'chessalyzer.js';
+import { TileTracker } from 'chessalyzer.js/trackers';
+
+const tileT1 = new TileTracker();
+const tileT2 = new TileTracker();
+
+await analyzePGN('<pathToPgnFile>', {
+    workers: false,
+    headers: true,
+    runs: [
+        {
+            trackers: [tileT1],
+            filter: (game) => Number(game.headers?.WhiteElo) > 2000,
+            maxGames: 1000,
+        },
+        {
+            trackers: [tileT2],
+            filter: (game) => Number(game.headers?.WhiteElo) < 1200,
+            maxGames: 1000,
+        },
+    ],
+});
+
+const compareFunc = (data, loopSqrData) => {
+    const { square } = loopSqrData;
+    const row = 7 - (square.charCodeAt(1) - 49);
+    const col = square.charCodeAt(0) - 97;
+    const val = data.tiles[row][col].w.wasOn;
+    return (val * 100) / data.movesTotal;
+};
+
+const heatmapData = tileT1.generateComparisonHeatmap(tileT2, compareFunc);
+```
+
+`generateComparisonHeatmap` calls your function with data from both trackers, letting you compute differences, ratios, or any other comparison per square.
+
+Because filters require the main thread, pass `workers: false`. See [Filters](/docs/filters) and [Heatmaps](/docs/heatmaps).

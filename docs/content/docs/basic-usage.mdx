@@ -1,0 +1,31 @@
+---
+title: Basic usage
+description: Run your first analysis and preview a heatmap in the terminal.
+---
+
+A typical workflow: create a tracker, run `analyzePGN`, then turn the collected stats into a heatmap.
+
+This example tracks **tile occupation** — how often each square had a piece on it — using the built-in `TileTracker`:
+
+```javascript
+import { analyzePGN, printHeatmap } from 'chessalyzer.js';
+import { TileTracker } from 'chessalyzer.js/trackers';
+
+const tileTracker = new TileTracker();
+
+const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
+
+console.log(result.gameCount, result.moveCount, result.movesPerSecond);
+
+const heatmapData = tileTracker.generateHeatmap('TILE_OCC_ALL');
+
+printHeatmap(heatmapData);
+```
+
+## What happened
+
+1. **`analyzePGN`** read the PGN, replayed each game, and fed move data to `tileTracker`.
+2. **`generateHeatmap('TILE_OCC_ALL')`** turned the tracker stats into a per-square value map using a built-in preset.
+3. **`printHeatmap`** rendered a quick color preview in the terminal (if your terminal supports colors).
+
+The tracker instance holds your results after the run — inspect `tileTracker.tiles` directly, or generate other heatmap presets. See [Trackers](/docs/trackers) and [Heatmaps](/docs/heatmaps).

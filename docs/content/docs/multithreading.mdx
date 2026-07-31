@@ -1,0 +1,40 @@
+---
+title: Multithreading
+description: Parallel analysis with worker threads — default and when to turn it off.
+---
+
+By default, chessalyzer.js uses Node.js [Worker Threads](https://nodejs.org/api/worker_threads.html) to read and analyze your PGN in parallel. No configuration needed:
+
+```javascript
+import { analyzePGN } from 'chessalyzer.js';
+import { TileTracker } from 'chessalyzer.js/trackers';
+
+const tileTracker = new TileTracker();
+
+await analyzePGN('<pathToPgnFile>', {
+    trackers: [tileTracker],
+    maxGames: 10000,
+    workers: { targetBytes: 4 * 1024 * 1024 },
+});
+```
+
+The `workers` option lets you tune chunk size; defaults are fine for most files.
+
+## Single-threaded mode
+
+Pass `workers: false` when you need everything on the main thread:
+
+```javascript
+await analyzePGN('<pathToPgnFile>', { workers: false });
+```
+
+**Required when using:**
+
+- A JavaScript [`filter`](/docs/filters) callback
+- Some [custom tracker](/docs/trackers/custom) setups during development
+
+The library validates this and will tell you if you forget.
+
+## Custom trackers in multithreaded mode
+
+Custom trackers need `static trackerId`, `static workerModule = import.meta.url`, and a `merge()` implementation. See [Custom trackers](/docs/trackers/custom).
