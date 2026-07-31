@@ -1,0 +1,29 @@
+---
+title: Heatmaps
+description: Turn tracker data into per-square values for preview or visualization.
+---
+
+After running `analyzePGN`, trackers hold the raw statistics. **Heatmaps** map those stats to a value for each square on the board.
+
+```javascript
+import { analyzePGN, printHeatmap } from 'chessalyzer.js';
+import { TileTracker } from 'chessalyzer.js/trackers';
+
+const tileTracker = new TileTracker();
+await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
+
+const heatmapData = tileTracker.generateHeatmap('TILE_OCC_ALL');
+printHeatmap(heatmapData);
+```
+
+## What you get
+
+`generateHeatmap` returns data you can pass to `printHeatmap` for a quick terminal preview, or feed into your own visualization library. chessalyzer.js provides the **data**, not chart components.
+
+## Options
+
+- **[Presets](/docs/heatmaps/presets)** — built-in short names like `'TILE_OCC_ALL'` for common views
+- **[Custom functions](/docs/heatmaps/custom-functions)** — write your own per-square calculation
+- **[Comparing analyses](/docs/comparing-analyses)** — `generateComparisonHeatmap` for side-by-side cohorts
+
+`TileTracker` and `PieceTracker` support heatmap generation.

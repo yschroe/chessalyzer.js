@@ -1,0 +1,34 @@
+---
+title: Trackers
+description: Collect statistics during analysis — per move or per game.
+---
+
+**Trackers** are how you define what chessalyzer.js measures. Pass them to `analyzePGN`; they accumulate stats as games are processed.
+
+There are two kinds:
+
+| Kind | Base class | Receives | Example |
+| ---- | ---------- | -------- | ------- |
+| **Move tracker** | `MoveTracker` | Per-move board/actions | `TileTracker`, `PieceTracker` |
+| **Game tracker** | `BaseGameTracker` | Headers + result per game | `GameTracker` |
+
+Move trackers need `replay: 'actions'`. Game trackers only need headers (set `headers: true` or use `'auto'`).
+
+## Usage
+
+```javascript
+import { analyzePGN } from 'chessalyzer.js';
+import { TileTracker, GameTracker } from 'chessalyzer.js/trackers';
+
+const tileTracker = new TileTracker();
+const gameTracker = new GameTracker();
+
+await analyzePGN('<pathToPgnFile>', {
+    trackers: [tileTracker, gameTracker],
+});
+```
+
+After the run, results live on the tracker instances you passed in.
+
+- [Built-in trackers](/docs/trackers/built-in) — `GameTracker`, `PieceTracker`, `TileTracker`
+- [Custom trackers](/docs/trackers/custom) — extend the base classes for your own stats

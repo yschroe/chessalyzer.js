@@ -1,0 +1,29 @@
+---
+title: Filters
+description: Limit analysis to games that match a JavaScript predicate.
+---
+
+You can filter games with a plain JavaScript function — for example, only analyze games where `WhiteElo > 2000`:
+
+```javascript
+import { analyzePGN } from 'chessalyzer.js';
+import { TileTracker } from 'chessalyzer.js/trackers';
+
+const tileTracker = new TileTracker();
+
+await analyzePGN('<pathToPgnFile>', {
+    workers: false,
+    trackers: [tileTracker],
+    headers: true,
+    filter: (game) => Number(game.headers?.WhiteElo) > 2000,
+});
+```
+
+## Requirements
+
+- **`headers: true`** — your filter reads tag pairs from `game.headers`.
+- **`workers: false`** — filters are regular JS callbacks and must run on the main thread. The library will let you know if you forget.
+
+Filters receive a `ParsedGame` with headers and moves. Combine with `maxGames` to cap how many matching games are processed.
+
+For comparing two filtered cohorts side by side, see [Comparing analyses](/docs/comparing-analyses).

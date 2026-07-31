@@ -1,0 +1,33 @@
+---
+title: Heatmap presets
+description: Built-in short names for common tile and piece heatmaps.
+---
+
+Instead of writing your own heatmap function, pass a preset **short name** as the first argument to `generateHeatmap`:
+
+```javascript
+const heatmapData = tileTracker.generateHeatmap('TILE_OCC_ALL');
+const pieceHeatmap = tileTracker.generateHeatmap('TILE_OCC_BY_PIECE', 'a2');
+```
+
+## TileTracker presets
+
+| Short Name | Description |
+| ---------- | ----------- |
+| `TILE_OCC_ALL` | How often each square had any piece on it (% of all moves) |
+| `TILE_OCC_WHITE` | Same, white pieces only |
+| `TILE_OCC_BLACK` | Same, black pieces only |
+| `TILE_CAPTURE_COUNT` | Count of captures on each square |
+| `TILE_OCC_BY_PIECE` | Occupation by each piece; pass a square (e.g. `'a2'`) |
+| `PIECE_MOVED_TO_TILE` | Where the piece starting on a square moved to; pass a square |
+
+## PieceTracker presets
+
+| Short Name | Description |
+| ---------- | ----------- |
+| `PIECE_CAPTURED_BY` | How often the piece on a square was captured by others; pass a square |
+| `PIECE_CAPTURED` | How often the piece on a square captured others; pass a square |
+
+Tile-specific presets need a square argument (starting position of the piece).
+
+For full control, see [Custom heatmap functions](/docs/heatmaps/custom-functions).

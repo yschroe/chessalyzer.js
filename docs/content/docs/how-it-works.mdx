@@ -1,0 +1,54 @@
+---
+title: How it works
+description: The four stages from PGN file to tracker results.
+---
+
+Every PGN file goes through four stages:
+
+1. **I/O** — read the file from disk (as lines, or as byte-sized chunks in multithreaded mode).
+2. **PGN parse** — extract headers, mainline move strings (SAN), and game results. No board involved yet.
+3. **Replay** — decode each SAN string and play it on an internal board. Needed when your trackers care about _where_ pieces are, not just _what_ was played.
+4. **Analyze** — run your trackers and accumulate statistics.
+
+When people say "PGN parser," they usually mean step 2 only. Turning a file into actual legal moves takes **PGN parse + replay**.
+
+## Full pipeline vs parse-only
+
+```javascript
+import { analyzePGN } from 'chessalyzer.js';
+import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
+import { GameTracker } from 'chessalyzer.js/trackers';
+
+// Just the games — no board replay
+const games = await parsePGN('<pathToPgnFile>', { headers: true, maxGames: 100 });
+// games[0].moves[i].san — mainline SAN strings
+
+// Same, but one game at a time (easier on memory for huge files)
+for await (const game of streamParsePGN('<pathToPgnFile>', { headers: true })) {
+    // process game
+}
+
+// Full pipeline
+await analyzePGN('<pathToPgnFile>', {
+    trackers: [new GameTracker()],
+    headers: true,
+    replay: 'board', // 'skip' | 'board' | 'actions'
+    validation: 'trust',
+});
+```
+
+## Replay modes
+
+| Mode | When to use |
+| ---- | ----------- |
+| `'skip'` | Count-only runs with no move trackers — fastest |
+| `'board'` | Trackers need board position but not per-move action details |
+| `'actions'` | Move trackers — required for `MoveTracker` subclasses |
+
+Move trackers need `'actions'`. Count-only runs (no move trackers) skip board replay by default.
+
+## Headers
+
+Set `headers: true` when your filter or tracker reads tag pairs like `WhiteElo`. By default, headers are parsed automatically when you use a game tracker (`'auto'`).
+
+See also: [PGN parser](/docs/pgn-parser), [Trackers](/docs/trackers).

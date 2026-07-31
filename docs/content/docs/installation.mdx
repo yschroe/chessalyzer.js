@@ -1,0 +1,46 @@
+---
+title: Installation
+description: Install chessalyzer.js and import the modules you need.
+---
+
+## Requirements
+
+- **Node.js** ≥ 22, or **Bun**
+
+## Install
+
+```sh
+npm install chessalyzer.js
+```
+
+## Imports
+
+The main entry point is `chessalyzer.js`. Subpath imports keep bundles focused:
+
+```javascript
+import { analyzePGN, printHeatmap } from 'chessalyzer.js';
+import { TileTracker } from 'chessalyzer.js/trackers';
+import { parsePGN, streamParsePGN } from 'chessalyzer.js/pgn';
+```
+
+| Subpath | Use for |
+| ------- | ------- |
+| `chessalyzer.js` | `analyzePGN`, heatmap helpers, filters |
+| `chessalyzer.js/trackers` | Built-in and base tracker classes |
+| `chessalyzer.js/pgn` | Parse-only PGN access |
+| `chessalyzer.js/io` | Low-level streaming I/O |
+| `chessalyzer.js/replay` | Replay types and helpers |
+
+## Quick check
+
+```javascript
+import { analyzePGN } from 'chessalyzer.js';
+import { TileTracker } from 'chessalyzer.js/trackers';
+
+const tileTracker = new TileTracker();
+const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
+
+console.log(result.gameCount, result.moveCount, result.movesPerSecond);
+```
+
+Next: [Basic usage](/docs/basic-usage).

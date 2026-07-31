@@ -1,0 +1,49 @@
+---
+title: Built-in trackers
+description: GameTracker, PieceTracker, and TileTracker.
+---
+
+chessalyzer.js ships three built-in trackers:
+
+```javascript
+import { GameTracker, PieceTracker, TileTracker } from 'chessalyzer.js/trackers';
+```
+
+## GameTracker
+
+Per-game statistics from headers and results.
+
+| Field | Description |
+| ----- | ----------- |
+| `results` | Counts of white wins, draws, black wins |
+| `ECO` | ECO code counts (e.g. `'A00'`) |
+| `games` | Number of games processed |
+
+## PieceTracker
+
+Tracks captures between pieces.
+
+| Field | Description |
+| ----- | ----------- |
+| `b` | Black pieces — how often each black piece captured each white piece (e.g. `b.Pa.Qd`) |
+| `w` | Same for white pieces |
+
+## TileTracker
+
+Tracks what happens on each square of the board.
+
+| Field | Description |
+| ----- | ----------- |
+| `tiles[][]` | Per-square stats for each piece (`b`/`w` → `Pa`, `Ra`, etc.) |
+| `movesTotal` | Total moves processed |
+
+Per-piece stats on each tile:
+
+- `movedTo` — how often the piece moved to this square
+- `wasOn` — half-moves the piece was on this square
+- `capturedOn` — captures made on this square
+- `wasCapturedOn` — times the piece was captured on this square
+
+Side totals omit the piece name: `tiles[0][6].b.wasOn` is all black pieces on that square.
+
+`TileTracker` and `PieceTracker` support [heatmap generation](/docs/heatmaps).

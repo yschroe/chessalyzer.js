@@ -1,0 +1,50 @@
+---
+title: Custom trackers
+description: Extend MoveTracker or BaseGameTracker for your own statistics.
+---
+
+Create a tracker by extending `MoveTracker` (per-move stats) or `BaseGameTracker` (per-game stats).
+
+For single-threaded analysis, implement `trackMoves` or `trackGame` and you're done. For multithreading, add three extras:
+
+1. Put the tracker in its **own module** with a **default export** (zero-arg constructor).
+2. Add **`static trackerId = 'YourUniqueId'`** and **`static workerModule = import.meta.url`** so workers can load your class.
+3. Implement **`merge(tracker)`** to add worker batch stats into yours. Duck-type the argument; do **not** use `instanceof`.
+
+```javascript
+export default class MyTracker extends BaseGameTracker {
+    static trackerId = 'MyTracker';
+    static workerModule = import.meta.url;
+
+    merge(tracker) {
+        this.games += tracker.games;
+    }
+
+    trackGame(game) {
+        // called once per game
+    }
+}
+```
+
+## Imports
+
+```javascript
+import type { GameFilter } from 'chessalyzer.js';
+import type { ParsedGame, ParsedMove } from 'chessalyzer.js/pgn';
+import type { Action, Square } from 'chessalyzer.js/replay';
+import {
+    BaseGameTracker,
+    MoveTracker,
+} from 'chessalyzer.js/trackers';
+```
+
+## Notes
+
+- **`static workerModule = import.meta.url`** requires an unbundled Node ≥ 22 or Bun runtime.
+- **Move trackers:** `SanDecoder` reuses an `Action[]` buffer each half-move. Copy fields you need to retain across moves.
+- **Castling** produces two move actions (king leg, then rook leg). The rook leg carries the same `castle` flag.
+- Override **`onGameEnd()`** for per-game flush hooks.
+
+See [`manual-tests/custom-game-tracker.ts`](https://github.com/yschroe/chessalyzer.js/blob/main/manual-tests/custom-game-tracker.ts) for a minimal working example.
+
+When using custom trackers with filters, pass `workers: false`. See [Multithreading](/docs/multithreading).

@@ -2,7 +2,12 @@ import tailwindcss from '@tailwindcss/vite';
 import { fumadocsMdx } from 'fumadocs-mdx/vite';
 import { defineConfig } from 'waku/config';
 
+const basePath = process.env.DOCS_BASE_PATH
+    ? `${process.env.DOCS_BASE_PATH.replace(/\/$/, '')}/`
+    : undefined;
+
 export default defineConfig({
+    basePath,
     vite: {
         resolve: {
             tsconfigPaths: true,

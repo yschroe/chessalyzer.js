@@ -1,31 +1,24 @@
 ---
-title: Hello World
-description: Your favourite docs framework.
-icon: Rocket
+title: Introduction
+description: Batch-analyze chess PGN files and turn game data into statistics and heatmaps.
+icon: BookOpen
 ---
 
-Hey there! Fumadocs is a docs framework that works on Waku!
+chessalyzer.js is a JavaScript library for working through large PGN databases and collecting exactly the statistics you care about — move by move, or game by game.
 
-## Heading
+Give it a file, pick a few **trackers**, and it handles the heavy lifting: reading the PGN, replaying moves on an internal board, and aggregating results. You stay in control of what gets measured, which keeps things fast even on big exports.
 
-Hello World!
+## What it's good at
+
+- **Batch analysis** — process thousands or millions of games without loading everything into memory at once.
+- **Modular stats** — track only what you need (results, captures, tile occupation, or your own metrics).
+- **Heatmaps** — turn tracker data into square-by-square values for terminal preview or your own visualizations.
+- **Throughput** — designed for multi-core machines; multithreaded by default.
+
+If you just want parsed games without board replay, the [`pgn-parser`](/docs/pgn-parser) module has you covered too.
 
 <Cards>
-    <Card title="Learn more about Waku" href="https://waku.gg" />
-    <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
+    <Card title="Installation" href="/docs/installation" />
+    <Card title="Basic usage" href="/docs/basic-usage" />
+    <Card title="Trackers" href="/docs/trackers" />
 </Cards>
-
-### CodeBlock
-
-```ts
-console.log('Hello World');
-```
-
-#### Table
-
-| Head                            | Description                         |
-| ------------------------------- | ----------------------------------- |
-| `hello`                         | Hello World                         |
-| very **important**              | Hey                                 |
-| _Surprisingly_                  | Fumadocs                            |
-| very long text that looks weird | hello world hello world hello world |
