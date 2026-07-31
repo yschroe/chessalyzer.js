@@ -4,11 +4,10 @@
         ".": {
             "entry": [
                 "src/index.ts",
-                "src/core/chess-worker.ts",
-                "src/export/io.ts",
-                "src/export/pgn.ts",
-                "src/export/replay.ts",
-                "src/export/trackers.ts",
+                "src/chess-worker.ts",
+                "src/pgn/index.ts",
+                "src/replay/index.ts",
+                "src/trackers/index.ts",
                 "bench/*.ts",
                 "bench/{atomic,exploratory}/*.ts"
             ],
