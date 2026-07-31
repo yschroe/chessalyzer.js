@@ -1,0 +1,35 @@
+{
+    "name": "chessalyzer-docs",
+    "private": true,
+    "type": "module",
+    "sideEffects": false,
+    "scripts": {
+        "dev": "waku dev",
+        "build": "waku build",
+        "start": "waku start",
+        "typecheck": "tsc --noEmit",
+        "lint": "oxlint"
+    },
+    "dependencies": {
+        "fumadocs-core": "16.14.0",
+        "fumadocs-mdx": "15.2.1",
+        "fumadocs-ui": "npm:@fumadocs/base-ui@16.14.0",
+        "lucide-react": "^1.28.0",
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
+        "react-server-dom-webpack": "^19.2.8",
+        "takumi-js": "^2.5.4",
+        "use-sync-external-store": "^1.6.0",
+        "waku": "1.0.0-beta.8"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.3.3",
+        "@types/mdx": "^2.0.14",
+        "@types/node": "^26.1.2",
+        "@types/react": "^19.2.18",
+        "@types/react-dom": "^19.2.4",
+        "tailwindcss": "^4.3.3",
+        "typescript": "^6.0.3",
+        "vite": "^8.2.0"
+    }
+}

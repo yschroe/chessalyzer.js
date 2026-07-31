@@ -1,14 +1,21 @@
 {
     "$schema": "./node_modules/knip/schema.json",
-    "entry": [
-        "src/index.ts",
-        "src/core/chess-worker.ts",
-        "src/export/io.ts",
-        "src/export/pgn.ts",
-        "src/export/replay.ts",
-        "src/export/trackers.ts",
-        "bench/*.ts",
-        "bench/{atomic,exploratory}/*.ts"
-    ],
-    "ignore": ["manual-tests/**"]
+    "workspaces": {
+        ".": {
+            "entry": [
+                "src/index.ts",
+                "src/core/chess-worker.ts",
+                "src/export/io.ts",
+                "src/export/pgn.ts",
+                "src/export/replay.ts",
+                "src/export/trackers.ts",
+                "bench/*.ts",
+                "bench/{atomic,exploratory}/*.ts"
+            ],
+            "ignore": ["manual-tests/**"]
+        },
+        "docs": {
+            "entry": ["src/pages/**/*.{ts,tsx}", "waku.config.ts"]
+        }
+    }
 }

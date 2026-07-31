@@ -1,6 +1,5 @@
 {
-    "include": ["src/**/*", "scripts/**/*", "test/**/*", "bench/**/*"],
-    "exclude": ["manual-tests"],
+    "include": ["src/**/*", "scripts/**/*", "test/**/*", "manual-tests/**/*", "bench/**/*"],
     "compilerOptions": {
         "target": "ESNext",
         "module": "Preserve",
