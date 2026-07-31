@@ -1,6 +1,6 @@
 import { generate as DefaultImage } from 'fumadocs-ui/og/takumi';
-import wasm from 'takumi-js/wasm';
 import { ImageResponse } from 'takumi-js/response';
+import wasm from 'takumi-js/wasm';
 import { ApiContext } from 'waku/router';
 
 import { appName } from '@/lib/shared';

@@ -39,11 +39,11 @@ await analyzePGN('<pathToPgnFile>', {
 
 ## Replay modes
 
-| Mode | When to use |
-| ---- | ----------- |
-| `'skip'` | Count-only runs with no move trackers — fastest |
-| `'board'` | Trackers need board position but not per-move action details |
-| `'actions'` | Move trackers — required for `MoveTracker` subclasses |
+| Mode        | When to use                                                  |
+| ----------- | ------------------------------------------------------------ |
+| `'skip'`    | Count-only runs with no move trackers — fastest              |
+| `'board'`   | Trackers need board position but not per-move action details |
+| `'actions'` | Move trackers — required for `MoveTracker` subclasses        |
 
 Move trackers need `'actions'`. Count-only runs (no move trackers) skip board replay by default.
 

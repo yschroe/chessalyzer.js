@@ -20,17 +20,17 @@ for await (const game of streamParsePGN('<pathToPgnFile>', { headers: true })) {
 
 ## Options
 
-| Option | Description |
-| ------ | ----------- |
-| `headers` | Parse tag pairs (`White`, `Black`, `WhiteElo`, etc.) |
-| `maxGames` | Stop after N games |
+| Option     | Description                                          |
+| ---------- | ---------------------------------------------------- |
+| `headers`  | Parse tag pairs (`White`, `Black`, `WhiteElo`, etc.) |
+| `maxGames` | Stop after N games                                   |
 
 ## vs `analyzePGN`
 
-| | `parsePGN` / `streamParsePGN` | `analyzePGN` |
-| - | ----------------------------- | ------------ |
-| Board replay | No | Yes (configurable) |
-| Trackers | No | Yes |
-| Speed | Fastest for raw game data | Full pipeline |
+|              | `parsePGN` / `streamParsePGN` | `analyzePGN`       |
+| ------------ | ----------------------------- | ------------------ |
+| Board replay | No                            | Yes (configurable) |
+| Trackers     | No                            | Yes                |
+| Speed        | Fastest for raw game data     | Full pipeline      |
 
 If you need legal move replay or tracker stats, use `analyzePGN`. If you just want structured game data, use the parser module. See [How it works](/docs/how-it-works) for the full pipeline.
