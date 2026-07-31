@@ -3,7 +3,7 @@
  * Build GitHub release notes from CHANGELOG.md for a version, plus commits since the previous tag.
  *
  * Usage: node scripts/release-notes.mjs <version>
- *   version — semver without "v" prefix (e.g. 4.0.0-alpha.1)
+ *   version — semver, "v" prefix is optional (e.g. v4.0.0-alpha.1)
  *
  * Writes RELEASE_BODY.md (override path with RELEASE_NOTES_OUTPUT).
  */
@@ -19,14 +19,16 @@ if (!version) {
 
 const changelog = readFileSync('CHANGELOG.md', 'utf8');
 const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const sectionRe = new RegExp(`## \\[${escaped}\\][^\\n]*\\n([\\s\\S]*?)(?=\\n## \\[|$)`);
+const sectionRe = new RegExp(
+    String.raw`## \[${escaped}\][\s-\d]*(?<changelog>[\s\S]*?)(?=\n## \[|$)`,
+);
+
 const match = changelog.match(sectionRe);
-if (!match) {
+let body = match?.groups?.changelog.trim();
+if (!body) {
     console.error(`No changelog section found for [${version}] in CHANGELOG.md`);
     process.exit(1);
 }
-
-let body = match[0].trim();
 
 const tag = `v${version}`;
 const prevTag = findPreviousTag(tag);
