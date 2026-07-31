@@ -7,10 +7,10 @@ description: Collect statistics during analysis — per move or per game.
 
 There are two kinds:
 
-| Kind | Base class | Receives | Example |
-| ---- | ---------- | -------- | ------- |
-| **Move tracker** | `MoveTracker` | Per-move board/actions | `TileTracker`, `PieceTracker` |
-| **Game tracker** | `BaseGameTracker` | Headers + result per game | `GameTracker` |
+| Kind             | Base class        | Receives                  | Example                       |
+| ---------------- | ----------------- | ------------------------- | ----------------------------- |
+| **Move tracker** | `MoveTracker`     | Per-move board/actions    | `TileTracker`, `PieceTracker` |
+| **Game tracker** | `BaseGameTracker` | Headers + result per game | `GameTracker`                 |
 
 Move trackers need `replay: 'actions'`. Game trackers only need headers (set `headers: true` or use `'auto'`).
 

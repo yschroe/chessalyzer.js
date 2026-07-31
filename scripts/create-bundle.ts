@@ -25,7 +25,6 @@ const result = await Bun.build({
             },
         }),
     ],
-    external: ['chalk'],
 });
 
 if (!result.success) {

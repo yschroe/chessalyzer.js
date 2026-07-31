@@ -13,29 +13,29 @@ import { GameTracker, PieceTracker, TileTracker } from 'chessalyzer.js/trackers'
 
 Per-game statistics from headers and results.
 
-| Field | Description |
-| ----- | ----------- |
+| Field     | Description                             |
+| --------- | --------------------------------------- |
 | `results` | Counts of white wins, draws, black wins |
-| `ECO` | ECO code counts (e.g. `'A00'`) |
-| `games` | Number of games processed |
+| `ECO`     | ECO code counts (e.g. `'A00'`)          |
+| `games`   | Number of games processed               |
 
 ## PieceTracker
 
 Tracks captures between pieces.
 
-| Field | Description |
-| ----- | ----------- |
-| `b` | Black pieces — how often each black piece captured each white piece (e.g. `b.Pa.Qd`) |
-| `w` | Same for white pieces |
+| Field | Description                                                                          |
+| ----- | ------------------------------------------------------------------------------------ |
+| `b`   | Black pieces — how often each black piece captured each white piece (e.g. `b.Pa.Qd`) |
+| `w`   | Same for white pieces                                                                |
 
 ## TileTracker
 
 Tracks what happens on each square of the board.
 
-| Field | Description |
-| ----- | ----------- |
-| `tiles[][]` | Per-square stats for each piece (`b`/`w` → `Pa`, `Ra`, etc.) |
-| `movesTotal` | Total moves processed |
+| Field        | Description                                                  |
+| ------------ | ------------------------------------------------------------ |
+| `tiles[][]`  | Per-square stats for each piece (`b`/`w` → `Pa`, `Ra`, etc.) |
+| `movesTotal` | Total moves processed                                        |
 
 Per-piece stats on each tile:
 
