@@ -1,13 +1,16 @@
 import { performance } from 'node:perf_hooks';
 
-import chalk from 'chalk';
-
 import { normalizeAnalyzeOptions } from '#core/analysis-config';
 import { collectError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
 import GameProcessor from '#core/game-processor';
 import type { AnalyzeOptions, AnalyzeResult, AnalyzeRun, AnalyzeRunResult } from '#types/analysis';
 import type { AnalyzeError } from '#types/errors';
 import type { HeatmapData } from '#types/tracker';
+
+/** Black foreground on a truecolor RGB background (ANSI). */
+function styleBgRgb(r: number, g: number, b: number, text: string): string {
+    return `\x1b[30;48;2;${r};${g};${b}m${text}\x1b[0m`;
+}
 
 /** Build {@link AnalyzeResult} from raw counts and duration. @internal Exported for unit tests. */
 export function buildAnalyzeResult(
@@ -107,7 +110,7 @@ export function printHeatmap(data: HeatmapData): void {
                 ];
 
                 const [outR = 0, outG = 0, outB = 0] = colorOut;
-                process.stdout.write(chalk.black.bgRgb(outR, outG, outB)(`    `));
+                process.stdout.write(styleBgRgb(outR, outG, outB, '    '));
             }
 
             process.stdout.write('\n');
