@@ -6,8 +6,6 @@
  * hot paths index {@link SQUARES} by internal row/col without allocating.
  */
 
-const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
-
 export type BoardIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 // oxfmt-ignore
@@ -83,22 +81,9 @@ export function coordsToSquare(row: number, col: number): Square {
     return SQUARES[row * 8 + col]!;
 }
 
-/** Convert internal coords to interned {@link Square}. */
-export function coordsToSquareFromCoord(coords: BoardCoord): Square {
-    const [row, col] = coords;
-    return SQUARES[row * 8 + col]!;
-}
-
 /** Convert interned {@link Square} to internal `[row, col]`. */
 export function squareToCoords(square: Square): BoardCoord {
     return algebraicToCoords(square)!;
-}
-
-/** Convert internal `[row, col]` to algebraic notation (e.g. `[6, 4]` → `'e2'`). */
-export function coordsToAlgebraic(coords: BoardCoord): string {
-    const [row, col] = coords;
-    if (row === undefined || !isBoardIndex(col)) return '';
-    return `${FILES[col]}${8 - row}`;
 }
 
 /** Grid row index from an interned {@link Square} (0 = rank 8). */

@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0-alpha.1] - 2026-07-31
+
 ### Changed
 
 - Dropped the `chalk` dependency; `printHeatmap` uses ANSI truecolor escapes instead (zero production dependencies).
+
+### Removed
+
+- Removed `chessalyzer.js/io` and other internal-only symbols (board coord helpers, tile/piece internals, `MAX_COLLECTED_ERRORS`, etc.). Subpaths are now `chessalyzer.js`, `/pgn`, `/replay` (types), and `/trackers`.
 
 ## [4.0.0-alpha.0] - 2026-07-30
 
@@ -49,7 +55,7 @@ Version 4 is a complete redesign: a simpler API, faster runs, and imports that m
 
 ## [3.0.6] - 2024-03-17
 
-### Changes
+### Changed
 
 - Internal: Switched to typed arrays for storing the board state. Boosts performance by around 5-10%.
 

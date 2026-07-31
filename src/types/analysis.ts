@@ -19,6 +19,9 @@ export interface AnalyzeRun {
      * filters run on the main thread only.
      */
     filter?: GameFilter;
+    /**
+     * Maximum number of games to process. Default unlimited.
+     */
     maxGames?: number;
 }
 
@@ -43,11 +46,11 @@ export interface AnalyzeSharedOptions extends Omit<ParsePgnOptions, 'headers'> {
     headers?: boolean | 'auto';
     /**
      * Board replay mode. Default inferred from trackers.
-     * Move trackers require `'actions'`.
+     * Throws when manual override is provided which is not compatible with the tracker configuration.
      */
     replay?: ReplayMode;
     /**
-     * Replay legality policy. Default `'trust'` (today’s behavior). Sibling to {@link replay} —
+     * Replay legality policy. Default `'trust'` (= no legality check). Sibling to {@link replay} —
      * does not change how moves are decoded, only whether legality is checked (future).
      */
     validation?: ReplayValidation;
@@ -70,16 +73,34 @@ export interface AnalyzeSingleRunOptions extends AnalyzeSharedOptions {
      * Per-game predicate. Requires `workers: false` — JavaScript filters run on the main thread only.
      */
     filter?: GameFilter;
+    /**
+     * Maximum number of games to process. Default unlimited.
+     */
     maxGames?: number;
-    runs?: undefined;
+    /**
+     * Not supported for single-run calls.
+     */
+    runs?: never;
 }
 
 /** Multi-run {@link analyzePGN} options. */
 export interface AnalyzeMultiRunOptions extends AnalyzeSharedOptions {
+    /**
+     * Runs to process.
+     */
     runs: [AnalyzeRun, ...AnalyzeRun[]];
-    trackers?: undefined;
-    filter?: undefined;
-    maxGames?: undefined;
+    /**
+     * Not supported for multi-run calls.
+     */
+    trackers?: never;
+    /**
+     * Not supported for multi-run calls.
+     */
+    filter?: never;
+    /**
+     * Not supported for multi-run calls.
+     */
+    maxGames?: never;
 }
 
 /** Options passed to {@link analyzePGN}. */

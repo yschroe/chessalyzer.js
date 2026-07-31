@@ -42,21 +42,17 @@
             "types": "./lib/index.d.ts",
             "import": "./lib/index.js"
         },
-        "./io": {
-            "types": "./lib/io.d.ts",
-            "import": "./lib/io.js"
-        },
         "./pgn": {
-            "types": "./lib/pgn.d.ts",
-            "import": "./lib/pgn.js"
+            "types": "./lib/pgn/index.d.ts",
+            "import": "./lib/pgn/index.js"
         },
         "./replay": {
-            "types": "./lib/replay.d.ts",
-            "import": "./lib/replay.js"
+            "types": "./lib/replay/index.d.ts",
+            "import": "./lib/replay/index.js"
         },
         "./trackers": {
-            "types": "./lib/trackers.d.ts",
-            "import": "./lib/trackers.js"
+            "types": "./lib/trackers/index.d.ts",
+            "import": "./lib/trackers/index.js"
         }
     },
     "scripts": {
