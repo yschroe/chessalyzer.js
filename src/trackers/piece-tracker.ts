@@ -3,44 +3,18 @@ import HeatmapPresets from '#trackers/heatmaps/piece-heatmaps';
 import type { Action } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
 
+// oxfmt-ignore
 export type Piece =
-    | 'Pa'
-    | 'Pb'
-    | 'Pc'
-    | 'Pd'
-    | 'Pe'
-    | 'Pf'
-    | 'Pg'
-    | 'Ph'
-    | 'Ra'
-    | 'Nb'
-    | 'Bc'
-    | 'Qd'
-    | 'Ke'
-    | 'Bf'
-    | 'Ng'
-    | 'Rh';
+    | 'Pa' | 'Pb' | 'Pc' | 'Pd' | 'Pe' | 'Pf' | 'Pg' | 'Ph'
+    | 'Ra' | 'Nb' | 'Bc' | 'Qd' | 'Ke' | 'Bf' | 'Ng' | 'Rh';
 
 type PieceStats = { [piece in Piece]: number };
 type PieceStatsMap = { [piece in Piece]: PieceStats };
 
+// oxfmt-ignore
 const pieceList: Piece[] = [
-    'Pa',
-    'Pb',
-    'Pc',
-    'Pd',
-    'Pe',
-    'Pf',
-    'Pg',
-    'Ph',
-    'Ra',
-    'Nb',
-    'Bc',
-    'Qd',
-    'Ke',
-    'Bf',
-    'Ng',
-    'Rh',
+    'Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph',
+    'Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh',
 ];
 
 const trackedPieceSet = new Set<string>(pieceList);
@@ -50,8 +24,8 @@ export function isTrackedPiece(name: string): name is Piece {
 }
 
 class PieceTracker extends MoveTracker {
-    static override trackerId = 'PieceTracker';
-    static override workerModule = import.meta.url;
+    static override readonly trackerId = 'PieceTracker';
+    static override readonly workerModule = import.meta.url;
 
     b: PieceStatsMap;
     w: PieceStatsMap;

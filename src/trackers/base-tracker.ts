@@ -14,9 +14,9 @@ import type {
 
 class BaseTracker implements Tracker {
     readonly type: 'move' | 'game';
-    cfg: TrackerConfig;
+    private t0: number;
     time: number;
-    t0: number;
+    cfg: TrackerConfig;
     heatmapPresets: Record<string, HeatmapPresetEntry> | null;
 
     /** Stable ID for worker-side tracker lookup (minification-safe). Required for multithreaded analysis. */
@@ -93,7 +93,7 @@ class BaseTracker implements Tracker {
 
 /** Abstract base for move-level trackers (receive {@link Action}[] per half-move). */
 export abstract class MoveTracker extends BaseTracker {
-    override readonly type = 'move' as const;
+    override readonly type = 'move';
 
     constructor() {
         super('move');
@@ -108,7 +108,7 @@ export abstract class MoveTracker extends BaseTracker {
 
 /** Abstract base for game-level trackers (receive {@link ParsedGame} after each game). */
 export abstract class BaseGameTracker extends BaseTracker {
-    override readonly type = 'game' as const;
+    override readonly type = 'game';
 
     constructor() {
         super('game');

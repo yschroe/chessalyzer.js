@@ -1,6 +1,9 @@
 import { resolveEffectiveReplayMode } from '#replay/replay-mode';
 import type { ReplayMode } from '#replay/replay-mode';
 import { BaseTracker } from '#trackers/base-tracker';
+import { GameTracker } from '#trackers/game-tracker';
+import { PieceTracker } from '#trackers/piece-tracker';
+import { TileTracker } from '#trackers/tile/tile-tracker';
 import type {
     AnalyzeMultiRunOptions,
     AnalyzeOptions,
@@ -48,7 +51,11 @@ function resolveWorkerModule(tracker: { constructor: unknown }): string {
     return ctor.workerModule ?? '';
 }
 
-const BUILTIN_TRACKER_IDS = new Set(['GameTracker', 'PieceTracker', 'TileTracker']);
+const BUILTIN_TRACKER_IDS = new Set([
+    GameTracker.trackerId,
+    PieceTracker.trackerId,
+    TileTracker.trackerId,
+]);
 
 function resolveTrackerId(tracker: Tracker, multithreaded: boolean): string {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- static trackerId lives on constructor, not Tracker instance type
