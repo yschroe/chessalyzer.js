@@ -23,12 +23,12 @@ import { TileTracker } from 'chessalyzer/trackers';
 import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
 ```
 
-| Subpath                | Use for                                               |
-| ---------------------- | ----------------------------------------------------- |
-| `chessalyzer`          | `analyzePGN`, heatmap helpers, filters                |
-| `chessalyzer/trackers` | Built-in trackers, factories, and class adapter bases |
-| `chessalyzer/pgn`      | Parse-only PGN access                                 |
-| `chessalyzer/replay`   | Replay action types, `Square`, and coord helpers      |
+| Subpath                | Use for                                          |
+| ---------------------- | ------------------------------------------------ |
+| `chessalyzer`          | `analyzePGN`, heatmap helpers, filters           |
+| `chessalyzer/trackers` | Built-in trackers, factories, heatmap helpers    |
+| `chessalyzer/pgn`      | Parse-only PGN access                            |
+| `chessalyzer/replay`   | Replay action types, `Square`, and coord helpers |
 
 ## Quick check
 
@@ -36,11 +36,10 @@ import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
 import { analyzePGN } from 'chessalyzer';
 import { TileTracker } from 'chessalyzer/trackers';
 
-const tileTracker = new TileTracker();
-const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
+const result = await analyzePGN('<pathToPgnFile>', { trackers: [TileTracker] });
 
 console.log(result.gameCount, result.moveCount, result.movesPerSecond);
-console.log(result.trackers[0].state.movesTotal);
+console.log(result.runs[0].trackers[0].state.movesTotal);
 ```
 
 Next: [Basic usage](/docs/basic-usage).

@@ -9,19 +9,17 @@ By default, Chessalyzer uses Node.js [Worker Threads](https://nodejs.org/api/wor
 import { analyzePGN } from 'chessalyzer';
 import { TileTracker } from 'chessalyzer/trackers';
 
-const tileTracker = new TileTracker();
-
 const result = await analyzePGN('<pathToPgnFile>', {
-    trackers: [tileTracker],
+    trackers: [TileTracker],
     maxGames: 10000,
-    workers: { targetBytes: 4 * 1024 * 1024 },
+    workers: { workerCount: 8, chunk: { targetBytes: 4 * 1024 * 1024 } },
 });
 
-const { state } = result.trackers[0];
+const { state } = result.runs[0].trackers[0];
 console.log(state.movesTotal);
 ```
 
-The `workers` option lets you tune chunk size; defaults are fine for most files.
+The `workers` option lets you tune the thread count and PGN chunk size; defaults are fine for most files.
 
 Workers accumulate tracker state locally and send plain `{ id, state }` snapshots back at pool drain. The main thread merges them by id into your result.
 

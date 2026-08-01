@@ -3,15 +3,14 @@ title: Built-in trackers
 description: GameTracker, PieceTracker, and TileTracker.
 ---
 
-Chessalyzer ships three built-in trackers. Stats live on **`result.trackers[m].state`** (single-run) or **`result.runs[n].trackers[m].state`** (multi-run) after `analyzePGN` returns.
+Chessalyzer ships three built-in trackers (`GameTracker`, `PieceTracker`, `TileTracker` — pass the definition itself, no `new`). Stats live on **`result.runs[n].trackers[m].state`** after `analyzePGN` returns.
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
-import { GameTracker, PieceTracker, TileTracker } from 'chessalyzer/trackers';
+import { TileTracker } from 'chessalyzer/trackers';
 
-const tileTracker = new TileTracker();
-const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
-const state = result.trackers[0].state;
+const result = await analyzePGN('<pathToPgnFile>', { trackers: [TileTracker] });
+const state = result.runs[0].trackers[0].state;
 ```
 
 ## GameTracker
@@ -37,18 +36,18 @@ Tracks captures between pieces.
 
 Tracks what happens on each square of the board.
 
-| Field        | Description                                                  |
-| ------------ | ------------------------------------------------------------ |
-| `tiles[][]`  | Per-square stats for each piece (`b`/`w` → `Pa`, `Ra`, etc.) |
-| `movesTotal` | Total moves processed                                        |
+| Field        | Description                                                     |
+| ------------ | --------------------------------------------------------------- |
+| `tiles[][]`  | Per-square stats for each piece (`b`/`w` → `total` / `byPiece`) |
+| `movesTotal` | Total moves processed                                           |
 
-Per-piece stats on each tile:
+Each tile has two color buckets (`b`, `w`). Each bucket has a `total` stats object plus per-piece stats under `byPiece` (`Pa`, `Ra`, etc.):
 
 - `movedTo` — how often the piece moved to this square
 - `wasOn` — half-moves the piece was on this square
 - `capturedOn` — captures made on this square
 - `wasCapturedOn` — times the piece was captured on this square
 
-Side totals omit the piece name: `state.tiles[0][6].b.wasOn` is all black pieces on that square.
+Use `total` for combined stats of one side on a square (e.g. `state.tiles[0][6].b.total.wasOn`), or `byPiece` for a single piece (e.g. `state.tiles[0][6].b.byPiece.Pa.wasOn`).
 
-`TileTracker` and `PieceTracker` support [heatmap generation](/docs/heatmaps) — pass state as the first argument to `generateHeatmap(state, { analysis })`.
+`TileTracker` and `PieceTracker` support [heatmap generation](/docs/heatmaps) — pass state and the matching preset map to `generateHeatmap(state, presets, { analysis })`.

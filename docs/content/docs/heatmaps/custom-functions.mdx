@@ -3,17 +3,18 @@ title: Custom heatmap functions
 description: Write your own per-square calculation for generateHeatmap.
 ---
 
-Pass a function via the `analysis` option to `generateHeatmap(state, { analysis })`. The function is called for every square on the board.
+Pass a function via the `analysis` option to `generateHeatmap(state, presets, { analysis })`. The function is called for every square on the board.
 
 ```javascript
+import { generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
 import { squareToCoords } from 'chessalyzer/replay';
 
-const { state } = result.trackers[0];
+const { state } = result.runs[0].trackers[0];
 
-const heatmapData = tileTracker.generateHeatmap(state, {
+const heatmapData = generateHeatmap(state, TileHeatmapPresets, {
     analysis: ({ data, loopSquare }) => {
         const [row, col] = squareToCoords(loopSquare.square);
-        const val = data.tiles[row][col].w.wasOn;
+        const val = data.tiles[row][col].w.total.wasOn;
         return (val * 100) / data.movesTotal;
     },
 });

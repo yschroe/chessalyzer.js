@@ -1,11 +1,9 @@
 ---
 title: Custom trackers
-description: Define your own statistics with factories or class adapters.
+description: Define your own statistics with defineGameTracker and defineMoveTracker.
 ---
 
-Trackers separate **definition** (behavior) from **state** (plain data). Author with a factory (`defineGameTracker` / `defineMoveTracker`) or a class adapter (`extends BaseMoveTracker` / `extends BaseGameTracker`).
-
-## Factory (recommended)
+Trackers separate **definition** (behavior) from **state** (plain data). Author with a factory (`defineGameTracker` / `defineMoveTracker`).
 
 ```javascript
 import { defineGameTracker } from 'chessalyzer/trackers';
@@ -26,40 +24,15 @@ const eloTracker = defineGameTracker({
         // optional end-of-analysis hook
     },
 });
+
+export default eloTracker; // multithreaded custom trackers only
 ```
-
-## Class adapter
-
-```javascript
-import type { ParsedGame } from 'chessalyzer/pgn';
-import { BaseGameTracker } from 'chessalyzer/trackers';
-
-export default class MyTracker extends BaseGameTracker {
-    id = 'MyTracker';
-    workerModule = import.meta.url;
-
-    init() {
-        return { games: 0, wins: [0, 0, 0] };
-    }
-
-    track(state, game) {
-        state.games += 1;
-        // called once per game
-    }
-
-    merge(state, other) {
-        state.games += other.games;
-    }
-}
-```
-
-Put class adapters in their **own module** with a **default export** for multithreaded analysis.
 
 ## Multithreading
 
 Custom trackers need:
 
-1. **Own module** with **default export** (class or factory object)
+1. **Own module** with **default export** (factory object)
 2. **`id`** and **`workerModule = import.meta.url`**
 3. **`merge(state, other)`** — both arguments are plain state after structured clone
 
@@ -68,9 +41,8 @@ Optional **`options`** (plain data) are cloned to workers before `init()`.
 ## Reading results
 
 ```javascript
-const tracker = new MyTracker();
-const result = await analyzePGN(path, { trackers: [tracker] });
-const { state } = result.trackers[0];
+const result = await analyzePGN(path, { trackers: [eloTracker] });
+const { state } = result.runs[0].trackers[0];
 console.log(state.games, state.wins);
 ```
 
@@ -80,12 +52,7 @@ console.log(state.games, state.wins);
 import type { GameFilter } from 'chessalyzer';
 import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
 import type { Action, Square } from 'chessalyzer/replay';
-import {
-    BaseGameTracker,
-    BaseMoveTracker,
-    defineGameTracker,
-    defineMoveTracker,
-} from 'chessalyzer/trackers';
+import { defineGameTracker, defineMoveTracker } from 'chessalyzer/trackers';
 ```
 
 ## Notes
