@@ -1,29 +1,77 @@
 ---
 title: Custom trackers
-description: Extend MoveTracker or BaseGameTracker for your own statistics.
+description: Define your own statistics with factories or class adapters.
 ---
 
-Create a tracker by extending `MoveTracker` (per-move stats) or `BaseGameTracker` (per-game stats).
+Trackers separate **definition** (behavior) from **state** (plain data). Author with a factory (`defineGameTracker` / `defineMoveTracker`) or a class adapter (`extends MoveTracker` / `extends BaseGameTracker`).
 
-For single-threaded analysis, implement `trackMoves` or `trackGame` and you're done. For multithreading, add three extras:
-
-1. Put the tracker in its **own module** with a **default export** (zero-arg constructor).
-2. Add **`static trackerId = 'YourUniqueId'`** and **`static workerModule = import.meta.url`** so workers can load your class.
-3. Implement **`merge(tracker)`** to add worker batch stats into yours. Duck-type the argument; do **not** use `instanceof`.
+## Factory (recommended)
 
 ```javascript
-export default class MyTracker extends BaseGameTracker {
-    static trackerId = 'MyTracker';
-    static workerModule = import.meta.url;
+import { defineGameTracker } from 'chessalyzer/trackers';
 
-    merge(tracker) {
-        this.games += tracker.games;
+const eloTracker = defineGameTracker({
+    id: 'elo-tracker',
+    workerModule: import.meta.url, // multithreaded custom trackers only
+    options: { minElo: 2000 },
+    init: () => ({ games: 0, wins: [0, 0, 0] }),
+    track: (state, game) => {
+        state.games += 1;
+        // fold one game into state
+    },
+    merge: (state, other) => {
+        // fold worker state into main state
+    },
+    onFinish: (state) => {
+        // optional end-of-analysis hook
+    },
+});
+```
+
+## Class adapter
+
+```javascript
+import type { ParsedGame } from 'chessalyzer/pgn';
+import { BaseGameTracker } from 'chessalyzer/trackers';
+
+export default class MyTracker extends BaseGameTracker {
+    id = 'MyTracker';
+    workerModule = import.meta.url;
+
+    init() {
+        return { games: 0, wins: [0, 0, 0] };
     }
 
-    trackGame(game) {
+    track(state, game) {
+        state.games += 1;
         // called once per game
     }
+
+    merge(state, other) {
+        state.games += other.games;
+    }
 }
+```
+
+Put class adapters in their **own module** with a **default export** for multithreaded analysis.
+
+## Multithreading
+
+Custom trackers need:
+
+1. **Own module** with **default export** (class or factory object)
+2. **`id`** and **`workerModule = import.meta.url`**
+3. **`merge(state, other)`** — both arguments are plain state after structured clone
+
+Optional **`options`** (plain data) are cloned to workers before `init()`.
+
+## Reading results
+
+```javascript
+const tracker = new MyTracker();
+const result = await analyzePGN(path, { trackers: [tracker] });
+const { state } = result.runs[0].trackers[0];
+console.log(state.games, state.wins);
 ```
 
 ## Imports
@@ -35,15 +83,17 @@ import type { Action, Square } from 'chessalyzer/replay';
 import {
     BaseGameTracker,
     MoveTracker,
+    defineGameTracker,
+    defineMoveTracker,
 } from 'chessalyzer/trackers';
 ```
 
 ## Notes
 
-- **`static workerModule = import.meta.url`** requires an unbundled Node ≥ 22 or Bun runtime.
+- **`workerModule = import.meta.url`** requires an unbundled Node ≥ 22 or Bun runtime.
 - **Move trackers:** `SanDecoder` reuses an `Action[]` buffer each half-move. Copy fields you need to retain across moves.
 - **Castling** produces two move actions (king leg, then rook leg). The rook leg carries the same `castle` flag.
-- Override **`onGameEnd()`** for per-game flush hooks.
+- Override **`onGameEnd(state)`** for per-game flush hooks and **`onFinish(state)`** for end-of-analysis hooks.
 
 See [`manual-tests/custom-game-tracker.ts`](https://github.com/yschroe/chessalyzer/blob/main/manual-tests/custom-game-tracker.ts) for a minimal working example.
 

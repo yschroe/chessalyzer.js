@@ -3,10 +3,12 @@ title: Custom heatmap functions
 description: Write your own per-square calculation for generateHeatmap.
 ---
 
-Pass a function instead of a preset short name to `generateHeatmap`. The function is called for every square on the board.
+Pass a function instead of a preset short name to `generateHeatmap(state, fn)`. The function is called for every square on the board.
 
 ```javascript
-const heatmapData = tileTracker.generateHeatmap((data, loopSqrData) => {
+const { state } = result.runs[0].trackers[0];
+
+const heatmapData = tileTracker.generateHeatmap(state, (data, loopSqrData) => {
     const { square } = loopSqrData;
     const row = 7 - (square.charCodeAt(1) - 49);
     const col = square.charCodeAt(0) - 97;
@@ -19,7 +21,7 @@ const heatmapData = tileTracker.generateHeatmap((data, loopSqrData) => {
 
 | #   | Name          | Description                                                               |
 | --- | ------------- | ------------------------------------------------------------------------- |
-| 1   | `data`        | Tracker data (defaults to the tracker you called `generateHeatmap` on)    |
+| 1   | `data`        | Tracker state passed to `generateHeatmap` (e.g. `TileTrackerState`)       |
 | 2   | `loopSqrData` | Info about the square being calculated                                    |
 | 3   | `sqrData`     | Info about a reference square you passed in (for piece-specific heatmaps) |
 | 4   | `optData`     | Optional extra data you provide                                           |
@@ -38,6 +40,6 @@ interface SquareData {
 
 Use `sqrData` when generating heatmaps for a specific piece — e.g. white's a-pawn at `'a2'`.
 
-Use `optData` for values your function needs but aren't on the tracker, such as "average position after X moves."
+Use `optData` for values your function needs but aren't on the tracker state, such as "average position after X moves."
 
 See [Presets](/docs/heatmaps/presets) for built-in functions you can study or reuse.

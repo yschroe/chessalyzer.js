@@ -11,12 +11,15 @@ import { TileTracker } from 'chessalyzer/trackers';
 
 const tileTracker = new TileTracker();
 
-await analyzePGN('<pathToPgnFile>', {
+const result = await analyzePGN('<pathToPgnFile>', {
     workers: false,
     trackers: [tileTracker],
     headers: true,
     filter: (game) => Number(game.headers?.WhiteElo) > 2000,
 });
+
+const { state } = result.runs[0].trackers[0];
+console.log(state.movesTotal);
 ```
 
 ## Requirements

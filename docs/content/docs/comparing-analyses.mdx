@@ -3,7 +3,7 @@ title: Comparing analyses
 description: Run multiple filtered cohorts and compare their heatmaps.
 ---
 
-Use the `runs` option to analyze different game subsets in one pass — each run gets its own tracker instances and optional filter.
+Use the `runs` option to analyze different game subsets in one pass — each run gets its own tracker definitions and optional filter.
 
 This example compares tile occupation for high-rated vs low-rated white players (1000 games each):
 
@@ -14,7 +14,7 @@ import { TileTracker } from 'chessalyzer/trackers';
 const tileT1 = new TileTracker();
 const tileT2 = new TileTracker();
 
-await analyzePGN('<pathToPgnFile>', {
+const result = await analyzePGN('<pathToPgnFile>', {
     workers: false,
     headers: true,
     runs: [
@@ -31,6 +31,9 @@ await analyzePGN('<pathToPgnFile>', {
     ],
 });
 
+const state1 = result.runs[0].trackers[0].state;
+const state2 = result.runs[1].trackers[0].state;
+
 const compareFunc = (data, loopSqrData) => {
     const { square } = loopSqrData;
     const row = 7 - (square.charCodeAt(1) - 49);
@@ -39,9 +42,9 @@ const compareFunc = (data, loopSqrData) => {
     return (val * 100) / data.movesTotal;
 };
 
-const heatmapData = tileT1.generateComparisonHeatmap(tileT2, compareFunc);
+const heatmapData = tileT1.generateComparisonHeatmap(state1, state2, compareFunc);
 ```
 
-`generateComparisonHeatmap` calls your function with data from both trackers, letting you compute differences, ratios, or any other comparison per square.
+`generateComparisonHeatmap` calls your function with state from both cohorts, letting you compute differences, ratios, or any other comparison per square.
 
 Because filters require the main thread, pass `workers: false`. See [Filters](/docs/filters) and [Heatmaps](/docs/heatmaps).
