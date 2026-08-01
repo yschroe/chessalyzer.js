@@ -27,7 +27,7 @@ import { TileTracker, generateHeatmap, TileHeatmapPresets } from 'chessalyzer/tr
 const result = await analyzePGN('<pathToPgnFile>', { trackers: [TileTracker] });
 
 const { state } = result.runs[0].trackers[0];
-const heatmap = generateHeatmap(state, TileHeatmapPresets, { analysis: 'TILE_OCC_ALL' });
+const heatmap = generateHeatmap(state, TileHeatmapPresets.TILE_OCC_ALL);
 
 printHeatmap(heatmap);
 ```

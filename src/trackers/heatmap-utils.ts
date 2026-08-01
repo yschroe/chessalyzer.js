@@ -10,18 +10,6 @@ import { getStartingPiece } from '#board/piece-names';
 import type { SquareData } from '#types/game';
 import type { GenerateHeatmapOptions, HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
 
-/** Resolve a preset name or pass through a custom analysis function. */
-function resolvePreset<T, P extends string>(
-    presets: Record<P, HeatmapAnalysisFunc<T>>,
-    analysis: P | HeatmapAnalysisFunc<T>,
-): HeatmapAnalysisFunc<T> {
-    if (typeof analysis !== 'string') return analysis;
-
-    const preset = presets[analysis];
-    if (!preset) throw new Error(`Heatmap preset '${analysis}' not found!`);
-    return preset;
-}
-
 function squareData(row: number, col: number): SquareData {
     const square = coordsToSquare(row, col);
     const loopSqrCoords: BoardCoord = [row, col];
@@ -50,7 +38,6 @@ function renderHeatmap<T>(
     data: T,
     fun: HeatmapAnalysisFunc<T>,
     square?: Square | BoardCoord,
-    optData?: unknown,
 ): HeatmapData {
     const refSquare = resolveRefSquare(square);
     const refRow = squareRow(refSquare);
@@ -72,7 +59,6 @@ function renderHeatmap<T>(
                 data,
                 loopSquare,
                 refSquare: refSquareData,
-                optData,
             });
             dataRow.push(heatVal);
             max = Math.max(max, heatVal);
@@ -86,39 +72,32 @@ function renderHeatmap<T>(
 
 /**
  * Generate an 8×8 heatmap from tracker state.
- * `analysis` is a preset name from `presets` (autocompleted) or a custom function.
+ * `analysis` is a preset function (e.g. `TileHeatmapPresets.TILE_OCC_ALL`) or a custom function.
  */
-export function generateHeatmap<T, P extends string>(
+export function generateHeatmap<T>(
     state: T,
-    presets: Record<P, HeatmapAnalysisFunc<T>>,
-    options: GenerateHeatmapOptions<T, P>,
+    analysis: HeatmapAnalysisFunc<T>,
+    options?: GenerateHeatmapOptions,
 ): HeatmapData {
-    return renderHeatmap(
-        state,
-        resolvePreset(presets, options.analysis),
-        options.square,
-        options.optData,
-    );
+    return renderHeatmap(state, analysis, options?.square);
 }
 
 /**
  * Percentage-difference heatmap between two datasets.
  * Positive = `state` higher; negative = `compState` higher; zero when either cell is 0.
  */
-export function generateComparisonHeatmap<T, P extends string>(
+export function generateComparisonHeatmap<T>(
     state: T,
     compState: T,
-    presets: Record<P, HeatmapAnalysisFunc<T>>,
-    options: GenerateHeatmapOptions<T, P>,
+    analysis: HeatmapAnalysisFunc<T>,
+    options?: GenerateHeatmapOptions,
 ): HeatmapData {
-    const fun = resolvePreset(presets, options.analysis);
-
     const map: number[][] = [];
     let max = -Infinity;
     let min = Infinity;
 
-    const map0 = renderHeatmap(state, fun, options.square, options.optData);
-    const map1 = renderHeatmap(compState, fun, options.square, options.optData);
+    const map0 = renderHeatmap(state, analysis, options?.square);
+    const map1 = renderHeatmap(compState, analysis, options?.square);
 
     for (let i = 0; i < 8; i += 1) {
         const dataRow: number[] = [];

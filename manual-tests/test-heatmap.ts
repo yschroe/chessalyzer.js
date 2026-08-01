@@ -26,15 +26,10 @@ console.log(data);
 const state1 = getTrackerState(data, TileTracker, 0);
 const state2 = getTrackerState(data, TileTracker, 1);
 
+printHeatmap(generateHeatmap(state1, TileHeatmapPresets.PIECE_MOVED_TO_TILE, { square: 'd1' }));
+printHeatmap(generateHeatmap(state2, TileHeatmapPresets.PIECE_MOVED_TO_TILE, { square: 'd1' }));
 printHeatmap(
-    generateHeatmap(state1, TileHeatmapPresets, { analysis: 'PIECE_MOVED_TO_TILE', square: 'd1' }),
-);
-printHeatmap(
-    generateHeatmap(state2, TileHeatmapPresets, { analysis: 'PIECE_MOVED_TO_TILE', square: 'd1' }),
-);
-printHeatmap(
-    generateComparisonHeatmap(state1, state2, TileHeatmapPresets, {
-        analysis: 'PIECE_MOVED_TO_TILE',
+    generateComparisonHeatmap(state1, state2, TileHeatmapPresets.PIECE_MOVED_TO_TILE, {
         square: 'd1',
     }),
 );

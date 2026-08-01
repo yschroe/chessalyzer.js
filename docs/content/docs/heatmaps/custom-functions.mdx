@@ -3,31 +3,30 @@ title: Custom heatmap functions
 description: Write your own per-square calculation for generateHeatmap.
 ---
 
-Pass a function via the `analysis` option to `generateHeatmap(state, presets, { analysis })`. The function is called for every square on the board.
+Pass any function as the `analysis` argument to `generateHeatmap(state, analysis, options?)`. The function is called for every square on the board.
 
 ```javascript
-import { generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
+import { generateHeatmap } from 'chessalyzer/trackers';
 import { squareToCoords } from 'chessalyzer/replay';
 
 const { state } = result.runs[0].trackers[0];
 
-const heatmapData = generateHeatmap(state, TileHeatmapPresets, {
-    analysis: ({ data, loopSquare }) => {
-        const [row, col] = squareToCoords(loopSquare.square);
-        const val = data.tiles[row][col].w.total.wasOn;
-        return (val * 100) / data.movesTotal;
-    },
+const heatmapData = generateHeatmap(state, ({ data, loopSquare }) => {
+    const [row, col] = squareToCoords(loopSquare.square);
+    const val = data.tiles[row][col].w.total.wasOn;
+    return (val * 100) / data.movesTotal;
 });
 ```
 
-## Options object
+Capture extra values from the outer scope when you need them (e.g. a precomputed average) — no special options field is required.
+
+## Analysis function arguments
 
 | Property     | Description                                                              |
 | ------------ | ------------------------------------------------------------------------ |
 | `data`       | Tracker state passed to `generateHeatmap` (e.g. `TileTrackerState`)      |
 | `loopSquare` | Info about the square being calculated                                   |
 | `refSquare`  | Info about the reference square you passed via `square` (piece heatmaps) |
-| `optData`    | Optional extra data you provide via `optData` in the options bag         |
 
 ### `loopSquare` / `refSquare` shape
 
@@ -44,7 +43,5 @@ interface SquareData {
 ```
 
 Use `refSquare` when generating heatmaps for a specific piece — e.g. white's a-pawn at `'a2'` (pass `square: 'a2'` in the options bag).
-
-Use `optData` for values your function needs but aren't on the tracker state, such as "average position after X moves."
 
 See [Presets](/docs/heatmaps/presets) for built-in functions you can study or reuse.
