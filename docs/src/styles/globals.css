@@ -6,7 +6,7 @@ html {
     scrollbar-gutter: stable;
 }
 
-html > body[data-scroll-locked] {
+body {
     margin-right: 0px !important;
     --removed-body-scroll-bar-size: 0px !important;
 }
