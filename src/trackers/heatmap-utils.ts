@@ -38,7 +38,6 @@ function renderHeatmap<T>(
     data: T,
     fun: HeatmapAnalysisFunc<T>,
     square?: Square | BoardCoord,
-    optData?: unknown,
 ): HeatmapData {
     const refSquare = resolveRefSquare(square);
     const refRow = squareRow(refSquare);
@@ -60,7 +59,6 @@ function renderHeatmap<T>(
                 data,
                 loopSquare,
                 refSquare: refSquareData,
-                optData,
             });
             dataRow.push(heatVal);
             max = Math.max(max, heatVal);
@@ -81,7 +79,7 @@ export function generateHeatmap<T>(
     analysis: HeatmapAnalysisFunc<T>,
     options?: GenerateHeatmapOptions,
 ): HeatmapData {
-    return renderHeatmap(state, analysis, options?.square, options?.optData);
+    return renderHeatmap(state, analysis, options?.square);
 }
 
 /**
@@ -98,8 +96,8 @@ export function generateComparisonHeatmap<T>(
     let max = -Infinity;
     let min = Infinity;
 
-    const map0 = renderHeatmap(state, analysis, options?.square, options?.optData);
-    const map1 = renderHeatmap(compState, analysis, options?.square, options?.optData);
+    const map0 = renderHeatmap(state, analysis, options?.square);
+    const map1 = renderHeatmap(compState, analysis, options?.square);
 
     for (let i = 0; i < 8; i += 1) {
         const dataRow: number[] = [];

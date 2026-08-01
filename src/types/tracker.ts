@@ -66,10 +66,8 @@ export interface HeatmapAnalysisArgs<T = unknown> {
     data: T;
     /** Square being evaluated in the current cell. */
     loopSquare: SquareData;
-    /** Reference square (for relative presets). */
+    /** Reference square for presets that evaluate relative to a piece/square. */
     refSquare: SquareData;
-    /** Caller-provided extra context. */
-    optData?: unknown;
 }
 
 /** Signature for built-in and custom heatmap preset functions. */
@@ -79,6 +77,4 @@ export type HeatmapAnalysisFunc<T = unknown> = (args: HeatmapAnalysisArgs<T>) =>
 export interface GenerateHeatmapOptions {
     /** Reference square for presets that evaluate relative to a piece/square. */
     square?: Square | BoardCoord;
-    /** Extra context forwarded to the analysis function. */
-    optData?: unknown;
 }

@@ -18,6 +18,8 @@ const heatmapData = generateHeatmap(state, ({ data, loopSquare }) => {
 });
 ```
 
+Capture extra values from the outer scope when you need them (e.g. a precomputed average) — no special options field is required.
+
 ## Analysis function arguments
 
 | Property     | Description                                                              |
@@ -25,7 +27,6 @@ const heatmapData = generateHeatmap(state, ({ data, loopSquare }) => {
 | `data`       | Tracker state passed to `generateHeatmap` (e.g. `TileTrackerState`)      |
 | `loopSquare` | Info about the square being calculated                                   |
 | `refSquare`  | Info about the reference square you passed via `square` (piece heatmaps) |
-| `optData`    | Optional extra data you provide via `optData` in the options bag         |
 
 ### `loopSquare` / `refSquare` shape
 
@@ -42,7 +43,5 @@ interface SquareData {
 ```
 
 Use `refSquare` when generating heatmaps for a specific piece — e.g. white's a-pawn at `'a2'` (pass `square: 'a2'` in the options bag).
-
-Use `optData` for values your function needs but aren't on the tracker state, such as "average position after X moves."
 
 See [Presets](/docs/heatmaps/presets) for built-in functions you can study or reuse.

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Heatmaps:** `generateHeatmap` / `generateComparisonHeatmap` take an analysis function directly (e.g. `TileHeatmapPresets.TILE_OCC_ALL` or a custom `HeatmapAnalysisFunc`). The preset map is no longer a separate argument; options are only `{ square?, optData? }`.
+- **Heatmaps:** `generateHeatmap` / `generateComparisonHeatmap` take an analysis function directly (e.g. `TileHeatmapPresets.TILE_OCC_ALL` or a custom `HeatmapAnalysisFunc`). The preset map is no longer a separate argument; options are only `{ square? }`. Dropped `optData` — close over outer scope instead.
 
 ## [4.0.0-alpha.2] - 2026-08-01
 
