@@ -5,9 +5,6 @@ import type { ParsedGame } from '#types/parse-pgn';
 /** Extract state type from a tracker definition. */
 export type StateOf<D> = D extends TrackerDef<infer S> ? S : never;
 
-/** Extract options type from a tracker definition. */
-export type OptionsOf<D> = D extends TrackerDef<unknown, infer O> ? O : never;
-
 /** Shared lifecycle hooks for move and game tracker definitions. */
 export interface TrackerDefBase<S = unknown, O = unknown> {
     readonly id: string;

@@ -1,5 +1,4 @@
 import type { AnalyzeResult } from 'chessalyzer';
-import type { GameTrackerState } from 'chessalyzer/trackers';
 import type { PieceTrackerState } from 'chessalyzer/trackers';
 import type { TileTrackerState } from 'chessalyzer/trackers';
 import type { StateOf, TrackerDef } from 'chessalyzer/trackers';
@@ -24,16 +23,6 @@ export function trackerStateAt<D extends TrackerDef>(
 
 function isStateForDef<D extends TrackerDef>(state: unknown, _def: D): state is StateOf<D> {
     return state !== undefined;
-}
-
-export function isGameTrackerState(value: unknown): value is GameTrackerState {
-    return (
-        typeof value === 'object' &&
-        value !== null &&
-        'games' in value &&
-        'results' in value &&
-        'ECO' in value
-    );
 }
 
 export function isTileTrackerState(value: unknown): value is TileTrackerState {
