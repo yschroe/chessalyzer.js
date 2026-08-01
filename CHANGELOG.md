@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Heatmaps:** `generateHeatmap` / `generateComparisonHeatmap` take an analysis function directly (e.g. `TileHeatmapPresets.TILE_OCC_ALL` or a custom `HeatmapAnalysisFunc`). The preset map is no longer a separate argument; options are only `{ square? }` (`Square`, not `BoardCoord`). Dropped `optData` — close over outer scope instead. Removed `TileHeatmapPresetName` / `PieceHeatmapPresetName`.
+- **Custom trackers:** multithreaded modules must default-export a definition object (`defineGameTracker` / `defineMoveTracker`). Class default exports are no longer supported.
+- **`TileTrackerState`:** public type is only `{ tiles, movesTotal }` (no `movesGame` / `currentPiece`). Virtual occupants are plain objects, not a `TilePiece` class.
 
 ## [4.0.0-alpha.2] - 2026-08-01
 

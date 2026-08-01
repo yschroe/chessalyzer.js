@@ -10,10 +10,12 @@ import { getStartingPiece } from '#board/piece-names';
 import { pieceList } from '#trackers/piece-types';
 import {
     createColorBucket,
-    TilePiece,
+    createTilePiece,
+    type RuntimeTileGrid,
+    type RuntimeTileRow,
     type StatsField,
+    type TileCell,
     type TileGrid,
-    type TileRow,
     type TileStats,
 } from '#trackers/tile/tile-tracker-types';
 
@@ -25,16 +27,16 @@ function addTileStats(dst: TileStats, src: TileStats): void {
 }
 
 /**
- * Grid lifecycle helpers for {@link TileTrackerBase}: allocation, reset, merge.
+ * Grid lifecycle helpers for {@link TileTracker}: allocation, reset, merge.
  *
  * The tile grid is an 8×8 array of {@link StatsField} cells. Each cell contains
  * aggregate stats for black/white plus per-piece-name {@link TileStats} objects.
- * These helpers keep constructor / `add` / `onGameEnd` DRY.
+ * These helpers keep init / track / onGameEnd DRY.
  */
 
 /** Allocate a fresh 8×8 grid with zeroed stats and starting-position virtual pieces. */
-export function createTileGrid(): TileGrid {
-    function makeRow(): TileRow {
+export function createTileGrid(): RuntimeTileGrid {
+    function makeRow(): RuntimeTileRow {
         return [
             createEmptyCell(),
             createEmptyCell(),
@@ -47,7 +49,7 @@ export function createTileGrid(): TileGrid {
         ];
     }
 
-    const tiles: TileGrid = [
+    const tiles: RuntimeTileGrid = [
         makeRow(),
         makeRow(),
         makeRow(),
@@ -80,9 +82,9 @@ function createEmptyCell(): StatsField {
  * Place the standard starting virtual piece on `(row, col)`, or clear the cell.
  * Board coords: row 0 = rank 8, row 7 = rank 1.
  */
-export function setStartingPiece(tiles: TileGrid, row: BoardIndex, col: BoardIndex): void {
+export function setStartingPiece(tiles: RuntimeTileGrid, row: BoardIndex, col: BoardIndex): void {
     const piece = getStartingPiece([row, col]);
-    tiles[row][col].currentPiece = piece ? new TilePiece(piece.name, piece.color) : null;
+    tiles[row][col].currentPiece = piece ? createTilePiece(piece.name, piece.color) : null;
 }
 
 /**
@@ -100,7 +102,12 @@ export function mergeCellStats(dst: StatsField, src: StatsField): void {
 }
 
 /** Resolve an interned {@link Square} to a grid cell when indices are in range. */
-export function tileCellAt(tiles: TileGrid, square: Square): StatsField | undefined {
+export function tileCellAt(tiles: RuntimeTileGrid, square: Square): StatsField | undefined;
+export function tileCellAt(tiles: TileGrid, square: Square): TileCell | undefined;
+export function tileCellAt(
+    tiles: TileGrid | RuntimeTileGrid,
+    square: Square,
+): TileCell | StatsField | undefined {
     const row = squareRow(square);
     const col = squareCol(square);
     if (!isBoardIndex(row) || !isBoardIndex(col)) {

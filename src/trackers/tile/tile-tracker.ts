@@ -13,15 +13,23 @@ import {
     setStartingPiece,
     tileCellAt,
 } from '#trackers/tile/tile-grid';
-import type { TileGrid } from '#trackers/tile/tile-tracker-types';
+import type { RuntimeTileGrid, TileGrid } from '#trackers/tile/tile-tracker-types';
 import type { Action } from '#types/actions';
 import type { MoveCoords } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
+import type { MoveTrackerDef } from '#types/tracker';
 
+/** Public TileTracker result: square counters and total move count (no per-game scratch). */
 export interface TileTrackerState {
     tiles: TileGrid;
-    movesGame: number;
     movesTotal: number;
+}
+
+/** Internal state used while tracking — includes occupation scratch fields. */
+interface TileTrackerRuntimeState {
+    tiles: RuntimeTileGrid;
+    movesTotal: number;
+    movesGame: number;
 }
 
 function isCastleRookLeg(action: Action): boolean {
@@ -36,11 +44,11 @@ function isCastleRookLeg(action: Action): boolean {
  * Add `(movesGame - lastMovedOn)` to wasOn for the piece currently on `pos`.
  * Measures how many half-moves the piece occupied the square since it arrived.
  */
-function addOccupation(state: TileTrackerState, pos: Square): void {
+function addOccupation(state: TileTrackerRuntimeState, pos: Square): void {
     addOccupationByRowCol(state, squareRow(pos), squareCol(pos));
 }
 
-function addOccupationByRowCol(state: TileTrackerState, row: number, col: number): void {
+function addOccupationByRowCol(state: TileTrackerRuntimeState, row: number, col: number): void {
     if (!isBoardIndex(row) || !isBoardIndex(col)) return;
     const cell = state.tiles[row][col];
     const { currentPiece } = cell;
@@ -59,7 +67,7 @@ function addOccupationByRowCol(state: TileTrackerState, row: number, col: number
  * increment movedTo counters. Skips promoted pawns (digit-suffixed names).
  */
 function processMove(
-    state: TileTrackerState,
+    state: TileTrackerRuntimeState,
     move: MoveCoords,
     player: PlayerColor,
     piece: string | null | undefined,
@@ -100,7 +108,7 @@ function processMove(
  * Taken piece occupation is flushed before clearing the square.
  */
 function processCapture(
-    state: TileTrackerState,
+    state: TileTrackerRuntimeState,
     pos: Square,
     player: PlayerColor,
     takingPiece: string | null | undefined,
@@ -132,7 +140,7 @@ function processCapture(
  * Maintains a virtual 8×8 grid ({@link StatsField}) parallel to the board replay.
  * Grid allocation/reset/merge lives in `./tile-grid`.
  */
-export const TileTracker = defineMoveTracker<TileTrackerState>({
+const tileTrackerDef = defineMoveTracker<TileTrackerRuntimeState>({
     id: 'TileTracker',
 
     init: () => ({
@@ -200,3 +208,6 @@ export const TileTracker = defineMoveTracker<TileTrackerState>({
         state.movesGame = 0;
     },
 });
+
+/** Public tracker definition — result state is typed without runtime scratch fields. */
+export const TileTracker: MoveTrackerDef<TileTrackerState> = tileTrackerDef;

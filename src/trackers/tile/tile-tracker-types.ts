@@ -1,5 +1,5 @@
 /**
- * Data model for {@link TileTrackerBase}: per-square stats and virtual piece tracking.
+ * Data model for {@link TileTracker}: per-square stats and virtual piece tracking.
  *
  * Piece names come from the canonical starting-position templates (via `piece-list`).
  * All tracker state is plain data (no class instances) so it survives structured
@@ -38,30 +38,36 @@ export function createColorBucket(): ColorBucket {
     return { total: createTileStats(), byPiece };
 }
 
+/** Public per-square counters (what callers see on {@link TileTrackerState.tiles}). */
+export interface TileCell {
+    b: ColorBucket;
+    w: ColorBucket;
+}
+
 /**
  * Virtual piece used for occupation tracking — not the same as board {@link ChessPiece}.
  * `lastMovedOn` stores the move index when this piece last arrived on its square.
  */
-export class TilePiece {
+export interface TilePiece {
     piece: string;
     color: 'b' | 'w';
     lastMovedOn: number;
-
-    constructor(piece: string, color: 'b' | 'w') {
-        this.piece = piece;
-        this.color = color;
-        this.lastMovedOn = 0;
-    }
 }
 
-/** One cell of the 8×8 tile grid: color aggregates, per-piece stats, and current occupant. */
-export interface StatsField {
-    b: ColorBucket;
-    w: ColorBucket;
+export function createTilePiece(piece: string, color: 'b' | 'w'): TilePiece {
+    return { piece, color, lastMovedOn: 0 };
+}
+
+/** Runtime cell: public counters plus live occupant for occupation tracking. */
+export interface StatsField extends TileCell {
     currentPiece: TilePiece | null;
 }
 
-export type TileRow = [
+type TileRow = [TileCell, TileCell, TileCell, TileCell, TileCell, TileCell, TileCell, TileCell];
+
+export type TileGrid = [TileRow, TileRow, TileRow, TileRow, TileRow, TileRow, TileRow, TileRow];
+
+export type RuntimeTileRow = [
     StatsField,
     StatsField,
     StatsField,
@@ -72,4 +78,13 @@ export type TileRow = [
     StatsField,
 ];
 
-export type TileGrid = [TileRow, TileRow, TileRow, TileRow, TileRow, TileRow, TileRow, TileRow];
+export type RuntimeTileGrid = [
+    RuntimeTileRow,
+    RuntimeTileRow,
+    RuntimeTileRow,
+    RuntimeTileRow,
+    RuntimeTileRow,
+    RuntimeTileRow,
+    RuntimeTileRow,
+    RuntimeTileRow,
+];
