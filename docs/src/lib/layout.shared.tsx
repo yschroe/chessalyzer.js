@@ -6,7 +6,11 @@ export function baseOptions(): BaseLayoutProps {
     return {
         nav: {
             // JSX supported
-            title: appName,
+            title: (
+                <>
+                    <span aria-hidden="true">♟️</span> {appName}
+                </>
+            ),
         },
         githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
     };
