@@ -15,9 +15,8 @@ import type {
 import { resolveHeatmapFunc } from '#trackers/heatmap-utils';
 import { PieceHeatmapPresets } from '#trackers/heatmaps/piece-heatmaps';
 import { isTrackedPiece } from '#trackers/piece-types';
-
-import { corpusPath, getCorpusEntry } from '../helpers/fixtures';
-import { isPieceTrackerState } from '../helpers/tracker-state';
+import { corpusPath, getCorpusEntry } from '~/test/helpers/fixtures';
+import { isPieceTrackerState } from '~/test/helpers/tracker-state';
 
 const pgnPath = await corpusPath('asorted');
 const corpusAvailable = pgnPath !== null;

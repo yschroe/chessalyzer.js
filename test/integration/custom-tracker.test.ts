@@ -2,8 +2,8 @@ import { describe, it, expect } from 'bun:test';
 
 import { analyzePGN, getTrackerState } from 'chessalyzer';
 
-import CustomGameTracker from '../fixtures/custom-game-tracker';
-import { fixtureExpected, fixturePath } from '../helpers/fixtures';
+import CustomGameTracker from '~/test/fixtures/custom-game-tracker';
+import { fixtureExpected, fixturePath } from '~/test/helpers/fixtures';
 
 describe('Custom tracker', () => {
     it('merges custom game tracker in worker-parse mode', async () => {

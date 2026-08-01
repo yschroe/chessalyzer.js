@@ -12,7 +12,7 @@ import {
     fixturePath,
     getFixtureEntry,
     repeatPgn,
-} from '../helpers/fixtures';
+} from '~/test/helpers/fixtures';
 
 // Integration tests against small committed PGN fixtures (test/fixtures/).
 describe('Fixtures', () => {

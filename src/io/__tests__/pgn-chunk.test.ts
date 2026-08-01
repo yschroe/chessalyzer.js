@@ -3,8 +3,7 @@ import { describe, it, expect } from 'bun:test';
 import { readLines } from '#io/line-reader';
 import { chunkEndsWithCompleteGame, readPgnChunks, type PgnChunkConfig } from '#io/pgn-chunks';
 import { parseGamesFromLines } from '#pgn/game-assembler';
-
-import { fixturePath, repeatPgn, cleanupTmpPgns } from '../../../test/helpers/fixtures';
+import { fixturePath, repeatPgn, cleanupTmpPgns } from '~/test/helpers/fixtures';
 
 async function collectChunks(path: string, config: PgnChunkConfig) {
     const chunks = [];

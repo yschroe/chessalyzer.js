@@ -5,9 +5,8 @@ import { createWorkerResultHandler, mergeWorkerTrackerFlush } from '#core/tracke
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { WorkerMessage } from '#types/worker';
-
-import CustomGameTracker from '../../../test/fixtures/custom-game-tracker';
-import { isCustomGameTrackerState, isTileTrackerState } from '../../../test/helpers/tracker-state';
+import CustomGameTracker from '~/test/fixtures/custom-game-tracker';
+import { isCustomGameTrackerState, isTileTrackerState } from '~/test/helpers/tracker-state';
 
 function baseConfig(
     overrides?: Partial<GameProcessorAnalysisConfigFull>,

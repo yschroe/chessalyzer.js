@@ -2,8 +2,7 @@ import { describe, it, expect } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
 import { GameAssembler, parseGamesFromLines } from '#pgn/game-assembler';
-
-import { fixturePath } from '../../../test/helpers/fixtures';
+import { fixturePath } from '~/test/helpers/fixtures';
 
 function linesFromFixture(id: 'lichess-headers' | 'corrupt'): string[] {
     return readFileSync(fixturePath(id), 'utf8').split('\n');

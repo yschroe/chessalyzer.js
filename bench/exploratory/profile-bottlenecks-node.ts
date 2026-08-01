@@ -12,10 +12,9 @@ import { GameTracker } from '#trackers/game-tracker';
 import { PieceTracker } from '#trackers/piece-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { AnalyzeSingleRunOptions } from '#types/analysis';
-
-import { findLargestPgn } from '../lib/pgn-fixture';
-import { getRuntimeLabel } from '../lib/report';
-import { formatSeconds, timeAsync } from '../lib/timing';
+import { findLargestPgn } from '~/bench/lib/pgn-fixture';
+import { getRuntimeLabel } from '~/bench/lib/report';
+import { formatSeconds, timeAsync } from '~/bench/lib/timing';
 
 const pgn = findLargestPgn();
 const HEADER_REGEX = /\[(.*?)\s"(.*?)"\]/;

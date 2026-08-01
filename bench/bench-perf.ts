@@ -22,10 +22,14 @@
  */
 import { analyzePGN } from '#core/analyze';
 import type { ReplayMode } from '#replay/replay-mode';
-
-import { resolvePerfPgn } from './lib/pgn-fixture';
-import { getRuntimeLabel } from './lib/report';
-import { formatSeconds, printTimedResults, runTimed, type TimedRunResult } from './lib/timing';
+import { resolvePerfPgn } from '~/bench/lib/pgn-fixture';
+import { getRuntimeLabel } from '~/bench/lib/report';
+import {
+    formatSeconds,
+    printTimedResults,
+    runTimed,
+    type TimedRunResult,
+} from '~/bench/lib/timing';
 
 const RUNS = Number(process.env.BENCH_RUNS ?? 2);
 const WARMUP = process.env.BENCH_WARMUP !== '0';

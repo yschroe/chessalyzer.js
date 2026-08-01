@@ -1,7 +1,7 @@
 import type { PieceTrackerState } from 'chessalyzer/trackers';
 import type { TileTrackerState } from 'chessalyzer/trackers';
 
-import type { CustomGameTrackerState } from '../fixtures/custom-game-tracker';
+import type { CustomGameTrackerState } from '~/test/fixtures/custom-game-tracker';
 
 export function isTileTrackerState(value: unknown): value is TileTrackerState {
     return (

@@ -4,8 +4,7 @@ import { analyzePGN, buildAnalyzeResult, getTrackerState } from '#core/analyze';
 import { MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { ReplayError } from '#types/errors';
-
-import { fixturePath } from '../../../test/helpers/fixtures';
+import { fixturePath } from '~/test/helpers/fixtures';
 
 function replayTestError(i: number): ReplayError {
     return { code: 'replay', gameIndex: i, reason: 'IllegalMove', message: 'bad' };

@@ -9,8 +9,8 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { analyzePGN } from '../src/index';
-import type { AnalyzeSingleRunOptions } from '../src/types/analysis';
+import { analyzePGN } from '#core/analyze';
+import type { AnalyzeSingleRunOptions } from '#types/analysis';
 
 const FIXTURES_DIR = new URL('../test/fixtures/', import.meta.url).pathname;
 const MANIFEST_PATH = join(FIXTURES_DIR, 'manifest.json');

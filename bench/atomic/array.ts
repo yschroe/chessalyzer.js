@@ -1,9 +1,9 @@
 /**
  * Compare array append strategies used across the PGN parser.
  */
-import { BULK, makeMoveTokens, makePgnLines, SINGLE } from '../lib/fixtures';
-import { runScenario, type BenchCase } from '../lib/harness';
-import { getRuntimeLabel, printResults } from '../lib/report';
+import { BULK, makeMoveTokens, makePgnLines, SINGLE } from '~/bench/lib/fixtures';
+import { runScenario, type BenchCase } from '~/bench/lib/harness';
+import { getRuntimeLabel, printResults } from '~/bench/lib/report';
 
 const moveTokens = makeMoveTokens(SINGLE);
 const pgnLines = makePgnLines(BULK);

@@ -7,8 +7,8 @@
 import { access, mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import corpusManifest from '../corpus/manifest.json';
-import manifest from '../fixtures/manifest.json';
+import corpusManifest from '~/test/corpus/manifest.json';
+import manifest from '~/test/fixtures/manifest.json';
 
 const TEST_DIR = new URL('..', import.meta.url).pathname;
 const FIXTURES_DIR = join(TEST_DIR, 'fixtures');

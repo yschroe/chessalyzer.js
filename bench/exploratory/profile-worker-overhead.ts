@@ -10,9 +10,8 @@ import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 
 import { readLines } from '#io/line-reader';
-
-import { findLargestPgn } from '../lib/pgn-fixture';
-import { formatSeconds, timeAsync } from '../lib/timing';
+import { findLargestPgn } from '~/bench/lib/pgn-fixture';
+import { formatSeconds, timeAsync } from '~/bench/lib/timing';
 
 const pgn = findLargestPgn();
 const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;

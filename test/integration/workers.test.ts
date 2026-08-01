@@ -4,10 +4,9 @@ import { join } from 'node:path';
 import { analyzePGN, getTrackerState } from 'chessalyzer';
 import { PieceTracker, TileTracker } from 'chessalyzer/trackers';
 
+import WorkerPool from '#core/worker-pool';
 import type { WorkerMessage } from '#types/worker';
-
-import WorkerPool from '../../src/core/worker-pool';
-import { fixturePath } from '../helpers/fixtures';
+import { fixturePath } from '~/test/helpers/fixtures';
 
 const workerPath = join(import.meta.dirname, '../../lib/chess-worker.js');
 const badSanPath = join(import.meta.dirname, '../fixtures/bad-san-mid-file.pgn');
