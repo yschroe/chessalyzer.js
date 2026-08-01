@@ -18,6 +18,8 @@ interface GameEntry {
     state: unknown;
 }
 
+type OrderedEntry = { kind: 'move'; entry: MoveEntry } | { kind: 'game'; entry: GameEntry };
+
 /**
  * Per-thread tracker engine: pairs definitions with mutable state,
  * drives hooks in the hot loop, and produces merge snapshots.
@@ -25,17 +27,23 @@ interface GameEntry {
 export class TrackerHost {
     readonly moveEntries: MoveEntry[];
     readonly gameEntries: GameEntry[];
+    private readonly orderedEntries: OrderedEntry[];
 
     constructor(defs: readonly TrackerDef[]) {
         this.moveEntries = [];
         this.gameEntries = [];
+        this.orderedEntries = [];
 
         for (const def of defs) {
             const state = def.init(def.options);
             if (def.kind === 'move') {
-                this.moveEntries.push({ def, state });
+                const entry: MoveEntry = { def, state };
+                this.moveEntries.push(entry);
+                this.orderedEntries.push({ kind: 'move', entry });
             } else {
-                this.gameEntries.push({ def, state });
+                const entry: GameEntry = { def, state };
+                this.gameEntries.push(entry);
+                this.orderedEntries.push({ kind: 'game', entry });
             }
         }
     }
@@ -98,13 +106,9 @@ export class TrackerHost {
     }
 
     results(): AnalyzeTrackerResult[] {
-        const out: AnalyzeTrackerResult[] = [];
-        for (const entry of this.gameEntries) {
-            out.push({ tracker: entry.def, state: entry.state });
-        }
-        for (const entry of this.moveEntries) {
-            out.push({ tracker: entry.def, state: entry.state });
-        }
-        return out;
+        return this.orderedEntries.map((ordered) => {
+            const { def, state } = ordered.entry;
+            return { tracker: def, state };
+        });
     }
 }

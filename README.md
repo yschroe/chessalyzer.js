@@ -59,7 +59,7 @@ console.log(result.gameCount, result.moveCount, result.movesPerSecond);
 
 # How it works
 
-Give chessalyzer a PGN file and it takes care of the boring parts: reading the file, understanding each game, and replaying every move on an internal board. Along the way, your trackers collect exactly the statistics you asked for — nothing more, which is what keeps it fast. When the run finishes, the results are right where you left them: on the tracker instances you passed in.
+Give chessalyzer a PGN file and it takes care of the boring parts: reading the file, understanding each game, and replaying every move on an internal board. Along the way, your trackers collect exactly the statistics you asked for — nothing more, which is what keeps it fast. When the run finishes, stats are returned in `result.trackers` (single-run) or `result.runs[n].trackers` (multi-run) — not mutated in place on the definition.
 
 The main entry points are `analyzePGN` (batch analysis) and `printHeatmap` (a quick terminal preview). Move trackers receive per-move data; game trackers receive header fields like player names and ratings. See [Pipeline](#pipeline) if you want to dig into the stages.
 
@@ -134,7 +134,8 @@ const tileTracker = new TileTracker();
 
 const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
 
-const heatmapData = tileTracker.generateHeatmap('TILE_OCC_ALL');
+const { state } = result.trackers[0];
+const heatmapData = tileTracker.generateHeatmap(state, { analysis: 'TILE_OCC_ALL' });
 
 printHeatmap(heatmapData);
 ```
@@ -162,7 +163,7 @@ You can also generate a comparison heat map where you can compare the data of tw
 const tileT1 = new TileTracker();
 const tileT2 = new TileTracker();
 
-await analyzePGN('<pathToPgnFile>', {
+const result = await analyzePGN('<pathToPgnFile>', {
     workers: false,
     headers: true,
     runs: [
@@ -179,17 +180,20 @@ await analyzePGN('<pathToPgnFile>', {
     ],
 });
 
-let func = (data, loopSqrData, _sqrData) => {
-    const { square } = loopSqrData;
-    const row = 7 - (square.charCodeAt(1) - 49);
-    const col = square.charCodeAt(0) - 97;
+const state1 = result.runs[0].trackers[0].state;
+const state2 = result.runs[1].trackers[0].state;
+
+import { squareToCoords } from 'chessalyzer/replay';
+
+const compareFunc = ({ data, loopSquare }) => {
+    const [row, col] = squareToCoords(loopSquare.square);
     let val = data.tiles[row][col].w.wasOn;
     val = (val * 100) / data.movesTotal;
     return val;
 };
 
 // Generate the comparison heatmap.
-const heatmapData = tileT1.generateComparisonHeatmap(tileT2, func);
+const heatmapData = tileT1.generateComparisonHeatmap(state1, state2, { analysis: compareFunc });
 
 // Use heatmapData.
 ```
@@ -255,10 +259,10 @@ To use a custom tracker with your multithreaded analysis please see the importan
 
 # Heatmap generation functions
 
-The function you create for heatmap generation gets passed up to four parameters (inside `generateHeatmap(...)`):
+Custom heatmap functions receive a single options object inside `generateHeatmap(state, { analysis })`:
 
-1. `data`: Tracker state passed as the first argument to `generateHeatmap(state, ...)`.
-2. `loopSqrData`: Information about the square the current heatmap value is calculated for. The `generateHeatmap(...)` function loops over every square of the board. `loopSqrData` has this shape:
+1. `data`: Tracker state passed as the first argument to `generateHeatmap`.
+2. `loopSquare`: Information about the square the current heatmap value is calculated for. The `generateHeatmap(...)` function loops over every square of the board. `loopSquare` has this shape:
 
     ```typescript
     import type { Square } from 'chessalyzer/replay';
@@ -276,15 +280,15 @@ The function you create for heatmap generation gets passed up to four parameters
     }
     ```
 
-3. `sqrData`: Contains informations about the square you passed into the `generateHeatmap()` function. The structure of `sqrData` is the same as of `loopSqrData`. You'll need this for extracting the values for the square / piece you are interested in. For example if you want to generate a heatmap for white's a pawn, the square for `sqrData` would be 'a2' (= starting position of the white a pawn).
+3. `refSquare`: Information about the reference square you passed via `square` in the options bag (for piece-specific heatmaps). The structure of `refSquare` is the same as `loopSquare`. For example if you want to generate a heatmap for white's a pawn, pass `square: 'a2'` (= starting position of the white a pawn).
 
-4. `optData`: Optional data you may need in this function. For example, if you wanted to generate a heatmap to show the average position of a piece after X moves, you could pass that 'X' here.
+4. `optData`: Optional data you may need in this function. Pass it via `optData` in the options bag.
 
 # Tracked statistics
 
 ## Built-in
 
-chessalyzer comes with three built-in trackers. Stats live on **`result.runs[n].trackers[m].state`** after `analyzePGN` returns.
+chessalyzer comes with three built-in trackers. Stats live on **`result.trackers[m].state`** (single-run) or **`result.runs[n].trackers[m].state`** (multi-run) after `analyzePGN` returns.
 
 `GameTracker` state:
 
@@ -311,7 +315,7 @@ chessalyzer comes with three built-in trackers. Stats live on **`result.runs[n].
 
 ## Custom Trackers
 
-Trackers separate **definition** (behavior) from **state** (plain accumulated data). Author with a factory (`defineGameTracker` / `defineMoveTracker`) or a class adapter (`extends MoveTracker` / `extends BaseGameTracker`). Pass definitions to `analyzePGN`; read stats from `result.runs[n].trackers[m].state`.
+Trackers separate **definition** (behavior) from **state** (plain accumulated data). Author with a factory (`defineGameTracker` / `defineMoveTracker`) or a class adapter (`extends BaseMoveTracker` / `extends BaseGameTracker`). Pass definitions to `analyzePGN`; read stats from `result.trackers` or use `getTrackerState(result, def)`.
 
 **Factory (recommended for clarity):**
 
@@ -367,12 +371,14 @@ Heads-up on castling: it produces two move actions (king leg, then rook leg) in 
 Import bases and types from their canonical subpaths:
 
 ```javascript
+import { analyzePGN, getTrackerState } from 'chessalyzer';
 import type { GameFilter } from 'chessalyzer';
 import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
 import type { Action, MoveAction, CaptureAction, PlayerColor, Square } from 'chessalyzer/replay';
+import { squareToCoords } from 'chessalyzer/replay';
 import {
     BaseGameTracker,
-    MoveTracker,
+    BaseMoveTracker,
     defineGameTracker,
     defineMoveTracker,
     TileHeatmapPresets,
@@ -400,15 +406,16 @@ Read stats after analysis:
 ```javascript
 const tracker = new GameTracker();
 const result = await analyzePGN(path, { trackers: [tracker] });
-const { state } = result.runs[0].trackers[0];
+const { state } = result.trackers[0];
+// or: const state = getTrackerState(result, tracker);
 console.log(state.games, state.results);
 ```
 
 # Heatmap Presets
 
-Built-in heatmap presets are module-level maps exported from `chessalyzer/trackers` (`TileHeatmapPresets`, `PieceHeatmapPresets`) and mirrored on `TileTracker.presets` / `PieceTracker.presets`. Preset names are typed (`TileHeatmapPresetName`, `PieceHeatmapPresetName`) for autocomplete when calling `generateHeatmap(state, ...)`.
+Built-in heatmap presets are module-level maps exported from `chessalyzer/trackers` (`TileHeatmapPresets`, `PieceHeatmapPresets`) and mirrored on `TileTracker.presets` / `PieceTracker.presets`. Preset names are typed (`TileHeatmapPresetName`, `PieceHeatmapPresetName`) for autocomplete when calling `generateHeatmap(state, { analysis })`.
 
-Instead of defining your own heatmap function you can pass a preset name as the second argument, e.g. `tileTracker.generateHeatmap(state, 'TILE_OCC_BY_PIECE', 'a2')`.
+Instead of defining your own heatmap function you can pass a preset name via the options bag, e.g. `tileTracker.generateHeatmap(state, { analysis: 'TILE_OCC_BY_PIECE', square: 'a2' })`.
 
 ### Tile Tracker
 

@@ -3,34 +3,38 @@ title: Custom heatmap functions
 description: Write your own per-square calculation for generateHeatmap.
 ---
 
-Pass a function instead of a preset short name to `generateHeatmap(state, fn)`. The function is called for every square on the board.
+Pass a function via the `analysis` option to `generateHeatmap(state, { analysis })`. The function is called for every square on the board.
 
 ```javascript
-const { state } = result.runs[0].trackers[0];
+import { squareToCoords } from 'chessalyzer/replay';
 
-const heatmapData = tileTracker.generateHeatmap(state, (data, loopSqrData) => {
-    const { square } = loopSqrData;
-    const row = 7 - (square.charCodeAt(1) - 49);
-    const col = square.charCodeAt(0) - 97;
-    const val = data.tiles[row][col].w.wasOn;
-    return (val * 100) / data.movesTotal;
+const { state } = result.trackers[0];
+
+const heatmapData = tileTracker.generateHeatmap(state, {
+    analysis: ({ data, loopSquare }) => {
+        const [row, col] = squareToCoords(loopSquare.square);
+        const val = data.tiles[row][col].w.wasOn;
+        return (val * 100) / data.movesTotal;
+    },
 });
 ```
 
-## Parameters
+## Options object
 
-| #   | Name          | Description                                                               |
-| --- | ------------- | ------------------------------------------------------------------------- |
-| 1   | `data`        | Tracker state passed to `generateHeatmap` (e.g. `TileTrackerState`)       |
-| 2   | `loopSqrData` | Info about the square being calculated                                    |
-| 3   | `sqrData`     | Info about a reference square you passed in (for piece-specific heatmaps) |
-| 4   | `optData`     | Optional extra data you provide                                           |
+| Property     | Description                                                              |
+| ------------ | ------------------------------------------------------------------------ |
+| `data`       | Tracker state passed to `generateHeatmap` (e.g. `TileTrackerState`)      |
+| `loopSquare` | Info about the square being calculated                                   |
+| `refSquare`  | Info about the reference square you passed via `square` (piece heatmaps) |
+| `optData`    | Optional extra data you provide via `optData` in the options bag         |
 
-### `loopSqrData` / `sqrData` shape
+### `loopSquare` / `refSquare` shape
 
 ```typescript
+import type { Square } from 'chessalyzer/replay';
+
 interface SquareData {
-    square: string; // e.g. 'a2'
+    square: Square; // e.g. 'a2'
     piece: {
         name: string; // e.g. 'Pa'
         color: 'b' | 'w';
@@ -38,7 +42,7 @@ interface SquareData {
 }
 ```
 
-Use `sqrData` when generating heatmaps for a specific piece — e.g. white's a-pawn at `'a2'`.
+Use `refSquare` when generating heatmaps for a specific piece — e.g. white's a-pawn at `'a2'` (pass `square: 'a2'` in the options bag).
 
 Use `optData` for values your function needs but aren't on the tracker state, such as "average position after X moves."
 

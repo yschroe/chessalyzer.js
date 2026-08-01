@@ -208,7 +208,10 @@ describe('Fixtures', () => {
                 expect(data.gameCount).toBe(1);
                 const state = trackerStateAt(data, tileTracker);
                 expect(state.movesTotal).toBe(golden.movesTotal);
-                const heat = tileTracker.generateHeatmap(state, 'TILE_OCC_ALL', 'e4');
+                const heat = tileTracker.generateHeatmap(state, {
+                    analysis: 'TILE_OCC_ALL',
+                    square: 'e4',
+                });
                 expect(heat.map[4]?.[4]).toBe(golden.e4TileOccAll);
             });
         }

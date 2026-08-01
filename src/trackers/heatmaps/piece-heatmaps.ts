@@ -1,6 +1,5 @@
 import { isPieceTrackerData, isTrackedPiece } from '#trackers/piece-types';
 import type { PieceStatsMap } from '#trackers/piece-types';
-import type { SquareData } from '#types/game';
 import type { HeatmapPresetEntry } from '#types/tracker';
 
 function captureCount(
@@ -18,10 +17,10 @@ export const PieceHeatmapPresets = {
         scope: 'specific',
         unit: '',
         description: 'Selected piece was taken by piece X Y times.',
-        calc: (data: unknown, loopSqrData: SquareData, sqrData: SquareData) => {
+        calc: ({ data, loopSquare, refSquare }) => {
             if (!isPieceTrackerData(data)) return 0;
-            const sqrPiece = sqrData.piece;
-            const loopPiece = loopSqrData.piece;
+            const sqrPiece = refSquare.piece;
+            const loopPiece = loopSquare.piece;
             if (!sqrPiece || !loopPiece || loopPiece.color === sqrPiece.color) return 0;
             return captureCount(data, loopPiece.color, loopPiece.name, sqrPiece.name);
         },
@@ -30,10 +29,10 @@ export const PieceHeatmapPresets = {
         scope: 'specific',
         unit: '',
         description: 'Selected piece took piece X Y times.',
-        calc: (data: unknown, loopSqrData: SquareData, sqrData: SquareData) => {
+        calc: ({ data, loopSquare, refSquare }) => {
             if (!isPieceTrackerData(data)) return 0;
-            const sqrPiece = sqrData.piece;
-            const loopPiece = loopSqrData.piece;
+            const sqrPiece = refSquare.piece;
+            const loopPiece = loopSquare.piece;
             if (!sqrPiece || !loopPiece || loopPiece.color === sqrPiece.color) return 0;
             return captureCount(data, sqrPiece.color, sqrPiece.name, loopPiece.name);
         },

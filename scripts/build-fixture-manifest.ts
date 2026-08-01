@@ -10,7 +10,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { analyzePGN } from '../src/index';
-import type { AnalyzeOptions } from '../src/types/analysis';
+import type { AnalyzeSingleRunOptions } from '../src/types/analysis';
 
 const FIXTURES_DIR = new URL('../test/fixtures/', import.meta.url).pathname;
 const MANIFEST_PATH = join(FIXTURES_DIR, 'manifest.json');
@@ -33,7 +33,7 @@ const descriptions: Record<string, string> = {
 };
 
 /** Per-fixture analyze options, or `manual` to keep the existing manifest entry unchanged. */
-const FIXTURE_ANALYZE: Record<string, AnalyzeOptions | 'manual'> = {
+const FIXTURE_ANALYZE: Record<string, AnalyzeSingleRunOptions | 'manual'> = {
     'bad-san-mid-file': { onError: 'skip-game', workers: false },
 };
 
@@ -47,7 +47,7 @@ interface ManifestFixture {
     file: string;
     description: string;
     expected: ManifestExpected;
-    analyzeOptions?: AnalyzeOptions;
+    analyzeOptions?: AnalyzeSingleRunOptions;
     golden?: Record<string, unknown>;
 }
 
@@ -68,8 +68,8 @@ async function loadExistingManifest(): Promise<Manifest> {
 
 /** Options stored in manifest (workers are always false in the build script). */
 function manifestAnalyzeOptions(
-    policy: AnalyzeOptions | 'manual' | undefined,
-): AnalyzeOptions | undefined {
+    policy: AnalyzeSingleRunOptions | 'manual' | undefined,
+): AnalyzeSingleRunOptions | undefined {
     if (!policy || policy === 'manual') return undefined;
     const { workers: _workers, ...rest } = policy;
     return Object.keys(rest).length > 0 ? rest : undefined;
@@ -98,7 +98,7 @@ for (const file of files) {
         continue;
     }
 
-    const analyzeOpts: AnalyzeOptions = { workers: false, ...policy };
+    const analyzeOpts: AnalyzeSingleRunOptions = { workers: false, ...policy };
 
     try {
         // oxlint-disable-next-line eslint/no-await-in-loop -- sequential fixture analysis for readable logs and lower memory use

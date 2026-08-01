@@ -63,7 +63,7 @@ export function assertMultithreadTrackerDef(
 }
 
 /** Abstract base for move-level tracker class adapters. */
-export abstract class MoveTracker<S = unknown, O = unknown> implements MoveTrackerDef<S, O> {
+export abstract class BaseMoveTracker<S = unknown, O = unknown> implements MoveTrackerDef<S, O> {
     abstract readonly id: string;
     readonly kind = 'move' as const;
     readonly workerModule?: string;

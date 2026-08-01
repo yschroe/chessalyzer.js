@@ -18,7 +18,7 @@ const result = await analyzePGN('<pathToPgnFile>', {
     filter: (game) => Number(game.headers?.WhiteElo) > 2000,
 });
 
-const { state } = result.runs[0].trackers[0];
+const { state } = result.trackers[0];
 console.log(state.movesTotal);
 ```
 

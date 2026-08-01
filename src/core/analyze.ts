@@ -3,35 +3,46 @@ import { performance } from 'node:perf_hooks';
 import { normalizeAnalyzeOptions } from '#core/analysis-config';
 import { collectError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
 import GameProcessor from '#core/game-processor';
-import type { AnalyzeOptions, AnalyzeResult, AnalyzeRunResult } from '#types/analysis';
+import { getTrackerState } from '#core/get-tracker-state';
+import type {
+    AnalyzeMultiRunOptions,
+    AnalyzeMultiRunResult,
+    AnalyzeOptions,
+    AnalyzeResult,
+    AnalyzeRunResult,
+    AnalyzeSingleRunOptions,
+    AnalyzeSingleRunResult,
+} from '#types/analysis';
 import type { AnalyzeError } from '#types/errors';
 import type { AnalyzeTrackerResult } from '#types/tracker';
 import type { HeatmapData } from '#types/tracker';
+
+export { getTrackerState };
 
 /** Black foreground on a truecolor RGB background (ANSI). */
 function styleBgRgb(r: number, g: number, b: number, text: string): string {
     return `\x1b[30;48;2;${r};${g};${b}m${text}\x1b[0m`;
 }
 
-/** Build {@link AnalyzeResult} from raw counts and duration. @internal Exported for unit tests. */
-export function buildAnalyzeResult(
+function buildResultBase(
     counts: {
         games: number;
         moves: number;
         skippedGames?: number;
         errors?: AnalyzeError[];
     }[],
-    trackerResults: AnalyzeTrackerResult[][],
     durationMs: number,
-): AnalyzeResult {
-    const runs: AnalyzeRunResult[] = counts.map(({ games, moves }, index) => ({
-        gameCount: games,
-        moveCount: moves,
-        trackers: trackerResults[index] ?? [],
-    }));
-
-    const gameCount = runs.reduce((sum, run) => sum + run.gameCount, 0);
-    const moveCount = runs.reduce((sum, run) => sum + run.moveCount, 0);
+): {
+    durationMs: number;
+    gameCount: number;
+    moveCount: number;
+    movesPerSecond: number;
+    skippedGames?: number;
+    errors?: AnalyzeError[];
+    errorsTruncated?: boolean;
+} {
+    const gameCount = counts.reduce((sum, c) => sum + c.games, 0);
+    const moveCount = counts.reduce((sum, c) => sum + c.moves, 0);
     const skippedGames = counts.reduce((sum, c) => sum + (c.skippedGames ?? 0), 0);
 
     const errors: AnalyzeError[] = [];
@@ -45,13 +56,18 @@ export function buildAnalyzeResult(
         }
     }
 
-    const result: AnalyzeResult = {
+    const base = {
         durationMs,
         gameCount,
         moveCount,
         movesPerSecond: durationMs > 0 ? Math.round(moveCount / (durationMs / 1000)) : 0,
-        runs,
     };
+
+    const result: typeof base & {
+        skippedGames?: number;
+        errors?: AnalyzeError[];
+        errorsTruncated?: boolean;
+    } = { ...base };
 
     if (skippedGames > 0) {
         result.skippedGames = skippedGames;
@@ -66,18 +82,62 @@ export function buildAnalyzeResult(
     return result;
 }
 
+/** Build {@link AnalyzeResult} from raw counts and duration. @internal Exported for unit tests. */
+export function buildAnalyzeResult(
+    counts: {
+        games: number;
+        moves: number;
+        skippedGames?: number;
+        errors?: AnalyzeError[];
+    }[],
+    trackerResults: AnalyzeTrackerResult[][],
+    durationMs: number,
+    multiRun: boolean,
+): AnalyzeResult {
+    const base = buildResultBase(counts, durationMs);
+
+    if (!multiRun) {
+        const result: AnalyzeSingleRunResult = {
+            ...base,
+            trackers: trackerResults[0] ?? [],
+        };
+        return result;
+    }
+
+    const runs: AnalyzeRunResult[] = counts.map(({ games, moves }, index) => ({
+        gameCount: games,
+        moveCount: moves,
+        trackers: trackerResults[index] ?? [],
+    }));
+
+    const result: AnalyzeMultiRunResult = {
+        ...base,
+        runs,
+    };
+    return result;
+}
+
 /**
  * Analyze a PGN file with optional trackers, filters, and worker configuration.
  */
+export async function analyzePGN(
+    path: string,
+    options?: AnalyzeSingleRunOptions,
+): Promise<AnalyzeSingleRunResult>;
+export async function analyzePGN(
+    path: string,
+    options: AnalyzeMultiRunOptions,
+): Promise<AnalyzeMultiRunResult>;
 export async function analyzePGN(path: string, options?: AnalyzeOptions): Promise<AnalyzeResult> {
-    const { runs, multithreadCfg, onError, headers, replay } = normalizeAnalyzeOptions(options);
+    const { runs, multithreadCfg, onError, headers, replay, multiRun } =
+        normalizeAnalyzeOptions(options);
     const gameProcessor = new GameProcessor(runs, multithreadCfg, onError, { headers, replay });
 
     const t0 = performance.now();
     const counts = await gameProcessor.processPGN(path);
     const trackerResults = gameProcessor.configs.map((cfg) => cfg.trackerHost.results());
     const durationMs = performance.now() - t0;
-    return buildAnalyzeResult(counts, trackerResults, durationMs);
+    return buildAnalyzeResult(counts, trackerResults, durationMs, multiRun);
 }
 
 /** Print {@link HeatmapData} to the terminal. */

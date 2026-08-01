@@ -3,16 +3,15 @@ import {
     isBoardIndex,
     squareCol,
     squareRow,
-    type BoardCoord,
     type Square,
 } from '#board/board-coords';
-import { MoveTracker } from '#trackers/define-tracker';
+import { BaseMoveTracker } from '#trackers/define-tracker';
 import {
     generateComparisonHeatmap,
     generateHeatmap,
     resolveHeatmapFunc,
 } from '#trackers/heatmap-utils';
-import { TileHeatmapPresets, type TileHeatmapPresetName } from '#trackers/heatmaps/tile-heatmaps';
+import { TileHeatmapPresets } from '#trackers/heatmaps/tile-heatmaps';
 import {
     createTileGrid,
     mergeCellStats,
@@ -23,7 +22,7 @@ import type { TileGrid } from '#trackers/tile/tile-tracker-types';
 import type { Action } from '#types/actions';
 import type { MoveCoords } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
-import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
+import type { GenerateHeatmapOptions, HeatmapData } from '#types/tracker';
 
 export interface TileTrackerState {
     tiles: TileGrid;
@@ -51,7 +50,7 @@ function playerBucket(player: string): PlayerColor | undefined {
  * Grid allocation/reset/merge lives in `./tile-grid`; this class implements move/capture
  * reaction logic and multithread aggregation.
  */
-class TileTracker extends MoveTracker<TileTrackerState> {
+class TileTracker extends BaseMoveTracker<TileTrackerState> {
     override readonly id = 'TileTracker';
     override readonly workerModule = import.meta.url;
     static readonly presets = TileHeatmapPresets;
@@ -66,31 +65,27 @@ class TileTracker extends MoveTracker<TileTrackerState> {
 
     generateHeatmap(
         state: TileTrackerState,
-        analysisFunc: TileHeatmapPresetName | HeatmapAnalysisFunc<TileTrackerState>,
-        square?: string | BoardCoord,
-        optData?: unknown,
+        options: GenerateHeatmapOptions<TileTrackerState>,
     ): HeatmapData {
         return generateHeatmap(
             state,
-            resolveHeatmapFunc(TileHeatmapPresets, analysisFunc),
-            square,
-            optData,
+            resolveHeatmapFunc(TileHeatmapPresets, options.analysis),
+            options.square,
+            options.optData,
         );
     }
 
     generateComparisonHeatmap(
         state: TileTrackerState,
         compState: TileTrackerState,
-        analysisFunc: TileHeatmapPresetName | HeatmapAnalysisFunc<TileTrackerState>,
-        square?: string | BoardCoord,
-        optData?: unknown,
+        options: GenerateHeatmapOptions<TileTrackerState>,
     ): HeatmapData {
         return generateComparisonHeatmap(
             state,
             compState,
-            resolveHeatmapFunc(TileHeatmapPresets, analysisFunc),
-            square,
-            optData,
+            resolveHeatmapFunc(TileHeatmapPresets, options.analysis),
+            options.square,
+            options.optData,
         );
     }
 

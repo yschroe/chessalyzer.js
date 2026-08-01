@@ -28,14 +28,14 @@ for await (const game of streamParsePGN('<pathToPgnFile>', { headers: true })) {
     // process game
 }
 
-// Full pipeline — stats returned in result.runs[n].trackers[m].state
+// Full pipeline — stats returned in result.trackers (single-run)
 const result = await analyzePGN('<pathToPgnFile>', {
     trackers: [new GameTracker()],
     headers: true,
     replay: 'board', // 'skip' | 'board' | 'actions'
     validation: 'trust',
 });
-console.log(result.runs[0].trackers[0].state.games);
+console.log(result.trackers[0].state.games);
 ```
 
 ## Replay modes
@@ -44,7 +44,7 @@ console.log(result.runs[0].trackers[0].state.games);
 | ----------- | ------------------------------------------------------------ |
 | `'skip'`    | Count-only runs with no move trackers — fastest              |
 | `'board'`   | Trackers need board position but not per-move action details |
-| `'actions'` | Move trackers — required for `MoveTracker` subclasses        |
+| `'actions'` | Move trackers — required for `BaseMoveTracker` subclasses    |
 
 Move trackers need `'actions'`. Count-only runs (no move trackers) skip board replay by default.
 

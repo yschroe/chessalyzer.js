@@ -22,10 +22,9 @@ import { isPieceTrackerState, trackerStateAt } from '../helpers/tracker-state';
 const pgnPath = await corpusPath('asorted');
 const corpusAvailable = pgnPath !== null;
 
-const customPieceHeatmapFunc: HeatmapAnalysisFunc = (data, loopSqrData, sqrData) => {
-    if (!sqrData) return 0;
-    const sqrPiece = sqrData.piece;
-    const loopPiece = loopSqrData.piece;
+const customPieceHeatmapFunc: HeatmapAnalysisFunc = ({ data, loopSquare, refSquare }) => {
+    const sqrPiece = refSquare.piece;
+    const loopPiece = loopSquare.piece;
     let val = 0;
     if (
         sqrPiece &&
@@ -240,7 +239,10 @@ if (corpusAvailable) {
                 });
 
                 it('PIECE_CAPTURED preset', () => {
-                    const data = pieceTracker.generateHeatmap(state, 'PIECE_CAPTURED', 'a8');
+                    const data = pieceTracker.generateHeatmap(state, {
+                        analysis: 'PIECE_CAPTURED',
+                        square: 'a8',
+                    });
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(
@@ -249,7 +251,10 @@ if (corpusAvailable) {
                 });
 
                 it('PIECE_CAPTURED_BY preset', () => {
-                    const data = pieceTracker.generateHeatmap(state, 'PIECE_CAPTURED_BY', 'a8');
+                    const data = pieceTracker.generateHeatmap(state, {
+                        analysis: 'PIECE_CAPTURED_BY',
+                        square: 'a8',
+                    });
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(
@@ -258,7 +263,10 @@ if (corpusAvailable) {
                 });
 
                 it('custom heatmap function', () => {
-                    const data = pieceTracker.generateHeatmap(state, customPieceHeatmapFunc, 'a8');
+                    const data = pieceTracker.generateHeatmap(state, {
+                        analysis: customPieceHeatmapFunc,
+                        square: 'a8',
+                    });
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(entry.golden.pieceTracker.heatmap.custom_a8);

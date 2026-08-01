@@ -17,7 +17,7 @@ const result = await analyzePGN('<pathToPgnFile>', {
     workers: { targetBytes: 4 * 1024 * 1024 },
 });
 
-const { state } = result.runs[0].trackers[0];
+const { state } = result.trackers[0];
 console.log(state.movesTotal);
 ```
 

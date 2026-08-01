@@ -1,7 +1,7 @@
 // Runtime
 export {
     BaseGameTracker,
-    MoveTracker,
+    BaseMoveTracker,
     defineGameTracker,
     defineMoveTracker,
 } from '#trackers/define-tracker';
@@ -23,6 +23,8 @@ export type { MoveCoords, SquareData } from '#types/game';
 export type {
     AnalyzeTrackerResult,
     GameTrackerDef,
+    GenerateHeatmapOptions,
+    HeatmapAnalysisArgs,
     HeatmapAnalysisFunc,
     HeatmapData,
     HeatmapPresetEntry,

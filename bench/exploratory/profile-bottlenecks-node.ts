@@ -11,7 +11,7 @@ import { readLines } from '#io/line-reader';
 import { GameTracker } from '#trackers/game-tracker';
 import { PieceTracker } from '#trackers/piece-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
-import type { AnalyzeOptions } from '#types/analysis';
+import type { AnalyzeSingleRunOptions } from '#types/analysis';
 
 import { findLargestPgn } from '../lib/pgn-fixture';
 import { getRuntimeLabel } from '../lib/report';
@@ -76,7 +76,7 @@ async function stagePgnParse(readHeader: boolean) {
     return { ms, games: result.games, moves: result.moves };
 }
 
-async function api(options: AnalyzeOptions) {
+async function api(options: AnalyzeSingleRunOptions) {
     const { ms, result } = await timeAsync(() => analyzePGN(pgn.path, options));
     return {
         ms,
