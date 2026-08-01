@@ -3,26 +3,26 @@ import { Link } from 'waku';
 import './home.css';
 
 function HeroBoard() {
-    const files = 8;
-    const ranks = 8;
+    const files = 14;
+    const ranks = 14;
     // Soft heatmap-style intensity on a few squares (library vibe, not uniform checker)
     const heat: Record<string, number> = {
-        '3-3': 0.55,
-        '3-4': 0.75,
-        '4-3': 0.7,
-        '4-4': 0.95,
-        '2-4': 0.4,
-        '5-3': 0.45,
-        '4-5': 0.5,
-        '5-4': 0.6,
-        '2-3': 0.3,
-        '3-2': 0.35,
+        '6-5': 0.55,
+        '6-6': 0.75,
+        '7-5': 0.7,
+        '7-6': 0.95,
+        '5-6': 0.4,
+        '8-5': 0.45,
+        '7-7': 0.5,
+        '8-6': 0.6,
+        '5-5': 0.3,
+        '6-4': 0.35,
     };
 
     return (
         <svg
             className="home-hero-board absolute inset-0 size-full"
-            viewBox="0 0 800 800"
+            viewBox="0 0 1000 1000"
             preserveAspectRatio="xMidYMid slice"
             aria-hidden="true"
         >
@@ -32,24 +32,28 @@ function HeroBoard() {
                     <stop offset="55%" stopColor="#163528" stopOpacity="0.95" />
                     <stop offset="100%" stopColor="#0f241c" stopOpacity="1" />
                 </linearGradient>
+
                 <radialGradient id="boardGlow" cx="48%" cy="42%" r="55%">
                     <stop offset="0%" stopColor="#c8a24a" stopOpacity="0.22" />
                     <stop offset="55%" stopColor="#2d6b4f" stopOpacity="0.08" />
                     <stop offset="100%" stopColor="#0f241c" stopOpacity="0" />
                 </radialGradient>
+
                 <linearGradient id="readability" x1="0%" y1="50%" x2="75%" y2="50%">
                     <stop offset="0%" stopColor="#0c1a14" stopOpacity="0.72" />
-                    <stop offset="45%" stopColor="#0c1a14" stopOpacity="0.35" />
+                    <stop offset="45%" stopColor="#0c1a14" stopOpacity="0.45" />
                     <stop offset="100%" stopColor="#0c1a14" stopOpacity="0" />
                 </linearGradient>
             </defs>
-            <rect width="800" height="800" fill="url(#boardWash)" />
+
+            {/* <rect width="800" height="800" fill="url(#boardWash)" /> */}
+
             {Array.from({ length: ranks }, (_, rank) =>
                 Array.from({ length: files }, (_, file) => {
                     const light = (file + rank) % 2 === 0;
                     const key = `${file}-${rank}`;
                     const intensity = heat[key] ?? 0;
-                    const size = 100;
+                    const size = 80;
                     const x = file * size;
                     const y = rank * size;
                     return (
@@ -59,8 +63,7 @@ function HeroBoard() {
                                 y={y}
                                 width={size}
                                 height={size}
-                                fill={light ? '#2f6b52' : '#1a4032'}
-                                opacity={0.85}
+                                fill={light ? '#DC91' : '#6421'}
                             />
                             {intensity > 0 ? (
                                 <rect
@@ -68,16 +71,14 @@ function HeroBoard() {
                                     y={y}
                                     width={size}
                                     height={size}
-                                    fill="#e8c56a"
-                                    opacity={intensity * 0.55}
+                                    fill="#FA0"
+                                    opacity={intensity * 0.4}
                                 />
                             ) : null}
                         </g>
                     );
                 }),
             )}
-            <rect width="800" height="800" fill="url(#boardGlow)" />
-            <rect width="800" height="800" fill="url(#readability)" />
         </svg>
     );
 }
@@ -87,8 +88,10 @@ export default function Home() {
         <div className="home-page relative isolate flex flex-1 flex-col overflow-hidden">
             <HeroBoard />
 
+            <div className="absolute inset-0 z-10"></div>
+
             <div className="z-10 flex flex-1 flex-col justify-center">
-                <div className="px-6 pt-24 sm:px-10 lg:px-36">
+                <div className="px-6 py-24 sm:px-10 lg:px-36">
                     <p className="home-brand mb-5 text-5xl font-semibold tracking-tight text-[#f3efe6] sm:text-6xl md:text-7xl">
                         Chessalyzer
                     </p>
