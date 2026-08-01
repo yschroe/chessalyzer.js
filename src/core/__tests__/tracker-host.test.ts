@@ -49,6 +49,35 @@ describe('TrackerHost', () => {
         expect(main.moveEntries[0]?.state).toEqual({ total: 5 });
     });
 
+    it('preserves input order in results()', () => {
+        const gameTracker = defineGameTracker({
+            id: 'order-game',
+            init: () => ({ count: 0 }),
+            track: (state) => {
+                state.count += 1;
+            },
+            merge: (state, other) => {
+                state.count += other.count;
+            },
+        });
+        const moveTracker = defineMoveTracker({
+            id: 'order-move',
+            init: () => ({ total: 0 }),
+            track: (state, actions) => {
+                state.total += actions.length;
+            },
+            merge: (state, other) => {
+                state.total += other.total;
+            },
+        });
+
+        const host = new TrackerHost([moveTracker, gameTracker]);
+        expect(host.results().map((entry) => entry.tracker.id)).toEqual([
+            'order-move',
+            'order-game',
+        ]);
+    });
+
     it('calls onFinish hooks on all trackers', () => {
         let finished = false;
         const tracker = defineGameTracker({

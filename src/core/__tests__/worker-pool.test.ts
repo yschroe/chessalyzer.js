@@ -3,7 +3,8 @@ import { join } from 'node:path';
 
 import WorkerPool from '#core/worker-pool';
 
-const workerPath = join(import.meta.dirname, '../../../lib/chess-worker.js');
+// TODO: Check if path works
+const workerPath = join(import.meta.dirname, '~/src/chess-worker.js');
 
 describe('WorkerPool', () => {
     let pool: WorkerPool | undefined;

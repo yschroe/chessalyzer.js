@@ -3,13 +3,16 @@ title: Heatmap presets
 description: Built-in short names for common tile and piece heatmaps.
 ---
 
-Instead of writing your own heatmap function, pass a preset **short name** as the second argument to `generateHeatmap(state, preset, square?)`:
+Instead of writing your own heatmap function, pass a preset **short name** via the `analysis` option:
 
 ```javascript
-const { state } = result.runs[0].trackers[0];
+const { state } = result.trackers[0];
 
-const heatmapData = tileTracker.generateHeatmap(state, 'TILE_OCC_ALL');
-const pieceHeatmap = tileTracker.generateHeatmap(state, 'TILE_OCC_BY_PIECE', 'a2');
+const heatmapData = tileTracker.generateHeatmap(state, { analysis: 'TILE_OCC_ALL' });
+const pieceHeatmap = tileTracker.generateHeatmap(state, {
+    analysis: 'TILE_OCC_BY_PIECE',
+    square: 'a2',
+});
 ```
 
 ## TileTracker presets

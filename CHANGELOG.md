@@ -9,9 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Tracker redesign:** trackers are now **definitions + plain state**. Pass a tracker definition to `analyzePGN` (`defineGameTracker` / `defineMoveTracker` factories, or class adapters extending `MoveTracker` / `BaseGameTracker`). Stats are returned in `result.runs[n].trackers[m].state` — not mutated in place on the definition.
+- **Tracker redesign:** trackers are now **definitions + plain state**. Pass a tracker definition to `analyzePGN` (`defineGameTracker` / `defineMoveTracker` factories, or class adapters extending `BaseMoveTracker` / `BaseGameTracker`). Stats are returned in `result.trackers[m].state` (single-run) or `result.runs[n].trackers[m].state` (multi-run) — not mutated in place on the definition.
+- **Result shape:** single-run `analyzePGN` returns flat `result.trackers`; multi-run keeps `result.runs`. New `getTrackerState(result, def)` helper looks up state by definition identity.
 - **Multithreaded contract:** `id`, `init()`, `track(state, …)`, `merge(state, other)`, and `workerModule` (custom trackers). Worker payloads are `TrackerSnapshot { id, state }` merged by id at pool drain. Optional `options` on the definition are cloned to workers before `init()`.
-- **Heatmaps:** `generateHeatmap(state, preset, square?)` and `generateComparisonHeatmap(state, otherState, preset, square?)` take tracker state as the first argument.
+- **Heatmaps:** `generateHeatmap(state, { analysis, square?, optData? })` and `generateComparisonHeatmap(state, otherState, { analysis, square?, optData? })`. `HeatmapAnalysisFunc` takes a single args object (`data`, `loopSquare`, `refSquare`, `optData?`).
+- **`MoveTracker` renamed to `BaseMoveTracker`** (aligns with `BaseGameTracker`).
+- **`chessalyzer/replay` exports:** `BoardCoord`, `squareToCoords`, `coordsToSquare`, `algebraicToCoords`.
 - Lifecycle hook renamed to **`onFinish(state)`** (symmetric with `onGameEnd`).
 - Removed dead profiling plumbing (`TrackerConfig`, `cfg` threading, `time` merge).
 

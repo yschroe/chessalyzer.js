@@ -1,3 +1,0 @@
-- Rework heatmap functions; use option bags
-- Have another looks at the result shape of the analyzePGN function. result.runs[0].trackers[0] is not really ergonomic
-- MoveTracker -> BaseMoveTracker

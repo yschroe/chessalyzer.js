@@ -15,12 +15,12 @@ import type { HeatmapAnalysisFunc, HeatmapData, HeatmapPresetEntry } from '#type
  */
 export function resolveHeatmapFunc<T>(
     presets: Record<string, HeatmapPresetEntry>,
-    analysisFunc: string | HeatmapAnalysisFunc<T>,
+    analysis: string | HeatmapAnalysisFunc<T>,
 ): HeatmapAnalysisFunc<T> {
-    if (typeof analysisFunc !== 'string') return analysisFunc;
+    if (typeof analysis !== 'string') return analysis;
 
-    const preset = presets[analysisFunc];
-    if (!preset) throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
+    const preset = presets[analysis];
+    if (!preset) throw new Error(`Heatmap preset '${analysis}' not found!`);
     return preset.calc;
 }
 
@@ -33,40 +33,33 @@ function squareData(row: number, col: number): SquareData {
     };
 }
 
-/**
- * Build 8×8 heatmap grids from tracker data and analysis functions.
- *
- * Each cell calls the provided `fun` with:
- * - `data` — tracker instance (or comparison baseline)
- * - `loopSqrData` — the square being evaluated
- * - `sqrData` — reference square (for relative presets)
- * - `optData` — caller-provided extra context
- */
-
-/**
- * Evaluate `fun` at every square and collect min/max for normalization.
- * @param square Optional reference square as `'e4'` or `[row, col]` coords.
- */
-export function generateHeatmap<T>(
-    data: T,
-    fun: HeatmapAnalysisFunc<T>,
-    square?: string | BoardCoord,
-    optData?: unknown,
-): HeatmapData {
-    let refSquare: Square = 'a1';
+function resolveRefSquare(square?: Square | BoardCoord): Square {
+    if (square === undefined) return 'a1';
 
     if (typeof square === 'string') {
         const resolved = algebraicToCoords(square);
         if (resolved) {
-            refSquare = coordsToSquare(resolved[0], resolved[1]);
+            return coordsToSquare(resolved[0], resolved[1]);
         }
-    } else if (square !== undefined) {
-        refSquare = coordsToSquare(square[0], square[1]);
+        return square;
     }
 
+    return coordsToSquare(square[0], square[1]);
+}
+
+/**
+ * Evaluate `fun` at every square and collect min/max for normalization.
+ */
+export function generateHeatmap<T>(
+    data: T,
+    fun: HeatmapAnalysisFunc<T>,
+    square?: Square | BoardCoord,
+    optData?: unknown,
+): HeatmapData {
+    const refSquare = resolveRefSquare(square);
     const refRow = squareRow(refSquare);
     const refCol = squareCol(refSquare);
-    const sqrData: SquareData = {
+    const refSquareData: SquareData = {
         square: refSquare,
         piece: getStartingPiece([refRow, refCol]),
     };
@@ -78,8 +71,13 @@ export function generateHeatmap<T>(
     for (let i = 0; i < 8; i += 1) {
         const dataRow: number[] = [];
         for (let j = 0; j < 8; j += 1) {
-            const loopSqrData = squareData(i, j);
-            const heatVal = fun(data, loopSqrData, sqrData, optData);
+            const loopSquare = squareData(i, j);
+            const heatVal = fun({
+                data,
+                loopSquare,
+                refSquare: refSquareData,
+                optData,
+            });
             dataRow.push(heatVal);
             max = Math.max(max, heatVal);
             min = Math.min(min, heatVal);
@@ -98,7 +96,7 @@ export function generateComparisonHeatmap<T>(
     data1: T,
     data2: T,
     fun: HeatmapAnalysisFunc<T>,
-    square?: string | BoardCoord,
+    square?: Square | BoardCoord,
     optData?: unknown,
 ): HeatmapData {
     const map: number[][] = [];

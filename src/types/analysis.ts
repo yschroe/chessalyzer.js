@@ -111,8 +111,8 @@ export interface AnalyzeRunResult {
     trackers: AnalyzeTrackerResult[];
 }
 
-/** Unified result shape from {@link analyzePGN}. */
-export interface AnalyzeResult {
+/** Shared fields on every {@link analyzePGN} result. */
+export interface AnalyzeResultBase {
     /** Wall time for the whole call in milliseconds. */
     durationMs: number;
     /**
@@ -124,8 +124,6 @@ export interface AnalyzeResult {
     moveCount: number;
     /** Call-level throughput from total moves and {@link durationMs}. */
     movesPerSecond: number;
-    /** One entry per run (length 1 when `runs` is omitted). */
-    runs: AnalyzeRunResult[];
     /** Games skipped due to replay failure when `onError: 'skip-game'`. */
     skippedGames?: number;
     /** Collected replay errors when `onError: 'skip-game'` (capped at 100). */
@@ -133,3 +131,22 @@ export interface AnalyzeResult {
     /** True when more than 100 replay errors occurred and {@link errors} was truncated. */
     errorsTruncated?: boolean;
 }
+
+/** Result from a single-run {@link analyzePGN} call (`runs` omitted). */
+export interface AnalyzeSingleRunResult extends AnalyzeResultBase {
+    /** Tracker definitions with accumulated state for this run. */
+    trackers: AnalyzeTrackerResult[];
+    /** Not present on single-run results. */
+    runs?: never;
+}
+
+/** Result from a multi-run {@link analyzePGN} call (`runs` provided). */
+export interface AnalyzeMultiRunResult extends AnalyzeResultBase {
+    /** One entry per run. */
+    runs: AnalyzeRunResult[];
+    /** Not present on multi-run results. */
+    trackers?: never;
+}
+
+/** Unified result shape from {@link analyzePGN}. */
+export type AnalyzeResult = AnalyzeSingleRunResult | AnalyzeMultiRunResult;

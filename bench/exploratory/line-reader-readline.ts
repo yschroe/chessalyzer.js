@@ -9,9 +9,8 @@ import { createInterface } from 'node:readline';
 
 import { readLines } from '#io/line-reader';
 import { readPgnChunks } from '#io/pgn-chunks';
-
-import { findLargestPgn } from '../lib/pgn-fixture';
-import { getRuntimeLabel } from '../lib/report';
+import { findLargestPgn } from '~/bench/lib/pgn-fixture';
+import { getRuntimeLabel } from '~/bench/lib/report';
 
 const pgn = findLargestPgn();
 

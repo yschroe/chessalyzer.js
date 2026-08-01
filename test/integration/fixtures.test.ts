@@ -1,6 +1,6 @@
 import { describe, it, beforeAll, afterAll, expect } from 'bun:test';
 
-import { analyzePGN } from 'chessalyzer';
+import { analyzePGN, getTrackerState } from 'chessalyzer';
 import type { AnalyzeResult } from 'chessalyzer';
 import type { ParsedGame } from 'chessalyzer/pgn';
 import { GameTracker, PieceTracker, TileTracker } from 'chessalyzer/trackers';
@@ -12,8 +12,7 @@ import {
     fixturePath,
     getFixtureEntry,
     repeatPgn,
-} from '../helpers/fixtures';
-import { trackerStateAt } from '../helpers/tracker-state';
+} from '~/test/helpers/fixtures';
 
 // Integration tests against small committed PGN fixtures (test/fixtures/).
 describe('Fixtures', () => {
@@ -104,7 +103,7 @@ describe('Fixtures', () => {
             const path = await repeatPgn('results-mix', 50);
             const gameTracker = new GameTracker();
             const data = await analyzePGN(path, { trackers: [gameTracker], workers: false });
-            const state = trackerStateAt(data, gameTracker);
+            const state = getTrackerState(data, gameTracker);
             expect(data.gameCount).toBe(state.games);
             const resultsSum = Object.values(state.results).reduce((a, c) => a + c, 0);
             expect(resultsSum).toBe(data.gameCount);
@@ -123,8 +122,8 @@ describe('Fixtures', () => {
 
             expect(data.runs[0]?.gameCount).toBe(expected.games);
             expect(data.runs[1]?.gameCount).toBe(expected.games);
-            const stateA = trackerStateAt(data, trackerA, 0);
-            const stateB = trackerStateAt(data, trackerB, 1);
+            const stateA = getTrackerState(data, trackerA, 0);
+            const stateB = getTrackerState(data, trackerB, 1);
             expect(stateA.games).toBe(expected.games);
             expect(stateB.games).toBe(expected.games);
         });
@@ -146,8 +145,8 @@ describe('Fixtures', () => {
 
             expect(data.runs[0]?.gameCount).toBe(fixtureExpected('results-mix').games);
             expect(data.runs[1]?.gameCount).toBe(3);
-            const allState = trackerStateAt(data, allGames, 0);
-            const whiteState = trackerStateAt(data, whiteWins, 1);
+            const allState = getTrackerState(data, allGames, 0);
+            const whiteState = getTrackerState(data, whiteWins, 1);
             expect(allState.games).toBe(fixtureExpected('results-mix').games);
             expect(whiteState.games).toBe(3);
         });
@@ -162,8 +161,8 @@ describe('Fixtures', () => {
 
             expect(data.runs[0]?.gameCount).toBe(2);
             expect(data.runs[1]?.gameCount).toBe(fixtureExpected('results-mix').games);
-            const cappedState = trackerStateAt(data, capped, 0);
-            const fullState = trackerStateAt(data, full, 1);
+            const cappedState = getTrackerState(data, capped, 0);
+            const fullState = getTrackerState(data, full, 1);
             expect(cappedState.games).toBe(2);
             expect(fullState.games).toBe(fixtureExpected('results-mix').games);
         });
@@ -176,7 +175,7 @@ describe('Fixtures', () => {
                 trackers: [gameTracker],
             });
             expect(data.gameCount).toBe(1);
-            const state = trackerStateAt(data, gameTracker);
+            const state = getTrackerState(data, gameTracker);
             expect(state.games).toBe(1);
         });
 
@@ -206,9 +205,12 @@ describe('Fixtures', () => {
                 });
 
                 expect(data.gameCount).toBe(1);
-                const state = trackerStateAt(data, tileTracker);
+                const state = getTrackerState(data, tileTracker);
                 expect(state.movesTotal).toBe(golden.movesTotal);
-                const heat = tileTracker.generateHeatmap(state, 'TILE_OCC_ALL', 'e4');
+                const heat = tileTracker.generateHeatmap(state, {
+                    analysis: 'TILE_OCC_ALL',
+                    square: 'e4',
+                });
                 expect(heat.map[4]?.[4]).toBe(golden.e4TileOccAll);
             });
         }
@@ -220,7 +222,7 @@ describe('Fixtures', () => {
                 workers: false,
             });
 
-            const state = trackerStateAt(data, tileTracker);
+            const state = getTrackerState(data, tileTracker);
             expect(state.movesTotal).toBe(golden.movesTotal);
             expect(state.movesTotal).toBe(fixtureExpected('en-passant').moves);
         });

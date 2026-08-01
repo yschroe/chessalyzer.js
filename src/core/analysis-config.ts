@@ -102,6 +102,8 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
     onError: 'abort' | 'skip-game';
     headers?: boolean | 'auto';
     replay?: ReplayMode;
+    /** True when the caller passed `runs` (multi-run options form). */
+    multiRun: boolean;
 } {
     const opts = options ?? {};
 
@@ -125,6 +127,7 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
             headers,
             replay,
             runs: opts.runs,
+            multiRun: true,
         };
     }
 
@@ -138,6 +141,7 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
         headers,
         replay,
         runs,
+        multiRun: false,
     };
 }
 

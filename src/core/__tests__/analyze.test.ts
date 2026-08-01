@@ -2,34 +2,32 @@ import { describe, expect, it } from 'bun:test';
 
 import { analyzePGN, buildAnalyzeResult } from '#core/analyze';
 import { MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
+import { getTrackerState } from '#core/get-tracker-state';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { ReplayError } from '#types/errors';
-
-import { fixturePath } from '../../../test/helpers/fixtures';
-import { trackerStateAt } from '../../../test/helpers/tracker-state';
+import { fixturePath } from '~/test/helpers/fixtures';
 
 function replayTestError(i: number): ReplayError {
     return { code: 'replay', gameIndex: i, reason: 'IllegalMove', message: 'bad' };
 }
 
 describe('analyzePGN result shape', () => {
-    it('returns tracker state on each run without per-run movesPerSecond', async () => {
+    it('returns flat trackers on single-run calls', async () => {
         const tileTracker = new TileTracker();
         const result = await analyzePGN(fixturePath('basic-normal'), {
             trackers: [tileTracker],
             workers: false,
         });
 
-        expect(result.runs).toHaveLength(1);
-        expect(result.runs[0]?.trackers).toHaveLength(1);
-        expect(result.runs[0]?.trackers[0]?.tracker).toBe(tileTracker);
-        expect(result.runs[0]).not.toHaveProperty('movesPerSecond');
+        expect(result).not.toHaveProperty('runs');
+        expect(result.trackers).toHaveLength(1);
+        expect(result.trackers[0]?.tracker).toBe(tileTracker);
         expect(result.movesPerSecond).toBeGreaterThan(0);
-        const state = trackerStateAt(result, tileTracker);
+        const state = getTrackerState(result, tileTracker);
         expect(state.movesTotal).toBe(result.moveCount);
     });
 
-    it('sums games across runs', async () => {
+    it('returns runs on multi-run calls', async () => {
         const t1 = new TileTracker();
         const t2 = new TileTracker();
         const result = await analyzePGN(fixturePath('results-mix'), {
@@ -40,6 +38,7 @@ describe('analyzePGN result shape', () => {
             ],
         });
 
+        expect(result).not.toHaveProperty('trackers');
         expect(result.runs[0]?.gameCount).toBe(2);
         expect(result.runs[1]?.gameCount).toBe(3);
         expect(result.gameCount).toBe(5);
@@ -51,7 +50,7 @@ describe('analyzePGN result shape', () => {
         const errors = Array.from({ length: MAX_COLLECTED_ERRORS + 3 }, (_, i) =>
             replayTestError(i),
         );
-        const result = buildAnalyzeResult([{ games: 0, moves: 0, errors }], [[]], 1);
+        const result = buildAnalyzeResult([{ games: 0, moves: 0, errors }], [[]], 1, false);
 
         expect(result.errors).toHaveLength(MAX_COLLECTED_ERRORS);
         expect(result.errorsTruncated).toBe(true);
@@ -64,7 +63,7 @@ describe('analyzePGN result shape', () => {
             reason: 'IllegalMove',
             message: 'bad',
         };
-        const result = buildAnalyzeResult([{ games: 0, moves: 0, errors: [err] }], [[]], 1);
+        const result = buildAnalyzeResult([{ games: 0, moves: 0, errors: [err] }], [[]], 1, false);
 
         expect(result.errors).toHaveLength(1);
         expect(result.errorsTruncated).toBeUndefined();

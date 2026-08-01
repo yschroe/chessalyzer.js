@@ -3,7 +3,7 @@ title: Custom trackers
 description: Define your own statistics with factories or class adapters.
 ---
 
-Trackers separate **definition** (behavior) from **state** (plain data). Author with a factory (`defineGameTracker` / `defineMoveTracker`) or a class adapter (`extends MoveTracker` / `extends BaseGameTracker`).
+Trackers separate **definition** (behavior) from **state** (plain data). Author with a factory (`defineGameTracker` / `defineMoveTracker`) or a class adapter (`extends BaseMoveTracker` / `extends BaseGameTracker`).
 
 ## Factory (recommended)
 
@@ -70,7 +70,7 @@ Optional **`options`** (plain data) are cloned to workers before `init()`.
 ```javascript
 const tracker = new MyTracker();
 const result = await analyzePGN(path, { trackers: [tracker] });
-const { state } = result.runs[0].trackers[0];
+const { state } = result.trackers[0];
 console.log(state.games, state.wins);
 ```
 
@@ -82,7 +82,7 @@ import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
 import type { Action, Square } from 'chessalyzer/replay';
 import {
     BaseGameTracker,
-    MoveTracker,
+    BaseMoveTracker,
     defineGameTracker,
     defineMoveTracker,
 } from 'chessalyzer/trackers';

@@ -11,8 +11,7 @@ import { defineMoveTracker } from '#trackers/define-tracker';
 import type { Action } from '#types/actions';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { AssembledGame, GameResult } from '#types/parse-pgn';
-
-import { fixturePath } from '../../../test/helpers/fixtures';
+import { fixturePath } from '~/test/helpers/fixtures';
 
 function emptyCfg(): GameProcessorAnalysisConfig {
     return {

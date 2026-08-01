@@ -1,6 +1,5 @@
 import { tileCellAt } from '#trackers/tile/tile-grid';
 import type { TileGrid } from '#trackers/tile/tile-tracker-types';
-import type { SquareData } from '#types/game';
 import type { HeatmapPresetEntry } from '#types/tracker';
 
 function isTileTrackerData(data: unknown): data is { tiles: TileGrid; movesTotal: number } {
@@ -11,10 +10,10 @@ export const TileHeatmapPresets = {
     TILE_OCC_ALL: {
         scope: 'global',
         unit: '%',
-        description: 'Tile <loopSqrData> had a piece on it for X% of all moves.',
-        calc: (data: unknown, loopSqrData: SquareData, _sqrData: SquareData) => {
+        description: 'Tile <loopSquare> had a piece on it for X% of all moves.',
+        calc: ({ data, loopSquare }) => {
             if (!isTileTrackerData(data)) return 0;
-            const cell = tileCellAt(data.tiles, loopSqrData.square);
+            const cell = tileCellAt(data.tiles, loopSquare.square);
             if (!cell) return 0;
             let val = cell.w.wasOn + cell.b.wasOn;
             val = (val * 100) / data.movesTotal;
@@ -24,10 +23,10 @@ export const TileHeatmapPresets = {
     TILE_OCC_WHITE: {
         scope: 'global',
         unit: '%',
-        description: 'Tile <loopSqrData> had a white piece on it for X% of all moves.',
-        calc: (data: unknown, loopSqrData: SquareData, _sqrData: SquareData) => {
+        description: 'Tile <loopSquare> had a white piece on it for X% of all moves.',
+        calc: ({ data, loopSquare }) => {
             if (!isTileTrackerData(data)) return 0;
-            const cell = tileCellAt(data.tiles, loopSqrData.square);
+            const cell = tileCellAt(data.tiles, loopSquare.square);
             if (!cell) return 0;
             let val = cell.w.wasOn;
             val = (val * 100) / data.movesTotal;
@@ -38,9 +37,9 @@ export const TileHeatmapPresets = {
         scope: 'global',
         unit: '%',
         description: 'Tile X had a black piece on it for Y% of all moves.',
-        calc: (data: unknown, loopSqrData: SquareData, _sqrData: SquareData) => {
+        calc: ({ data, loopSquare }) => {
             if (!isTileTrackerData(data)) return 0;
-            const cell = tileCellAt(data.tiles, loopSqrData.square);
+            const cell = tileCellAt(data.tiles, loopSquare.square);
             if (!cell) return 0;
             let val = cell.b.wasOn;
             val = (val * 100) / data.movesTotal;
@@ -51,12 +50,12 @@ export const TileHeatmapPresets = {
         scope: 'specific',
         unit: '%',
         description: 'Selected tile was occupated by piece X during Y% of all moves.',
-        calc: (data: unknown, loopSqrData: SquareData, sqrData: SquareData) => {
+        calc: ({ data, loopSquare, refSquare }) => {
             if (!isTileTrackerData(data)) return 0;
-            const { piece } = loopSqrData;
+            const { piece } = loopSquare;
 
             let val = 0;
-            const cell = tileCellAt(data.tiles, sqrData.square);
+            const cell = tileCellAt(data.tiles, refSquare.square);
             if (piece && cell) {
                 const pieceStats = cell[piece.color][piece.name];
                 val = pieceStats?.wasOn ?? 0;
@@ -69,9 +68,9 @@ export const TileHeatmapPresets = {
         scope: 'global',
         unit: '',
         description: 'Count of Pieces that were taken on each tile.',
-        calc: (data: unknown, loopSqrData: SquareData, _sqrData: SquareData) => {
+        calc: ({ data, loopSquare }) => {
             if (!isTileTrackerData(data)) return 0;
-            const cell = tileCellAt(data.tiles, loopSqrData.square);
+            const cell = tileCellAt(data.tiles, loopSquare.square);
             if (!cell) return 0;
             const val = cell.b.wasCapturedOn + cell.w.wasCapturedOn;
             return val;
@@ -81,10 +80,10 @@ export const TileHeatmapPresets = {
         scope: 'specific',
         unit: '',
         description: 'Selected piece had tile X as a move target Y times.',
-        calc: (data: unknown, loopSqrData: SquareData, sqrData: SquareData) => {
+        calc: ({ data, loopSquare, refSquare }) => {
             if (!isTileTrackerData(data)) return 0;
-            const { piece } = sqrData;
-            const { square } = loopSqrData;
+            const { piece } = refSquare;
+            const { square } = loopSquare;
             let val = 0;
             const cell = tileCellAt(data.tiles, square);
             if (piece && cell) {

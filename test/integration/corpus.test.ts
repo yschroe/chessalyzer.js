@@ -2,7 +2,7 @@ import { describe, it, beforeAll, expect } from 'bun:test';
 
 // Optional golden regression tests against the large corpus (test/corpus/).
 // Skipped automatically when corpus files are not present locally.
-import { analyzePGN } from 'chessalyzer';
+import { analyzePGN, getTrackerState } from 'chessalyzer';
 import type { AnalyzeResult } from 'chessalyzer';
 import type { ParsedGame } from 'chessalyzer/pgn';
 import { GameTracker, PieceTracker } from 'chessalyzer/trackers';
@@ -15,17 +15,15 @@ import type {
 import { resolveHeatmapFunc } from '#trackers/heatmap-utils';
 import { PieceHeatmapPresets } from '#trackers/heatmaps/piece-heatmaps';
 import { isTrackedPiece } from '#trackers/piece-types';
-
-import { corpusPath, getCorpusEntry } from '../helpers/fixtures';
-import { isPieceTrackerState, trackerStateAt } from '../helpers/tracker-state';
+import { corpusPath, getCorpusEntry } from '~/test/helpers/fixtures';
+import { isPieceTrackerState } from '~/test/helpers/tracker-state';
 
 const pgnPath = await corpusPath('asorted');
 const corpusAvailable = pgnPath !== null;
 
-const customPieceHeatmapFunc: HeatmapAnalysisFunc = (data, loopSqrData, sqrData) => {
-    if (!sqrData) return 0;
-    const sqrPiece = sqrData.piece;
-    const loopPiece = loopSqrData.piece;
+const customPieceHeatmapFunc: HeatmapAnalysisFunc = ({ data, loopSquare, refSquare }) => {
+    const sqrPiece = refSquare.piece;
+    const loopPiece = loopSquare.piece;
     let val = 0;
     if (
         sqrPiece &&
@@ -129,7 +127,7 @@ if (corpusAvailable) {
                 beforeAll(async () => {
                     const gameTracker = new GameTracker();
                     data = await analyzePGN(path, { trackers: [gameTracker] });
-                    state = trackerStateAt(data, gameTracker);
+                    state = getTrackerState(data, gameTracker);
                 });
 
                 it('matches PGN parse game count', () => {
@@ -148,7 +146,7 @@ if (corpusAvailable) {
                 beforeAll(async () => {
                     const gameTracker = new GameTracker();
                     data = await analyzePGN(path, { trackers: [gameTracker], workers: false });
-                    state = trackerStateAt(data, gameTracker);
+                    state = getTrackerState(data, gameTracker);
                 });
 
                 it('matches PGN parse game count', () => {
@@ -166,7 +164,7 @@ if (corpusAvailable) {
                         maxGames: entry.golden.gameTracker.filterWhiteWins,
                         filter: (game: ParsedGame) => game.result === '1-0',
                     });
-                    state = trackerStateAt(data, gameTracker);
+                    state = getTrackerState(data, gameTracker);
                 });
 
                 it('counts only white wins', () => {
@@ -181,7 +179,7 @@ if (corpusAvailable) {
                 beforeAll(async () => {
                     const gameTracker = new GameTracker();
                     const data = await analyzePGN(path, { trackers: [gameTracker] });
-                    state = trackerStateAt(data, gameTracker);
+                    state = getTrackerState(data, gameTracker);
                 });
 
                 it('matches known ECO totals', () => {
@@ -198,7 +196,7 @@ if (corpusAvailable) {
                 beforeAll(async () => {
                     const pieceTracker = new PieceTracker();
                     const data = await analyzePGN(path, { trackers: [pieceTracker] });
-                    state = trackerStateAt(data, pieceTracker);
+                    state = getTrackerState(data, pieceTracker);
                 });
 
                 it('tracks the reference square pair', () => {
@@ -218,7 +216,7 @@ if (corpusAvailable) {
                         trackers: [pieceTracker],
                         workers: false,
                     });
-                    state = trackerStateAt(data, pieceTracker);
+                    state = getTrackerState(data, pieceTracker);
                 });
 
                 it('tracks the reference square pair', () => {
@@ -236,11 +234,14 @@ if (corpusAvailable) {
                 beforeAll(async () => {
                     pieceTracker = new PieceTracker();
                     const data = await analyzePGN(path, { trackers: [pieceTracker] });
-                    state = trackerStateAt(data, pieceTracker);
+                    state = getTrackerState(data, pieceTracker);
                 });
 
                 it('PIECE_CAPTURED preset', () => {
-                    const data = pieceTracker.generateHeatmap(state, 'PIECE_CAPTURED', 'a8');
+                    const data = pieceTracker.generateHeatmap(state, {
+                        analysis: 'PIECE_CAPTURED',
+                        square: 'a8',
+                    });
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(
@@ -249,7 +250,10 @@ if (corpusAvailable) {
                 });
 
                 it('PIECE_CAPTURED_BY preset', () => {
-                    const data = pieceTracker.generateHeatmap(state, 'PIECE_CAPTURED_BY', 'a8');
+                    const data = pieceTracker.generateHeatmap(state, {
+                        analysis: 'PIECE_CAPTURED_BY',
+                        square: 'a8',
+                    });
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(
@@ -258,7 +262,10 @@ if (corpusAvailable) {
                 });
 
                 it('custom heatmap function', () => {
-                    const data = pieceTracker.generateHeatmap(state, customPieceHeatmapFunc, 'a8');
+                    const data = pieceTracker.generateHeatmap(state, {
+                        analysis: customPieceHeatmapFunc,
+                        square: 'a8',
+                    });
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(entry.golden.pieceTracker.heatmap.custom_a8);

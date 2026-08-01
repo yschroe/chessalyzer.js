@@ -17,8 +17,8 @@ const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
 
 console.log(result.gameCount, result.moveCount, result.movesPerSecond);
 
-const { state } = result.runs[0].trackers[0];
-const heatmapData = tileTracker.generateHeatmap(state, 'TILE_OCC_ALL');
+const { state } = result.trackers[0];
+const heatmapData = tileTracker.generateHeatmap(state, { analysis: 'TILE_OCC_ALL' });
 
 printHeatmap(heatmapData);
 ```
@@ -26,8 +26,8 @@ printHeatmap(heatmapData);
 ## What happened
 
 1. **`analyzePGN`** read the PGN, replayed each game, and accumulated stats into plain state owned by the framework.
-2. **`result.runs[0].trackers[0].state`** holds the tile stats; `tracker` is the definition you passed in.
-3. **`generateHeatmap(state, 'TILE_OCC_ALL')`** turned that state into a per-square value map using a built-in preset.
+2. **`result.trackers[0].state`** holds the tile stats; `tracker` is the definition you passed in.
+3. **`generateHeatmap(state, { analysis: 'TILE_OCC_ALL' })`** turned that state into a per-square value map using a built-in preset.
 4. **`printHeatmap`** rendered a quick color preview in the terminal (if your terminal supports colors).
 
 Inspect `state.tiles` directly, or generate other heatmap presets. See [Trackers](/docs/trackers) and [Heatmaps](/docs/heatmaps).

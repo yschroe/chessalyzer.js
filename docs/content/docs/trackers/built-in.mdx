@@ -3,7 +3,7 @@ title: Built-in trackers
 description: GameTracker, PieceTracker, and TileTracker.
 ---
 
-Chessalyzer ships three built-in trackers. Stats live on **`result.runs[n].trackers[m].state`** after `analyzePGN` returns.
+Chessalyzer ships three built-in trackers. Stats live on **`result.trackers[m].state`** (single-run) or **`result.runs[n].trackers[m].state`** (multi-run) after `analyzePGN` returns.
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
@@ -11,7 +11,7 @@ import { GameTracker, PieceTracker, TileTracker } from 'chessalyzer/trackers';
 
 const tileTracker = new TileTracker();
 const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
-const state = result.runs[0].trackers[0].state;
+const state = result.trackers[0].state;
 ```
 
 ## GameTracker
@@ -51,4 +51,4 @@ Per-piece stats on each tile:
 
 Side totals omit the piece name: `state.tiles[0][6].b.wasOn` is all black pieces on that square.
 
-`TileTracker` and `PieceTracker` support [heatmap generation](/docs/heatmaps) — pass state as the first argument to `generateHeatmap(state, ...)`.
+`TileTracker` and `PieceTracker` support [heatmap generation](/docs/heatmaps) — pass state as the first argument to `generateHeatmap(state, { analysis })`.

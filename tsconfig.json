@@ -1,6 +1,9 @@
 {
     "include": ["src/**/*", "scripts/**/*", "test/**/*", "manual-tests/**/*", "bench/**/*"],
     "compilerOptions": {
+        "paths": {
+            "~/*": ["./*"]
+        },
         "target": "ESNext",
         "module": "Preserve",
         "moduleResolution": "bundler",

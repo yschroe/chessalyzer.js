@@ -1,3 +1,4 @@
+import type { BoardCoord, Square } from '#board/board-coords';
 import type { Action } from '#types/actions';
 import type { SquareData } from '#types/game';
 import type { ParsedGame } from '#types/parse-pgn';
@@ -67,7 +68,27 @@ export interface HeatmapData {
     max: number;
 }
 
+/** Arguments passed to built-in and custom heatmap analysis functions. */
+export interface HeatmapAnalysisArgs<T = unknown> {
+    /** Tracker state being visualized. */
+    data: T;
+    /** Square being evaluated in the current cell. */
+    loopSquare: SquareData;
+    /** Reference square (for relative presets). */
+    refSquare: SquareData;
+    /** Caller-provided extra context. */
+    optData?: unknown;
+}
+
 /** Signature for built-in and custom heatmap preset functions. */
-export interface HeatmapAnalysisFunc<T = unknown> {
-    (data: T, loopSqrData: SquareData, sqrData: SquareData, optData?: unknown): number;
+export type HeatmapAnalysisFunc<T = unknown> = (args: HeatmapAnalysisArgs<T>) => number;
+
+/** Options for {@link generateHeatmap} and tracker `generateHeatmap` helpers. */
+export interface GenerateHeatmapOptions<T = unknown> {
+    /** Preset short name or custom analysis function. */
+    analysis: string | HeatmapAnalysisFunc<T>;
+    /** Reference square for `scope: 'specific'` presets. */
+    square?: Square | BoardCoord;
+    /** Extra context forwarded to the analysis function. */
+    optData?: unknown;
 }

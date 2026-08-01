@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 
 import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
 
-import { allFixtureIds, fixtureExpected, fixturePath } from '../helpers/fixtures';
+import { allFixtureIds, fixtureExpected, fixturePath } from '~/test/helpers/fixtures';
 
 async function collectStream(path: string, options?: Parameters<typeof streamParsePGN>[1]) {
     const games = [];

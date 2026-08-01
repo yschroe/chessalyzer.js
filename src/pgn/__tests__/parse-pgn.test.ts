@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 
 import { parsePGN } from '#pgn/parse-pgn';
-
-import { fixturePath } from '../../../test/helpers/fixtures';
+import { fixturePath } from '~/test/helpers/fixtures';
 
 describe('parsePGN', () => {
     it('parses games without headers by default', async () => {

@@ -1,18 +1,14 @@
-import type { BoardCoord } from '#board/board-coords';
-import { MoveTracker } from '#trackers/define-tracker';
+import { BaseMoveTracker } from '#trackers/define-tracker';
 import {
     generateComparisonHeatmap,
     generateHeatmap,
     resolveHeatmapFunc,
 } from '#trackers/heatmap-utils';
-import {
-    PieceHeatmapPresets,
-    type PieceHeatmapPresetName,
-} from '#trackers/heatmaps/piece-heatmaps';
+import { PieceHeatmapPresets } from '#trackers/heatmaps/piece-heatmaps';
 import { isTrackedPiece, pieceList, type Piece, type PieceStatsMap } from '#trackers/piece-types';
 import type { Action } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
-import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
+import type { GenerateHeatmapOptions, HeatmapData } from '#types/tracker';
 
 export interface PieceTrackerState {
     b: PieceStatsMap;
@@ -38,7 +34,7 @@ function createInitialState(): PieceTrackerState {
     };
 }
 
-class PieceTracker extends MoveTracker<PieceTrackerState> {
+class PieceTracker extends BaseMoveTracker<PieceTrackerState> {
     override readonly id = 'PieceTracker';
     override readonly workerModule = import.meta.url;
     static readonly presets = PieceHeatmapPresets;
@@ -49,31 +45,27 @@ class PieceTracker extends MoveTracker<PieceTrackerState> {
 
     generateHeatmap(
         state: PieceTrackerState,
-        analysisFunc: PieceHeatmapPresetName | HeatmapAnalysisFunc<PieceTrackerState>,
-        square?: string | BoardCoord,
-        optData?: unknown,
+        options: GenerateHeatmapOptions<PieceTrackerState>,
     ): HeatmapData {
         return generateHeatmap(
             state,
-            resolveHeatmapFunc(PieceHeatmapPresets, analysisFunc),
-            square,
-            optData,
+            resolveHeatmapFunc(PieceHeatmapPresets, options.analysis),
+            options.square,
+            options.optData,
         );
     }
 
     generateComparisonHeatmap(
         state: PieceTrackerState,
         compState: PieceTrackerState,
-        analysisFunc: PieceHeatmapPresetName | HeatmapAnalysisFunc<PieceTrackerState>,
-        square?: string | BoardCoord,
-        optData?: unknown,
+        options: GenerateHeatmapOptions<PieceTrackerState>,
     ): HeatmapData {
         return generateComparisonHeatmap(
             state,
             compState,
-            resolveHeatmapFunc(PieceHeatmapPresets, analysisFunc),
-            square,
-            optData,
+            resolveHeatmapFunc(PieceHeatmapPresets, options.analysis),
+            options.square,
+            options.optData,
         );
     }
 

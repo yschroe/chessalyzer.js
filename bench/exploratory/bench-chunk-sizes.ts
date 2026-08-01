@@ -6,10 +6,9 @@
 import { availableParallelism } from 'node:os';
 
 import { analyzePGN } from '#core/analyze';
-
-import { findLargestPgn } from '../lib/pgn-fixture';
-import { getRuntimeLabel } from '../lib/report';
-import { formatSeconds, timeAsync } from '../lib/timing';
+import { findLargestPgn } from '~/bench/lib/pgn-fixture';
+import { getRuntimeLabel } from '~/bench/lib/report';
+import { formatSeconds, timeAsync } from '~/bench/lib/timing';
 
 const pgn = findLargestPgn();
 const MB = 1024 * 1024;
