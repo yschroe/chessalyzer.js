@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 
-import { analyzePGN, buildAnalyzeResult, getTrackerState } from '#core/analyze';
+import { analyzePGN, buildAnalyzeResult } from '#core/analyze';
 import { MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
+import { getTrackerState } from '#core/get-tracker-state';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { ReplayError } from '#types/errors';
 import { fixturePath } from '~/test/helpers/fixtures';

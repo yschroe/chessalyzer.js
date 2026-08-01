@@ -21,8 +21,8 @@ const data = await analyzePGN('./pgn/asorted-games.pgn', {
 });
 console.log(data);
 
-const state1 = getTrackerState(data, tileTracker, 0);
-const state2 = getTrackerState(data, tileTracker2, 1);
+const state1 = getTrackerState(data, tileTracker);
+const state2 = getTrackerState(data, tileTracker2);
 
 printHeatmap(
     tileTracker.generateHeatmap(state1, { analysis: 'PIECE_MOVED_TO_TILE', square: 'd1' }),
