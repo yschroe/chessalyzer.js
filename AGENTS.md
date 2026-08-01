@@ -15,8 +15,6 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 3. **Replay** — SAN decode + play on a board ([`src/replay/`](src/replay/)), mode `'skip' | 'board' | 'actions'`.
 4. **Analyze** — [`GameProcessor`](src/core/game-processor.ts) runs configured trackers ([`src/trackers/`](src/trackers/)).
 
-**Terminology:** Canonical glossary in the [README Pipeline section](README.md#pipeline) and [Sprint 11](sprints/sprint-11-pipeline-terminology.md). Public docs use **replay** for SAN decode + play.
-
 **Key directories:**
 
 | Path                 | Purpose                                                                                |
