@@ -25,7 +25,7 @@ export default function Page({ slugs }: PageProps<'/docs/[...slugs]'>) {
             <meta property="og:image" content={getPageImageUrl(page)} />
             <DocsTitle>{page.data.title}</DocsTitle>
             <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
-            <div className="flex flex-row gap-2 items-center border-b pt-2 pb-6">
+            <div className="flex flex-row items-center gap-2 border-b pt-2 pb-6">
                 <MarkdownCopyButton markdownUrl={markdownUrl} />
                 <ViewOptionsPopover
                     markdownUrl={markdownUrl}
