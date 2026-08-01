@@ -92,15 +92,15 @@ export default function Home() {
 
             <div className="z-10 flex flex-1 flex-col justify-center">
                 <div className="px-6 py-24 sm:px-10 lg:px-36">
-                    <p className="home-brand mb-5 text-5xl font-semibold tracking-tight text-[#f3efe6] sm:text-6xl md:text-7xl">
+                    <p className="home-brand mb-5 text-5xl font-semibold tracking-tight text-fd-foreground sm:text-6xl md:text-7xl">
                         Chessalyzer
                     </p>
 
-                    <h1 className="home-headline mb-4 max-w-lg text-2xl leading-snug font-medium text-[#f7f3ea] sm:text-3xl md:text-4xl">
+                    <h1 className="home-headline mb-4 max-w-lg text-2xl leading-snug font-medium text-fd-foreground sm:text-3xl md:text-4xl">
                         Batch-analyze chess games at scale
                     </h1>
 
-                    <p className="home-lede mb-8 max-w-xl text-base leading-relaxed text-[#d5ddd4] sm:text-lg">
+                    <p className="home-lede mb-8 max-w-xl text-base leading-relaxed text-fd-foreground sm:text-lg">
                         Parse large PGN databases and run modular trackers — fast, parallel, and
                         dependency-free.
                     </p>
@@ -114,7 +114,7 @@ export default function Home() {
                         </Link>
                         <a
                             href="https://github.com/yschroe/chessalyzer"
-                            className="text-sm font-medium text-[#d5ddd4] underline-offset-4 transition-colors hover:text-[#f3efe6] hover:underline"
+                            className="text-sm font-medium text-fd-foreground underline-offset-4 hover:underline"
                         >
                             View on GitHub
                         </a>
