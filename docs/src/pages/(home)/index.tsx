@@ -7,16 +7,16 @@ function HeroBoard() {
     const ranks = 14;
     // Soft heatmap-style intensity on a few squares (library vibe, not uniform checker)
     const heat: Record<string, number> = {
-        '6-5': 0.55,
-        '6-6': 0.75,
-        '7-5': 0.7,
-        '7-6': 0.95,
-        '5-6': 0.4,
-        '8-5': 0.45,
-        '7-7': 0.5,
-        '8-6': 0.6,
-        '5-5': 0.3,
-        '6-4': 0.35,
+        '7-5': 0.55,
+        '7-6': 0.75,
+        '8-5': 0.7,
+        '8-6': 0.95,
+        '6-6': 0.4,
+        '9-5': 0.45,
+        '8-7': 0.5,
+        '9-6': 0.6,
+        '6-5': 0.3,
+        '7-4': 0.35,
     };
 
     return (
@@ -63,7 +63,7 @@ function HeroBoard() {
                                 y={y}
                                 width={size}
                                 height={size}
-                                fill={light ? '#DC91' : '#6421'}
+                                fill={light ? '#DC92' : '#6422'}
                             />
                             {intensity > 0 ? (
                                 <rect
