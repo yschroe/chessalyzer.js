@@ -1,6 +1,6 @@
 {
     "name": "chessalyzer",
-    "version": "4.0.0-alpha.1",
+    "version": "4.0.0-alpha.2",
     "description": "A JavaScript library for batch analyzing chess games.",
     "keywords": [
         "analysis",
