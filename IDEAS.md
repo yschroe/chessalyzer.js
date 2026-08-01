@@ -2,7 +2,7 @@
 
 Forward-looking notes on what chessalyzer does **not** do today, and plausible directions for extending it. This is not a committed roadmap — items may be reordered, dropped, or implemented differently.
 
-For what exists now, see [README.md](./README.md) and [AGENTS.md](./AGENTS.md). **Pipeline naming:** [Sprint 11](sprints/sprint-11-pipeline-terminology.md) is the source of truth for stage terminology (I/O → PGN parse → replay → analyze).
+For what exists now, see [README.md](./README.md) and [AGENTS.md](./AGENTS.md).
 
 ---
 

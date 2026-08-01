@@ -12,9 +12,8 @@ export interface GameAndMoveCount {
 }
 
 /** Normalized per-config processor state (filter, game limit). */
-export interface GameProcessorConfig {
-    hasFilter: boolean;
-    filter: (game: ParsedGame) => boolean;
+interface GameProcessorConfig {
+    filter?: (game: ParsedGame) => boolean;
     maxGames: number;
 }
 
@@ -30,8 +29,8 @@ export interface GameProcessorAnalysisConfig {
 /** Main-thread processor config including serializable tracker metadata for workers. */
 export interface GameProcessorAnalysisConfigFull extends GameProcessorAnalysisConfig {
     config: GameProcessorConfig;
-    trackerData: { id: string; module?: string; options?: unknown }[];
+    /** Serializable tracker metadata for worker bootstrap; set only when multithreaded. */
+    trackerData?: { id: string; module?: string; options?: unknown }[];
     replayMode: ReplayMode;
-    readGames: number;
     isDone: boolean;
 }

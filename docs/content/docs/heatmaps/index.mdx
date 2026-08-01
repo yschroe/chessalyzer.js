@@ -7,13 +7,12 @@ After running `analyzePGN`, tracker **state** holds the raw statistics. **Heatma
 
 ```javascript
 import { analyzePGN, printHeatmap } from 'chessalyzer';
-import { TileTracker } from 'chessalyzer/trackers';
+import { generateHeatmap, TileHeatmapPresets, TileTracker } from 'chessalyzer/trackers';
 
-const tileTracker = new TileTracker();
-const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
+const result = await analyzePGN('<pathToPgnFile>', { trackers: [TileTracker] });
 
-const { state } = result.trackers[0];
-const heatmapData = tileTracker.generateHeatmap(state, { analysis: 'TILE_OCC_ALL' });
+const { state } = result.runs[0].trackers[0];
+const heatmapData = generateHeatmap(state, TileHeatmapPresets, { analysis: 'TILE_OCC_ALL' });
 printHeatmap(heatmapData);
 ```
 
@@ -25,6 +24,6 @@ printHeatmap(heatmapData);
 
 - **[Presets](/docs/heatmaps/presets)** — built-in short names like `'TILE_OCC_ALL'` for common views
 - **[Custom functions](/docs/heatmaps/custom-functions)** — write your own per-square calculation
-- **[Comparing analyses](/docs/comparing-analyses)** — `generateComparisonHeatmap(state, otherState, { analysis })` for side-by-side cohorts
+- **[Comparing analyses](/docs/comparing-analyses)** — `generateComparisonHeatmap(state, otherState, presets, { analysis })` for side-by-side cohorts
 
-`TileTracker` and `PieceTracker` expose `generateHeatmap(state, options)` and `generateComparisonHeatmap(state, otherState, options)` helpers.
+Use `generateHeatmap(state, presets, options)` and `generateComparisonHeatmap(state, otherState, presets, options)` from `chessalyzer/trackers`. Pass the preset map matching your tracker state (`TileHeatmapPresets` or `PieceHeatmapPresets`).

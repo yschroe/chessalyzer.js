@@ -1,21 +1,13 @@
-import { algebraicToCoordsAt, type BoardCoord } from '#board/board-coords';
-import { ReplayFailure } from '#replay/replay-failure';
+import { squareToCoords } from '#board/board-coords';
 import type SanContext from '#replay/san-context';
-import type { PieceToken } from '#types/tokens';
-
-const PIECE_TOKEN_BY_CHAR: Record<number, PieceToken | undefined> = {
-    82: 'R',
-    78: 'N',
-    66: 'B',
-    81: 'Q',
-    75: 'K',
-};
+import { resolveCastle, resolvePawnMove, resolvePieceMove } from '#replay/san-resolver';
 
 /**
  * Apply one SAN on the board without building {@link Action} objects.
  *
- * Used on the replay fast path when no move trackers are attached. Each method
- * mirrors the corresponding logic in {@link SanDecoder} but skips tracker-facing allocations.
+ * Used on the replay fast path when no move trackers are attached. Move resolution
+ * is shared with {@link SanDecoder} (see `san-resolver.ts`); this class only performs
+ * the board mutations and skips tracker-facing allocations.
  */
 export default class SanApplier {
     constructor(private readonly ctx: SanContext) {}
@@ -31,128 +23,43 @@ export default class SanApplier {
         else this.applyPiece(san);
     }
 
-    /**
-     * Pawn SAN: `e4`, `exd5`, en passant (empty target square), `e8=Q`.
-     * Origin is found by scanning at most two ranks behind the target on the same file.
-     */
     private applyPawn(san: string): void {
-        const player = this.ctx.activePlayer;
-        const direction = player === 'w' ? 1 : -1;
-        const board = this.ctx.board;
+        const ctx = this.ctx;
+        const player = ctx.activePlayer;
+        const board = ctx.board;
+        const r = ctx.pawnResolution;
+        resolvePawnMove(ctx, san, r);
 
-        let end = san.length;
-        let promotesTo = '';
-        if (san.charCodeAt(end - 2) === 61) {
-            promotesTo = san.charAt(end - 1);
-            end -= 2;
+        if (r.capture) {
+            board.captureAt(player, ctx.takenOnBuf);
         }
+        board.moveByToken(player, 80 /* P */, ctx.fromBuf, r.to);
 
-        const to = algebraicToCoordsAt(san, end);
-        const from = this.ctx.fromBuf;
-        const [toRow, toCol] = to;
-
-        if (san.charCodeAt(1) === 120) {
-            from[0] = toRow + direction;
-            from[1] = san.charCodeAt(0) - 97;
-
-            if (board.isEmpty(to)) {
-                this.ctx.takenOnBuf[0] = toRow + direction;
-                this.ctx.takenOnBuf[1] = toCol;
-                board.captureAt(player, this.ctx.takenOnBuf);
-            } else {
-                board.captureAt(player, to);
-            }
-        } else {
-            for (let i = 1; i <= 2; i += 1) {
-                const row = toRow + i * direction;
-                if (board.isPawnAt(row, toCol)) {
-                    from[0] = row;
-                    from[1] = toCol;
-                    break;
-                }
-            }
-        }
-
-        board.moveByToken(player, 80 /* P */, from, to);
-
-        if (promotesTo) {
-            board.promotePiece(player, to, promotesTo);
+        if (r.promotesTo) {
+            board.promotePiece(player, r.to, r.promotesTo);
         }
     }
 
-    /**
-     * Piece SAN: target = last two chars; optional `x` before target;
-     * file/rank disambiguation delegated to {@link PieceFinder}.
-     */
     private applyPiece(san: string): void {
-        const player = this.ctx.activePlayer;
-        const board = this.ctx.board;
-        const tokenChar = san.charCodeAt(0);
-        const token = PIECE_TOKEN_BY_CHAR[tokenChar];
-        if (!token) {
-            throw new ReplayFailure('UnknownToken', `Unknown piece token in SAN: ${san}`);
-        }
+        const ctx = this.ctx;
+        const player = ctx.activePlayer;
+        const board = ctx.board;
+        const r = ctx.pieceResolution;
+        resolvePieceMove(ctx, san, r);
 
-        const end = san.length;
-        const to = algebraicToCoordsAt(san, end);
-
-        let restEnd = end - 2;
-        let capture = false;
-        if (san.charCodeAt(restEnd - 1) === 120) {
-            capture = true;
-            restEnd -= 1;
+        if (r.capture) {
+            board.captureAt(player, r.to);
         }
-        const restLen = restEnd - 1;
-
-        let from: BoardCoord;
-        if (restLen === 2) {
-            from = algebraicToCoordsAt(san, restEnd);
-        } else if (restLen === 1) {
-            const c = san.charCodeAt(1);
-            const mustBeInCol = c >= 97 && c <= 104 ? c - 97 : null;
-            const mustBeInRow = c >= 49 && c <= 56 ? 56 - c : null;
-            from = this.ctx.pieceFinder.findPiece(
-                to,
-                mustBeInRow,
-                mustBeInCol,
-                token,
-                tokenChar,
-                player,
-            );
-        } else {
-            from = this.ctx.pieceFinder.findPiece(to, null, null, token, tokenChar, player);
-        }
-
-        if (capture) {
-            board.captureAt(player, to);
-        }
-        board.moveByToken(player, tokenChar, from, to);
+        board.moveByToken(player, r.tokenChar, r.from, r.to);
     }
 
-    /** Castling: `O-O` (san.length === 3) = kingside, else queenside. Moves king then rook. */
+    /** Castling moves king then rook; squares come from the shared resolver. */
     private applyCastle(san: string): void {
         const player = this.ctx.activePlayer;
-        const row = player === 'w' ? 7 : 0;
         const board = this.ctx.board;
-        const from = this.ctx.fromBuf;
-        const to = this.ctx.takenOnBuf;
+        const r = resolveCastle(san, player);
 
-        from[0] = row;
-        from[1] = 4;
-        to[0] = row;
-
-        if (san.length === 3) {
-            to[1] = 6;
-            board.moveByToken(player, 75 /* K */, from, to);
-            from[1] = 7;
-            to[1] = 5;
-            board.moveByToken(player, 82 /* R */, from, to);
-        } else {
-            to[1] = 2;
-            board.moveByToken(player, 75 /* K */, from, to);
-            from[1] = 0;
-            to[1] = 3;
-            board.moveByToken(player, 82 /* R */, from, to);
-        }
+        board.moveByToken(player, 75 /* K */, squareToCoords(r.kingFrom), squareToCoords(r.kingTo));
+        board.moveByToken(player, 82 /* R */, squareToCoords(r.rookFrom), squareToCoords(r.rookTo));
     }
 }

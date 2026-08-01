@@ -1,27 +1,18 @@
 import type { ParsedGame } from 'chessalyzer/pgn';
-import { BaseGameTracker } from 'chessalyzer/trackers';
+import { defineGameTracker } from 'chessalyzer/trackers';
 
 export interface CustomGameTrackerState {
     wins: [number, number, number];
     games: number;
 }
 
-export default class CustomGameTracker extends BaseGameTracker<CustomGameTrackerState> {
-    override readonly id = 'CustomGameTracker';
-    override readonly workerModule = import.meta.url;
+export default defineGameTracker<CustomGameTrackerState>({
+    id: 'CustomGameTracker',
+    workerModule: import.meta.url,
 
-    init(): CustomGameTrackerState {
-        return { wins: [0, 0, 0], games: 0 };
-    }
+    init: () => ({ wins: [0, 0, 0], games: 0 }),
 
-    merge(state: CustomGameTrackerState, other: CustomGameTrackerState): void {
-        state.wins[0] += other.wins[0];
-        state.wins[1] += other.wins[1];
-        state.wins[2] += other.wins[2];
-        state.games += other.games;
-    }
-
-    track(state: CustomGameTrackerState, game: ParsedGame): void {
+    track(state, game: ParsedGame) {
         state.games += 1;
         switch (game.result) {
             case '1-0':
@@ -39,5 +30,12 @@ export default class CustomGameTracker extends BaseGameTracker<CustomGameTracker
             default:
                 break;
         }
-    }
-}
+    },
+
+    merge(state, other) {
+        state.wins[0] += other.wins[0];
+        state.wins[1] += other.wins[1];
+        state.wins[2] += other.wins[2];
+        state.games += other.games;
+    },
+});

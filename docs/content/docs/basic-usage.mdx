@@ -3,22 +3,20 @@ title: Basic usage
 description: Run your first analysis and preview a heatmap in the terminal.
 ---
 
-A typical workflow: create a tracker definition, run `analyzePGN`, read state from the result, then turn it into a heatmap.
+A typical workflow: pick a tracker definition, run `analyzePGN`, read state from the result, then turn it into a heatmap.
 
 This example tracks **tile occupation** — how often each square had a piece on it — using the built-in `TileTracker`:
 
 ```javascript
 import { analyzePGN, printHeatmap } from 'chessalyzer';
-import { TileTracker } from 'chessalyzer/trackers';
+import { generateHeatmap, TileHeatmapPresets, TileTracker } from 'chessalyzer/trackers';
 
-const tileTracker = new TileTracker();
-
-const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
+const result = await analyzePGN('<pathToPgnFile>', { trackers: [TileTracker] });
 
 console.log(result.gameCount, result.moveCount, result.movesPerSecond);
 
-const { state } = result.trackers[0];
-const heatmapData = tileTracker.generateHeatmap(state, { analysis: 'TILE_OCC_ALL' });
+const { state } = result.runs[0].trackers[0];
+const heatmapData = generateHeatmap(state, TileHeatmapPresets, { analysis: 'TILE_OCC_ALL' });
 
 printHeatmap(heatmapData);
 ```
@@ -26,8 +24,8 @@ printHeatmap(heatmapData);
 ## What happened
 
 1. **`analyzePGN`** read the PGN, replayed each game, and accumulated stats into plain state owned by the framework.
-2. **`result.trackers[0].state`** holds the tile stats; `tracker` is the definition you passed in.
-3. **`generateHeatmap(state, { analysis: 'TILE_OCC_ALL' })`** turned that state into a per-square value map using a built-in preset.
+2. **`result.runs[0].trackers[0].state`** holds the tile stats; `tracker` is the definition you passed in.
+3. **`generateHeatmap(state, TileHeatmapPresets, { analysis: 'TILE_OCC_ALL' })`** turned that state into a per-square value map using a built-in preset.
 4. **`printHeatmap`** rendered a quick color preview in the terminal (if your terminal supports colors).
 
 Inspect `state.tiles` directly, or generate other heatmap presets. See [Trackers](/docs/trackers) and [Heatmaps](/docs/heatmaps).

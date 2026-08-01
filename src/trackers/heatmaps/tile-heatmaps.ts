@@ -1,98 +1,51 @@
+import { isTrackedPiece } from '#trackers/piece-types';
 import { tileCellAt } from '#trackers/tile/tile-grid';
-import type { TileGrid } from '#trackers/tile/tile-tracker-types';
-import type { HeatmapPresetEntry } from '#types/tracker';
-
-function isTileTrackerData(data: unknown): data is { tiles: TileGrid; movesTotal: number } {
-    return typeof data === 'object' && data !== null && 'tiles' in data && 'movesTotal' in data;
-}
+import type { TileTrackerState } from '#trackers/tile/tile-tracker';
+import type { HeatmapAnalysisFunc } from '#types/tracker';
 
 export const TileHeatmapPresets = {
-    TILE_OCC_ALL: {
-        scope: 'global',
-        unit: '%',
-        description: 'Tile <loopSquare> had a piece on it for X% of all moves.',
-        calc: ({ data, loopSquare }) => {
-            if (!isTileTrackerData(data)) return 0;
-            const cell = tileCellAt(data.tiles, loopSquare.square);
-            if (!cell) return 0;
-            let val = cell.w.wasOn + cell.b.wasOn;
-            val = (val * 100) / data.movesTotal;
-            return val;
-        },
+    /** Tile had a piece on it for X% of all moves. */
+    TILE_OCC_ALL: ({ data, loopSquare }) => {
+        const cell = tileCellAt(data.tiles, loopSquare.square);
+        if (!cell) return 0;
+        return ((cell.w.total.wasOn + cell.b.total.wasOn) * 100) / data.movesTotal;
     },
-    TILE_OCC_WHITE: {
-        scope: 'global',
-        unit: '%',
-        description: 'Tile <loopSquare> had a white piece on it for X% of all moves.',
-        calc: ({ data, loopSquare }) => {
-            if (!isTileTrackerData(data)) return 0;
-            const cell = tileCellAt(data.tiles, loopSquare.square);
-            if (!cell) return 0;
-            let val = cell.w.wasOn;
-            val = (val * 100) / data.movesTotal;
-            return val;
-        },
+    /** Tile had a white piece on it for X% of all moves. */
+    TILE_OCC_WHITE: ({ data, loopSquare }) => {
+        const cell = tileCellAt(data.tiles, loopSquare.square);
+        if (!cell) return 0;
+        return (cell.w.total.wasOn * 100) / data.movesTotal;
     },
-    TILE_OCC_BLACK: {
-        scope: 'global',
-        unit: '%',
-        description: 'Tile X had a black piece on it for Y% of all moves.',
-        calc: ({ data, loopSquare }) => {
-            if (!isTileTrackerData(data)) return 0;
-            const cell = tileCellAt(data.tiles, loopSquare.square);
-            if (!cell) return 0;
-            let val = cell.b.wasOn;
-            val = (val * 100) / data.movesTotal;
-            return val;
-        },
+    /** Tile had a black piece on it for X% of all moves. */
+    TILE_OCC_BLACK: ({ data, loopSquare }) => {
+        const cell = tileCellAt(data.tiles, loopSquare.square);
+        if (!cell) return 0;
+        return (cell.b.total.wasOn * 100) / data.movesTotal;
     },
-    TILE_OCC_BY_PIECE: {
-        scope: 'specific',
-        unit: '%',
-        description: 'Selected tile was occupated by piece X during Y% of all moves.',
-        calc: ({ data, loopSquare, refSquare }) => {
-            if (!isTileTrackerData(data)) return 0;
-            const { piece } = loopSquare;
+    /** Reference square was occupied by piece X during Y% of all moves. Requires `square`. */
+    TILE_OCC_BY_PIECE: ({ data, loopSquare, refSquare }) => {
+        const { piece } = loopSquare;
 
-            let val = 0;
-            const cell = tileCellAt(data.tiles, refSquare.square);
-            if (piece && cell) {
-                const pieceStats = cell[piece.color][piece.name];
-                val = pieceStats?.wasOn ?? 0;
-            }
-            val = (val * 100) / data.movesTotal;
-            return val;
-        },
+        let val = 0;
+        const cell = tileCellAt(data.tiles, refSquare.square);
+        if (piece && cell && isTrackedPiece(piece.name)) {
+            val = cell[piece.color].byPiece[piece.name].wasOn;
+        }
+        return (val * 100) / data.movesTotal;
     },
-    TILE_CAPTURE_COUNT: {
-        scope: 'global',
-        unit: '',
-        description: 'Count of Pieces that were taken on each tile.',
-        calc: ({ data, loopSquare }) => {
-            if (!isTileTrackerData(data)) return 0;
-            const cell = tileCellAt(data.tiles, loopSquare.square);
-            if (!cell) return 0;
-            const val = cell.b.wasCapturedOn + cell.w.wasCapturedOn;
-            return val;
-        },
+    /** Count of pieces that were taken on each tile. */
+    TILE_CAPTURE_COUNT: ({ data, loopSquare }) => {
+        const cell = tileCellAt(data.tiles, loopSquare.square);
+        if (!cell) return 0;
+        return cell.b.total.wasCapturedOn + cell.w.total.wasCapturedOn;
     },
-    PIECE_MOVED_TO_TILE: {
-        scope: 'specific',
-        unit: '',
-        description: 'Selected piece had tile X as a move target Y times.',
-        calc: ({ data, loopSquare, refSquare }) => {
-            if (!isTileTrackerData(data)) return 0;
-            const { piece } = refSquare;
-            const { square } = loopSquare;
-            let val = 0;
-            const cell = tileCellAt(data.tiles, square);
-            if (piece && cell) {
-                const pieceStats = cell[piece.color][piece.name];
-                val = pieceStats?.movedTo ?? 0;
-            }
-            return val;
-        },
+    /** Reference piece had tile X as a move target Y times. Requires `square`. */
+    PIECE_MOVED_TO_TILE: ({ data, loopSquare, refSquare }) => {
+        const { piece } = refSquare;
+        const cell = tileCellAt(data.tiles, loopSquare.square);
+        if (!piece || !cell || !isTrackedPiece(piece.name)) return 0;
+        return cell[piece.color].byPiece[piece.name].movedTo;
     },
-} as const satisfies Record<string, HeatmapPresetEntry>;
+} satisfies Record<string, HeatmapAnalysisFunc<TileTrackerState>>;
 
 export type TileHeatmapPresetName = keyof typeof TileHeatmapPresets;

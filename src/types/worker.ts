@@ -1,14 +1,11 @@
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
-import type { AssembledGame } from '#types/parse-pgn';
 import type { TrackerSnapshot } from '#types/tracker';
 
 /** One-time worker bootstrap: tracker ids, options, optional module paths. */
 export interface WorkerInitData {
     configs: {
         trackerData: { id: string; module?: string; options?: unknown }[];
-        /** When true, worker assembles games and returns them for main-thread filter/replay. */
-        pgnParseOnly?: boolean;
         replayMode: ReplayMode;
     }[];
     onError?: 'abort' | 'skip-game';
@@ -36,17 +33,22 @@ export interface WorkerFlushTask {
 
 export type WorkerTaskData = WorkerBatchTask | WorkerFlushTask;
 
-/** Per-config slice of a worker batch or flush result. */
-export interface WorkerConfigResult {
+/** Per-config slice of a worker batch result (counters only; tracker state flushes at drain). */
+export interface WorkerBatchConfigResult {
     idxConfig: number;
     moves: number;
     games: number;
-    trackerSnapshots?: TrackerSnapshot[];
     skippedGames?: number;
     errors?: AnalyzeError[];
-    /** Parsed games when {@link WorkerInitData.configs} entry has `pgnParseOnly: true`. */
-    parsedGames?: AssembledGame[];
 }
+
+/** Per-config slice of a worker flush result (accumulated tracker state at pool drain). */
+interface WorkerFlushConfigResult {
+    idxConfig: number;
+    trackerSnapshots: TrackerSnapshot[];
+}
+
+export type WorkerConfigResult = WorkerBatchConfigResult | WorkerFlushConfigResult;
 
 /** Worker → main result: one or more config results, or a batch-level error. */
 export interface WorkerMessage {

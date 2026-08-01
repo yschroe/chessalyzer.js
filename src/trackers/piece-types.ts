@@ -1,23 +1,15 @@
-// oxfmt-ignore
-export type Piece =
-    | 'Pa' | 'Pb' | 'Pc' | 'Pd' | 'Pe' | 'Pf' | 'Pg' | 'Ph'
-    | 'Ra' | 'Nb' | 'Bc' | 'Qd' | 'Ke' | 'Bf' | 'Ng' | 'Rh';
+import { PAWN_TEMPLATE, PIECE_TEMPLATE } from '#board/piece-names';
+
+/** Starting-position piece names (`Pa`…`Ph`, `Ra`…`Rh`), derived from the canonical templates. */
+export type Piece = (typeof PAWN_TEMPLATE)[number] | (typeof PIECE_TEMPLATE)[number];
 
 type PieceStats = { [piece in Piece]: number };
 export type PieceStatsMap = { [piece in Piece]: PieceStats };
 
-// oxfmt-ignore
-export const pieceList: Piece[] = [
-    'Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph',
-    'Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh',
-];
+export const pieceList: Piece[] = [...PAWN_TEMPLATE, ...PIECE_TEMPLATE];
 
 const trackedPieceSet = new Set<string>(pieceList);
 
 export function isTrackedPiece(name: string): name is Piece {
     return trackedPieceSet.has(name);
-}
-
-export function isPieceTrackerData(data: unknown): data is { b: PieceStatsMap; w: PieceStatsMap } {
-    return typeof data === 'object' && data !== null && 'b' in data && 'w' in data;
 }

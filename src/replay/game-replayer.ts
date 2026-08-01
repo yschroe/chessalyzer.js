@@ -7,7 +7,6 @@ import SanDecoder from '#replay/san-decoder';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { AssembledGame } from '#types/parse-pgn';
 import { toParsedGame } from '#types/parse-pgn';
-import type { PlayerColor } from '#types/tokens';
 
 /**
  * Orchestrates per-game analysis: game trackers → optional SAN replay (decode + play) → counters.
@@ -29,10 +28,6 @@ class GameReplayer {
     /** Exposed for tests/debugging; same instance as `ctx.board`. */
     get board() {
         return this.ctx.board;
-    }
-
-    get activePlayer(): PlayerColor {
-        return this.ctx.activePlayer;
     }
 
     /**
@@ -69,12 +64,11 @@ class GameReplayer {
             );
         }
 
+        trackerHost.onGameEnd();
+
         if (!replayOk) {
-            trackerHost.onGameEnd();
             return;
         }
-
-        trackerHost.onGameEnd();
 
         analysisCfg.processedMoves += moves.length;
         analysisCfg.processedGames += 1;

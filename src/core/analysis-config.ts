@@ -1,31 +1,17 @@
 import { TrackerHost } from '#core/tracker-host';
 import { resolveEffectiveReplayMode } from '#replay/replay-mode';
-import type { ReplayMode } from '#replay/replay-mode';
 import { BUILTIN_TRACKER_IDS } from '#trackers/builtin-registry';
 import { assertMultithreadTrackerDef, assertTrackerDef } from '#trackers/define-tracker';
-import type {
-    AnalyzeMultiRunOptions,
-    AnalyzeOptions,
-    AnalyzeRun,
-    ReplayValidation,
-    WorkerOptions,
-} from '#types/analysis';
-import type { GameProcessorAnalysisConfigFull, GameProcessorConfig } from '#types/analysis-runtime';
-import type { ParsedGame } from '#types/parse-pgn';
+import type { AnalyzeOptions, AnalyzeRun, WorkerOptions } from '#types/analysis';
+import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { TrackerDef } from '#types/tracker';
 
-/** Normalized analysis run: per-config runtime state plus path-selection flags. */
-export interface NormalizedAnalysisRun {
+/** Fully normalized `analyzePGN` inputs: per-run processor state plus path-selection fields. */
+export interface NormalizedAnalyzeOptions {
     configs: GameProcessorAnalysisConfigFull[];
+    multithreadCfg: WorkerOptions | null;
+    onError: 'abort' | 'skip-game';
     parseHeaders: boolean;
-}
-
-/** Options threaded from public {@link AnalyzeOptions} into processor normalization. */
-export interface NormalizeAnalysisOptions {
-    headers?: boolean | 'auto';
-    replay?: ReplayMode;
-    /** When true, custom trackers must provide id, merge, and workerModule. */
-    multithreaded?: boolean;
 }
 
 function resolveParseHeaders(
@@ -44,19 +30,6 @@ function resolveParseHeaders(
     return needsHeaders;
 }
 
-function normalizeProcessorConfig(
-    filter: ((game: ParsedGame) => boolean) | undefined,
-    maxGames: number | undefined,
-): GameProcessorConfig {
-    const hasFilter = filter !== undefined;
-
-    return {
-        hasFilter,
-        filter: hasFilter ? filter : () => true,
-        maxGames: maxGames ?? Infinity,
-    };
-}
-
 function assertFilterRequiresSingleThreaded(
     runs: AnalyzeRun[],
     multithreadCfg: WorkerOptions | null,
@@ -70,8 +43,8 @@ function assertFilterRequiresSingleThreaded(
     }
 }
 
-function assertNoConflictingSingleRunFields(opts: AnalyzeMultiRunOptions): void {
-    const extra = opts as AnalyzeMultiRunOptions & {
+function assertNoConflictingRunFields(opts: AnalyzeOptions): void {
+    const extra = opts as AnalyzeOptions & {
         trackers?: unknown;
         filter?: unknown;
         maxGames?: unknown;
@@ -87,80 +60,36 @@ function assertNoConflictingSingleRunFields(opts: AnalyzeMultiRunOptions): void 
     }
 }
 
-function assertValidationSupported(validation: ReplayValidation | undefined): void {
-    if ((validation as string | undefined) === 'validate') {
-        throw new Error('validation: "validate" is not yet implemented');
-    }
-}
-
-/**
- * Convert public {@link AnalyzeOptions} into processor inputs.
- */
-export function normalizeAnalyzeOptions(options?: AnalyzeOptions): {
-    runs: AnalyzeRun[];
-    multithreadCfg: WorkerOptions | null;
-    onError: 'abort' | 'skip-game';
-    headers?: boolean | 'auto';
-    replay?: ReplayMode;
-    /** True when the caller passed `runs` (multi-run options form). */
-    multiRun: boolean;
-} {
-    const opts = options ?? {};
-
-    assertValidationSupported(opts.validation);
-
-    const multithreadCfg: WorkerOptions | null =
-        opts.workers === false ? null : (opts.workers ?? {});
-
-    const onError = opts.onError ?? 'abort';
-    const { headers, replay } = opts;
-
-    if (opts.runs !== undefined) {
-        assertNoConflictingSingleRunFields(opts);
+function resolveRuns(opts: AnalyzeOptions): AnalyzeRun[] {
+    if ('runs' in opts && opts.runs !== undefined) {
+        assertNoConflictingRunFields(opts);
         if (opts.runs.length === 0) {
             throw new Error('runs must contain at least one entry');
         }
-        assertFilterRequiresSingleThreaded(opts.runs, multithreadCfg);
-        return {
-            multithreadCfg,
-            onError,
-            headers,
-            replay,
-            runs: opts.runs,
-            multiRun: true,
-        };
+        return opts.runs;
     }
-
-    const runs: AnalyzeRun[] = [
-        { trackers: opts.trackers, filter: opts.filter, maxGames: opts.maxGames },
-    ];
-    assertFilterRequiresSingleThreaded(runs, multithreadCfg);
-    return {
-        multithreadCfg,
-        onError,
-        headers,
-        replay,
-        runs,
-        multiRun: false,
-    };
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- runs branch excluded above; remaining shape is the single-run sugar
+    const single = opts as AnalyzeRun;
+    return [{ trackers: single.trackers, filter: single.filter, maxGames: single.maxGames }];
 }
 
 /**
- * Convert {@link AnalyzeRun}s into processor runtime state and path flags.
- * Side-effect free: callers assign the returned fields onto {@link GameProcessor}.
+ * Convert public {@link AnalyzeOptions} into processor inputs in one pass:
+ * validates, then builds per-run runtime state and path-selection fields.
  */
-export function normalizeAnalysisConfigs(
-    runs: AnalyzeRun[],
-    options?: NormalizeAnalysisOptions,
-): NormalizedAnalysisRun {
+export function normalizeAnalyzeOptions(options?: AnalyzeOptions): NormalizedAnalyzeOptions {
+    const opts = options ?? {};
+    const multithreadCfg: WorkerOptions | null =
+        opts.workers === false ? null : (opts.workers ?? {});
+    const runs = resolveRuns(opts);
+    assertFilterRequiresSingleThreaded(runs, multithreadCfg);
+
+    const multithreaded = multithreadCfg !== null;
     let needsHeaders = false;
-    const multithreaded = options?.multithreaded ?? false;
-    const normalized: GameProcessorAnalysisConfigFull[] = [];
+    const configs: GameProcessorAnalysisConfigFull[] = [];
 
     for (const run of runs) {
-        const config = normalizeProcessorConfig(run.filter, run.maxGames);
         const defs: TrackerDef[] = [];
-
         if (run.trackers) {
             for (const tracker of run.trackers) {
                 assertTrackerDef(tracker);
@@ -174,36 +103,37 @@ export function normalizeAnalysisConfigs(
             }
         }
 
-        const trackerHost = new TrackerHost(defs);
         const trackerData = multithreaded
             ? defs.map((tracker) => ({
                   id: tracker.id,
                   module: tracker.workerModule,
                   options: tracker.options,
               }))
-            : [];
+            : undefined;
 
-        const tempCfg: GameProcessorAnalysisConfigFull = {
-            trackerHost,
+        configs.push({
+            trackerHost: new TrackerHost(defs),
             trackerData,
-            config,
+            config: {
+                filter: run.filter,
+                maxGames: run.maxGames ?? Infinity,
+            },
             processedMoves: 0,
             processedGames: 0,
             skippedGames: 0,
             errors: [],
-            readGames: 0,
             isDone: false,
             replayMode: resolveEffectiveReplayMode(
                 defs.some((def) => def.kind === 'move'),
-                options?.replay,
+                opts.replay,
             ),
-        };
-
-        normalized.push(tempCfg);
+        });
     }
 
     return {
-        configs: normalized,
-        parseHeaders: resolveParseHeaders(options?.headers, needsHeaders),
+        configs,
+        multithreadCfg,
+        onError: opts.onError ?? 'abort',
+        parseHeaders: resolveParseHeaders(opts.headers, needsHeaders),
     };
 }

@@ -45,11 +45,14 @@ export function assertTrackerDef(tracker: unknown): asserts tracker is TrackerDe
     }
     assertTrackerDefShape(tracker);
 }
+/**
+ * Multithreaded validation for tracker definitions. Callers must have already
+ * run {@link assertTrackerDef} — this only checks the worker contract.
+ */
 export function assertMultithreadTrackerDef(
     tracker: TrackerDef,
     builtinIds: ReadonlySet<string>,
 ): void {
-    assertTrackerDefShape(tracker);
     if (typeof tracker.merge !== 'function') {
         throw new Error(
             `Tracker "${tracker.id}" must implement merge() for multithreaded analysis`,
@@ -60,34 +63,4 @@ export function assertMultithreadTrackerDef(
             `Custom tracker "${tracker.id}" must set workerModule for multithreaded analysis`,
         );
     }
-}
-
-/** Abstract base for move-level tracker class adapters. */
-export abstract class BaseMoveTracker<S = unknown, O = unknown> implements MoveTrackerDef<S, O> {
-    abstract readonly id: string;
-    readonly kind = 'move' as const;
-    readonly workerModule?: string;
-    readonly options?: O;
-
-    abstract init(options?: O): S;
-    abstract track(state: S, actions: Action[]): void;
-    abstract merge(state: S, other: S): void;
-
-    onGameEnd?(state: S): void;
-    onFinish?(state: S): void;
-}
-
-/** Abstract base for game-level tracker class adapters. */
-export abstract class BaseGameTracker<S = unknown, O = unknown> implements GameTrackerDef<S, O> {
-    abstract readonly id: string;
-    readonly kind = 'game' as const;
-    readonly workerModule?: string;
-    readonly options?: O;
-
-    abstract init(options?: O): S;
-    abstract track(state: S, game: ParsedGame): void;
-    abstract merge(state: S, other: S): void;
-
-    onGameEnd?(state: S): void;
-    onFinish?(state: S): void;
 }

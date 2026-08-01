@@ -1,10 +1,9 @@
-import { extractMoves, isGameResultLine, parseHeaderTag, stripComments } from '#pgn/movetext';
+import { extractGameResult, extractMoves, parseHeaderTag, stripComments } from '#pgn/movetext';
 import type { AssembledGame } from '#types/parse-pgn';
 import { isGameResult } from '#types/parse-pgn';
 
-export interface ParseGamesOptions {
+export interface GameAssemblerOptions {
     parseHeaders: boolean;
-    maxGames?: number;
 }
 
 function toGameResult(value: string) {
@@ -19,7 +18,7 @@ export class GameAssembler {
     private game: AssembledGame = { moves: [] };
     private headers: Record<string, string> | undefined;
 
-    constructor(private readonly options: ParseGamesOptions) {}
+    constructor(private readonly options: GameAssemblerOptions) {}
 
     /** Process one physical line; returns a completed game at game boundaries, else null. */
     processLine(line: string): AssembledGame | null {
@@ -43,11 +42,12 @@ export class GameAssembler {
             this.game.moves = this.game.moves.concat(matchedMoves);
         }
 
-        if (isGameResultLine(cleanedLine)) {
+        const resultToken = extractGameResult(cleanedLine);
+        if (resultToken !== null) {
             const completed: AssembledGame = { moves: this.game.moves };
-            const resultMatch = cleanedLine.match(/(1-0|0-1|1\/2-1\/2)\s*$/);
-            if (resultMatch?.[1] !== undefined) {
-                completed.result = toGameResult(resultMatch[1]);
+            const result = toGameResult(resultToken);
+            if (result !== undefined) {
+                completed.result = result;
             } else if (this.headers?.Result !== undefined) {
                 completed.result = toGameResult(this.headers.Result);
             }
@@ -66,7 +66,7 @@ export class GameAssembler {
 /** Assemble a sequence of PGN lines into complete games (for worker-side batch parsing). */
 export function parseGamesFromLines(
     lines: Iterable<string>,
-    options: ParseGamesOptions,
+    options: GameAssemblerOptions & { maxGames?: number },
 ): AssembledGame[] {
     const assembler = new GameAssembler(options);
     const games: AssembledGame[] = [];

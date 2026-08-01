@@ -12,6 +12,7 @@ import GameReplayer from '#replay/game-replayer';
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AssembledGame } from '#types/parse-pgn';
 import type {
+    WorkerBatchConfigResult,
     WorkerBatchTask,
     WorkerConfigResult,
     WorkerInitData,
@@ -35,19 +36,11 @@ const gameReplayer = new GameReplayer();
 /** Tracker config is read once from workerData; batches only carry PGN chunks. */
 const ready = initWorkerTrackers(initData);
 
-function isPgnParseOnly(idxConfig: number): boolean {
-    // Reserved for serializable filters — false for all public analyzePGN paths today (Phase 6).
-    return initData?.configs[idxConfig]?.pgnParseOnly ?? false;
-}
-
 function getReplayMode(idxConfig: number): ReplayMode {
     return initData?.configs[idxConfig]?.replayMode ?? 'skip';
 }
 
 function computeParseMaxGames(configs: WorkerTaskConfigEntry[]): number {
-    const hasFilter = configs.some((c) => isPgnParseOnly(c.idxConfig));
-    if (hasFilter) return Infinity;
-
     let max = 0;
     for (const entry of configs) {
         if (entry.remainingGames === undefined) return Infinity;
@@ -59,7 +52,7 @@ function computeParseMaxGames(configs: WorkerTaskConfigEntry[]): number {
 function processReplayConfig(
     entry: WorkerTaskConfigEntry,
     parsedGames: AssembledGame[],
-): WorkerConfigResult {
+): WorkerBatchConfigResult {
     const cfg = getCachedCfg(entry.idxConfig);
     resetCfgBatchCounters(cfg);
 
@@ -79,7 +72,7 @@ function processReplayConfig(
         gamesProcessed += 1;
     }
 
-    const result: WorkerConfigResult = {
+    const result: WorkerBatchConfigResult = {
         moves: cfg.processedMoves,
         games: cfg.processedGames,
         idxConfig: entry.idxConfig,
@@ -103,16 +96,7 @@ function processBatch(msg: WorkerBatchTask): WorkerMessage {
     const results: WorkerConfigResult[] = [];
 
     for (const entry of msg.configs) {
-        if (isPgnParseOnly(entry.idxConfig)) {
-            results.push({
-                parsedGames,
-                idxConfig: entry.idxConfig,
-                games: 0,
-                moves: 0,
-            });
-        } else {
-            results.push(processReplayConfig(entry, parsedGames));
-        }
+        results.push(processReplayConfig(entry, parsedGames));
     }
 
     return { results };
@@ -124,8 +108,6 @@ function processFlush(): WorkerMessage {
     const configCount = initData?.configs.length ?? 0;
 
     for (let idxConfig = 0; idxConfig < configCount; idxConfig += 1) {
-        if (isPgnParseOnly(idxConfig)) continue;
-
         const cfg = getCachedCfg(idxConfig);
         const hasTrackers =
             cfg.trackerHost.gameEntries.length > 0 || cfg.trackerHost.moveEntries.length > 0;
@@ -133,8 +115,6 @@ function processFlush(): WorkerMessage {
 
         results.push({
             idxConfig,
-            games: 0,
-            moves: 0,
             trackerSnapshots: cfg.trackerHost.snapshots(),
         });
     }

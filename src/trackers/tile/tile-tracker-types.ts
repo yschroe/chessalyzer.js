@@ -1,32 +1,42 @@
 /**
  * Data model for {@link TileTrackerBase}: per-square stats and virtual piece tracking.
  *
- * Piece name templates are shared with board replay and heatmaps via {@link PAWN_TEMPLATE}
- * and {@link PIECE_TEMPLATE} from `board/piece-names`.
+ * Piece names come from the canonical starting-position templates (via `piece-list`).
+ * All tracker state is plain data (no class instances) so it survives structured
+ * clone across the worker boundary.
  */
 
-export { PAWN_TEMPLATE, PIECE_TEMPLATE } from '#board/piece-names';
+import { pieceList, type Piece } from '#trackers/piece-types';
 
 /** Counters for one color on one square (aggregate or per-piece-name). */
-export class TileStats {
+export interface TileStats {
     movedTo: number;
     wasOn: number;
     capturedOn: number;
     wasCapturedOn: number;
+}
 
-    constructor() {
-        this.movedTo = 0;
-        this.wasOn = 0;
-        this.capturedOn = 0;
-        this.wasCapturedOn = 0;
-    }
+function createTileStats(): TileStats {
+    return { movedTo: 0, wasOn: 0, capturedOn: 0, wasCapturedOn: 0 };
 }
 
 /**
- * Per-color bucket on a square: aggregate counters plus named sub-buckets per piece type.
- * Both `cell.b.movedTo` and `cell.b.Nb.movedTo` are valid access patterns.
+ * Per-color bucket on a square: aggregate counters plus one slot per starting piece.
+ * Access via `cell.w.total.wasOn` (aggregate) or `cell.w.byPiece.Nb.wasOn` (per piece).
  */
-export type ColorBucket = TileStats & Record<string, TileStats>;
+export interface ColorBucket {
+    total: TileStats;
+    byPiece: Record<Piece, TileStats>;
+}
+
+export function createColorBucket(): ColorBucket {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- filled for every Piece in the loop below
+    const byPiece = {} as Record<Piece, TileStats>;
+    for (const name of pieceList) {
+        byPiece[name] = createTileStats();
+    }
+    return { total: createTileStats(), byPiece };
+}
 
 /**
  * Virtual piece used for occupation tracking — not the same as board {@link ChessPiece}.

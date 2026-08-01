@@ -1,5 +1,5 @@
-import { openLineStream, type LineStream } from '#io/line-reader';
-import { isGameResultLine, stripComments } from '#pgn/movetext';
+import { lineStreamIterable } from '#io/line-iterable';
+import { extractGameResult, stripComments } from '#pgn/movetext';
 
 /** Default chunk size (~4 MB) for worker-side PGN dispatch. */
 const DEFAULT_PGN_CHUNK_BYTES = 4 * 1024 * 1024;
@@ -16,8 +16,6 @@ export interface PgnChunkConfig {
 
 /** A chunk of PGN lines. */
 export interface PgnChunk {
-    /** Raw text of the chunk. */
-    text: string;
     /** UTF-8 bytes for zero-copy transfer to workers via `postMessage` transfer list. */
     bytes: Uint8Array;
     /** Number of lines in the chunk. */
@@ -26,11 +24,6 @@ export interface PgnChunk {
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
-
-/** Encode PGN chunk text as UTF-8 bytes for worker transfer. */
-function encodePgnChunkText(text: string): Uint8Array {
-    return textEncoder.encode(text);
-}
 
 /** Decode UTF-8 PGN chunk bytes received from the main thread. */
 export function decodePgnChunkBytes(bytes: Uint8Array): string {
@@ -52,32 +45,15 @@ function findLastCompleteGameLineIndex(lines: string[]): number {
         const line = lines[i];
         if (line === undefined || line === '') continue;
         if (line.startsWith('[')) continue;
-        if (isGameResultLine(stripComments(line))) return i;
+        if (extractGameResult(stripComments(line)) !== null) return i;
     }
     return -1;
 }
 
-/** True when the last movetext line in the chunk completes a game. */
-export function chunkEndsWithCompleteGame(lines: string[]): boolean {
-    const lastResultIdx = findLastCompleteGameLineIndex(lines);
-    if (lastResultIdx === -1) return false;
-
-    for (let i = lastResultIdx + 1; i < lines.length; i += 1) {
-        const line = lines[i];
-        if (line === undefined || line === '') continue;
-        if (line.startsWith('[')) continue;
-        return false;
-    }
-
-    return true;
-}
-
-type ChunkResult = IteratorResult<PgnChunk>;
-
 /**
  * Stream a PGN file as raw text chunks aligned to complete games.
  *
- * I/O lives in {@link openLineStream}; this module only accumulates lines, cuts on
+ * I/O lives in {@link lineStreamIterable}; this module only accumulates lines, cuts on
  * game boundaries, and encodes transferable bytes. `await` happens between chunks
  * (not per line) via the returned async iterator.
  */
@@ -90,12 +66,6 @@ export function readPgnChunks(file: string, config: PgnChunkConfig = {}): AsyncI
     let byteSize = 0;
     /** True once the current fill has reached the byte/line target and is waiting on a game boundary. */
     let extendingToBoundary = false;
-
-    const pending: ChunkResult[] = [];
-    let waiter: ((result: ChunkResult) => void) | null = null;
-    let finished = false;
-    let streamError: Error | null = null;
-    let lines: LineStream;
 
     const pushLine = (line: string) => {
         accumulator.push(line);
@@ -125,34 +95,13 @@ export function readPgnChunks(file: string, config: PgnChunkConfig = {}): AsyncI
         }
 
         return {
-            text,
-            bytes: encodePgnChunkText(text),
+            bytes: textEncoder.encode(text),
             lineCount: completeLines.length,
         };
     };
 
-    const deliver = (result: ChunkResult) => {
-        if (waiter) {
-            const resolve = waiter;
-            waiter = null;
-            resolve(result);
-            return;
-        }
-        pending.push(result);
-    };
-
-    const tryEmitChunk = (): boolean => {
-        const chunk = takeCompleteChunk();
-        if (!chunk) return false;
-        extendingToBoundary = false;
-        // Pause for backpressure while the consumer awaits the next chunk.
-        lines.pause();
-        deliver({ value: chunk, done: false });
-        return true;
-    };
-
-    lines = openLineStream(file, {
-        onLine: (line) => {
+    return lineStreamIterable<PgnChunk>(file, {
+        onLine: (line, sink) => {
             pushLine(line);
 
             if (!extendingToBoundary) {
@@ -160,65 +109,19 @@ export function readPgnChunks(file: string, config: PgnChunkConfig = {}): AsyncI
                 extendingToBoundary = true;
             }
 
-            tryEmitChunk();
+            const chunk = takeCompleteChunk();
+            if (chunk) {
+                extendingToBoundary = false;
+                sink.emit(chunk);
+            }
         },
-        onClose: () => {
-            finished = true;
-            // Final flush without pause — the line stream is already closed.
+        onClose: (sink) => {
+            // Final flush — the line stream is already closed, so emit's pause is a no-op.
             if (accumulator.length > 0) {
                 const chunk = takeCompleteChunk();
-                if (chunk) deliver({ value: chunk, done: false });
+                if (chunk) sink.emit(chunk);
             }
-            deliver({ value: undefined, done: true });
-        },
-        onError: (err) => {
-            if (streamError) return;
-            streamError = err;
-            finished = true;
-            if (waiter) {
-                const rejectWaiter = waiter;
-                waiter = null;
-                rejectWaiter({ value: undefined, done: true });
-            }
-            lines.close();
+            sink.finish();
         },
     });
-
-    const next = (): Promise<ChunkResult> => {
-        if (streamError) return Promise.reject(streamError);
-
-        const queued = pending.shift();
-        if (queued !== undefined) {
-            if (!queued.done && !lines.closed) lines.resume();
-            return Promise.resolve(queued);
-        }
-
-        if (finished) {
-            return Promise.resolve({ value: undefined, done: true });
-        }
-
-        return new Promise<ChunkResult>((resolve, reject) => {
-            waiter = (result) => {
-                if (streamError) {
-                    reject(streamError);
-                    return;
-                }
-                resolve(result);
-            };
-            lines.resume();
-        });
-    };
-
-    return {
-        [Symbol.asyncIterator]: () => ({
-            next,
-            async return(): Promise<ChunkResult> {
-                finished = true;
-                lines.close();
-                waiter = null;
-                pending.length = 0;
-                return { value: undefined, done: true };
-            },
-        }),
-    };
 }

@@ -1,9 +1,9 @@
-import { isPieceTrackerData, isTrackedPiece } from '#trackers/piece-types';
-import type { PieceStatsMap } from '#trackers/piece-types';
-import type { HeatmapPresetEntry } from '#types/tracker';
+import type { PieceTrackerState } from '#trackers/piece-tracker';
+import { isTrackedPiece } from '#trackers/piece-types';
+import type { HeatmapAnalysisFunc } from '#types/tracker';
 
 function captureCount(
-    data: { b: PieceStatsMap; w: PieceStatsMap },
+    data: PieceTrackerState,
     takerColor: 'b' | 'w',
     takerName: string,
     takenName: string,
@@ -13,30 +13,20 @@ function captureCount(
 }
 
 export const PieceHeatmapPresets = {
-    PIECE_CAPTURED_BY: {
-        scope: 'specific',
-        unit: '',
-        description: 'Selected piece was taken by piece X Y times.',
-        calc: ({ data, loopSquare, refSquare }) => {
-            if (!isPieceTrackerData(data)) return 0;
-            const sqrPiece = refSquare.piece;
-            const loopPiece = loopSquare.piece;
-            if (!sqrPiece || !loopPiece || loopPiece.color === sqrPiece.color) return 0;
-            return captureCount(data, loopPiece.color, loopPiece.name, sqrPiece.name);
-        },
+    /** Reference piece was taken by piece X Y times. Requires `square`. */
+    PIECE_CAPTURED_BY: ({ data, loopSquare, refSquare }) => {
+        const sqrPiece = refSquare.piece;
+        const loopPiece = loopSquare.piece;
+        if (!sqrPiece || !loopPiece || loopPiece.color === sqrPiece.color) return 0;
+        return captureCount(data, loopPiece.color, loopPiece.name, sqrPiece.name);
     },
-    PIECE_CAPTURED: {
-        scope: 'specific',
-        unit: '',
-        description: 'Selected piece took piece X Y times.',
-        calc: ({ data, loopSquare, refSquare }) => {
-            if (!isPieceTrackerData(data)) return 0;
-            const sqrPiece = refSquare.piece;
-            const loopPiece = loopSquare.piece;
-            if (!sqrPiece || !loopPiece || loopPiece.color === sqrPiece.color) return 0;
-            return captureCount(data, sqrPiece.color, sqrPiece.name, loopPiece.name);
-        },
+    /** Reference piece took piece X Y times. Requires `square`. */
+    PIECE_CAPTURED: ({ data, loopSquare, refSquare }) => {
+        const sqrPiece = refSquare.piece;
+        const loopPiece = loopSquare.piece;
+        if (!sqrPiece || !loopPiece || loopPiece.color === sqrPiece.color) return 0;
+        return captureCount(data, sqrPiece.color, sqrPiece.name, loopPiece.name);
     },
-} as const satisfies Record<string, HeatmapPresetEntry>;
+} satisfies Record<string, HeatmapAnalysisFunc<PieceTrackerState>>;
 
 export type PieceHeatmapPresetName = keyof typeof PieceHeatmapPresets;

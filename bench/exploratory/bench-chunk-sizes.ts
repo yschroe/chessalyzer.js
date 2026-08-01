@@ -20,7 +20,7 @@ async function bench(label: string, multithreadCfg: { targetBytes: number; worke
         analyzePGN(pgn.path, {
             trackers: [],
             workers: {
-                targetBytes: multithreadCfg.targetBytes,
+                chunk: { targetBytes: multithreadCfg.targetBytes },
                 workerCount: multithreadCfg.workerCount,
             },
         }),

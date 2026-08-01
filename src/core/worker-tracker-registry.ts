@@ -41,11 +41,7 @@ function isTrackerConstructor(value: unknown): value is new () => TrackerDef {
     return typeof value === 'function';
 }
 
-function createTrackerDef(
-    id: string,
-    modulePath: string | undefined,
-    options: unknown,
-): TrackerDef {
+function createTrackerDef(id: string, options: unknown): TrackerDef {
     const factory = TrackerFactories[id];
     assert(factory, `Unknown tracker "${id}"`);
 
@@ -125,9 +121,7 @@ function createAnalysisCfg(
         };
     }
 
-    const defs = trackerData.map((tracker) =>
-        createTrackerDef(tracker.id, tracker.module, tracker.options),
-    );
+    const defs = trackerData.map((tracker) => createTrackerDef(tracker.id, tracker.options));
 
     return {
         trackerHost: new TrackerHost(defs),

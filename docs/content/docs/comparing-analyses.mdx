@@ -9,23 +9,20 @@ This example compares tile occupation for high-rated vs low-rated white players 
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
-import { TileTracker } from 'chessalyzer/trackers';
+import { generateComparisonHeatmap, TileHeatmapPresets, TileTracker } from 'chessalyzer/trackers';
 import { squareToCoords } from 'chessalyzer/replay';
-
-const tileT1 = new TileTracker();
-const tileT2 = new TileTracker();
 
 const result = await analyzePGN('<pathToPgnFile>', {
     workers: false,
     headers: true,
     runs: [
         {
-            trackers: [tileT1],
+            trackers: [TileTracker],
             filter: (game) => Number(game.headers?.WhiteElo) > 2000,
             maxGames: 1000,
         },
         {
-            trackers: [tileT2],
+            trackers: [TileTracker],
             filter: (game) => Number(game.headers?.WhiteElo) < 1200,
             maxGames: 1000,
         },
@@ -37,11 +34,13 @@ const state2 = result.runs[1].trackers[0].state;
 
 const compareFunc = ({ data, loopSquare }) => {
     const [row, col] = squareToCoords(loopSquare.square);
-    const val = data.tiles[row][col].w.wasOn;
+    const val = data.tiles[row][col].w.total.wasOn;
     return (val * 100) / data.movesTotal;
 };
 
-const heatmapData = tileT1.generateComparisonHeatmap(state1, state2, { analysis: compareFunc });
+const heatmapData = generateComparisonHeatmap(state1, state2, TileHeatmapPresets, {
+    analysis: compareFunc,
+});
 ```
 
 `generateComparisonHeatmap` builds two heatmaps from the same analysis function and returns per-cell percentage differences.
