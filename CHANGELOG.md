@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0-alpha.2] - 2026-08-01
+
 ### Changed
 
 - **Tracker redesign:** trackers are now **definitions + plain state**. Pass a tracker definition to `analyzePGN` (`defineGameTracker` / `defineMoveTracker` factories, or class adapters extending `BaseMoveTracker` / `BaseGameTracker`). Stats are returned in `result.trackers[m].state` (single-run) or `result.runs[n].trackers[m].state` (multi-run) — not mutated in place on the definition.
@@ -16,11 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`MoveTracker` renamed to `BaseMoveTracker`** (aligns with `BaseGameTracker`).
 - **`chessalyzer/replay` exports:** `BoardCoord`, `squareToCoords`, `coordsToSquare`, `algebraicToCoords`.
 - Lifecycle hook renamed to **`onFinish(state)`** (symmetric with `onGameEnd`).
-- Removed dead profiling plumbing (`TrackerConfig`, `cfg` threading, `time` merge).
 
 ### Removed
 
 - `BaseTracker`, `Tracker` / `*Contract` types, `static trackerId`, `trackMoves` / `trackGame` method names on bases (use `track(state, …)`), in-place mutation of tracker instances after analysis.
+- Removed dead profiling plumbing (`TrackerConfig`, `cfg` threading, `time` merge).
 
 ## [4.0.0-alpha.1] - 2026-07-31
 
