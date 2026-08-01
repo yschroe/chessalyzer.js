@@ -239,7 +239,7 @@ export function normalizeAnalysisConfigs(
                     assertMultithreadTracker(tracker, id, path);
                     tempCfg.trackerData.push({
                         id,
-                        cfg: tracker.cfg,
+                        cfg: tracker.getRuntimeCfg(),
                         path,
                     });
                 }

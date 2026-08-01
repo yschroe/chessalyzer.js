@@ -4,22 +4,12 @@ import type { Action } from '#types/actions';
 import type { ParsedGame } from '#types/parse-pgn';
 import type { GameTrackerContract, MoveTrackerContract, TrackerConfig } from '#types/tracker';
 
-/** Apply worker bootstrap config to a tracker instance. Framework use only. */
-export function applyTrackerConfig(tracker: BaseTracker, cfg: TrackerConfig): void {
-    tracker.setRuntimeCfg(cfg);
-}
-
-/** @internal Framework use only — adds worker-reported profiling time after `merge`. */
-export function addTrackerElapsed(tracker: { time: number }, ms: number): void {
-    tracker.time += ms;
-}
-
 class BaseTracker {
     readonly type: 'move' | 'game';
     private t0: number;
     /** Accumulated profiling time in milliseconds (framework-owned; do not mutate in `merge`). */
-    time: number;
-    #cfg: TrackerConfig;
+    private profiledTime: number;
+    private cfg: TrackerConfig;
 
     /** Stable ID for worker-side tracker lookup (minification-safe). Required for multithreaded analysis. */
     static trackerId?: string;
@@ -29,31 +19,32 @@ class BaseTracker {
 
     constructor(type: 'move' | 'game') {
         this.type = type;
-        this.#cfg = {
+        this.cfg = {
             profilingActive: false,
         };
-        this.time = 0;
+        this.profiledTime = 0;
         this.t0 = 0;
     }
 
-    get cfg(): Readonly<TrackerConfig> {
-        return this.#cfg;
+    /** @internal Framework use only. */
+    getRuntimeCfg(): TrackerConfig {
+        return this.cfg;
     }
 
-    /** @internal Framework use only — prefer {@link applyTrackerConfig}. */
+    /** @internal Framework use only. */
     setRuntimeCfg(cfg: TrackerConfig): void {
-        this.#cfg = cfg;
+        this.cfg = cfg;
     }
 
     /** @internal Framework use only — adds worker-reported profiling time after `merge`. */
     addElapsed(ms: number): void {
-        addTrackerElapsed(this, ms);
+        this.profiledTime += ms;
     }
 
     protected profiledTrack(fn: () => void): void {
-        if (this.#cfg.profilingActive) this.t0 = performance.now();
+        if (this.cfg.profilingActive) this.t0 = performance.now();
         fn();
-        if (this.#cfg.profilingActive) this.time += performance.now() - this.t0;
+        if (this.cfg.profilingActive) this.profiledTime += performance.now() - this.t0;
     }
 
     /** Override when using multithreaded analysis to aggregate worker batch stats. */

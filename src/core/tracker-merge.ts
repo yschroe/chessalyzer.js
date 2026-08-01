@@ -1,21 +1,18 @@
 import { collectError } from '#core/analyze-errors';
 import GameReplayer from '#replay/game-replayer';
-import { addTrackerElapsed } from '#trackers/base-tracker';
+import type { BaseTracker } from '#trackers/base-tracker';
 import type { GameAndMoveCount } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { AssembledGame } from '#types/parse-pgn';
 import { toParsedGame } from '#types/parse-pgn';
 import type { WorkerConfigResult, WorkerMessage } from '#types/worker';
 
-function mergeTrackerPayload(
-    tracker: { time: number; merge?: (data: unknown) => void },
-    data: unknown,
-): void {
+function mergeTrackerPayload(tracker: BaseTracker, data: unknown): void {
     tracker.merge?.(data);
     if (typeof data === 'object' && data !== null && 'time' in data) {
         const time = Reflect.get(data, 'time');
         if (typeof time === 'number') {
-            addTrackerElapsed(tracker, time);
+            tracker.addElapsed(time);
         }
     }
 }

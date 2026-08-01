@@ -1,11 +1,6 @@
 import assert from 'node:assert';
 
-import {
-    applyTrackerConfig,
-    BaseGameTracker,
-    BaseTracker,
-    MoveTracker,
-} from '#trackers/base-tracker';
+import { BaseGameTracker, BaseTracker, MoveTracker } from '#trackers/base-tracker';
 import { GameTracker } from '#trackers/game-tracker';
 import { PieceTracker } from '#trackers/piece-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
@@ -109,7 +104,7 @@ function createAnalysisCfg(
         assert(TrackerClass, `Unknown tracker "${tracker.id}"`);
 
         const instance: BaseTracker = new TrackerClass();
-        applyTrackerConfig(instance, tracker.cfg);
+        instance.setRuntimeCfg(tracker.cfg);
         if (instance instanceof MoveTracker) {
             cfg.trackers.move.push(instance);
         } else if (instance instanceof BaseGameTracker) {
