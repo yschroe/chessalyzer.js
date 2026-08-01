@@ -3,16 +3,17 @@ title: Heatmaps
 description: Turn tracker data into per-square values for preview or visualization.
 ---
 
-After running `analyzePGN`, trackers hold the raw statistics. **Heatmaps** map those stats to a value for each square on the board.
+After running `analyzePGN`, tracker **state** holds the raw statistics. **Heatmaps** map that state to a value for each square on the board.
 
 ```javascript
 import { analyzePGN, printHeatmap } from 'chessalyzer';
 import { TileTracker } from 'chessalyzer/trackers';
 
 const tileTracker = new TileTracker();
-await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
+const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
 
-const heatmapData = tileTracker.generateHeatmap('TILE_OCC_ALL');
+const { state } = result.runs[0].trackers[0];
+const heatmapData = tileTracker.generateHeatmap(state, 'TILE_OCC_ALL');
 printHeatmap(heatmapData);
 ```
 
@@ -24,6 +25,6 @@ printHeatmap(heatmapData);
 
 - **[Presets](/docs/heatmaps/presets)** — built-in short names like `'TILE_OCC_ALL'` for common views
 - **[Custom functions](/docs/heatmaps/custom-functions)** — write your own per-square calculation
-- **[Comparing analyses](/docs/comparing-analyses)** — `generateComparisonHeatmap` for side-by-side cohorts
+- **[Comparing analyses](/docs/comparing-analyses)** — `generateComparisonHeatmap(state, otherState, ...)` for side-by-side cohorts
 
-`TileTracker` and `PieceTracker` support heatmap generation.
+`TileTracker` and `PieceTracker` expose `generateHeatmap(state, ...)` and `generateComparisonHeatmap(state, otherState, ...)` helpers.

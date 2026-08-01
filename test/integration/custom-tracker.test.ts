@@ -4,6 +4,7 @@ import { analyzePGN } from 'chessalyzer';
 
 import CustomGameTracker from '../fixtures/custom-game-tracker';
 import { fixtureExpected, fixturePath } from '../helpers/fixtures';
+import { trackerStateAt } from '../helpers/tracker-state';
 
 describe('Custom tracker', () => {
     it('merges custom game tracker in worker-parse mode', async () => {
@@ -13,9 +14,10 @@ describe('Custom tracker', () => {
             trackers: [tracker],
         });
 
+        const state = trackerStateAt(data, tracker);
         expect(data.gameCount).toBe(expected.games);
-        expect(tracker.games).toBe(expected.games);
-        expect(tracker.wins[0] + tracker.wins[1] + tracker.wins[2]).toBe(expected.games);
+        expect(state.games).toBe(expected.games);
+        expect(state.wins[0] + state.wins[1] + state.wins[2]).toBe(expected.games);
     });
 
     it('merges custom game tracker with filter (single-threaded)', async () => {
@@ -26,10 +28,11 @@ describe('Custom tracker', () => {
             filter: (game) => game.result === '1-0',
         });
 
+        const state = trackerStateAt(data, tracker);
         expect(data.gameCount).toBe(3);
-        expect(tracker.games).toBe(3);
-        expect(tracker.wins[0]).toBe(3);
-        expect(tracker.wins[1]).toBe(0);
-        expect(tracker.wins[2]).toBe(0);
+        expect(state.games).toBe(3);
+        expect(state.wins[0]).toBe(3);
+        expect(state.wins[1]).toBe(0);
+        expect(state.wins[2]).toBe(0);
     });
 });

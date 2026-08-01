@@ -11,14 +11,19 @@ import { TileTracker } from 'chessalyzer/trackers';
 
 const tileTracker = new TileTracker();
 
-await analyzePGN('<pathToPgnFile>', {
+const result = await analyzePGN('<pathToPgnFile>', {
     trackers: [tileTracker],
     maxGames: 10000,
     workers: { targetBytes: 4 * 1024 * 1024 },
 });
+
+const { state } = result.runs[0].trackers[0];
+console.log(state.movesTotal);
 ```
 
 The `workers` option lets you tune chunk size; defaults are fine for most files.
+
+Workers accumulate tracker state locally and send plain `{ id, state }` snapshots back at pool drain. The main thread merges them by id into your result.
 
 ## Single-threaded mode
 
@@ -37,4 +42,4 @@ The library validates this and will tell you if you forget.
 
 ## Custom trackers in multithreaded mode
 
-Custom trackers need `static trackerId`, `static workerModule = import.meta.url`, and a `merge()` implementation. See [Custom trackers](/docs/trackers/custom).
+Custom trackers need `id`, `workerModule = import.meta.url`, and `merge(state, other)`. See [Custom trackers](/docs/trackers/custom).

@@ -1,89 +1,92 @@
-import { MoveTracker } from '#trackers/base-tracker';
-import HeatmapPresets from '#trackers/heatmaps/piece-heatmaps';
+import type { BoardCoord } from '#board/board-coords';
+import { MoveTracker } from '#trackers/define-tracker';
+import {
+    generateComparisonHeatmap,
+    generateHeatmap,
+    resolveHeatmapFunc,
+} from '#trackers/heatmap-utils';
+import {
+    PieceHeatmapPresets,
+    type PieceHeatmapPresetName,
+} from '#trackers/heatmaps/piece-heatmaps';
+import { isTrackedPiece, pieceList, type Piece, type PieceStatsMap } from '#trackers/piece-types';
 import type { Action } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
+import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
 
-export type Piece =
-    | 'Pa'
-    | 'Pb'
-    | 'Pc'
-    | 'Pd'
-    | 'Pe'
-    | 'Pf'
-    | 'Pg'
-    | 'Ph'
-    | 'Ra'
-    | 'Nb'
-    | 'Bc'
-    | 'Qd'
-    | 'Ke'
-    | 'Bf'
-    | 'Ng'
-    | 'Rh';
-
-type PieceStats = { [piece in Piece]: number };
-type PieceStatsMap = { [piece in Piece]: PieceStats };
-
-const pieceList: Piece[] = [
-    'Pa',
-    'Pb',
-    'Pc',
-    'Pd',
-    'Pe',
-    'Pf',
-    'Pg',
-    'Ph',
-    'Ra',
-    'Nb',
-    'Bc',
-    'Qd',
-    'Ke',
-    'Bf',
-    'Ng',
-    'Rh',
-];
-
-const trackedPieceSet = new Set<string>(pieceList);
-
-export function isTrackedPiece(name: string): name is Piece {
-    return trackedPieceSet.has(name);
-}
-
-class PieceTracker extends MoveTracker {
-    static override trackerId = 'PieceTracker';
-    static override workerModule = import.meta.url;
-
+export interface PieceTrackerState {
     b: PieceStatsMap;
     w: PieceStatsMap;
-    constructor() {
-        super();
-        this.heatmapPresets = HeatmapPresets;
+}
 
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries cannot infer PieceStats mapped type
-        const emptyPieceStats = Object.fromEntries(pieceList.map((val) => [val, 0])) as PieceStats;
+function createEmptyPieceStatsMap(): PieceStatsMap {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries cannot infer PieceStats mapped type
+    const emptyPieceStats = Object.fromEntries(pieceList.map((val) => [val, 0])) as {
+        [piece in Piece]: number;
+    };
 
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries cannot infer PieceStatsMap mapped type
-        this.b = Object.fromEntries(
-            pieceList.map((val) => [val, { ...emptyPieceStats }]),
-        ) as PieceStatsMap;
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries cannot infer PieceStatsMap mapped type
-        this.w = Object.fromEntries(
-            pieceList.map((val) => [val, { ...emptyPieceStats }]),
-        ) as PieceStatsMap;
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries cannot infer PieceStatsMap mapped type
+    return Object.fromEntries(
+        pieceList.map((val) => [val, { ...emptyPieceStats }]),
+    ) as PieceStatsMap;
+}
+
+function createInitialState(): PieceTrackerState {
+    return {
+        b: createEmptyPieceStatsMap(),
+        w: createEmptyPieceStatsMap(),
+    };
+}
+
+class PieceTracker extends MoveTracker<PieceTrackerState> {
+    override readonly id = 'PieceTracker';
+    override readonly workerModule = import.meta.url;
+    static readonly presets = PieceHeatmapPresets;
+
+    init(): PieceTrackerState {
+        return createInitialState();
     }
 
-    override merge(tracker: unknown) {
-        if (!isPieceTracker(tracker)) return;
+    generateHeatmap(
+        state: PieceTrackerState,
+        analysisFunc: PieceHeatmapPresetName | HeatmapAnalysisFunc<PieceTrackerState>,
+        square?: string | BoardCoord,
+        optData?: unknown,
+    ): HeatmapData {
+        return generateHeatmap(
+            state,
+            resolveHeatmapFunc(PieceHeatmapPresets, analysisFunc),
+            square,
+            optData,
+        );
+    }
 
+    generateComparisonHeatmap(
+        state: PieceTrackerState,
+        compState: PieceTrackerState,
+        analysisFunc: PieceHeatmapPresetName | HeatmapAnalysisFunc<PieceTrackerState>,
+        square?: string | BoardCoord,
+        optData?: unknown,
+    ): HeatmapData {
+        return generateComparisonHeatmap(
+            state,
+            compState,
+            resolveHeatmapFunc(PieceHeatmapPresets, analysisFunc),
+            square,
+            optData,
+        );
+    }
+
+    merge(state: PieceTrackerState, other: PieceTrackerState): void {
         for (const piece of pieceList) {
             for (const piece2 of pieceList) {
-                this.w[piece][piece2] += tracker.w[piece][piece2];
-                this.b[piece][piece2] += tracker.b[piece][piece2];
+                state.w[piece][piece2] += other.w[piece][piece2];
+                state.b[piece][piece2] += other.b[piece][piece2];
             }
         }
     }
 
-    override trackMoves(data: Action[]) {
+    track(state: PieceTrackerState, data: Action[]): void {
         for (const action of data) {
             if (action.type === 'capture') {
                 const { takingPiece, takenPiece, player } = action;
@@ -96,19 +99,20 @@ class PieceTracker extends MoveTracker {
                     isTrackedPiece(takingPiece) &&
                     isTrackedPiece(takenPiece)
                 ) {
-                    this.processCapture(player, takingPiece, takenPiece);
+                    this.processCapture(state, player, takingPiece, takenPiece);
                 }
             }
         }
     }
 
-    processCapture(player: PlayerColor, takingPiece: Piece, takenPiece: Piece) {
-        this[player][takingPiece][takenPiece] += 1;
+    private processCapture(
+        state: PieceTrackerState,
+        player: PlayerColor,
+        takingPiece: Piece,
+        takenPiece: Piece,
+    ): void {
+        state[player][takingPiece][takenPiece] += 1;
     }
-}
-
-function isPieceTracker(tracker: unknown): tracker is PieceTracker {
-    return typeof tracker === 'object' && tracker !== null && 'b' in tracker && 'w' in tracker;
 }
 
 export { PieceTracker };

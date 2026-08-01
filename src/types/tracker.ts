@@ -2,37 +2,59 @@ import type { Action } from '#types/actions';
 import type { SquareData } from '#types/game';
 import type { ParsedGame } from '#types/parse-pgn';
 
-/**
- * Contract implemented by {@link BaseTracker} and custom user trackers.
- * Move trackers receive {@link Action}[]; game trackers receive {@link ParsedGame}.
- *
- * Prefer extending {@link MoveTracker} or {@link BaseGameTracker} rather than implementing
- * this interface directly — the raw `track` union is for framework dispatch.
- *
- * Multithreaded custom trackers must use a **zero-arg constructor**, set
- * `static trackerId` and `static workerModule`, and implement {@link merge}.
- */
-export interface Tracker {
-    type: 'move' | 'game';
-    track: (arg: ParsedGame | Action[]) => void;
-    onGameEnd?: () => void;
-    finish?: () => void;
+/** Extract state type from a tracker definition. */
+export type StateOf<D> = D extends TrackerDef<infer S> ? S : never;
+
+/** Shared lifecycle hooks for move and game tracker definitions. */
+export interface TrackerDefBase<S = unknown, O = unknown> {
+    readonly id: string;
+    readonly kind: 'move' | 'game';
+    /** Module URL for worker-side dynamic import of custom trackers (multithreaded only). */
+    readonly workerModule?: string;
+    /** Plain options cloned to workers before `init`. */
+    readonly options?: O;
+    init(options?: O): S;
     /**
-     * Aggregate worker batch stats into this instance.
-     * Receives a plain object after structured clone — duck-type fields; do not use `instanceof`.
-     * Framework-owned fields such as `time` are merged centrally after this hook returns.
+     * Aggregate worker batch state into the main-thread state.
+     * Required for multithreaded analysis (validated at normalization).
      */
-    merge?: (arg: unknown) => void;
+    merge?(state: S, other: S): void;
+    /** Optional per-game hook after each game (success or skip). */
+    onGameEnd?(state: S): void;
+    /** Optional end-of-analysis hook (e.g. sort aggregated keys). */
+    onFinish?(state: S): void;
 }
 
-/** Optional runtime flags attached to tracker instances (on {@link BaseTracker} subclasses). */
-export interface TrackerConfig {
-    profilingActive: boolean;
+/** Move-level tracker definition — receives {@link Action}[] per half-move. */
+export interface MoveTrackerDef<S = unknown, O = unknown> extends TrackerDefBase<S, O> {
+    readonly kind: 'move';
+    track(state: S, actions: Action[]): void;
 }
 
-/** Built-in or custom heatmap preset definition attached to a tracker. */
+/** Game-level tracker definition — receives {@link ParsedGame} after each game. */
+export interface GameTrackerDef<S = unknown, O = unknown> extends TrackerDefBase<S, O> {
+    readonly kind: 'game';
+    track(state: S, game: ParsedGame): void;
+}
+
+/** Any tracker definition passed to {@link AnalyzeOptions.trackers}. */
+export type TrackerDef<S = unknown, O = unknown> = MoveTrackerDef<S, O> | GameTrackerDef<S, O>;
+
+/** Plain state snapshot sent worker → main at pool drain. */
+export interface TrackerSnapshot {
+    id: string;
+    state: unknown;
+}
+
+/** One tracker definition plus its accumulated state in an {@link AnalyzeRunResult}. */
+export interface AnalyzeTrackerResult<D extends TrackerDef = TrackerDef> {
+    tracker: D;
+    state: StateOf<D>;
+}
+
+/** Built-in or custom heatmap preset definition. */
 export interface HeatmapPresetEntry {
-    scope?: string;
+    scope?: 'global' | 'specific';
     unit?: string;
     description?: string;
     calc: HeatmapAnalysisFunc;

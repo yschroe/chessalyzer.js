@@ -23,12 +23,12 @@ import { TileTracker } from 'chessalyzer/trackers';
 import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
 ```
 
-| Subpath                | Use for                                |
-| ---------------------- | -------------------------------------- |
-| `chessalyzer`          | `analyzePGN`, heatmap helpers, filters |
-| `chessalyzer/trackers` | Built-in and base tracker classes      |
-| `chessalyzer/pgn`      | Parse-only PGN access                  |
-| `chessalyzer/replay`   | Replay action and square types         |
+| Subpath                | Use for                                               |
+| ---------------------- | ----------------------------------------------------- |
+| `chessalyzer`          | `analyzePGN`, heatmap helpers, filters                |
+| `chessalyzer/trackers` | Built-in trackers, factories, and class adapter bases |
+| `chessalyzer/pgn`      | Parse-only PGN access                                 |
+| `chessalyzer/replay`   | Replay action and square types                        |
 
 ## Quick check
 
@@ -40,6 +40,7 @@ const tileTracker = new TileTracker();
 const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
 
 console.log(result.gameCount, result.moveCount, result.movesPerSecond);
+console.log(result.runs[0].trackers[0].state.movesTotal);
 ```
 
 Next: [Basic usage](/docs/basic-usage).

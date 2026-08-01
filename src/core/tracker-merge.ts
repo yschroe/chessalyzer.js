@@ -1,21 +1,10 @@
 import { collectError } from '#core/analyze-errors';
 import GameReplayer from '#replay/game-replayer';
-import type { BaseTracker } from '#trackers/base-tracker';
 import type { GameAndMoveCount } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { AssembledGame } from '#types/parse-pgn';
 import { toParsedGame } from '#types/parse-pgn';
 import type { WorkerConfigResult, WorkerMessage } from '#types/worker';
-
-function mergeTrackerPayload(tracker: BaseTracker, data: unknown): void {
-    tracker.merge?.(data);
-    if (typeof data === 'object' && data !== null && 'time' in data) {
-        const time = Reflect.get(data, 'time');
-        if (typeof time === 'number') {
-            tracker.time += time;
-        }
-    }
-}
 
 /**
  * Merge one worker batch into the matching main-thread config (trackers + counters).
@@ -25,25 +14,15 @@ function mergeWorkerResult(
     configs: GameProcessorAnalysisConfigFull[],
     result: WorkerConfigResult,
 ): void {
-    const { idxConfig, gameTrackers, moveTrackers, moves, games, skippedGames, errors } = result;
+    const { idxConfig, trackerSnapshots, moves, games, skippedGames, errors } = result;
 
     const cfg = configs[idxConfig];
     if (!cfg || cfg.isDone) return;
 
-    if (gameTrackers) {
-        for (let i = 0; i < gameTrackers.length; i += 1) {
-            const tracker = cfg.trackers.game[i];
-            const data = gameTrackers[i];
-            if (tracker && data) mergeTrackerPayload(tracker, data);
-        }
+    if (trackerSnapshots) {
+        cfg.trackerHost.mergeSnapshots(trackerSnapshots);
     }
-    if (moveTrackers) {
-        for (let i = 0; i < moveTrackers.length; i += 1) {
-            const tracker = cfg.trackers.move[i];
-            const data = moveTrackers[i];
-            if (tracker && data) mergeTrackerPayload(tracker, data);
-        }
-    }
+
     cfg.processedMoves += moves;
     cfg.processedGames += games;
     cfg.skippedGames += skippedGames ?? 0;
@@ -70,19 +49,8 @@ export function mergeWorkerTrackerFlush(
         const cfg = configs[configResult.idxConfig];
         if (!cfg) continue;
 
-        if (configResult.gameTrackers) {
-            for (let i = 0; i < configResult.gameTrackers.length; i += 1) {
-                const tracker = cfg.trackers.game[i];
-                const data = configResult.gameTrackers[i];
-                if (tracker && data) mergeTrackerPayload(tracker, data);
-            }
-        }
-        if (configResult.moveTrackers) {
-            for (let i = 0; i < configResult.moveTrackers.length; i += 1) {
-                const tracker = cfg.trackers.move[i];
-                const data = configResult.moveTrackers[i];
-                if (tracker && data) mergeTrackerPayload(tracker, data);
-            }
+        if (configResult.trackerSnapshots) {
+            cfg.trackerHost.mergeSnapshots(configResult.trackerSnapshots);
         }
     }
 }
@@ -182,11 +150,10 @@ export function createWorkerResultHandler(
     };
 }
 
-/** Invoke tracker `finish` hooks and return aggregate game/move counts. */
+/** Invoke tracker finish hooks and return aggregate game/move counts. */
 export function finishTrackers(configs: GameProcessorAnalysisConfigFull[]): GameAndMoveCount[] {
-    for (const { trackers } of configs) {
-        for (const tracker of trackers.game) tracker.finish?.();
-        for (const tracker of trackers.move) tracker.finish?.();
+    for (const { trackerHost } of configs) {
+        trackerHost.onFinish();
     }
 
     return configs.map((cfg) => ({

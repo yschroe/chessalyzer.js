@@ -13,6 +13,7 @@ import {
     getFixtureEntry,
     repeatPgn,
 } from '../helpers/fixtures';
+import { trackerStateAt } from '../helpers/tracker-state';
 
 // Integration tests against small committed PGN fixtures (test/fixtures/).
 describe('Fixtures', () => {
@@ -103,8 +104,9 @@ describe('Fixtures', () => {
             const path = await repeatPgn('results-mix', 50);
             const gameTracker = new GameTracker();
             const data = await analyzePGN(path, { trackers: [gameTracker], workers: false });
-            expect(data.gameCount).toBe(gameTracker.games);
-            const resultsSum = Object.values(gameTracker.results).reduce((a, c) => a + c, 0);
+            const state = trackerStateAt(data, gameTracker);
+            expect(data.gameCount).toBe(state.games);
+            const resultsSum = Object.values(state.results).reduce((a, c) => a + c, 0);
             expect(resultsSum).toBe(data.gameCount);
         });
     });
@@ -121,8 +123,10 @@ describe('Fixtures', () => {
 
             expect(data.runs[0]?.gameCount).toBe(expected.games);
             expect(data.runs[1]?.gameCount).toBe(expected.games);
-            expect(trackerA.games).toBe(expected.games);
-            expect(trackerB.games).toBe(expected.games);
+            const stateA = trackerStateAt(data, trackerA, 0);
+            const stateB = trackerStateAt(data, trackerB, 1);
+            expect(stateA.games).toBe(expected.games);
+            expect(stateB.games).toBe(expected.games);
         });
 
         it('handles mixed filter and unfiltered runs in one pass', async () => {
@@ -142,8 +146,10 @@ describe('Fixtures', () => {
 
             expect(data.runs[0]?.gameCount).toBe(fixtureExpected('results-mix').games);
             expect(data.runs[1]?.gameCount).toBe(3);
-            expect(allGames.games).toBe(fixtureExpected('results-mix').games);
-            expect(whiteWins.games).toBe(3);
+            const allState = trackerStateAt(data, allGames, 0);
+            const whiteState = trackerStateAt(data, whiteWins, 1);
+            expect(allState.games).toBe(fixtureExpected('results-mix').games);
+            expect(whiteState.games).toBe(3);
         });
 
         it('respects per-run maxGames in multi-run', async () => {
@@ -156,8 +162,10 @@ describe('Fixtures', () => {
 
             expect(data.runs[0]?.gameCount).toBe(2);
             expect(data.runs[1]?.gameCount).toBe(fixtureExpected('results-mix').games);
-            expect(capped.games).toBe(2);
-            expect(full.games).toBe(fixtureExpected('results-mix').games);
+            const cappedState = trackerStateAt(data, capped, 0);
+            const fullState = trackerStateAt(data, full, 1);
+            expect(cappedState.games).toBe(2);
+            expect(fullState.games).toBe(fixtureExpected('results-mix').games);
         });
     });
 
@@ -168,7 +176,8 @@ describe('Fixtures', () => {
                 trackers: [gameTracker],
             });
             expect(data.gameCount).toBe(1);
-            expect(gameTracker.games).toBe(1);
+            const state = trackerStateAt(data, gameTracker);
+            expect(state.games).toBe(1);
         });
 
         it('runs PieceTracker on promotion', async () => {
@@ -197,21 +206,23 @@ describe('Fixtures', () => {
                 });
 
                 expect(data.gameCount).toBe(1);
-                expect(tileTracker.movesTotal).toBe(golden.movesTotal);
-                const heat = tileTracker.generateHeatmap('TILE_OCC_ALL', 'e4');
+                const state = trackerStateAt(data, tileTracker);
+                expect(state.movesTotal).toBe(golden.movesTotal);
+                const heat = tileTracker.generateHeatmap(state, 'TILE_OCC_ALL', 'e4');
                 expect(heat.map[4]?.[4]).toBe(golden.e4TileOccAll);
             });
         }
 
         it('counts castling as one move (rook leg excluded from move counter)', async () => {
             const tileTracker = new TileTracker();
-            await analyzePGN(fixturePath('en-passant'), {
+            const data = await analyzePGN(fixturePath('en-passant'), {
                 trackers: [tileTracker],
                 workers: false,
             });
 
-            expect(tileTracker.movesTotal).toBe(golden.movesTotal);
-            expect(tileTracker.movesTotal).toBe(fixtureExpected('en-passant').moves);
+            const state = trackerStateAt(data, tileTracker);
+            expect(state.movesTotal).toBe(golden.movesTotal);
+            expect(state.movesTotal).toBe(fixtureExpected('en-passant').moves);
         });
     });
 });

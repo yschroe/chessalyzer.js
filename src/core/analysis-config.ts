@@ -1,6 +1,8 @@
+import { TrackerHost } from '#core/tracker-host';
 import { resolveEffectiveReplayMode } from '#replay/replay-mode';
 import type { ReplayMode } from '#replay/replay-mode';
-import { BaseTracker } from '#trackers/base-tracker';
+import { BUILTIN_TRACKER_IDS } from '#trackers/builtin-registry';
+import { assertMultithreadTrackerDef, assertTrackerDef } from '#trackers/define-tracker';
 import type {
     AnalyzeMultiRunOptions,
     AnalyzeOptions,
@@ -10,7 +12,7 @@ import type {
 } from '#types/analysis';
 import type { GameProcessorAnalysisConfigFull, GameProcessorConfig } from '#types/analysis-runtime';
 import type { ParsedGame } from '#types/parse-pgn';
-import type { Tracker } from '#types/tracker';
+import type { TrackerDef } from '#types/tracker';
 
 /** Normalized analysis run: per-config runtime state plus path-selection flags. */
 export interface NormalizedAnalysisRun {
@@ -22,7 +24,7 @@ export interface NormalizedAnalysisRun {
 export interface NormalizeAnalysisOptions {
     headers?: boolean | 'auto';
     replay?: ReplayMode;
-    /** When true, custom trackers must provide trackerId, merge, and workerModule. */
+    /** When true, custom trackers must provide id, merge, and workerModule. */
     multithreaded?: boolean;
 }
 
@@ -40,51 +42,6 @@ function resolveParseHeaders(
         return false;
     }
     return needsHeaders;
-}
-
-function resolveWorkerModule(tracker: { constructor: unknown }): string {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- static workerModule lives on constructor, not Tracker instance type
-    const ctor = tracker.constructor as { workerModule?: string };
-    return ctor.workerModule ?? '';
-}
-
-const BUILTIN_TRACKER_IDS = new Set(['GameTracker', 'PieceTracker', 'TileTracker']);
-
-function resolveTrackerId(tracker: Tracker, multithreaded: boolean): string {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- static trackerId lives on constructor, not Tracker instance type
-    const id = (tracker.constructor as { trackerId?: string }).trackerId;
-    if (!id) {
-        if (multithreaded) {
-            throw new Error(
-                'Tracker is missing static trackerId (required for multithreaded analysis)',
-            );
-        }
-        return '';
-    }
-    return id;
-}
-
-function isMergeMethod(value: unknown): value is (arg: unknown) => void {
-    return typeof value === 'function';
-}
-
-function getTrackerMergeMethod(tracker: Tracker): ((arg: unknown) => void) | undefined {
-    const proto = Object.getPrototypeOf(tracker);
-    if (proto === null || typeof proto !== 'object') return undefined;
-    const merge = Reflect.get(proto, 'merge');
-    return isMergeMethod(merge) ? merge : undefined;
-}
-
-function assertMultithreadTracker(tracker: Tracker, id: string, path: string): void {
-    const mergeFn = getTrackerMergeMethod(tracker);
-    if (!mergeFn || mergeFn === BaseTracker.prototype.merge) {
-        throw new Error(`Tracker "${id}" must implement merge(...) for multithreaded analysis`);
-    }
-    if (!BUILTIN_TRACKER_IDS.has(id) && !path) {
-        throw new Error(
-            `Custom tracker "${id}" must set static workerModule = import.meta.url for multithreaded analysis`,
-        );
-    }
 }
 
 function normalizeProcessorConfig(
@@ -198,10 +155,33 @@ export function normalizeAnalysisConfigs(
 
     for (const run of runs) {
         const config = normalizeProcessorConfig(run.filter, run.maxGames);
+        const defs: TrackerDef[] = [];
+
+        if (run.trackers) {
+            for (const tracker of run.trackers) {
+                assertTrackerDef(tracker);
+                defs.push(tracker);
+                if (tracker.kind === 'game') {
+                    needsHeaders = true;
+                }
+                if (multithreaded) {
+                    assertMultithreadTrackerDef(tracker, BUILTIN_TRACKER_IDS);
+                }
+            }
+        }
+
+        const trackerHost = new TrackerHost(defs);
+        const trackerData = multithreaded
+            ? defs.map((tracker) => ({
+                  id: tracker.id,
+                  module: tracker.workerModule,
+                  options: tracker.options,
+              }))
+            : [];
 
         const tempCfg: GameProcessorAnalysisConfigFull = {
-            trackers: { move: [], game: [] },
-            trackerData: [],
+            trackerHost,
+            trackerData,
             config,
             processedMoves: 0,
             processedGames: 0,
@@ -209,42 +189,11 @@ export function normalizeAnalysisConfigs(
             errors: [],
             readGames: 0,
             isDone: false,
-            replayMode: 'skip',
+            replayMode: resolveEffectiveReplayMode(
+                defs.some((def) => def.kind === 'move'),
+                options?.replay,
+            ),
         };
-
-        if (run.trackers) {
-            for (const tracker of run.trackers) {
-                if (!(tracker instanceof BaseTracker)) {
-                    throw new Error(
-                        'Trackers must extend BaseTracker (or a built-in tracker class)',
-                    );
-                }
-                if (tracker.type === 'move') {
-                    tempCfg.trackers.move.push(tracker);
-                } else if (tracker.type === 'game') {
-                    tempCfg.trackers.game.push(tracker);
-                    needsHeaders = true;
-                } else {
-                    throw new Error(`Unknown tracker type: ${String(tracker.type)}`);
-                }
-
-                const id = resolveTrackerId(tracker, multithreaded);
-                const path = resolveWorkerModule(tracker);
-                if (multithreaded) {
-                    assertMultithreadTracker(tracker, id, path);
-                    tempCfg.trackerData.push({
-                        id,
-                        cfg: tracker.cfg,
-                        path,
-                    });
-                }
-            }
-        }
-
-        tempCfg.replayMode = resolveEffectiveReplayMode(
-            tempCfg.trackers.move.length > 0,
-            options?.replay,
-        );
 
         normalized.push(tempCfg);
     }

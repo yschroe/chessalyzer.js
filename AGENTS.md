@@ -50,14 +50,14 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 ### Custom tracker multithreaded contract
 
-User-facing docs: [README Custom Trackers](README.md#custom-trackers). For MT (`workers` not `false`), custom trackers must:
+User-facing docs: [README Custom Trackers](README.md#custom-trackers). Trackers are **definitions** (behavior + identity) separate from **state** (plain data owned per thread). For MT (`workers` not `false`), custom trackers must:
 
-1. Live in a **separate module** with a **default export** of the tracker class.
-2. Set **`static trackerId = 'YourUniqueId'`** — stable ID (minification-safe; required for multithreaded analysis only)
-3. Set **`static workerModule = import.meta.url`** — workers dynamically import that URL at startup ([`worker-tracker-registry.ts`](src/core/worker-tracker-registry.ts)).
-4. Implement **`merge(tracker)`** — aggregate worker batch stats into the main-thread instance. Duck-type the argument; do **not** use `instanceof`. Only merge your own stats — framework-owned fields such as `time` are merged centrally after `merge` returns.
+1. Live in a **separate module** with a **default export** (class adapter or factory object).
+2. Set **`id`** (instance field on class adapters) and **`workerModule = import.meta.url`** so workers can load the module.
+3. Implement **`init()`**, **`track(state, …)`**, and **`merge(state, other)`** — state is plain structured-cloneable data; only states cross the worker boundary as `TrackerSnapshot { id, state }`.
+4. Optional **`options`** (plain data) are cloned to workers before `init()`.
 
-Built-ins register via `trackerId` in the worker registry; customs are loaded from `workerModule`. `static workerModule = import.meta.url` requires an unbundled Node ≥ 22 or Bun runtime. Move trackers may override **`onGameEnd()`** for per-game flush hooks. See [`test/fixtures/custom-game-tracker.ts`](test/fixtures/custom-game-tracker.ts) and [`manual-tests/custom-game-tracker.ts`](manual-tests/custom-game-tracker.ts).
+Built-ins register in [`builtin-registry.ts`](src/trackers/builtin-registry.ts); customs are loaded from `workerModule`. `workerModule = import.meta.url` requires an unbundled Node ≥ 22 or Bun runtime. Move trackers may override **`onGameEnd(state)`** for per-game flush hooks. See [`test/fixtures/custom-game-tracker.ts`](test/fixtures/custom-game-tracker.ts).
 
 ## Performance
 

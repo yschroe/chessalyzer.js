@@ -28,13 +28,14 @@ for await (const game of streamParsePGN('<pathToPgnFile>', { headers: true })) {
     // process game
 }
 
-// Full pipeline
-await analyzePGN('<pathToPgnFile>', {
+// Full pipeline — stats returned in result.runs[n].trackers[m].state
+const result = await analyzePGN('<pathToPgnFile>', {
     trackers: [new GameTracker()],
     headers: true,
     replay: 'board', // 'skip' | 'board' | 'actions'
     validation: 'trust',
 });
+console.log(result.runs[0].trackers[0].state.games);
 ```
 
 ## Replay modes

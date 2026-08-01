@@ -4,7 +4,6 @@ import type { ReplayMode } from '#replay/replay-mode';
 import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
 import SanDecoder from '#replay/san-decoder';
-import type { BaseTracker } from '#trackers/base-tracker';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { AssembledGame } from '#types/parse-pgn';
 import { toParsedGame } from '#types/parse-pgn';
@@ -51,22 +50,18 @@ class GameReplayer {
         gameIndex: number,
         onError: 'abort' | 'skip-game',
     ): void {
-        const gameTrackers = analysisCfg.trackers.game;
-        if (gameTrackers.length > 0) {
-            const parsed = toParsedGame(game);
-            for (const tracker of gameTrackers) {
-                tracker.analyze(parsed);
-            }
+        const { trackerHost } = analysisCfg;
+        if (trackerHost.gameEntries.length > 0) {
+            trackerHost.trackGame(toParsedGame(game));
         }
 
         const { moves } = game;
-        const moveTrackers = analysisCfg.trackers.move;
 
         let replayOk = true;
         if (replayMode !== 'skip') {
             replayOk = this.replayMoves(
                 game,
-                moveTrackers,
+                trackerHost,
                 replayMode,
                 gameIndex,
                 onError,
@@ -75,15 +70,11 @@ class GameReplayer {
         }
 
         if (!replayOk) {
-            for (const tracker of moveTrackers) {
-                tracker.onGameEnd?.();
-            }
+            trackerHost.onGameEnd();
             return;
         }
 
-        for (const tracker of moveTrackers) {
-            tracker.onGameEnd?.();
-        }
+        trackerHost.onGameEnd();
 
         analysisCfg.processedMoves += moves.length;
         analysisCfg.processedGames += 1;
@@ -93,7 +84,7 @@ class GameReplayer {
     /** Replay movetext onto the board; optionally emit actions for move trackers. Returns false when skipped. */
     private replayMoves(
         game: AssembledGame,
-        moveTrackers: BaseTracker[],
+        trackerHost: GameProcessorAnalysisConfig['trackerHost'],
         replayMode: ReplayMode,
         gameIndex: number,
         onError: 'abort' | 'skip-game',
@@ -110,9 +101,7 @@ class GameReplayer {
                     const san = moves[moveIndex];
                     if (!san) continue;
                     const currentMoveActions = this.sanDecoder.decodeSan(san);
-                    for (const tracker of moveTrackers) {
-                        tracker.analyze(currentMoveActions);
-                    }
+                    trackerHost.trackMoves(currentMoveActions);
                     board.applyActions(currentMoveActions);
                     this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
                 }

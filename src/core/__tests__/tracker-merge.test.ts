@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'bun:test';
 
+import { TrackerHost } from '#core/tracker-host';
 import { createWorkerResultHandler, mergeWorkerTrackerFlush } from '#core/tracker-merge';
-import type { BaseTracker } from '#trackers/base-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { WorkerMessage } from '#types/worker';
 
 import CustomGameTracker from '../../../test/fixtures/custom-game-tracker';
+import { isCustomGameTrackerState, isTileTrackerState } from '../../../test/helpers/tracker-state';
 
 function baseConfig(
     overrides?: Partial<GameProcessorAnalysisConfigFull>,
@@ -20,7 +21,7 @@ function baseConfig(
         trackerData: [],
         readGames: 0,
         isDone: false,
-        trackers: { move: [], game: [] },
+        trackerHost: new TrackerHost([]),
         processedMoves: 0,
         processedGames: 0,
         skippedGames: 0,
@@ -33,35 +34,49 @@ function baseConfig(
 describe('tracker merge', () => {
     describe('TileTracker.merge', () => {
         it('sums counters and tile stats from a partial batch', () => {
-            const main = new TileTracker();
-            const batch = new TileTracker();
+            const tileTracker = new TileTracker();
+            const mainHost = new TrackerHost([tileTracker]);
+            const batchHost = new TrackerHost([tileTracker]);
 
-            main.movesTotal = 10;
-            batch.movesTotal = 7;
-            main.tiles[4][4].w.movedTo = 3;
-            batch.tiles[4][4].w.movedTo = 2;
+            const mainState = mainHost.moveEntries[0]?.state;
+            const batchState = batchHost.moveEntries[0]?.state;
+            if (!isTileTrackerState(mainState) || !isTileTrackerState(batchState)) {
+                throw new Error('expected tile tracker state');
+            }
 
-            main.merge(batch);
+            mainState.movesTotal = 10;
+            batchState.movesTotal = 7;
+            mainState.tiles[4][4].w.movedTo = 3;
+            batchState.tiles[4][4].w.movedTo = 2;
 
-            expect(main.movesTotal).toBe(17);
-            expect(main.tiles[4][4].w.movedTo).toBe(5);
+            mainHost.mergeSnapshots(batchHost.snapshots());
+
+            expect(mainState.movesTotal).toBe(17);
+            expect(mainState.tiles[4][4].w.movedTo).toBe(5);
         });
     });
 
     describe('CustomGameTracker.merge', () => {
         it('sums wins and game counts from a partial batch', () => {
-            const main = new CustomGameTracker();
-            const batch = new CustomGameTracker();
+            const customTracker = new CustomGameTracker();
+            const mainHost = new TrackerHost([customTracker]);
+            const batchHost = new TrackerHost([customTracker]);
 
-            main.wins = [2, 1, 3];
-            main.games = 6;
-            batch.wins = [1, 0, 2];
-            batch.games = 3;
+            const mainState = mainHost.gameEntries[0]?.state;
+            const batchState = batchHost.gameEntries[0]?.state;
+            if (!isCustomGameTrackerState(mainState) || !isCustomGameTrackerState(batchState)) {
+                throw new Error('expected custom game tracker state');
+            }
 
-            main.merge(batch);
+            mainState.wins = [2, 1, 3];
+            mainState.games = 6;
+            batchState.wins = [1, 0, 2];
+            batchState.games = 3;
 
-            expect(main.wins).toEqual([3, 1, 5]);
-            expect(main.games).toBe(9);
+            mainHost.mergeSnapshots(batchHost.snapshots());
+
+            expect(mainState.wins).toEqual([3, 1, 5]);
+            expect(mainState.games).toBe(9);
         });
     });
 
@@ -85,18 +100,10 @@ describe('tracker merge', () => {
             expect(fatal?.message).toBe('Unknown tracker "DoesNotExist"');
         });
 
-        it('merges worker batch counters and tracker state', () => {
-            const mainTracker = new CustomGameTracker();
-            const batchTracker = new CustomGameTracker();
-            batchTracker.wins = [1, 0, 1];
-            batchTracker.games = 2;
-
+        it('merges worker batch counters without tracker state', () => {
+            const customTracker = new CustomGameTracker();
             const cfg = baseConfig({
-                trackers: {
-                    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixture uses built-package BaseGameTracker
-                    game: [mainTracker as unknown as BaseTracker],
-                    move: [],
-                },
+                trackerHost: new TrackerHost([customTracker]),
                 config: { hasFilter: false, filter: () => true, maxGames: 10 },
             });
 
@@ -110,38 +117,28 @@ describe('tracker merge', () => {
                         idxConfig: 0,
                         games: 2,
                         moves: 40,
-                        gameTrackers: [batchTracker],
                     },
                 ],
             });
 
             expect(cfg.processedGames).toBe(2);
             expect(cfg.processedMoves).toBe(40);
-            expect(mainTracker.games).toBe(2);
-            expect(mainTracker.wins).toEqual([1, 0, 1]);
+            const state = cfg.trackerHost.gameEntries[0]?.state;
+            if (!isCustomGameTrackerState(state)) {
+                throw new Error('expected custom game tracker state');
+            }
+            expect(state.games).toBe(0);
         });
 
         it('merges multi-config batch results', () => {
             const trackerA = new CustomGameTracker();
             const trackerB = new CustomGameTracker();
-            const batchA = new CustomGameTracker();
-            const batchB = new CustomGameTracker();
-            batchA.games = 1;
-            batchB.games = 2;
 
             const cfgA = baseConfig({
-                trackers: {
-                    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixture uses built-package BaseGameTracker
-                    game: [trackerA as unknown as BaseTracker],
-                    move: [],
-                },
+                trackerHost: new TrackerHost([trackerA]),
             });
             const cfgB = baseConfig({
-                trackers: {
-                    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixture uses built-package BaseGameTracker
-                    game: [trackerB as unknown as BaseTracker],
-                    move: [],
-                },
+                trackerHost: new TrackerHost([trackerB]),
             });
 
             const handler = createWorkerResultHandler([cfgA, cfgB], () => {
@@ -150,27 +147,32 @@ describe('tracker merge', () => {
 
             handler(null, {
                 results: [
-                    { idxConfig: 0, games: 1, moves: 10, gameTrackers: [batchA] },
-                    { idxConfig: 1, games: 2, moves: 20, gameTrackers: [batchB] },
+                    { idxConfig: 0, games: 1, moves: 10 },
+                    { idxConfig: 1, games: 2, moves: 20 },
                 ],
             });
 
             expect(cfgA.processedGames).toBe(1);
             expect(cfgB.processedGames).toBe(2);
-            expect(trackerA.games).toBe(1);
-            expect(trackerB.games).toBe(2);
         });
     });
 
     describe('mergeWorkerTrackerFlush', () => {
         it('merges tracker state without touching counters', () => {
-            const mainTracker = new TileTracker();
+            const tileTracker = new TileTracker();
             const workerTracker = new TileTracker();
-            workerTracker.movesTotal = 12;
-            workerTracker.tiles[0][0].w.movedTo = 4;
+            const mainHost = new TrackerHost([tileTracker]);
+            const workerHost = new TrackerHost([workerTracker]);
+
+            const workerState = workerHost.moveEntries[0]?.state;
+            if (!isTileTrackerState(workerState)) {
+                throw new Error('expected tile tracker state');
+            }
+            workerState.movesTotal = 12;
+            workerState.tiles[0][0].w.movedTo = 4;
 
             const cfg = baseConfig({
-                trackers: { game: [], move: [mainTracker] },
+                trackerHost: mainHost,
                 processedGames: 50,
                 processedMoves: 500,
             });
@@ -181,15 +183,19 @@ describe('tracker merge', () => {
                         idxConfig: 0,
                         games: 0,
                         moves: 0,
-                        moveTrackers: [workerTracker],
+                        trackerSnapshots: workerHost.snapshots(),
                     },
                 ],
             });
 
+            const mainState = mainHost.moveEntries[0]?.state;
+            if (!isTileTrackerState(mainState)) {
+                throw new Error('expected tile tracker state');
+            }
             expect(cfg.processedGames).toBe(50);
             expect(cfg.processedMoves).toBe(500);
-            expect(mainTracker.movesTotal).toBe(12);
-            expect(mainTracker.tiles[0][0].w.movedTo).toBe(4);
+            expect(mainState.movesTotal).toBe(12);
+            expect(mainState.tiles[0][0].w.movedTo).toBe(4);
         });
     });
 });

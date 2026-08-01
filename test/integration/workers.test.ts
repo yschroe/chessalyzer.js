@@ -8,6 +8,7 @@ import type { WorkerMessage } from '#types/worker';
 
 import WorkerPool from '../../src/core/worker-pool';
 import { fixturePath } from '../helpers/fixtures';
+import { trackerStateAt } from '../helpers/tracker-state';
 
 const workerPath = join(import.meta.dirname, '../../lib/chess-worker.js');
 const badSanPath = join(import.meta.dirname, '../fixtures/bad-san-mid-file.pgn');
@@ -46,9 +47,7 @@ describe('Workers', () => {
             pool = new WorkerPool(1, workerPath, {
                 configs: [
                     {
-                        trackerData: [
-                            { id: 'DoesNotExist', cfg: { profilingActive: false }, path: '' },
-                        ],
+                        trackerData: [{ id: 'DoesNotExist' }],
                         replayMode: 'skip',
                     },
                 ],
@@ -93,7 +92,8 @@ describe('Workers', () => {
 
             expect(data.gameCount).toBe(1);
             expect(data.moveCount).toBe(15);
-            expect(tileTracker.movesTotal).toBeGreaterThan(0);
+            const state = trackerStateAt(data, tileTracker);
+            expect(state.movesTotal).toBeGreaterThan(0);
         });
     });
 });

@@ -2,11 +2,12 @@ import { describe, it, expect } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
 import type ChessBoard from '#board/chess-board';
+import { TrackerHost } from '#core/tracker-host';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
 import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
-import { MoveTracker } from '#trackers/base-tracker';
+import { defineMoveTracker } from '#trackers/define-tracker';
 import type { Action } from '#types/actions';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { AssembledGame, GameResult } from '#types/parse-pgn';
@@ -15,7 +16,7 @@ import { fixturePath } from '../../../test/helpers/fixtures';
 
 function emptyCfg(): GameProcessorAnalysisConfig {
     return {
-        trackers: { move: [], game: [] },
+        trackerHost: new TrackerHost([]),
         processedMoves: 0,
         processedGames: 0,
         skippedGames: 0,
@@ -54,22 +55,21 @@ describe('GameReplayer', () => {
             const replayer = new GameReplayer();
             const cfg = emptyCfg();
 
-            class ActionCounter extends MoveTracker {
-                actionCount = 0;
-
-                override trackMoves(actions: Action[]) {
-                    this.actionCount += actions.length;
-                }
-
-                override merge() {}
-            }
-
-            const counter = new ActionCounter();
-            cfg.trackers.move.push(counter);
+            const counter = defineMoveTracker({
+                id: 'action-counter',
+                init: () => ({ actionCount: 0 }),
+                track: (state, actions: Action[]) => {
+                    state.actionCount += actions.length;
+                },
+                merge: (state, other) => {
+                    state.actionCount += other.actionCount;
+                },
+            });
+            cfg.trackerHost = new TrackerHost([counter]);
 
             replayer.processGame(game(['e4', 'e5']), cfg, 'actions', 0, 'abort');
 
-            expect(counter.actionCount).toBe(2);
+            expect(cfg.trackerHost.moveEntries[0]?.state).toEqual({ actionCount: 2 });
             expect(cfg.processedMoves).toBe(2);
         });
 

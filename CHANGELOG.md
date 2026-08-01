@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Tracker redesign:** trackers are now **definitions + plain state**. Pass a tracker definition to `analyzePGN` (`defineGameTracker` / `defineMoveTracker` factories, or class adapters extending `MoveTracker` / `BaseGameTracker`). Stats are returned in `result.runs[n].trackers[m].state` — not mutated in place on the definition.
+- **Multithreaded contract:** `id`, `init()`, `track(state, …)`, `merge(state, other)`, and `workerModule` (custom trackers). Worker payloads are `TrackerSnapshot { id, state }` merged by id at pool drain. Optional `options` on the definition are cloned to workers before `init()`.
+- **Heatmaps:** `generateHeatmap(state, preset, square?)` and `generateComparisonHeatmap(state, otherState, preset, square?)` take tracker state as the first argument.
+- Lifecycle hook renamed to **`onFinish(state)`** (symmetric with `onGameEnd`).
+- Removed dead profiling plumbing (`TrackerConfig`, `cfg` threading, `time` merge).
+
+### Removed
+
+- `BaseTracker`, `Tracker` / `*Contract` types, `static trackerId`, `trackMoves` / `trackGame` method names on bases (use `track(state, …)`), in-place mutation of tracker instances after analysis.
+
 ## [4.0.0-alpha.1] - 2026-07-31
 
 ### Changed
