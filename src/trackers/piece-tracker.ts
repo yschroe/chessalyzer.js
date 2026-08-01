@@ -1,40 +1,40 @@
+import type { BoardCoord } from '#board/board-coords';
 import { MoveTracker } from '#trackers/base-tracker';
-import HeatmapPresets from '#trackers/heatmaps/piece-heatmaps';
+import {
+    generateComparisonHeatmap,
+    generateHeatmap,
+    resolveHeatmapFunc,
+} from '#trackers/heatmap-utils';
+import {
+    PieceHeatmapPresets,
+    type PieceHeatmapPresetName,
+} from '#trackers/heatmaps/piece-heatmaps';
+import {
+    isPieceTrackerData,
+    isTrackedPiece,
+    pieceList,
+    type Piece,
+    type PieceStatsMap,
+} from '#trackers/piece-types';
 import type { Action } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
-
-// oxfmt-ignore
-export type Piece =
-    | 'Pa' | 'Pb' | 'Pc' | 'Pd' | 'Pe' | 'Pf' | 'Pg' | 'Ph'
-    | 'Ra' | 'Nb' | 'Bc' | 'Qd' | 'Ke' | 'Bf' | 'Ng' | 'Rh';
-
-type PieceStats = { [piece in Piece]: number };
-type PieceStatsMap = { [piece in Piece]: PieceStats };
-
-// oxfmt-ignore
-const pieceList: Piece[] = [
-    'Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph',
-    'Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh',
-];
-
-const trackedPieceSet = new Set<string>(pieceList);
-
-export function isTrackedPiece(name: string): name is Piece {
-    return trackedPieceSet.has(name);
-}
+import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
 
 class PieceTracker extends MoveTracker {
     static override readonly trackerId = 'PieceTracker';
     static override readonly workerModule = import.meta.url;
+    static readonly presets = PieceHeatmapPresets;
 
     b: PieceStatsMap;
     w: PieceStatsMap;
+
     constructor() {
         super();
-        this.heatmapPresets = HeatmapPresets;
 
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries cannot infer PieceStats mapped type
-        const emptyPieceStats = Object.fromEntries(pieceList.map((val) => [val, 0])) as PieceStats;
+        const emptyPieceStats = Object.fromEntries(pieceList.map((val) => [val, 0])) as {
+            [piece in Piece]: number;
+        };
 
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries cannot infer PieceStatsMap mapped type
         this.b = Object.fromEntries(
@@ -46,8 +46,36 @@ class PieceTracker extends MoveTracker {
         ) as PieceStatsMap;
     }
 
+    generateHeatmap(
+        analysisFunc: PieceHeatmapPresetName | HeatmapAnalysisFunc<this>,
+        square?: string | BoardCoord,
+        optData?: unknown,
+    ): HeatmapData {
+        return generateHeatmap(
+            this,
+            resolveHeatmapFunc(PieceHeatmapPresets, analysisFunc),
+            square,
+            optData,
+        );
+    }
+
+    generateComparisonHeatmap(
+        compData: this,
+        analysisFunc: PieceHeatmapPresetName | HeatmapAnalysisFunc<this>,
+        square?: string | BoardCoord,
+        optData?: unknown,
+    ): HeatmapData {
+        return generateComparisonHeatmap(
+            this,
+            compData,
+            resolveHeatmapFunc(PieceHeatmapPresets, analysisFunc),
+            square,
+            optData,
+        );
+    }
+
     override merge(tracker: unknown) {
-        if (!isPieceTracker(tracker)) return;
+        if (!isPieceTrackerData(tracker)) return;
 
         for (const piece of pieceList) {
             for (const piece2 of pieceList) {
@@ -76,13 +104,9 @@ class PieceTracker extends MoveTracker {
         }
     }
 
-    processCapture(player: PlayerColor, takingPiece: Piece, takenPiece: Piece) {
+    private processCapture(player: PlayerColor, takingPiece: Piece, takenPiece: Piece) {
         this[player][takingPiece][takenPiece] += 1;
     }
-}
-
-function isPieceTracker(tracker: unknown): tracker is PieceTracker {
-    return typeof tracker === 'object' && tracker !== null && 'b' in tracker && 'w' in tracker;
 }
 
 export { PieceTracker };

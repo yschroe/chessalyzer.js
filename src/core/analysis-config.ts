@@ -1,6 +1,6 @@
 import { resolveEffectiveReplayMode } from '#replay/replay-mode';
 import type { ReplayMode } from '#replay/replay-mode';
-import { BaseTracker } from '#trackers/base-tracker';
+import { BaseGameTracker, BaseTracker, MoveTracker } from '#trackers/base-tracker';
 import { GameTracker } from '#trackers/game-tracker';
 import { PieceTracker } from '#trackers/piece-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
@@ -226,13 +226,11 @@ export function normalizeAnalysisConfigs(
                         'Trackers must extend BaseTracker (or a built-in tracker class)',
                     );
                 }
-                if (tracker.type === 'move') {
+                if (tracker instanceof MoveTracker) {
                     tempCfg.trackers.move.push(tracker);
-                } else if (tracker.type === 'game') {
+                } else if (tracker instanceof BaseGameTracker) {
                     tempCfg.trackers.game.push(tracker);
                     needsHeaders = true;
-                } else {
-                    throw new Error(`Unknown tracker type: ${String(tracker.type)}`);
                 }
 
                 const id = resolveTrackerId(tracker, multithreaded);

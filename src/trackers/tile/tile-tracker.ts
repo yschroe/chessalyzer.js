@@ -3,10 +3,16 @@ import {
     isBoardIndex,
     squareCol,
     squareRow,
+    type BoardCoord,
     type Square,
 } from '#board/board-coords';
 import { MoveTracker } from '#trackers/base-tracker';
-import HeatmapPresets from '#trackers/heatmaps/tile-heatmaps';
+import {
+    generateComparisonHeatmap,
+    generateHeatmap,
+    resolveHeatmapFunc,
+} from '#trackers/heatmap-utils';
+import { TileHeatmapPresets, type TileHeatmapPresetName } from '#trackers/heatmaps/tile-heatmaps';
 import {
     createTileGrid,
     mergeCellStats,
@@ -17,8 +23,13 @@ import type { TileGrid } from '#trackers/tile/tile-tracker-types';
 import type { Action } from '#types/actions';
 import type { MoveCoords } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
+import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
 
-function isTileTracker(tracker: unknown): tracker is TileTracker {
+function isTileTrackerData(tracker: unknown): tracker is {
+    tiles: TileGrid;
+    movesGame: number;
+    movesTotal: number;
+} {
     return (
         typeof tracker === 'object' &&
         tracker !== null &&
@@ -50,6 +61,7 @@ function playerBucket(player: string): PlayerColor | undefined {
 class TileTracker extends MoveTracker {
     static override readonly trackerId = 'TileTracker';
     static override readonly workerModule = import.meta.url;
+    static readonly presets = TileHeatmapPresets;
 
     movesGame: number;
     movesTotal: number;
@@ -57,15 +69,42 @@ class TileTracker extends MoveTracker {
 
     constructor() {
         super();
-        this.heatmapPresets = HeatmapPresets;
         this.movesGame = 0;
         this.movesTotal = 0;
         this.tiles = createTileGrid();
     }
 
+    generateHeatmap(
+        analysisFunc: TileHeatmapPresetName | HeatmapAnalysisFunc<this>,
+        square?: string | BoardCoord,
+        optData?: unknown,
+    ): HeatmapData {
+        return generateHeatmap(
+            this,
+            resolveHeatmapFunc(TileHeatmapPresets, analysisFunc),
+            square,
+            optData,
+        );
+    }
+
+    generateComparisonHeatmap(
+        compData: this,
+        analysisFunc: TileHeatmapPresetName | HeatmapAnalysisFunc<this>,
+        square?: string | BoardCoord,
+        optData?: unknown,
+    ): HeatmapData {
+        return generateComparisonHeatmap(
+            this,
+            compData,
+            resolveHeatmapFunc(TileHeatmapPresets, analysisFunc),
+            square,
+            optData,
+        );
+    }
+
     /** Merge stats from a worker batch tracker into this (main-thread) instance. */
     override merge(tracker: unknown) {
-        if (!isTileTracker(tracker)) return;
+        if (!isTileTrackerData(tracker)) return;
 
         this.movesGame += tracker.movesGame;
         this.movesTotal += tracker.movesTotal;
@@ -127,7 +166,7 @@ class TileTracker extends MoveTracker {
      * Record a piece move: credit occupation on `from`, transfer virtual piece to `to`,
      * increment movedTo counters. Skips promoted pawns (names containing digits).
      */
-    processMove(move: MoveCoords, player: string, piece: string) {
+    private processMove(move: MoveCoords, player: string, piece: string) {
         const fromRow = squareRow(move.from);
         const fromCol = squareCol(move.from);
         const toRow = squareRow(move.to);
@@ -165,7 +204,12 @@ class TileTracker extends MoveTracker {
      * Record capture stats on `pos` for taker and taken.
      * Taken piece occupation is flushed before clearing the square.
      */
-    processCapture(pos: Square, player: string, takingPiece: string, takenPiece: string): void {
+    private processCapture(
+        pos: Square,
+        player: string,
+        takingPiece: string,
+        takenPiece: string,
+    ): void {
         const cell = tileCellAt(this.tiles, pos);
         const bucket = playerBucket(player);
         if (!cell || !bucket) return;
@@ -191,7 +235,7 @@ class TileTracker extends MoveTracker {
      * Add `(movesGame - lastMovedOn)` to wasOn for the piece currently on `pos`.
      * Measures how many half-moves the piece occupied the square since it arrived.
      */
-    addOccupation(pos: Square): void {
+    private addOccupation(pos: Square): void {
         this.addOccupationByRowCol(squareRow(pos), squareCol(pos));
     }
 

@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Renamed tracker `finish()` hook to `onFinish()`
+- **Tracker types:** `Tracker` is now a discriminated union (`MoveTrackerContract` | `GameTrackerContract`) with type-specific `track` signatures instead of `track(ParsedGame | Action[])`. Extend `MoveTracker` / `BaseGameTracker` — do not implement `Tracker` directly.
+- **Heatmaps:** preset maps moved off tracker instances to module exports (`TileHeatmapPresets`, `PieceHeatmapPresets`) with typed preset names (`TileHeatmapPresetName`, `PieceHeatmapPresetName`). `generateHeatmap` / `generateComparisonHeatmap` live on `TileTracker` and `PieceTracker` only (`static presets` on each class).
+- **Tracker internals:** `cfg` is read-only on instances (set via framework bootstrap). `time` remains readable; framework merges profiling time via `addTrackerElapsed`. Hot-path helpers on built-in move trackers are private.
 
 ## [4.0.0-alpha.1] - 2026-07-31
 

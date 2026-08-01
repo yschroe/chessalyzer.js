@@ -320,7 +320,7 @@ chessalyzer comes with three built-in trackers, which can be directly imported i
 
 ## Custom Trackers
 
-Want to track something the built-ins do not cover? Create your own tracker by extending `MoveTracker` (per-move stats) or `BaseGameTracker` (per-game stats like results or ECO codes).
+Want to track something the built-ins do not cover? Create your own tracker by extending `MoveTracker` (per-move stats) or `BaseGameTracker` (per-game stats like results or ECO codes). The public `Tracker` type is a discriminated union of move and game contracts — implement `trackMoves` or `trackGame` via those bases rather than implementing `Tracker` directly.
 
 For single-threaded analysis, implement `trackMoves` or `trackGame` and you are done. For multithreading, you need three small extras:
 
@@ -369,11 +369,16 @@ import type {
 import {
     BaseGameTracker,
     MoveTracker,
+    TileHeatmapPresets,
     type HeatmapAnalysisFunc,
     type HeatmapPresetEntry,
     type MoveCoords,
+    type MoveTrackerContract,
+    type GameTrackerContract,
     type SquareData,
+    type TileHeatmapPresetName,
     type Tracker,
+    type TrackerBase,
     type TrackerConfig,
 } from 'chessalyzer/trackers';
 ```
@@ -391,7 +396,9 @@ merge(tracker) {
 
 # Heatmap Presets
 
-Instead of defining your own heatmap function you can also use the heatmap presets chessalyzer provides you via the Tile and Piece Trackers. You can access those presets by passing the SHORT_NAMEs of the following table as your first argument in `generateHeatmap(...)`, e.g. `<yourTileTrackerInstance>.generateHeatmap('TILE_OCC_BY_PIECE', 'a2')`.
+Built-in heatmap presets are module-level maps exported from `chessalyzer/trackers` (`TileHeatmapPresets`, `PieceHeatmapPresets`) and mirrored on `TileTracker.presets` / `PieceTracker.presets`. Preset names are typed (`TileHeatmapPresetName`, `PieceHeatmapPresetName`) for autocomplete when calling `generateHeatmap(...)`.
+
+Instead of defining your own heatmap function you can pass a preset name as the first argument, e.g. `tileTracker.generateHeatmap('TILE_OCC_BY_PIECE', 'a2')`.
 
 ### Tile Tracker
 

@@ -1,5 +1,5 @@
 import type { ReplayMode } from '#replay/replay-mode';
-import type { BaseTracker } from '#trackers/base-tracker';
+import type { BaseGameTracker, MoveTracker } from '#trackers/base-tracker';
 import type { AnalyzeError } from '#types/errors';
 import type { ParsedGame } from '#types/parse-pgn';
 import type { TrackerConfig } from '#types/tracker';
@@ -21,7 +21,7 @@ export interface GameProcessorConfig {
 
 /** Runtime tracker buckets while processing one analysis config. */
 export interface GameProcessorAnalysisConfig {
-    trackers: { move: BaseTracker[]; game: BaseTracker[] };
+    trackers: { move: MoveTracker[]; game: BaseGameTracker[] };
     processedMoves: number;
     processedGames: number;
     skippedGames: number;

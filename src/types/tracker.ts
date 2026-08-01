@@ -2,20 +2,9 @@ import type { Action } from '#types/actions';
 import type { SquareData } from '#types/game';
 import type { ParsedGame } from '#types/parse-pgn';
 
-/**
- * Contract implemented by {@link BaseTracker} and custom user trackers.
- * Move trackers receive {@link Action}[]; game trackers receive {@link ParsedGame}.
- *
- * Prefer extending {@link MoveTracker} or {@link BaseGameTracker} rather than implementing
- * this interface directly — the raw `track` union is for framework dispatch.
- *
- * Multithreaded custom trackers must use a **zero-arg constructor**, set
- * `static trackerId` and `static workerModule`, and implement {@link merge}.
- */
-export interface Tracker {
-    type: 'move' | 'game';
-    /** Track moves or games (e.g. count pieces, accumulate stats). */
-    track: (arg: ParsedGame | Action[]) => void;
+/** Shared lifecycle hooks for move and game trackers. */
+export interface TrackerBase {
+    readonly type: 'move' | 'game';
     /** Optional per-game hook after each game (success or skipped). */
     onGameEnd?: () => void;
     /** Optional end-of-analysis hook (e.g. sort aggregated keys). */
@@ -28,14 +17,37 @@ export interface Tracker {
     merge?: (arg: unknown) => void;
 }
 
+/** Move-level tracker contract — receives {@link Action}[] per half-move. */
+export interface MoveTrackerContract extends TrackerBase {
+    readonly type: 'move';
+    track: (actions: Action[]) => void;
+}
+
+/** Game-level tracker contract — receives {@link ParsedGame} after each game. */
+export interface GameTrackerContract extends TrackerBase {
+    readonly type: 'game';
+    track: (game: ParsedGame) => void;
+}
+
+/**
+ * Public tracker contracts for {@link AnalyzeOptions.trackers}.
+ *
+ * Prefer extending {@link MoveTracker} or {@link BaseGameTracker} rather than implementing
+ * these interfaces directly — customs must subclass those bases at runtime.
+ *
+ * Multithreaded custom trackers must use a **zero-arg constructor**, set
+ * `static trackerId` and `static workerModule`, and implement {@link merge}.
+ */
+export type Tracker = MoveTrackerContract | GameTrackerContract;
+
 /** Optional runtime flags attached to tracker instances (on {@link BaseTracker} subclasses). */
 export interface TrackerConfig {
     profilingActive: boolean;
 }
 
-/** Built-in or custom heatmap preset definition attached to a tracker. */
+/** Built-in or custom heatmap preset definition. */
 export interface HeatmapPresetEntry {
-    scope?: string;
+    scope?: 'global' | 'specific';
     unit?: string;
     description?: string;
     calc: HeatmapAnalysisFunc;

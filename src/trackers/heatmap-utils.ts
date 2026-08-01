@@ -8,7 +8,21 @@ import {
 } from '#board/board-coords';
 import { getStartingPiece } from '#board/piece-names';
 import type { SquareData } from '#types/game';
-import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
+import type { HeatmapAnalysisFunc, HeatmapData, HeatmapPresetEntry } from '#types/tracker';
+
+/**
+ * Resolve a preset name or pass through a custom analysis function.
+ */
+export function resolveHeatmapFunc<T>(
+    presets: Record<string, HeatmapPresetEntry>,
+    analysisFunc: string | HeatmapAnalysisFunc<T>,
+): HeatmapAnalysisFunc<T> {
+    if (typeof analysisFunc !== 'string') return analysisFunc;
+
+    const preset = presets[analysisFunc];
+    if (!preset) throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
+    return preset.calc;
+}
 
 function squareData(row: number, col: number): SquareData {
     const square = coordsToSquare(row, col);

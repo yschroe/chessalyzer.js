@@ -1,18 +1,19 @@
 import { tileCellAt } from '#trackers/tile/tile-grid';
-import { TileTracker } from '#trackers/tile/tile-tracker';
+import type { TileGrid } from '#trackers/tile/tile-tracker-types';
 import type { SquareData } from '#types/game';
+import type { HeatmapPresetEntry } from '#types/tracker';
 
-function isTileTracker(data: unknown): data is TileTracker {
+function isTileTrackerData(data: unknown): data is { tiles: TileGrid; movesTotal: number } {
     return typeof data === 'object' && data !== null && 'tiles' in data && 'movesTotal' in data;
 }
 
-export default {
+export const TileHeatmapPresets = {
     TILE_OCC_ALL: {
         scope: 'global',
         unit: '%',
         description: 'Tile <loopSqrData> had a piece on it for X% of all moves.',
         calc: (data: unknown, loopSqrData: SquareData, _sqrData: SquareData) => {
-            if (!isTileTracker(data)) return 0;
+            if (!isTileTrackerData(data)) return 0;
             const cell = tileCellAt(data.tiles, loopSqrData.square);
             if (!cell) return 0;
             let val = cell.w.wasOn + cell.b.wasOn;
@@ -25,7 +26,7 @@ export default {
         unit: '%',
         description: 'Tile <loopSqrData> had a white piece on it for X% of all moves.',
         calc: (data: unknown, loopSqrData: SquareData, _sqrData: SquareData) => {
-            if (!isTileTracker(data)) return 0;
+            if (!isTileTrackerData(data)) return 0;
             const cell = tileCellAt(data.tiles, loopSqrData.square);
             if (!cell) return 0;
             let val = cell.w.wasOn;
@@ -38,7 +39,7 @@ export default {
         unit: '%',
         description: 'Tile X had a black piece on it for Y% of all moves.',
         calc: (data: unknown, loopSqrData: SquareData, _sqrData: SquareData) => {
-            if (!isTileTracker(data)) return 0;
+            if (!isTileTrackerData(data)) return 0;
             const cell = tileCellAt(data.tiles, loopSqrData.square);
             if (!cell) return 0;
             let val = cell.b.wasOn;
@@ -51,7 +52,7 @@ export default {
         unit: '%',
         description: 'Selected tile was occupated by piece X during Y% of all moves.',
         calc: (data: unknown, loopSqrData: SquareData, sqrData: SquareData) => {
-            if (!isTileTracker(data)) return 0;
+            if (!isTileTrackerData(data)) return 0;
             const { piece } = loopSqrData;
 
             let val = 0;
@@ -69,7 +70,7 @@ export default {
         unit: '',
         description: 'Count of Pieces that were taken on each tile.',
         calc: (data: unknown, loopSqrData: SquareData, _sqrData: SquareData) => {
-            if (!isTileTracker(data)) return 0;
+            if (!isTileTrackerData(data)) return 0;
             const cell = tileCellAt(data.tiles, loopSqrData.square);
             if (!cell) return 0;
             const val = cell.b.wasCapturedOn + cell.w.wasCapturedOn;
@@ -81,7 +82,7 @@ export default {
         unit: '',
         description: 'Selected piece had tile X as a move target Y times.',
         calc: (data: unknown, loopSqrData: SquareData, sqrData: SquareData) => {
-            if (!isTileTracker(data)) return 0;
+            if (!isTileTrackerData(data)) return 0;
             const { piece } = sqrData;
             const { square } = loopSqrData;
             let val = 0;
@@ -93,4 +94,6 @@ export default {
             return val;
         },
     },
-};
+} as const satisfies Record<string, HeatmapPresetEntry>;
+
+export type TileHeatmapPresetName = keyof typeof TileHeatmapPresets;

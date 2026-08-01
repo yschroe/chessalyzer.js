@@ -4,7 +4,7 @@ import type { ReplayMode } from '#replay/replay-mode';
 import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
 import SanDecoder from '#replay/san-decoder';
-import type { BaseTracker } from '#trackers/base-tracker';
+import type { MoveTracker } from '#trackers/base-tracker';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { AssembledGame } from '#types/parse-pgn';
 import { toParsedGame } from '#types/parse-pgn';
@@ -93,7 +93,7 @@ class GameReplayer {
     /** Replay movetext onto the board; optionally emit actions for move trackers. Returns false when skipped. */
     private replayMoves(
         game: AssembledGame,
-        moveTrackers: BaseTracker[],
+        moveTrackers: MoveTracker[],
         replayMode: ReplayMode,
         gameIndex: number,
         onError: 'abort' | 'skip-game',

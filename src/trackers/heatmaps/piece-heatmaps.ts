@@ -1,12 +1,10 @@
-import { isTrackedPiece, type PieceTracker } from '#trackers/piece-tracker';
+import { isPieceTrackerData, isTrackedPiece } from '#trackers/piece-types';
+import type { PieceStatsMap } from '#trackers/piece-types';
 import type { SquareData } from '#types/game';
-
-function isPieceTracker(data: unknown): data is PieceTracker {
-    return typeof data === 'object' && data !== null && 'b' in data && 'w' in data;
-}
+import type { HeatmapPresetEntry } from '#types/tracker';
 
 function captureCount(
-    data: PieceTracker,
+    data: { b: PieceStatsMap; w: PieceStatsMap },
     takerColor: 'b' | 'w',
     takerName: string,
     takenName: string,
@@ -15,13 +13,13 @@ function captureCount(
     return data[takerColor][takerName][takenName];
 }
 
-export default {
+export const PieceHeatmapPresets = {
     PIECE_CAPTURED_BY: {
         scope: 'specific',
         unit: '',
         description: 'Selected piece was taken by piece X Y times.',
         calc: (data: unknown, loopSqrData: SquareData, sqrData: SquareData) => {
-            if (!isPieceTracker(data)) return 0;
+            if (!isPieceTrackerData(data)) return 0;
             const sqrPiece = sqrData.piece;
             const loopPiece = loopSqrData.piece;
             if (!sqrPiece || !loopPiece || loopPiece.color === sqrPiece.color) return 0;
@@ -33,11 +31,13 @@ export default {
         unit: '',
         description: 'Selected piece took piece X Y times.',
         calc: (data: unknown, loopSqrData: SquareData, sqrData: SquareData) => {
-            if (!isPieceTracker(data)) return 0;
+            if (!isPieceTrackerData(data)) return 0;
             const sqrPiece = sqrData.piece;
             const loopPiece = loopSqrData.piece;
             if (!sqrPiece || !loopPiece || loopPiece.color === sqrPiece.color) return 0;
             return captureCount(data, sqrPiece.color, sqrPiece.name, loopPiece.name);
         },
     },
-};
+} as const satisfies Record<string, HeatmapPresetEntry>;
+
+export type PieceHeatmapPresetName = keyof typeof PieceHeatmapPresets;

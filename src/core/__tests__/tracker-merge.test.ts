@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 
 import { createWorkerResultHandler, mergeWorkerTrackerFlush } from '#core/tracker-merge';
-import type { BaseTracker } from '#trackers/base-tracker';
+import type { BaseGameTracker } from '#trackers/base-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { WorkerMessage } from '#types/worker';
@@ -94,7 +94,7 @@ describe('tracker merge', () => {
             const cfg = baseConfig({
                 trackers: {
                     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixture uses built-package BaseGameTracker
-                    game: [mainTracker as unknown as BaseTracker],
+                    game: [mainTracker as unknown as BaseGameTracker],
                     move: [],
                 },
                 config: { hasFilter: false, filter: () => true, maxGames: 10 },
@@ -132,14 +132,14 @@ describe('tracker merge', () => {
             const cfgA = baseConfig({
                 trackers: {
                     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixture uses built-package BaseGameTracker
-                    game: [trackerA as unknown as BaseTracker],
+                    game: [trackerA as unknown as BaseGameTracker],
                     move: [],
                 },
             });
             const cfgB = baseConfig({
                 trackers: {
                     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixture uses built-package BaseGameTracker
-                    game: [trackerB as unknown as BaseTracker],
+                    game: [trackerB as unknown as BaseGameTracker],
                     move: [],
                 },
             });

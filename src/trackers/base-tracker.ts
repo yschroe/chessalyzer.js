@@ -1,23 +1,25 @@
 import { performance } from 'node:perf_hooks';
 
-import type { BoardCoord } from '#board/board-coords';
-import { generateComparisonHeatmap, generateHeatmap } from '#trackers/heatmap-utils';
 import type { Action } from '#types/actions';
 import type { ParsedGame } from '#types/parse-pgn';
-import type {
-    HeatmapAnalysisFunc,
-    HeatmapData,
-    HeatmapPresetEntry,
-    Tracker,
-    TrackerConfig,
-} from '#types/tracker';
+import type { GameTrackerContract, MoveTrackerContract, TrackerConfig } from '#types/tracker';
 
-class BaseTracker implements Tracker {
+/** Apply worker bootstrap config to a tracker instance. Framework use only. */
+export function applyTrackerConfig(tracker: BaseTracker, cfg: TrackerConfig): void {
+    tracker.setRuntimeCfg(cfg);
+}
+
+/** @internal Framework use only — adds worker-reported profiling time after `merge`. */
+export function addTrackerElapsed(tracker: { time: number }, ms: number): void {
+    tracker.time += ms;
+}
+
+class BaseTracker {
     readonly type: 'move' | 'game';
     private t0: number;
+    /** Accumulated profiling time in milliseconds (framework-owned; do not mutate in `merge`). */
     time: number;
-    cfg: TrackerConfig;
-    heatmapPresets: Record<string, HeatmapPresetEntry> | null;
+    #cfg: TrackerConfig;
 
     /** Stable ID for worker-side tracker lookup (minification-safe). Required for multithreaded analysis. */
     static trackerId?: string;
@@ -27,22 +29,31 @@ class BaseTracker implements Tracker {
 
     constructor(type: 'move' | 'game') {
         this.type = type;
-        this.cfg = {
+        this.#cfg = {
             profilingActive: false,
         };
         this.time = 0;
         this.t0 = 0;
-        this.heatmapPresets = {};
     }
 
-    analyze(data: ParsedGame | Action[]) {
-        if (this.cfg.profilingActive) this.t0 = performance.now();
-        this.track(data);
-        if (this.cfg.profilingActive) this.time += performance.now() - this.t0;
+    get cfg(): Readonly<TrackerConfig> {
+        return this.#cfg;
     }
 
-    track(_data: ParsedGame | Action[]) {
-        throw new Error('Your tracker must implement a track(...) method!');
+    /** @internal Framework use only — prefer {@link applyTrackerConfig}. */
+    setRuntimeCfg(cfg: TrackerConfig): void {
+        this.#cfg = cfg;
+    }
+
+    /** @internal Framework use only — adds worker-reported profiling time after `merge`. */
+    addElapsed(ms: number): void {
+        addTrackerElapsed(this, ms);
+    }
+
+    protected profiledTrack(fn: () => void): void {
+        if (this.#cfg.profilingActive) this.t0 = performance.now();
+        fn();
+        if (this.#cfg.profilingActive) this.time += performance.now() - this.t0;
     }
 
     /** Override when using multithreaded analysis to aggregate worker batch stats. */
@@ -53,69 +64,44 @@ class BaseTracker implements Tracker {
 
     /** Optional end-of-analysis hook (e.g. sort aggregated keys). */
     onFinish(): void {}
-
-    private resolveHeatmapFunc<T>(
-        analysisFunc: string | HeatmapAnalysisFunc<T>,
-    ): HeatmapAnalysisFunc<T> {
-        if (typeof analysisFunc !== 'string') return analysisFunc;
-
-        if (!this.heatmapPresets || Object.keys(this.heatmapPresets).length === 0) {
-            throw new Error('Your tracker does not define any heatmap presets!');
-        }
-        const preset = this.heatmapPresets[analysisFunc];
-        if (!preset) throw new Error(`Heatmap preset '${analysisFunc}' not found!`);
-        return preset.calc;
-    }
-
-    generateHeatmap(
-        analysisFunc: string | HeatmapAnalysisFunc<this>,
-        square?: string | BoardCoord,
-        optData?: unknown,
-    ): HeatmapData {
-        return generateHeatmap(this, this.resolveHeatmapFunc(analysisFunc), square, optData);
-    }
-
-    generateComparisonHeatmap(
-        compData: this,
-        analysisFunc: string | HeatmapAnalysisFunc<this>,
-        square?: string | BoardCoord,
-        optData?: unknown,
-    ): HeatmapData {
-        return generateComparisonHeatmap(
-            this,
-            compData,
-            this.resolveHeatmapFunc(analysisFunc),
-            square,
-            optData,
-        );
-    }
 }
 
 /** Abstract base for move-level trackers (receive {@link Action}[] per half-move). */
-export abstract class MoveTracker extends BaseTracker {
+export abstract class MoveTracker extends BaseTracker implements MoveTrackerContract {
     override readonly type = 'move';
 
     constructor() {
         super('move');
     }
 
-    override track(data: ParsedGame | Action[]): void {
-        if (Array.isArray(data)) this.trackMoves(data);
+    analyze(actions: Action[]): void {
+        this.profiledTrack(() => this.track(actions));
+    }
+
+    track(actions: Action[]): void {
+        this.trackMoves(actions);
     }
 
     abstract trackMoves(actions: Action[]): void;
 }
 
-/** Abstract base for game-level trackers (receive {@link ParsedGame} after each game). */
-export abstract class BaseGameTracker extends BaseTracker {
+/**
+ * Abstract base for game-level trackers (receive {@link ParsedGame} after each game).
+ * Concrete built-in: {@link GameTracker}.
+ */
+export abstract class BaseGameTracker extends BaseTracker implements GameTrackerContract {
     override readonly type = 'game';
 
     constructor() {
         super('game');
     }
 
-    override track(data: ParsedGame | Action[]): void {
-        if (!Array.isArray(data)) this.trackGame(data);
+    analyze(game: ParsedGame): void {
+        this.profiledTrack(() => this.track(game));
+    }
+
+    track(game: ParsedGame): void {
+        this.trackGame(game);
     }
 
     abstract trackGame(game: ParsedGame): void;
