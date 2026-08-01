@@ -4,13 +4,7 @@ import type { TileTrackerState } from 'chessalyzer/trackers';
 import type { CustomGameTrackerState } from '~/test/fixtures/custom-game-tracker';
 
 export function isTileTrackerState(value: unknown): value is TileTrackerState {
-    return (
-        typeof value === 'object' &&
-        value !== null &&
-        'movesTotal' in value &&
-        'movesGame' in value &&
-        'tiles' in value
-    );
+    return typeof value === 'object' && value !== null && 'movesTotal' in value && 'tiles' in value;
 }
 
 export function isPieceTrackerState(value: unknown): value is PieceTrackerState {

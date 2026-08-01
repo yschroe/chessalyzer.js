@@ -41,7 +41,7 @@ function assertTrackerDefShape(tracker: object): asserts tracker is TrackerDef {
 /** Runtime validation for tracker definitions passed to analyzePGN. */
 export function assertTrackerDef(tracker: unknown): asserts tracker is TrackerDef {
     if (typeof tracker !== 'object' || tracker === null) {
-        throw new Error('Trackers must be tracker definition objects or class instances');
+        throw new Error('Trackers must be tracker definition objects');
     }
     assertTrackerDefShape(tracker);
 }

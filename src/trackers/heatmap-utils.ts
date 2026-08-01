@@ -1,5 +1,4 @@
 import {
-    algebraicToCoords,
     coordsToSquare,
     squareCol,
     squareRow,
@@ -19,27 +18,9 @@ function squareData(row: number, col: number): SquareData {
     };
 }
 
-function resolveRefSquare(square?: Square | BoardCoord): Square {
-    if (square === undefined) return 'a1';
-
-    if (typeof square === 'string') {
-        const resolved = algebraicToCoords(square);
-        if (resolved) {
-            return coordsToSquare(resolved[0], resolved[1]);
-        }
-        return square;
-    }
-
-    return coordsToSquare(square[0], square[1]);
-}
-
 /** Evaluate `fun` at every square and collect min/max for normalization. */
-function renderHeatmap<T>(
-    data: T,
-    fun: HeatmapAnalysisFunc<T>,
-    square?: Square | BoardCoord,
-): HeatmapData {
-    const refSquare = resolveRefSquare(square);
+function renderHeatmap<T>(data: T, fun: HeatmapAnalysisFunc<T>, square?: Square): HeatmapData {
+    const refSquare = square ?? 'a1';
     const refRow = squareRow(refSquare);
     const refCol = squareCol(refSquare);
     const refSquareData: SquareData = {

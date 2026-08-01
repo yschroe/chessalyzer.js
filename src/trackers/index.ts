@@ -5,11 +5,8 @@ export { PieceTracker, type PieceTrackerState } from '#trackers/piece-tracker';
 export { TileTracker, type TileTrackerState } from '#trackers/tile/tile-tracker';
 
 export { generateComparisonHeatmap, generateHeatmap } from '#trackers/heatmap-utils';
-export {
-    PieceHeatmapPresets,
-    type PieceHeatmapPresetName,
-} from '#trackers/heatmaps/piece-heatmaps';
-export { TileHeatmapPresets, type TileHeatmapPresetName } from '#trackers/heatmaps/tile-heatmaps';
+export { PieceHeatmapPresets } from '#trackers/heatmaps/piece-heatmaps';
+export { TileHeatmapPresets } from '#trackers/heatmaps/tile-heatmaps';
 
 export type { Piece } from '#trackers/piece-types';
 export { isTrackedPiece } from '#trackers/piece-types';

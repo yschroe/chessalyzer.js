@@ -50,8 +50,8 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 User-facing docs: [README Custom Trackers](README.md#custom-trackers). Trackers are **definitions** (behavior + identity) separate from **state** (plain data owned per thread). For MT (`workers` not `false`), custom trackers must:
 
-1. Live in a **separate module** with a **default export** (class adapter or factory object).
-2. Set **`id`** (instance field on class adapters) and **`workerModule = import.meta.url`** so workers can load the module.
+1. Live in a **separate module** with a **default export** (factory object from `defineGameTracker` / `defineMoveTracker`).
+2. Set **`id`** and **`workerModule = import.meta.url`** so workers can load the module.
 3. Implement **`init()`**, **`track(state, …)`**, and **`merge(state, other)`** — state is plain structured-cloneable data; only states cross the worker boundary as `TrackerSnapshot { id, state }`.
 4. Optional **`options`** (plain data) are cloned to workers before `init()`.
 

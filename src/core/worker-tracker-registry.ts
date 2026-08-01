@@ -26,19 +26,15 @@ function hasDefaultExport(module: unknown): module is { default: unknown } {
     return typeof module === 'object' && module !== null && 'default' in module;
 }
 
-/** Normalize a default export (class or def object) into a tracker definition. */
+/** Normalize a default export into a tracker definition (factory object only). */
 function normalizeDefaultExport(value: unknown): TrackerDef {
-    if (isTrackerConstructor(value)) {
-        const instance = new value();
-        assertTrackerDef(instance);
-        return instance;
+    if (typeof value === 'function') {
+        throw new Error(
+            'Custom tracker module must default-export a tracker definition object (from defineGameTracker / defineMoveTracker), not a class or function',
+        );
     }
     assertTrackerDef(value);
     return value;
-}
-
-function isTrackerConstructor(value: unknown): value is new () => TrackerDef {
-    return typeof value === 'function';
 }
 
 function createTrackerDef(id: string, options: unknown): TrackerDef {
@@ -89,7 +85,7 @@ async function loadCustomTrackers(initData: WorkerInitData | undefined): Promise
 
                 if (!hasDefaultExport(customTracker)) {
                     throw new Error(
-                        `Custom tracker "${tracker.id}" module must default-export a tracker definition or class`,
+                        `Custom tracker "${tracker.id}" module must default-export a tracker definition object`,
                     );
                 }
 
