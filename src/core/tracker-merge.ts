@@ -182,11 +182,11 @@ export function createWorkerResultHandler(
     };
 }
 
-/** Invoke tracker `finish` hooks and return aggregate game/move counts. */
+/** Invoke tracker `onFinish` hooks and return aggregate game/move counts. */
 export function finishTrackers(configs: GameProcessorAnalysisConfigFull[]): GameAndMoveCount[] {
     for (const { trackers } of configs) {
-        for (const tracker of trackers.game) tracker.finish?.();
-        for (const tracker of trackers.move) tracker.finish?.();
+        for (const tracker of trackers.game) tracker.onFinish?.();
+        for (const tracker of trackers.move) tracker.onFinish?.();
     }
 
     return configs.map((cfg) => ({

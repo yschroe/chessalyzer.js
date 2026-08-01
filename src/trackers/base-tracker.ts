@@ -52,7 +52,7 @@ class BaseTracker implements Tracker {
     onGameEnd(): void {}
 
     /** Optional end-of-analysis hook (e.g. sort aggregated keys). */
-    finish(): void {}
+    onFinish(): void {}
 
     private resolveHeatmapFunc<T>(
         analysisFunc: string | HeatmapAnalysisFunc<T>,

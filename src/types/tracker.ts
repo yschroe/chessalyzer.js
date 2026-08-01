@@ -14,9 +14,12 @@ import type { ParsedGame } from '#types/parse-pgn';
  */
 export interface Tracker {
     type: 'move' | 'game';
+    /** Track moves or games (e.g. count pieces, accumulate stats). */
     track: (arg: ParsedGame | Action[]) => void;
+    /** Optional per-game hook after each game (success or skipped). */
     onGameEnd?: () => void;
-    finish?: () => void;
+    /** Optional end-of-analysis hook (e.g. sort aggregated keys). */
+    onFinish?: () => void;
     /**
      * Aggregate worker batch stats into this instance.
      * Receives a plain object after structured clone — duck-type fields; do not use `instanceof`.
