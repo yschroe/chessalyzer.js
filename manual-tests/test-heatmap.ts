@@ -1,5 +1,5 @@
-import { analyzePGN, printHeatmap } from 'chessalyzer';
-import { TileTracker, type TileTrackerState } from 'chessalyzer/trackers';
+import { analyzePGN, getTrackerState, printHeatmap } from 'chessalyzer';
+import { TileTracker } from 'chessalyzer/trackers';
 
 const tileTracker = new TileTracker();
 const tileTracker2 = new TileTracker();
@@ -21,8 +21,8 @@ const data = await analyzePGN('./pgn/asorted-games.pgn', {
 });
 console.log(data);
 
-const state1 = data.runs[0]?.trackers[0]?.state as TileTrackerState;
-const state2 = data.runs[1]?.trackers[0]?.state as TileTrackerState;
+const state1 = getTrackerState(data, tileTracker);
+const state2 = getTrackerState(data, tileTracker2);
 
 printHeatmap(
     tileTracker.generateHeatmap(state1, { analysis: 'PIECE_MOVED_TO_TILE', square: 'd1' }),

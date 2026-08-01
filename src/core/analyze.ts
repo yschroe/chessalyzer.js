@@ -3,7 +3,6 @@ import { performance } from 'node:perf_hooks';
 import { normalizeAnalyzeOptions } from '#core/analysis-config';
 import { collectError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
 import GameProcessor from '#core/game-processor';
-import { getTrackerState } from '#core/get-tracker-state';
 import type {
     AnalyzeMultiRunOptions,
     AnalyzeMultiRunResult,
@@ -16,8 +15,6 @@ import type {
 import type { AnalyzeError } from '#types/errors';
 import type { AnalyzeTrackerResult } from '#types/tracker';
 import type { HeatmapData } from '#types/tracker';
-
-export { getTrackerState };
 
 /** Black foreground on a truecolor RGB background (ANSI). */
 function styleBgRgb(r: number, g: number, b: number, text: string): string {
