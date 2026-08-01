@@ -7,7 +7,7 @@ import { fixtureExpected, fixturePath } from '~/test/helpers/fixtures';
 
 describe('Custom tracker', () => {
     it('merges custom game tracker in worker-parse mode', async () => {
-        const tracker = new CustomGameTracker();
+        const tracker = CustomGameTracker;
         const expected = fixtureExpected('results-mix');
         const data = await analyzePGN(fixturePath('results-mix'), {
             trackers: [tracker],
@@ -20,7 +20,7 @@ describe('Custom tracker', () => {
     });
 
     it('merges custom game tracker with filter (single-threaded)', async () => {
-        const tracker = new CustomGameTracker();
+        const tracker = CustomGameTracker;
         const data = await analyzePGN(fixturePath('results-mix'), {
             workers: false,
             trackers: [tracker],

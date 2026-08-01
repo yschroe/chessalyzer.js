@@ -8,20 +8,18 @@ import {
 } from '#board/board-coords';
 import { getStartingPiece } from '#board/piece-names';
 import type { SquareData } from '#types/game';
-import type { HeatmapAnalysisFunc, HeatmapData, HeatmapPresetEntry } from '#types/tracker';
+import type { GenerateHeatmapOptions, HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
 
-/**
- * Resolve a preset name or pass through a custom analysis function.
- */
-export function resolveHeatmapFunc<T>(
-    presets: Record<string, HeatmapPresetEntry>,
-    analysis: string | HeatmapAnalysisFunc<T>,
+/** Resolve a preset name or pass through a custom analysis function. */
+function resolvePreset<T, P extends string>(
+    presets: Record<P, HeatmapAnalysisFunc<T>>,
+    analysis: P | HeatmapAnalysisFunc<T>,
 ): HeatmapAnalysisFunc<T> {
     if (typeof analysis !== 'string') return analysis;
 
     const preset = presets[analysis];
     if (!preset) throw new Error(`Heatmap preset '${analysis}' not found!`);
-    return preset.calc;
+    return preset;
 }
 
 function squareData(row: number, col: number): SquareData {
@@ -47,10 +45,8 @@ function resolveRefSquare(square?: Square | BoardCoord): Square {
     return coordsToSquare(square[0], square[1]);
 }
 
-/**
- * Evaluate `fun` at every square and collect min/max for normalization.
- */
-export function generateHeatmap<T>(
+/** Evaluate `fun` at every square and collect min/max for normalization. */
+function renderHeatmap<T>(
     data: T,
     fun: HeatmapAnalysisFunc<T>,
     square?: Square | BoardCoord,
@@ -89,22 +85,40 @@ export function generateHeatmap<T>(
 }
 
 /**
- * Percentage-difference heatmap between two datasets.
- * Positive = `data1` higher; negative = `data2` higher; zero when either cell is 0.
+ * Generate an 8×8 heatmap from tracker state.
+ * `analysis` is a preset name from `presets` (autocompleted) or a custom function.
  */
-export function generateComparisonHeatmap<T>(
-    data1: T,
-    data2: T,
-    fun: HeatmapAnalysisFunc<T>,
-    square?: Square | BoardCoord,
-    optData?: unknown,
+export function generateHeatmap<T, P extends string>(
+    state: T,
+    presets: Record<P, HeatmapAnalysisFunc<T>>,
+    options: GenerateHeatmapOptions<T, P>,
 ): HeatmapData {
+    return renderHeatmap(
+        state,
+        resolvePreset(presets, options.analysis),
+        options.square,
+        options.optData,
+    );
+}
+
+/**
+ * Percentage-difference heatmap between two datasets.
+ * Positive = `state` higher; negative = `compState` higher; zero when either cell is 0.
+ */
+export function generateComparisonHeatmap<T, P extends string>(
+    state: T,
+    compState: T,
+    presets: Record<P, HeatmapAnalysisFunc<T>>,
+    options: GenerateHeatmapOptions<T, P>,
+): HeatmapData {
+    const fun = resolvePreset(presets, options.analysis);
+
     const map: number[][] = [];
     let max = -Infinity;
     let min = Infinity;
 
-    const map0 = generateHeatmap(data1, fun, square, optData);
-    const map1 = generateHeatmap(data2, fun, square, optData);
+    const map0 = renderHeatmap(state, fun, options.square, options.optData);
+    const map1 = renderHeatmap(compState, fun, options.square, options.optData);
 
     for (let i = 0; i < 8; i += 1) {
         const dataRow: number[] = [];

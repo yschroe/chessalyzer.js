@@ -1,27 +1,20 @@
 import { collectError } from '#core/analyze-errors';
-import GameReplayer from '#replay/game-replayer';
 import type { GameAndMoveCount } from '#types/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
-import type { AssembledGame } from '#types/parse-pgn';
-import { toParsedGame } from '#types/parse-pgn';
-import type { WorkerConfigResult, WorkerMessage } from '#types/worker';
+import type { WorkerBatchConfigResult, WorkerMessage } from '#types/worker';
 
 /**
- * Merge one worker batch into the matching main-thread config (trackers + counters).
+ * Merge one worker batch into the matching main-thread config (counters only).
  * Callers must already have rejected batch-level `result.error` / transport errors when aborting.
  */
 function mergeWorkerResult(
     configs: GameProcessorAnalysisConfigFull[],
-    result: WorkerConfigResult,
+    result: WorkerBatchConfigResult,
 ): void {
-    const { idxConfig, trackerSnapshots, moves, games, skippedGames, errors } = result;
+    const { idxConfig, moves, games, skippedGames, errors } = result;
 
     const cfg = configs[idxConfig];
     if (!cfg || cfg.isDone) return;
-
-    if (trackerSnapshots) {
-        cfg.trackerHost.mergeSnapshots(trackerSnapshots);
-    }
 
     cfg.processedMoves += moves;
     cfg.processedGames += games;
@@ -33,7 +26,8 @@ function mergeWorkerResult(
         }
     }
 
-    if (cfg.processedGames >= cfg.config.maxGames) {
+    // maxGames caps attempts (accepted games), so skipped games count toward it.
+    if (cfg.processedGames + cfg.skippedGames >= cfg.config.maxGames) {
         cfg.isDone = true;
     }
 }
@@ -46,107 +40,50 @@ export function mergeWorkerTrackerFlush(
     if (result.error) throw new Error(result.error);
 
     for (const configResult of result.results) {
+        if (!('trackerSnapshots' in configResult)) continue;
         const cfg = configs[configResult.idxConfig];
         if (!cfg) continue;
-
-        if (configResult.trackerSnapshots) {
-            cfg.trackerHost.mergeSnapshots(configResult.trackerSnapshots);
-        }
+        cfg.trackerHost.mergeSnapshots(configResult.trackerSnapshots);
     }
-}
-
-/** Reserved for worker-safe filters: apply JS filter + replay on main after worker parse. */
-function mergeParsedGamesOnMain(
-    cfg: GameProcessorAnalysisConfigFull,
-    parsedGames: AssembledGame[],
-    gameReplayer: GameReplayer,
-    onError: 'abort' | 'skip-game',
-): void {
-    if (cfg.isDone) return;
-
-    const replayMode = cfg.replayMode;
-
-    for (const game of parsedGames) {
-        if (cfg.isDone) break;
-        if (cfg.config.hasFilter && !cfg.config.filter(toParsedGame(game))) continue;
-
-        cfg.readGames += 1;
-        gameReplayer.processGame(
-            game,
-            cfg,
-            replayMode,
-            cfg.processedGames + cfg.skippedGames,
-            onError,
-        );
-
-        if (cfg.readGames === cfg.config.maxGames) {
-            cfg.isDone = true;
-        }
-    }
-}
-
-export interface WorkerResultHandlerOptions {
-    gameReplayer?: GameReplayer;
-    onError?: 'abort' | 'skip-game';
 }
 
 function mergeWorkerMessage(
     configs: GameProcessorAnalysisConfigFull[],
     result: WorkerMessage,
-    options?: WorkerResultHandlerOptions,
 ): void {
     for (const configResult of result.results) {
-        if (configResult.parsedGames) {
-            const cfg = configs[configResult.idxConfig];
-            if (!cfg || !options?.gameReplayer) {
-                throw new Error('Missing main-thread replayer for filtered worker batch');
-            }
-            mergeParsedGamesOnMain(
-                cfg,
-                configResult.parsedGames,
-                options.gameReplayer,
-                options.onError ?? 'abort',
-            );
-            continue;
-        }
-
+        // Flush payloads carry tracker state and are merged at pool drain, never per batch.
+        if ('trackerSnapshots' in configResult) continue;
         mergeWorkerResult(configs, configResult);
     }
 }
 
 /**
- * Callback for {@link WorkerPool.runTask}: routes transport/batch errors to `onFatal`,
- * otherwise merges a successful result into `configs`.
+ * Promise handlers for {@link WorkerPool.runTask}: `onResult` merges a successful batch
+ * into `configs`; `onError` (or a merge failure) routes to `onFatal`. Only the first
+ * failure is forwarded — late results after a fatal error are discarded.
  */
 export function createWorkerResultHandler(
     configs: GameProcessorAnalysisConfigFull[],
     onFatal: (err: Error) => void,
-    options?: WorkerResultHandlerOptions,
-): (err: Error | null, result: WorkerMessage | null) => void {
+): { onResult: (result: WorkerMessage) => void; onError: (err: unknown) => void } {
     let fatal = false;
-    return (err, result) => {
+    const fail = (err: unknown) => {
         if (fatal) return;
+        fatal = true;
+        onFatal(err instanceof Error ? err : new Error(String(err)));
+    };
 
-        if (err) {
-            fatal = true;
-            onFatal(err);
-            return;
-        }
-
-        if (!result) return;
-
-        if (result.error) {
-            fatal = true;
-            onFatal(new Error(result.error));
-            return;
-        }
-
-        try {
-            mergeWorkerMessage(configs, result, options);
-        } catch (e: unknown) {
-            fatal = true;
-            onFatal(e instanceof Error ? e : new Error(String(e)));
-        }
+    return {
+        onResult: (result) => {
+            if (fatal) return;
+            try {
+                mergeWorkerMessage(configs, result);
+            } catch (e: unknown) {
+                fail(e);
+            }
+        },
+        onError: fail,
     };
 }
 

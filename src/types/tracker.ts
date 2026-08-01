@@ -53,14 +53,6 @@ export interface AnalyzeTrackerResult<D extends TrackerDef = TrackerDef> {
     state: StateOf<D>;
 }
 
-/** Built-in or custom heatmap preset definition. */
-export interface HeatmapPresetEntry {
-    scope?: 'global' | 'specific';
-    unit?: string;
-    description?: string;
-    calc: HeatmapAnalysisFunc;
-}
-
 /** 8×8 numeric grid plus value range for rendering. */
 export interface HeatmapData {
     map: number[][];
@@ -83,11 +75,14 @@ export interface HeatmapAnalysisArgs<T = unknown> {
 /** Signature for built-in and custom heatmap preset functions. */
 export type HeatmapAnalysisFunc<T = unknown> = (args: HeatmapAnalysisArgs<T>) => number;
 
-/** Options for {@link generateHeatmap} and tracker `generateHeatmap` helpers. */
-export interface GenerateHeatmapOptions<T = unknown> {
-    /** Preset short name or custom analysis function. */
-    analysis: string | HeatmapAnalysisFunc<T>;
-    /** Reference square for `scope: 'specific'` presets. */
+/**
+ * Options for `generateHeatmap` / `generateComparisonHeatmap`.
+ * `P` is the preset-name union of the passed preset map, so `analysis` autocompletes.
+ */
+export interface GenerateHeatmapOptions<T = unknown, P extends string = string> {
+    /** Preset name or custom analysis function. */
+    analysis: P | HeatmapAnalysisFunc<T>;
+    /** Reference square for presets that evaluate relative to a piece/square. */
     square?: Square | BoardCoord;
     /** Extra context forwarded to the analysis function. */
     optData?: unknown;

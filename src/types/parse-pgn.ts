@@ -36,13 +36,31 @@ export interface ParsedGame {
     headers?: Readonly<Record<string, string>>;
 }
 
-/** Options for {@link parsePGN}. */
+/** Options for {@link parsePGN} and {@link streamParsePGN}. */
 export interface ParsePgnOptions {
     /**
-     * Parse tag-pair headers. Default: `false` for parsePGN; `'auto'` infers from game trackers on analyzePGN.
+     * Parse tag-pair headers. Default `false`.
+     * (`analyzePGN` additionally accepts `'auto'`, which infers from game trackers.)
      */
-    headers?: boolean | 'auto';
+    headers?: boolean;
     maxGames?: number;
+}
+
+/** Resolved standalone-parse options shared by {@link parsePGN} and {@link streamParsePGN}. */
+export interface StandaloneParseOptions {
+    parseHeaders: boolean;
+    maxGames: number;
+}
+
+/**
+ * Resolve {@link ParsePgnOptions} for the standalone parse entry points.
+ * Unlike `analyzePGN` there is no `'auto'` inference — headers are opt-in only.
+ */
+export function resolveStandaloneParseOptions(options?: ParsePgnOptions): StandaloneParseOptions {
+    return {
+        parseHeaders: options?.headers ?? false,
+        maxGames: options?.maxGames ?? Infinity,
+    };
 }
 
 /** Create a {@link ParsedMove} at the single monomorphic construction site. */

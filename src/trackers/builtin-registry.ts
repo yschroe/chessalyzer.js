@@ -3,19 +3,16 @@ import { PieceTracker } from '#trackers/piece-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { TrackerDef } from '#types/tracker';
 
-const BUILTIN_TRACKER_CLASSES = [PieceTracker, TileTracker, GameTracker] as const;
+const BUILTIN_TRACKER_DEFS: readonly TrackerDef[] = [PieceTracker, TileTracker, GameTracker];
 
 /** Stable ids for built-in tracker definitions. */
-export const BUILTIN_TRACKER_IDS = new Set(
-    BUILTIN_TRACKER_CLASSES.map((TrackerClass) => new TrackerClass().id),
+export const BUILTIN_TRACKER_IDS: ReadonlySet<string> = new Set(
+    BUILTIN_TRACKER_DEFS.map((def) => def.id),
 );
 
 type TrackerFactory = () => TrackerDef;
 
-/** Registry of built-in tracker factories keyed by id. */
+/** Registry of built-in tracker definitions keyed by id. */
 export const BUILTIN_TRACKER_FACTORIES: Record<string, TrackerFactory> = Object.fromEntries(
-    BUILTIN_TRACKER_CLASSES.map((TrackerClass) => {
-        const instance = new TrackerClass();
-        return [instance.id, () => new TrackerClass()];
-    }),
+    BUILTIN_TRACKER_DEFS.map((def) => [def.id, () => def]),
 );

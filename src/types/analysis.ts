@@ -1,68 +1,15 @@
 import type { PgnChunkConfig } from '#io/pgn-chunks';
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
-import type { ParsePgnOptions, ParsedGame } from '#types/parse-pgn';
+import type { ParsedGame } from '#types/parse-pgn';
 import type { AnalyzeTrackerResult, TrackerDef } from '#types/tracker';
 
 /** Per-game predicate for single-threaded analysis (`workers: false`). */
 export type GameFilter = (game: ParsedGame) => boolean;
 
-/** Options for a single analysis run. */
+/** Options for one analysis run. */
 export interface AnalyzeRun {
-    /** Tracker definitions for this run (factory objects or class adapter instances). */
-    trackers?: TrackerDef[];
-    /**
-     * Per-game predicate. Requires {@link AnalyzeSharedOptions.workers} `false` — JavaScript
-     * filters run on the main thread only.
-     */
-    filter?: GameFilter;
-    /**
-     * Maximum number of games to process. Default unlimited.
-     */
-    maxGames?: number;
-}
-
-/** Worker thread pool and PGN chunking. Pass `false` via {@link AnalyzeOptions.workers} to disable. */
-export interface WorkerOptions extends PgnChunkConfig {
-    /** Worker thread count. Defaults to `os.availableParallelism()`. */
-    workerCount?: number;
-}
-
-/**
- * Replay legality policy. `'trust'` is the default (assume well-formed PGN).
- * Additional modes may be added without a major version bump.
- */
-export type ReplayValidation = 'trust';
-
-/** Shared analyze options for single-run and multi-run calls. */
-export interface AnalyzeSharedOptions extends Omit<ParsePgnOptions, 'headers'> {
-    /**
-     * Parse tag-pair headers. Default `'auto'` infers from game trackers.
-     * `false` disables header parsing; throws when a game tracker is present.
-     */
-    headers?: boolean | 'auto';
-    /**
-     * Board replay mode. Default inferred from trackers.
-     * Throws when manual override is provided which is not compatible with the tracker configuration.
-     */
-    replay?: ReplayMode;
-    /**
-     * Replay legality policy. Default `'trust'` (= no legality check). Sibling to {@link replay} —
-     * does not change how moves are decoded, only whether legality is checked (future).
-     */
-    validation?: ReplayValidation;
-    /** Default: multithreaded with library defaults. `false` = single-threaded. */
-    workers?: false | WorkerOptions;
-    /**
-     * Replay error policy per game. Does not apply to PGN structural parse failures.
-     * Default `'abort'` stops on the first bad game; `'skip-game'` continues and collects errors.
-     */
-    onError?: 'abort' | 'skip-game';
-}
-
-/** Single-run {@link analyzePGN} options. */
-export interface AnalyzeSingleRunOptions extends AnalyzeSharedOptions {
-    /** Tracker definitions for this run (factory objects or class adapter instances). */
+    /** Tracker definitions for this run (factory objects). */
     trackers?: TrackerDef[];
     /**
      * Per-game predicate. Requires `workers: false` — JavaScript filters run on the main thread only.
@@ -72,36 +19,44 @@ export interface AnalyzeSingleRunOptions extends AnalyzeSharedOptions {
      * Maximum number of games to process. Default unlimited.
      */
     maxGames?: number;
-    /**
-     * Not supported for single-run calls.
-     */
-    runs?: never;
 }
 
-/** Multi-run {@link analyzePGN} options. */
-export interface AnalyzeMultiRunOptions extends AnalyzeSharedOptions {
-    /**
-     * Runs to process.
-     */
-    runs: [AnalyzeRun, ...AnalyzeRun[]];
-    /**
-     * Not supported for multi-run calls.
-     */
-    trackers?: never;
-    /**
-     * Not supported for multi-run calls.
-     */
-    filter?: never;
-    /**
-     * Not supported for multi-run calls.
-     */
-    maxGames?: never;
+/** Worker thread pool and PGN chunking. Pass `false` via `workers` to disable. */
+export interface WorkerOptions {
+    /** Worker thread count. Defaults to `os.availableParallelism()`. */
+    workerCount?: number;
+    /** Advanced: PGN chunk sizing for worker dispatch. */
+    chunk?: PgnChunkConfig;
 }
 
-/** Options passed to {@link analyzePGN}. */
-export type AnalyzeOptions = AnalyzeSingleRunOptions | AnalyzeMultiRunOptions;
+interface AnalyzeSharedFields {
+    /**
+     * Parse tag-pair headers. Default `'auto'` infers from game trackers.
+     * `false` disables header parsing; throws when a game tracker is present.
+     */
+    headers?: boolean | 'auto';
+    /**
+     * Board replay mode. Default inferred from trackers.
+     * Throws when a manual override is not compatible with the tracker configuration.
+     */
+    replay?: ReplayMode;
+    /** Default: multithreaded with library defaults. `false` = single-threaded. */
+    workers?: false | WorkerOptions;
+    /**
+     * Replay error policy per game. Does not apply to PGN structural parse failures.
+     * Default `'abort'` stops on the first bad game; `'skip-game'` continues and collects errors.
+     */
+    onError?: 'abort' | 'skip-game';
+}
 
-/** Per-run counters and tracker instances returned from {@link analyzePGN}. */
+/**
+ * Options passed to `analyzePGN`: shared fields plus either a single run
+ * (top-level `trackers` / `filter` / `maxGames` sugar) or explicit `runs`.
+ */
+export type AnalyzeOptions = AnalyzeSharedFields &
+    (AnalyzeRun | { runs: [AnalyzeRun, ...AnalyzeRun[]] });
+
+/** Per-run counters and tracker results returned from `analyzePGN`. */
 export interface AnalyzeRunResult {
     /** Games processed in this run (after filter / maxGames). */
     gameCount: number;
@@ -111,8 +66,8 @@ export interface AnalyzeRunResult {
     trackers: AnalyzeTrackerResult[];
 }
 
-/** Shared fields on every {@link analyzePGN} result. */
-export interface AnalyzeResultBase {
+/** Result from `analyzePGN`. Always contains one {@link AnalyzeRunResult} per run. */
+export interface AnalyzeResult {
     /** Wall time for the whole call in milliseconds. */
     durationMs: number;
     /**
@@ -130,23 +85,6 @@ export interface AnalyzeResultBase {
     errors?: AnalyzeError[];
     /** True when more than 100 replay errors occurred and {@link errors} was truncated. */
     errorsTruncated?: boolean;
-}
-
-/** Result from a single-run {@link analyzePGN} call (`runs` omitted). */
-export interface AnalyzeSingleRunResult extends AnalyzeResultBase {
-    /** Tracker definitions with accumulated state for this run. */
-    trackers: AnalyzeTrackerResult[];
-    /** Not present on single-run results. */
-    runs?: never;
-}
-
-/** Result from a multi-run {@link analyzePGN} call (`runs` provided). */
-export interface AnalyzeMultiRunResult extends AnalyzeResultBase {
-    /** One entry per run. */
+    /** One entry per run (length 1 for single-run calls). */
     runs: AnalyzeRunResult[];
-    /** Not present on multi-run results. */
-    trackers?: never;
 }
-
-/** Unified result shape from {@link analyzePGN}. */
-export type AnalyzeResult = AnalyzeSingleRunResult | AnalyzeMultiRunResult;

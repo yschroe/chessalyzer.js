@@ -51,7 +51,7 @@ import { TileTracker } from 'chessalyzer/trackers';
 3. Use the library. See next chapters for examples.
 
 ```javascript
-const result = await analyzePGN('<pathToPgnFile>', { trackers: [new TileTracker()] });
+const result = await analyzePGN('<pathToPgnFile>', { trackers: [TileTracker] });
 console.log(result.gameCount, result.moveCount, result.movesPerSecond);
 ```
 
@@ -59,7 +59,7 @@ console.log(result.gameCount, result.moveCount, result.movesPerSecond);
 
 # How it works
 
-Give chessalyzer a PGN file and it takes care of the boring parts: reading the file, understanding each game, and replaying every move on an internal board. Along the way, your trackers collect exactly the statistics you asked for — nothing more, which is what keeps it fast. When the run finishes, stats are returned in `result.trackers` (single-run) or `result.runs[n].trackers` (multi-run) — not mutated in place on the definition.
+Give chessalyzer a PGN file and it takes care of the boring parts: reading the file, understanding each game, and replaying every move on an internal board. Along the way, your trackers collect exactly the statistics you asked for — nothing more, which is what keeps it fast. When the run finishes, stats are returned in `result.runs[n].trackers` (the result always has a `runs` array, even for a single run) — not mutated in place on the definition.
 
 The main entry points are `analyzePGN` (batch analysis) and `printHeatmap` (a quick terminal preview). Move trackers receive per-move data; game trackers receive header fields like player names and ratings. See [Pipeline](#pipeline) if you want to dig into the stages.
 
@@ -109,10 +109,9 @@ for await (const game of streamParsePGN('<pathToPgnFile>', { headers: true })) {
 
 // Full pipeline
 await analyzePGN('<pathToPgnFile>', {
-    trackers: [new GameTracker()],
+    trackers: [GameTracker],
     headers: true,
     replay: 'board', // 'skip' | 'board' | 'actions' — move trackers need 'actions'
-    validation: 'trust',
 });
 ```
 
@@ -128,14 +127,12 @@ Let's start with a basic example. Here we simply want to track the tile occupati
 
 ```javascript
 import { analyzePGN, printHeatmap } from 'chessalyzer';
-import { TileTracker } from 'chessalyzer/trackers';
+import { generateHeatmap, TileHeatmapPresets, TileTracker } from 'chessalyzer/trackers';
 
-const tileTracker = new TileTracker();
+const result = await analyzePGN('<pathToPgnFile>', { trackers: [TileTracker] });
 
-const result = await analyzePGN('<pathToPgnFile>', { trackers: [tileTracker] });
-
-const { state } = result.trackers[0];
-const heatmapData = tileTracker.generateHeatmap(state, { analysis: 'TILE_OCC_ALL' });
+const { state } = result.runs[0].trackers[0];
+const heatmapData = generateHeatmap(state, TileHeatmapPresets, { analysis: 'TILE_OCC_ALL' });
 
 printHeatmap(heatmapData);
 ```
@@ -147,7 +144,7 @@ You can filter games with a plain JavaScript function — for example, only anal
 ```javascript
 await analyzePGN('<pathToPgnFile>', {
     workers: false,
-    trackers: [tileTracker],
+    trackers: [TileTracker],
     headers: true,
     filter: (game) => Number(game.headers?.WhiteElo) > 2000,
 });
@@ -160,20 +157,19 @@ Filters are regular JS callbacks, so they need to run on the main thread. Pass `
 You can also generate a comparison heat map where you can compare the data of two different analyses. Let's say you wanted to compare how the white player occupates the board between a lower rated player and a higher rated player. To get comparable results 1000 games of each shall be evaluated:
 
 ```javascript
-const tileT1 = new TileTracker();
-const tileT2 = new TileTracker();
+import { generateComparisonHeatmap, TileHeatmapPresets, TileTracker } from 'chessalyzer/trackers';
 
 const result = await analyzePGN('<pathToPgnFile>', {
     workers: false,
     headers: true,
     runs: [
         {
-            trackers: [tileT1],
+            trackers: [TileTracker],
             filter: (game) => Number(game.headers?.WhiteElo) > 2000,
             maxGames: 1000,
         },
         {
-            trackers: [tileT2],
+            trackers: [TileTracker],
             filter: (game) => Number(game.headers?.WhiteElo) < 1200,
             maxGames: 1000,
         },
@@ -187,13 +183,15 @@ import { squareToCoords } from 'chessalyzer/replay';
 
 const compareFunc = ({ data, loopSquare }) => {
     const [row, col] = squareToCoords(loopSquare.square);
-    let val = data.tiles[row][col].w.wasOn;
+    let val = data.tiles[row][col].w.total.wasOn;
     val = (val * 100) / data.movesTotal;
     return val;
 };
 
 // Generate the comparison heatmap.
-const heatmapData = tileT1.generateComparisonHeatmap(state1, state2, { analysis: compareFunc });
+const heatmapData = generateComparisonHeatmap(state1, state2, TileHeatmapPresets, {
+    analysis: compareFunc,
+});
 
 // Use heatmapData.
 ```
@@ -204,13 +202,13 @@ By default, chessalyzer uses Node.js [Worker Threads](https://nodejs.org/api/wor
 
 ```javascript
 await analyzePGN('<pathToPgnFile>', {
-    trackers: [tileTracker],
+    trackers: [TileTracker],
     maxGames: 10000,
-    workers: { targetBytes: 4 * 1024 * 1024 },
+    workers: { workerCount: 8, chunk: { targetBytes: 4 * 1024 * 1024 } },
 });
 ```
 
-The `workers` option lets you tune chunk size if you want; the defaults are fine for most files.
+The `workers` option lets you tune the thread count and PGN chunk size if you want; the defaults are fine for most files.
 
 ### Single-threaded mode
 
@@ -251,7 +249,7 @@ console.log(result.gameCount, result.skippedGames, result.errors, result.errorsT
 
 `result.errors` holds up to 100 typed replay errors (`gameIndex`, `moveIndex`, `san`, `reason`). If more than 100 games fail, `result.errorsTruncated` is `true`. The library never logs to the console for you — you decide what to do with the errors.
 
-Replay assumes trustworthy PGN by default (`validation: 'trust'`).
+Replay assumes trustworthy PGN; moves are not checked for legality.
 
 ##### Important
 
@@ -259,7 +257,7 @@ To use a custom tracker with your multithreaded analysis please see the importan
 
 # Heatmap generation functions
 
-Custom heatmap functions receive a single options object inside `generateHeatmap(state, { analysis })`:
+Custom heatmap functions receive a single options object inside `generateHeatmap(state, presets, { analysis })`:
 
 1. `data`: Tracker state passed as the first argument to `generateHeatmap`.
 2. `loopSquare`: Information about the square the current heatmap value is calculated for. The `generateHeatmap(...)` function loops over every square of the board. `loopSquare` has this shape:
@@ -288,7 +286,7 @@ Custom heatmap functions receive a single options object inside `generateHeatmap
 
 ## Built-in
 
-chessalyzer comes with three built-in trackers. Stats live on **`result.trackers[m].state`** (single-run) or **`result.runs[n].trackers[m].state`** (multi-run) after `analyzePGN` returns.
+chessalyzer comes with three built-in trackers (`GameTracker`, `PieceTracker`, `TileTracker` — pass the definition itself, no `new`). Stats live on **`result.runs[n].trackers[m].state`** after `analyzePGN` returns.
 
 `GameTracker` state:
 
@@ -303,21 +301,19 @@ chessalyzer comes with three built-in trackers. Stats live on **`result.trackers
 `TileTracker` state:
 
 - `tiles[][]`  
-  Represents the tiles of the board. Has two objects (`b`, `w`) on the first layer, and then each piece inside these objects as a second layer (`Pa`, `Ra` etc.). For each piece following stats are tracked:
+  Represents the tiles of the board. Each tile has two color buckets (`b`, `w`), and each bucket has a `total` stats object plus per-piece stats under `byPiece` (`Pa`, `Ra` etc.). The following stats are tracked per bucket:
     - `movedTo`: How often the piece moved to this tile
     - `wasOn`: Amount of half-moves the piece was on this tile
     - `capturedOn`: How often the piece captured another piece on this tile
     - `wasCapturedOn`: How often the piece was captured on this tile
 
-    These stats are also tracked for black and white as a whole. Simply omit the piece name to get the total stats of one side for a specific tile, e.g. `tiles[0][6].b.wasOn`.
+    Use `total` for the combined stats of one side on a specific tile (e.g. `tiles[0][6].b.total.wasOn`), or `byPiece` for a single piece (e.g. `tiles[0][6].b.byPiece.Pa.wasOn`).
 
 - `movesTotal`: Amount of moves processed in total.
 
 ## Custom Trackers
 
-Trackers separate **definition** (behavior) from **state** (plain accumulated data). Author with a factory (`defineGameTracker` / `defineMoveTracker`) or a class adapter (`extends BaseMoveTracker` / `extends BaseGameTracker`). Pass definitions to `analyzePGN`; read stats from `result.trackers` or use `getTrackerState(result, def)`.
-
-**Factory (recommended for clarity):**
+Trackers separate **definition** (behavior) from **state** (plain accumulated data). Author with a factory (`defineGameTracker` / `defineMoveTracker`). Pass definitions to `analyzePGN`; read stats from `result.runs[n].trackers` or use `getTrackerState(result, def)`.
 
 ```javascript
 import { defineGameTracker } from 'chessalyzer/trackers';
@@ -337,25 +333,8 @@ const eloTracker = defineGameTracker({
         /* optional end-of-analysis */
     },
 });
-```
 
-**Class adapter:**
-
-```javascript
-export default class MyTracker extends BaseGameTracker {
-    id = 'MyTracker';
-    workerModule = import.meta.url;
-
-    init() {
-        return { games: 0, wins: [0, 0, 0] };
-    }
-    track(state, game) {
-        /* called once per game */
-    }
-    merge(state, other) {
-        /* fold worker state into main state */
-    }
-}
+export default eloTracker; // multithreaded custom trackers only
 ```
 
 For multithreaded analysis, custom trackers need: **own module** with **default export**, **`id`**, **`workerModule`**, and **`merge`**. Worker state is sent as plain `{ id, state }` snapshots merged by id at pool drain.
@@ -368,7 +347,7 @@ See [`manual-tests/custom-game-tracker.ts`](manual-tests/custom-game-tracker.ts)
 
 Heads-up on castling: it produces two move actions (king leg, then rook leg) in one batch. The rook leg carries the same `castle` flag. `TileTracker` counts castling as one move for `movesTotal`; your move tracker can skip rook legs via `action.castle` on the second leg.
 
-Import bases and types from their canonical subpaths:
+Import factories and types from their canonical subpaths:
 
 ```javascript
 import { analyzePGN, getTrackerState } from 'chessalyzer';
@@ -377,10 +356,10 @@ import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
 import type { Action, MoveAction, CaptureAction, PlayerColor, Square } from 'chessalyzer/replay';
 import { squareToCoords } from 'chessalyzer/replay';
 import {
-    BaseGameTracker,
-    BaseMoveTracker,
     defineGameTracker,
     defineMoveTracker,
+    generateComparisonHeatmap,
+    generateHeatmap,
     TileHeatmapPresets,
     type GameTrackerDef,
     type HeatmapAnalysisFunc,
@@ -404,18 +383,17 @@ merge(state, other) {
 Read stats after analysis:
 
 ```javascript
-const tracker = new GameTracker();
-const result = await analyzePGN(path, { trackers: [tracker] });
-const { state } = result.trackers[0];
-// or: const state = getTrackerState(result, tracker);
+const result = await analyzePGN(path, { trackers: [GameTracker] });
+const { state } = result.runs[0].trackers[0];
+// or: const state = getTrackerState(result, GameTracker);
 console.log(state.games, state.results);
 ```
 
 # Heatmap Presets
 
-Built-in heatmap presets are module-level maps exported from `chessalyzer/trackers` (`TileHeatmapPresets`, `PieceHeatmapPresets`) and mirrored on `TileTracker.presets` / `PieceTracker.presets`. Preset names are typed (`TileHeatmapPresetName`, `PieceHeatmapPresetName`) for autocomplete when calling `generateHeatmap(state, { analysis })`.
+Built-in heatmap presets are module-level maps exported from `chessalyzer/trackers` (`TileHeatmapPresets`, `PieceHeatmapPresets`). Pass the map matching your tracker state as the second argument to `generateHeatmap` — preset names are typed (`TileHeatmapPresetName`, `PieceHeatmapPresetName`), so `analysis` autocompletes.
 
-Instead of defining your own heatmap function you can pass a preset name via the options bag, e.g. `tileTracker.generateHeatmap(state, { analysis: 'TILE_OCC_BY_PIECE', square: 'a2' })`.
+Instead of defining your own heatmap function you can pass a preset name via the options bag, e.g. `generateHeatmap(state, TileHeatmapPresets, { analysis: 'TILE_OCC_BY_PIECE', square: 'a2' })`.
 
 ### Tile Tracker
 

@@ -130,10 +130,6 @@ export default class PiecePositions {
         }
     }
 
-    move(pieceName: string, from: BoardCoord, to: BoardCoord): void {
-        this.moveByChar(pieceName.charCodeAt(0), from, to);
-    }
-
     /**
      * Remove the piece at `on` from its type list (swap-with-last for O(1) removal).
      */

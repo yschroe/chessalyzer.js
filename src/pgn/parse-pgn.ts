@@ -1,11 +1,7 @@
 import { readLines } from '#io/line-reader';
 import { GameAssembler } from '#pgn/game-assembler';
 import type { ParsePgnOptions, ParsedGame } from '#types/parse-pgn';
-import { toParsedGame } from '#types/parse-pgn';
-
-function resolveStandaloneParseHeaders(headers?: boolean | 'auto'): boolean {
-    return headers === true;
-}
+import { resolveStandaloneParseOptions, toParsedGame } from '#types/parse-pgn';
 
 /**
  * Parse a PGN file into {@link ParsedGame} objects (stage 2 only — no board replay).
@@ -14,10 +10,9 @@ function resolveStandaloneParseHeaders(headers?: boolean | 'auto'): boolean {
  * prefer {@link analyzePGN} which streams via worker chunks.
  */
 export async function parsePGN(path: string, options?: ParsePgnOptions): Promise<ParsedGame[]> {
-    const parseHeaders = resolveStandaloneParseHeaders(options?.headers);
-    const maxGames = options?.maxGames ?? Infinity;
+    const { parseHeaders, maxGames } = resolveStandaloneParseOptions(options);
     const games: ParsedGame[] = [];
-    const assembler = new GameAssembler({ parseHeaders, maxGames });
+    const assembler = new GameAssembler({ parseHeaders });
 
     await readLines(path, (line): void | false => {
         const game = assembler.processLine(line);

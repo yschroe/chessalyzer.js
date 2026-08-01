@@ -1,6 +1,7 @@
 import { squareToCoords } from '#board/board-coords';
 import type { BoardCoord } from '#board/board-coords';
 import type { MutableBoardCoord } from '#board/board-coords';
+import { PAWN_TEMPLATE, PIECE_TEMPLATE } from '#board/piece-names';
 import PiecePositions from '#board/piece-positions';
 import type { Action, MoveAction, CaptureAction, PromoteAction } from '#types/actions';
 import type { ChessPiece } from '#types/game';
@@ -42,25 +43,11 @@ class ChessBoard {
         1, 2, 3, 4, 5, 6, 7, 8
     ]);
 
-    /** Index → piece name for standard pieces (index 0 unused). */
+    /** Index → piece name for standard pieces (index 0 unused). Derived from the starting-position templates. */
     private static pieceLookupList: ReadonlyArray<string | null> = [
         null,
-        'Ra',
-        'Nb',
-        'Bc',
-        'Qd',
-        'Ke',
-        'Bf',
-        'Ng',
-        'Rh',
-        'Pa',
-        'Pb',
-        'Pc',
-        'Pd',
-        'Pe',
-        'Pf',
-        'Pg',
-        'Ph',
+        ...PIECE_TEMPLATE,
+        ...PAWN_TEMPLATE,
     ];
     /** Dense 64-byte board; index always 0..63 for on-board row/col (reads use `!`). */
     private tiles: Uint8Array;

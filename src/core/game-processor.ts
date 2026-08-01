@@ -1,9 +1,8 @@
 import assert from 'node:assert';
-import { EventEmitter } from 'node:events';
 import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
 
-import { normalizeAnalysisConfigs, type NormalizeAnalysisOptions } from '#core/analysis-config';
+import type { NormalizedAnalyzeOptions } from '#core/analysis-config';
 import {
     createWorkerResultHandler,
     finishTrackers,
@@ -14,46 +13,13 @@ import { readLines } from '#io/line-reader';
 import { readPgnChunks } from '#io/pgn-chunks';
 import { GameAssembler } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
-import type { AnalyzeRun, WorkerOptions } from '#types/analysis';
+import type { WorkerOptions } from '#types/analysis';
 import type { GameAndMoveCount, GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import { toParsedGame } from '#types/parse-pgn';
 import type { WorkerBatchTask, WorkerInitData, WorkerTaskConfigEntry } from '#types/worker';
 
 /** Path to the worker file. */
 const WORKER_PATH = join(import.meta.dirname, 'chess-worker.js');
-
-interface FatalErrorGate {
-    fatalPromise: Promise<never>;
-    onFatal: (err: Error) => void;
-    getFatalError: () => Error | undefined;
-}
-
-/** Track the first worker/callback failure and unblock pool completion waits. */
-function createFatalErrorGate(): FatalErrorGate {
-    let fatalError: Error | undefined;
-    let rejectFatal: ((err: Error) => void) | undefined;
-    const fatalPromise = new Promise<never>((_, reject) => {
-        rejectFatal = reject;
-    });
-
-    return {
-        fatalPromise,
-        onFatal: (err: Error) => {
-            fatalError = err;
-            rejectFatal?.(err);
-        },
-        getFatalError: () => fatalError,
-    };
-}
-
-/** Wait for worker pool drain, racing against the first fatal callback error. */
-async function awaitWorkerPoolDone(workerPool: WorkerPool, gate: FatalErrorGate): Promise<void> {
-    const fatalError = gate.getFatalError();
-    if (fatalError) throw fatalError;
-
-    workerPool.flagNotifyWhenDone = true;
-    await Promise.race([EventEmitter.once(workerPool, 'done'), gate.fatalPromise]);
-}
 
 /**
  * Orchestrates PGN I/O, optional worker dispatch, SAN replay, and tracker merge.
@@ -65,20 +31,11 @@ class GameProcessor {
     multithreadConfig: WorkerOptions | null;
     readonly onError: 'abort' | 'skip-game';
 
-    constructor(
-        runs: AnalyzeRun[],
-        multithreadCfg: WorkerOptions | null,
-        onError: 'abort' | 'skip-game' = 'abort',
-        normalizeOptions?: NormalizeAnalysisOptions,
-    ) {
-        const normalized = normalizeAnalysisConfigs(runs, {
-            ...normalizeOptions,
-            multithreaded: multithreadCfg !== null,
-        });
+    constructor(normalized: NormalizedAnalyzeOptions) {
         this.configs = normalized.configs;
         this.parseHeaders = normalized.parseHeaders;
-        this.multithreadConfig = multithreadCfg;
-        this.onError = onError;
+        this.multithreadConfig = normalized.multithreadCfg;
+        this.onError = normalized.onError;
     }
 
     /**
@@ -107,22 +64,19 @@ class GameProcessor {
             if (!game) return;
 
             for (const cfg of this.configs) {
-                if (
-                    !cfg.isDone &&
-                    (!cfg.config.hasFilter || cfg.config.filter(toParsedGame(game)))
-                ) {
-                    cfg.readGames += 1;
-                    gameReplayer.processGame(
-                        game,
-                        cfg,
-                        cfg.replayMode,
-                        cfg.processedGames + cfg.skippedGames,
-                        this.onError,
-                    );
-                    if (cfg.readGames === cfg.config.maxGames) {
-                        cfg.isDone = true;
-                        if (this.configs.every((c) => c.isDone)) return false;
-                    }
+                if (cfg.isDone || cfg.config.filter?.(toParsedGame(game)) === false) continue;
+
+                gameReplayer.processGame(
+                    game,
+                    cfg,
+                    cfg.replayMode,
+                    cfg.processedGames + cfg.skippedGames,
+                    this.onError,
+                );
+                // maxGames caps attempts (accepted games), so skipped games count toward it.
+                if (cfg.processedGames + cfg.skippedGames >= cfg.config.maxGames) {
+                    cfg.isDone = true;
+                    if (this.configs.every((c) => c.isDone)) return false;
                 }
             }
 
@@ -138,51 +92,39 @@ class GameProcessor {
 
         const workerInitData: WorkerInitData = {
             configs: this.configs.map((cfg) => ({
-                trackerData: cfg.trackerData,
-                // Reserved for worker-safe serializable filters (IDEAS.md). Unreachable while JS
-                // `filter` requires `workers: false` — see assertFilterRequiresSingleThreaded.
-                pgnParseOnly: cfg.config.hasFilter,
+                trackerData: cfg.trackerData ?? [],
                 replayMode: cfg.replayMode,
             })),
             onError: this.onError,
         };
         const workerPool = new WorkerPool(this.resolveWorkerCount(), WORKER_PATH, workerInitData);
 
-        const chunkConfig = {
-            targetBytes: this.multithreadConfig.targetBytes,
-            maxLines: this.multithreadConfig.maxLines,
-            minLines: this.multithreadConfig.minLines,
-        };
+        const chunkConfig = this.multithreadConfig.chunk ?? {};
 
-        const gameReplayer = new GameReplayer();
-        const gate = createFatalErrorGate();
-
-        const handleWorkerResult = createWorkerResultHandler(this.configs, gate.onFatal, {
-            gameReplayer,
-            onError: this.onError,
+        const handler = createWorkerResultHandler(this.configs, (err) => {
+            workerPool.fail(err);
         });
 
         try {
             chunkLoop: for await (const chunk of readPgnChunks(path, chunkConfig)) {
-                if (gate.getFatalError()) break;
+                if (workerPool.failed) break;
 
                 const taskConfigs: WorkerTaskConfigEntry[] = [];
 
                 for (const [idxConfig, cfg] of this.configs.entries()) {
                     if (cfg.isDone) continue;
 
-                    if (!cfg.config.hasFilter && cfg.config.maxGames !== Infinity) {
-                        const remaining = cfg.config.maxGames - cfg.processedGames;
-                        if (remaining <= 0) continue;
-                    }
-
                     const entry: WorkerTaskConfigEntry = {
                         idxConfig,
-                        parseHeaders: cfg.config.hasFilter ? true : this.parseHeaders,
+                        parseHeaders: this.parseHeaders,
                     };
 
-                    if (!cfg.config.hasFilter && cfg.config.maxGames !== Infinity) {
-                        entry.remainingGames = cfg.config.maxGames - cfg.processedGames;
+                    if (cfg.config.maxGames !== Infinity) {
+                        // maxGames caps attempts (accepted games), so skipped games count toward it.
+                        const remaining =
+                            cfg.config.maxGames - (cfg.processedGames + cfg.skippedGames);
+                        if (remaining <= 0) continue;
+                        entry.remainingGames = remaining;
                     }
 
                     taskConfigs.push(entry);
@@ -198,12 +140,13 @@ class GameProcessor {
                     configs: taskConfigs,
                 };
 
-                workerPool.runTask(task, handleWorkerResult);
+                void workerPool.runTask(task).then(handler.onResult, handler.onError);
 
                 if (this.configs.every((c) => c.isDone)) break chunkLoop;
             }
 
-            await awaitWorkerPoolDone(workerPool, gate);
+            // Throws the first fatal worker/task/merge error, if any.
+            await workerPool.drain();
 
             const flushResults = await workerPool.flush();
             for (const flushResult of flushResults) {

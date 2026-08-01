@@ -22,10 +22,12 @@ const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
 const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
 
 /**
- * Matches a game result suffix: `-1/2` (draw), `-0` (black wins), `-1` (white wins).
- * Used on cleaned movetext lines, e.g. `... Qh7+ 1-0`.
+ * Matches a game-result terminator at end of line: `1-0`, `0-1`, `1/2-1/2`, or `*`
+ * (game ended without a recorded result). Used on cleaned movetext lines, e.g.
+ * `... Qh7+ 1-0`. `*` must terminate games too — otherwise `*`-terminated games
+ * never complete and are silently dropped.
  */
-const RESULT_REGEX = /-(1\/2|0|1)$/;
+const RESULT_REGEX = /(1-0|0-1|1\/2-1\/2|\*)\s*$/;
 
 /**
  * Parse a PGN header tag line into `[key, value]`, or null if not a valid tag.
@@ -54,7 +56,11 @@ export function extractMoves(line: string): string[] | null {
     return line.match(MOVE_REGEX);
 }
 
-/** True when the line ends with a game result (e.g. `1-0`, `0-1`, `1/2-1/2`). */
-export function isGameResultLine(line: string): boolean {
-    return RESULT_REGEX.test(line);
+/**
+ * Extract the game-result terminator from a cleaned movetext line, or null when the
+ * line does not end a game. Doubles as the game-boundary test for assembly and
+ * chunking, so both agree on what completes a game.
+ */
+export function extractGameResult(line: string): string | null {
+    return RESULT_REGEX.exec(line)?.[1] ?? null;
 }

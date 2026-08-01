@@ -24,7 +24,6 @@ describe('getTrackerState', () => {
             [{ games: 1, moves: 0 }],
             [[{ tracker, state: { games: 3 } }]],
             1,
-            false,
         );
 
         expect(getTrackerState(result, tracker)).toEqual({ games: 3 });
@@ -40,7 +39,6 @@ describe('getTrackerState', () => {
             ],
             [[{ tracker: a, state: { games: 1 } }], [{ tracker: b, state: { games: 2 } }]],
             1,
-            true,
         );
 
         expect(getTrackerState(result, a)).toEqual({ games: 1 });
@@ -59,7 +57,6 @@ describe('getTrackerState', () => {
                 [{ tracker: shared, state: { games: 2 } }],
             ],
             1,
-            true,
         );
 
         expect(() => getTrackerState(result, shared)).toThrow(
@@ -79,7 +76,6 @@ describe('getTrackerState', () => {
                 [{ tracker: shared, state: { games: 2 } }],
             ],
             1,
-            true,
         );
 
         expect(getTrackerState(result, shared, 0)).toEqual({ games: 1 });
@@ -93,7 +89,6 @@ describe('getTrackerState', () => {
             [{ games: 1, moves: 0 }],
             [[{ tracker: present, state: { games: 1 } }]],
             1,
-            false,
         );
 
         expect(() => getTrackerState(result, absent)).toThrow(

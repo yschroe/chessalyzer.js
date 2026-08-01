@@ -11,7 +11,7 @@ import { readLines } from '#io/line-reader';
 import { GameTracker } from '#trackers/game-tracker';
 import { PieceTracker } from '#trackers/piece-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
-import type { AnalyzeSingleRunOptions } from '#types/analysis';
+import type { AnalyzeOptions } from '#types/analysis';
 import { findLargestPgn } from '~/bench/lib/pgn-fixture';
 import { getRuntimeLabel } from '~/bench/lib/report';
 import { formatSeconds, timeAsync } from '~/bench/lib/timing';
@@ -75,7 +75,7 @@ async function stagePgnParse(readHeader: boolean) {
     return { ms, games: result.games, moves: result.moves };
 }
 
-async function api(options: AnalyzeSingleRunOptions) {
+async function api(options: AnalyzeOptions) {
     const { ms, result } = await timeAsync(() => analyzePGN(pgn.path, options));
     return {
         ms,
@@ -109,7 +109,7 @@ console.log(
     `4 PGN parse (+ hdr)  ${formatSeconds(pgnParseHdr.ms).padStart(9)}s  | ${mps(pgnParseHdr.moves, pgnParseHdr.ms)} moves/s`,
 );
 
-const multi = await api({ trackers: [], workers: { targetBytes: 4 * 1024 * 1024 } });
+const multi = await api({ trackers: [], workers: { chunk: { targetBytes: 4 * 1024 * 1024 } } });
 console.log(
     `5 Analyze E2E (multi, no trackers) ${formatSeconds(multi.ms).padStart(9)}s  | ${multi.mps.toLocaleString()} moves/s`,
 );
@@ -120,16 +120,16 @@ console.log(
 );
 
 const tile = await api({
-    trackers: [new TileTracker()],
-    workers: { targetBytes: 4 * 1024 * 1024 },
+    trackers: [TileTracker],
+    workers: { chunk: { targetBytes: 4 * 1024 * 1024 } },
 });
 console.log(
     `7 Analyze E2E (multi, Tile) ${formatSeconds(tile.ms).padStart(9)}s  | ${tile.mps.toLocaleString()} moves/s`,
 );
 
 const all = await api({
-    trackers: [new TileTracker(), new GameTracker(), new PieceTracker()],
-    workers: { targetBytes: 4 * 1024 * 1024 },
+    trackers: [TileTracker, GameTracker, PieceTracker],
+    workers: { chunk: { targetBytes: 4 * 1024 * 1024 } },
 });
 console.log(
     `8 Analyze E2E (multi, all trackers) ${formatSeconds(all.ms).padStart(9)}s  | ${all.mps.toLocaleString()} moves/s`,

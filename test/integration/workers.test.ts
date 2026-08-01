@@ -14,22 +14,22 @@ const corruptPath = fixturePath('corrupt');
 
 const minimalChunkBytes = new TextEncoder().encode('[Event "t"]\n\n1. e4 1-0\n');
 
-function runTaskWithTimeout(
+async function runTaskWithTimeout(
     pool: WorkerPool,
     task: Parameters<WorkerPool['runTask']>[0],
     timeoutMs: number,
 ): Promise<{ err: Error | null; result: WorkerMessage | null }> {
-    return new Promise((resolve, reject) => {
-        const timer = setTimeout(
-            () => reject(new Error('WorkerPool callback timed out')),
-            timeoutMs,
-        );
-
-        pool.runTask(task, (err, result) => {
-            clearTimeout(timer);
-            resolve({ err, result });
-        });
-    });
+    const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('WorkerPool task timed out')), timeoutMs),
+    );
+    const settled = pool.runTask(task).then(
+        (result) => ({ err: null, result }),
+        (err: unknown) => ({
+            err: err instanceof Error ? err : new Error(String(err)),
+            result: null,
+        }),
+    );
+    return Promise.race([settled, timeout]);
 }
 
 describe('Workers', () => {
@@ -70,7 +70,7 @@ describe('Workers', () => {
         it('aborts on first bad game by default', async () => {
             let caught: unknown;
             try {
-                await analyzePGN(badSanPath, { trackers: [new PieceTracker()] });
+                await analyzePGN(badSanPath, { trackers: [PieceTracker] });
             } catch (err) {
                 caught = err;
             }
@@ -80,7 +80,7 @@ describe('Workers', () => {
         });
 
         it('processes corrupt.pgn with an incomplete trailing game without hanging', async () => {
-            const tileTracker = new TileTracker();
+            const tileTracker = TileTracker;
             const data = await Promise.race([
                 analyzePGN(corruptPath, { trackers: [tileTracker] }),
                 new Promise<never>((_, reject) =>

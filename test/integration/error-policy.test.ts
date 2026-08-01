@@ -10,7 +10,7 @@ describe('Error policy', () => {
     it('aborts on first bad game by default', async () => {
         let caught: unknown;
         try {
-            await analyzePGN(badSanPath, { workers: false, trackers: [new PieceTracker()] });
+            await analyzePGN(badSanPath, { workers: false, trackers: [PieceTracker] });
         } catch (err) {
             caught = err;
         }
@@ -29,7 +29,7 @@ describe('Error policy', () => {
         const data = await analyzePGN(badSanPath, {
             workers: false,
             onError: 'skip-game',
-            trackers: [new PieceTracker()],
+            trackers: [PieceTracker],
         });
 
         expect(data.gameCount).toBe(2);
@@ -45,7 +45,7 @@ describe('Error policy', () => {
     it('skip-game continues with error summary (worker-parse)', async () => {
         const data = await analyzePGN(badSanPath, {
             onError: 'skip-game',
-            trackers: [new PieceTracker()],
+            trackers: [PieceTracker],
         });
 
         expect(data.gameCount).toBe(2);
@@ -54,7 +54,7 @@ describe('Error policy', () => {
     });
 
     it('skip-game with move tracker on actions replay path', async () => {
-        const pieceTracker = new PieceTracker();
+        const pieceTracker = PieceTracker;
         const data = await analyzePGN(badSanPath, {
             trackers: [pieceTracker],
             workers: false,

@@ -73,4 +73,16 @@ describe('GameAssembler', () => {
         expect(completed?.moves).toEqual(['e4', 'e5', 'Nf3']);
         expect(completed?.result).toBe('1-0');
     });
+
+    it('completes games terminated by `*`', () => {
+        const games = parseGamesFromLines(
+            ['[Event "One"]', '', '1. e4 e5 *', '', '[Event "Two"]', '', '1. d4 1-0', ''],
+            { parseHeaders: false },
+        );
+
+        expect(games).toHaveLength(2);
+        expect(games[0]?.moves).toEqual(['e4', 'e5']);
+        expect(games[0]?.result).toBe('*');
+        expect(games[1]?.result).toBe('1-0');
+    });
 });

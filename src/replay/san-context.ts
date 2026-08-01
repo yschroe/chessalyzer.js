@@ -1,5 +1,6 @@
 import ChessBoard from '#board/chess-board';
 import PieceFinder from '#replay/piece-finder';
+import type { PawnResolution, PieceResolution } from '#replay/san-resolver';
 import type { Action, CaptureAction, MoveAction, PromoteAction } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
 
@@ -20,11 +21,25 @@ export default class SanContext {
     /** Reused `[row, col]` for the origin square — contents overwritten per move. */
     readonly fromBuf: [number, number] = [0, 0];
 
-    /** Reused destination square buffer for internal board lookups. */
-    readonly toBuf: [number, number] = [0, 0];
-
     /** Reused for en-passant capture square during decode. */
     readonly takenOnBuf: [number, number] = [0, 0];
+
+    /** Reused pawn resolution scratch for the shared SAN resolver — overwritten per move. */
+    readonly pawnResolution: PawnResolution = {
+        to: [0, 0],
+        capture: false,
+        enPassant: false,
+        promotesTo: '',
+    };
+
+    /** Reused piece resolution scratch for the shared SAN resolver — overwritten per move. */
+    readonly pieceResolution: PieceResolution = {
+        token: 'K',
+        tokenChar: 75,
+        to: [0, 0],
+        from: [0, 0],
+        capture: false,
+    };
 
     // --- Action pools (tracker path). Trackers consume actions synchronously. ---
 

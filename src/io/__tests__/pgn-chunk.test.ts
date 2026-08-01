@@ -1,9 +1,40 @@
 import { describe, it, expect } from 'bun:test';
 
 import { readLines } from '#io/line-reader';
-import { chunkEndsWithCompleteGame, readPgnChunks, type PgnChunkConfig } from '#io/pgn-chunks';
+import { decodePgnChunkBytes, readPgnChunks, type PgnChunkConfig } from '#io/pgn-chunks';
 import { parseGamesFromLines } from '#pgn/game-assembler';
+import { extractGameResult, stripComments } from '#pgn/movetext';
 import { fixturePath, repeatPgn, cleanupTmpPgns } from '~/test/helpers/fixtures';
+
+/** Index of the last movetext line that completes a game, or -1 if none. */
+function findLastCompleteGameLineIndex(lines: string[]): number {
+    for (let i = lines.length - 1; i >= 0; i -= 1) {
+        const line = lines[i];
+        if (line === undefined || line === '') continue;
+        if (line.startsWith('[')) continue;
+        if (extractGameResult(stripComments(line)) !== null) return i;
+    }
+    return -1;
+}
+
+/** True when the last movetext line in the chunk completes a game. */
+function chunkEndsWithCompleteGame(lines: string[]): boolean {
+    const lastResultIdx = findLastCompleteGameLineIndex(lines);
+    if (lastResultIdx === -1) return false;
+
+    for (let i = lastResultIdx + 1; i < lines.length; i += 1) {
+        const line = lines[i];
+        if (line === undefined || line === '') continue;
+        if (line.startsWith('[')) continue;
+        return false;
+    }
+
+    return true;
+}
+
+function chunkText(chunk: { bytes: Uint8Array }): string {
+    return decodePgnChunkBytes(chunk.bytes);
+}
 
 async function collectChunks(path: string, config: PgnChunkConfig) {
     const chunks = [];
@@ -20,7 +51,7 @@ describe('readPgnChunks', () => {
 
         expect(chunks.length).toBeGreaterThan(1);
         for (const chunk of chunks) {
-            expect(chunkEndsWithCompleteGame(chunk.text.split('\n'))).toBe(true);
+            expect(chunkEndsWithCompleteGame(chunkText(chunk).split('\n'))).toBe(true);
         }
         await cleanupTmpPgns();
     });
@@ -43,7 +74,7 @@ describe('readPgnChunks', () => {
         const chunkGames = [];
         for await (const chunk of readPgnChunks(path, { targetBytes: 1 })) {
             chunkGames.push(
-                ...parseGamesFromLines(chunk.text.split('\n'), { parseHeaders: false }),
+                ...parseGamesFromLines(chunkText(chunk).split('\n'), { parseHeaders: false }),
             );
         }
 
@@ -63,7 +94,7 @@ describe('readPgnChunks', () => {
         if (!chunk) return;
 
         expect(chunk.lineCount).toBeGreaterThan(0);
-        expect(chunkEndsWithCompleteGame(chunk.text.split('\n'))).toBe(true);
+        expect(chunkEndsWithCompleteGame(chunkText(chunk).split('\n'))).toBe(true);
         await cleanupTmpPgns();
     });
 
@@ -73,7 +104,7 @@ describe('readPgnChunks', () => {
         const chunk = chunks[0];
         expect(chunk).toBeDefined();
         if (!chunk) return;
-        expect(chunkEndsWithCompleteGame(chunk.text.split('\n'))).toBe(true);
+        expect(chunkEndsWithCompleteGame(chunkText(chunk).split('\n'))).toBe(true);
     });
 
     it('emits a complete game before an incomplete trailing game with default chunk size', async () => {
@@ -82,7 +113,7 @@ describe('readPgnChunks', () => {
         const [chunk] = chunks;
         expect(chunk).toBeDefined();
         if (!chunk) return;
-        const games = parseGamesFromLines(chunk.text.split('\n'), { parseHeaders: true });
+        const games = parseGamesFromLines(chunkText(chunk).split('\n'), { parseHeaders: true });
         expect(games).toHaveLength(1);
         expect(games[0]?.result).toBe('1-0');
     });

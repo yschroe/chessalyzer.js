@@ -6,25 +6,22 @@ import {
     type BoardIndex,
     type Square,
 } from '#board/board-coords';
+import { getStartingPiece } from '#board/piece-names';
+import { pieceList } from '#trackers/piece-types';
 import {
-    PAWN_TEMPLATE,
-    PIECE_TEMPLATE,
-    TileStats,
+    createColorBucket,
     TilePiece,
-    type ColorBucket,
     type StatsField,
     type TileGrid,
     type TileRow,
+    type TileStats,
 } from '#trackers/tile/tile-tracker-types';
 
-function addNamedStats(dst: StatsField, src: StatsField, color: 'b' | 'w', name: string): void {
-    const srcStats = src[color][name];
-    const dstStats = dst[color][name];
-    if (!srcStats || !dstStats) return;
-    dstStats.movedTo += srcStats.movedTo;
-    dstStats.wasOn += srcStats.wasOn;
-    dstStats.capturedOn += srcStats.capturedOn;
-    dstStats.wasCapturedOn += srcStats.wasCapturedOn;
+function addTileStats(dst: TileStats, src: TileStats): void {
+    dst.movedTo += src.movedTo;
+    dst.wasOn += src.wasOn;
+    dst.capturedOn += src.capturedOn;
+    dst.wasCapturedOn += src.wasCapturedOn;
 }
 
 /**
@@ -72,24 +69,11 @@ export function createTileGrid(): TileGrid {
 
 /** Build one empty cell with aggregate + per-piece stat slots (all zero). */
 function createEmptyCell(): StatsField {
-    const cell: StatsField = {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ColorBucket built incrementally; aggregate TileStats then per-piece slots
-        b: new TileStats() as ColorBucket,
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ColorBucket built incrementally; aggregate TileStats then per-piece slots
-        w: new TileStats() as ColorBucket,
+    return {
+        b: createColorBucket(),
+        w: createColorBucket(),
         currentPiece: null,
     };
-
-    for (const name of PAWN_TEMPLATE) {
-        cell.b[name] = new TileStats();
-        cell.w[name] = new TileStats();
-    }
-    for (const name of PIECE_TEMPLATE) {
-        cell.b[name] = new TileStats();
-        cell.w[name] = new TileStats();
-    }
-
-    return cell;
 }
 
 /**
@@ -97,28 +81,8 @@ function createEmptyCell(): StatsField {
  * Board coords: row 0 = rank 8, row 7 = rank 1.
  */
 export function setStartingPiece(tiles: TileGrid, row: BoardIndex, col: BoardIndex): void {
-    let color: 'b' | 'w' | undefined;
-    let piece: string | undefined;
-
-    if (row === 0) {
-        color = 'b';
-        piece = PIECE_TEMPLATE[col];
-    } else if (row === 1) {
-        color = 'b';
-        piece = PAWN_TEMPLATE[col];
-    } else if (row === 6) {
-        color = 'w';
-        piece = PAWN_TEMPLATE[col];
-    } else if (row === 7) {
-        color = 'w';
-        piece = PIECE_TEMPLATE[col];
-    }
-
-    if (color !== undefined && piece !== undefined) {
-        tiles[row][col].currentPiece = new TilePiece(piece, color);
-    } else {
-        tiles[row][col].currentPiece = null;
-    }
+    const piece = getStartingPiece([row, col]);
+    tiles[row][col].currentPiece = piece ? new TilePiece(piece.name, piece.color) : null;
 }
 
 /**
@@ -126,22 +90,12 @@ export function setStartingPiece(tiles: TileGrid, row: BoardIndex, col: BoardInd
  * Used when combining worker batch results on the main thread.
  */
 export function mergeCellStats(dst: StatsField, src: StatsField): void {
-    dst.b.movedTo += src.b.movedTo;
-    dst.w.movedTo += src.w.movedTo;
-    dst.b.wasOn += src.b.wasOn;
-    dst.w.wasOn += src.w.wasOn;
-    dst.b.capturedOn += src.b.capturedOn;
-    dst.w.capturedOn += src.w.capturedOn;
-    dst.b.wasCapturedOn += src.b.wasCapturedOn;
-    dst.w.wasCapturedOn += src.w.wasCapturedOn;
+    addTileStats(dst.b.total, src.b.total);
+    addTileStats(dst.w.total, src.w.total);
 
-    for (const name of PAWN_TEMPLATE) {
-        addNamedStats(dst, src, 'b', name);
-        addNamedStats(dst, src, 'w', name);
-    }
-    for (const name of PIECE_TEMPLATE) {
-        addNamedStats(dst, src, 'b', name);
-        addNamedStats(dst, src, 'w', name);
+    for (const name of pieceList) {
+        addTileStats(dst.b.byPiece[name], src.b.byPiece[name]);
+        addTileStats(dst.w.byPiece[name], src.w.byPiece[name]);
     }
 }
 
