@@ -1,15 +1,130 @@
 import { Link } from 'waku';
 
+import './home.css';
+
+function HeroBoard() {
+    const files = 8;
+    const ranks = 8;
+    // Soft heatmap-style intensity on a few squares (library vibe, not uniform checker)
+    const heat: Record<string, number> = {
+        '3-3': 0.55,
+        '3-4': 0.75,
+        '4-3': 0.7,
+        '4-4': 0.95,
+        '2-4': 0.4,
+        '5-3': 0.45,
+        '4-5': 0.5,
+        '5-4': 0.6,
+        '2-3': 0.3,
+        '3-2': 0.35,
+    };
+
+    return (
+        <svg
+            className="home-hero-board absolute inset-0 size-full"
+            viewBox="0 0 800 800"
+            preserveAspectRatio="xMidYMid slice"
+            aria-hidden="true"
+        >
+            <defs>
+                <linearGradient id="boardWash" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#1f4a38" stopOpacity="0.9" />
+                    <stop offset="55%" stopColor="#163528" stopOpacity="0.95" />
+                    <stop offset="100%" stopColor="#0f241c" stopOpacity="1" />
+                </linearGradient>
+                <radialGradient id="boardGlow" cx="48%" cy="42%" r="55%">
+                    <stop offset="0%" stopColor="#c8a24a" stopOpacity="0.22" />
+                    <stop offset="55%" stopColor="#2d6b4f" stopOpacity="0.08" />
+                    <stop offset="100%" stopColor="#0f241c" stopOpacity="0" />
+                </radialGradient>
+                <linearGradient id="readability" x1="0%" y1="50%" x2="75%" y2="50%">
+                    <stop offset="0%" stopColor="#0c1a14" stopOpacity="0.72" />
+                    <stop offset="45%" stopColor="#0c1a14" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#0c1a14" stopOpacity="0" />
+                </linearGradient>
+            </defs>
+            <rect width="800" height="800" fill="url(#boardWash)" />
+            {Array.from({ length: ranks }, (_, rank) =>
+                Array.from({ length: files }, (_, file) => {
+                    const light = (file + rank) % 2 === 0;
+                    const key = `${file}-${rank}`;
+                    const intensity = heat[key] ?? 0;
+                    const size = 100;
+                    const x = file * size;
+                    const y = rank * size;
+                    return (
+                        <g key={key}>
+                            <rect
+                                x={x}
+                                y={y}
+                                width={size}
+                                height={size}
+                                fill={light ? '#2f6b52' : '#1a4032'}
+                                opacity={0.85}
+                            />
+                            {intensity > 0 ? (
+                                <rect
+                                    x={x}
+                                    y={y}
+                                    width={size}
+                                    height={size}
+                                    fill="#e8c56a"
+                                    opacity={intensity * 0.55}
+                                />
+                            ) : null}
+                        </g>
+                    );
+                }),
+            )}
+            <rect width="800" height="800" fill="url(#boardGlow)" />
+            <rect width="800" height="800" fill="url(#readability)" />
+        </svg>
+    );
+}
+
 export default function Home() {
     return (
-        <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <h1 className="font-medium text-xl mb-4">chessalyzer documentation</h1>
-            <Link
-                to="/docs"
-                className="px-3 py-2 rounded-lg bg-fd-primary text-fd-primary-foreground font-medium text-sm mx-auto"
-            >
-                Open Docs
-            </Link>
+        <div className="home-page relative isolate flex flex-1 flex-col overflow-hidden">
+            <HeroBoard />
+
+            <div className="z-10 flex flex-1 flex-col justify-center">
+                <div className="px-6 pt-24 sm:px-10 lg:px-36">
+                    <p className="home-brand mb-5 text-5xl font-semibold tracking-tight text-[#f3efe6] sm:text-6xl md:text-7xl">
+                        Chessalyzer
+                    </p>
+
+                    <h1 className="home-headline mb-4 max-w-lg text-2xl leading-snug font-medium text-[#f7f3ea] sm:text-3xl md:text-4xl">
+                        Batch-analyze chess games at scale
+                    </h1>
+
+                    <p className="home-lede mb-8 max-w-xl text-base leading-relaxed text-[#d5ddd4] sm:text-lg">
+                        Parse large PGN databases and run modular trackers — fast, parallel, and
+                        dependency-free.
+                    </p>
+
+                    <div className="home-cta flex flex-wrap items-center gap-4">
+                        <Link
+                            to="/docs"
+                            className="inline-flex items-center bg-[#e8c56a] px-5 py-3 text-sm font-semibold text-[#14241c] transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e8c56a]"
+                        >
+                            Open Docs
+                        </Link>
+                        <a
+                            href="https://github.com/yschroe/chessalyzer"
+                            className="text-sm font-medium text-[#d5ddd4] underline-offset-4 transition-colors hover:text-[#f3efe6] hover:underline"
+                        >
+                            View on GitHub
+                        </a>
+                    </div>
+                </div>
+
+                <div className="mx-auto mt-auto p-6 font-sans">
+                    <p className="text-xs leading-relaxed text-fd-foreground">
+                        Most of this documentation was AI-generated and will be overhauled before
+                        the final release. Treat it as a draft while the API settles.
+                    </p>
+                </div>
+            </div>
         </div>
     );
 }
