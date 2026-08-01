@@ -1,19 +1,7 @@
-import { getTrackerState } from 'chessalyzer';
-import type { AnalyzeResult } from 'chessalyzer';
 import type { PieceTrackerState } from 'chessalyzer/trackers';
 import type { TileTrackerState } from 'chessalyzer/trackers';
-import type { StateOf, TrackerDef } from 'chessalyzer/trackers';
 
 import type { CustomGameTrackerState } from '../fixtures/custom-game-tracker';
-
-/** @deprecated Use public {@link getTrackerState} from `chessalyzer`. */
-export function trackerStateAt<D extends TrackerDef>(
-    result: AnalyzeResult,
-    def: D,
-    runIndex = 0,
-): StateOf<D> {
-    return getTrackerState(result, def, runIndex);
-}
 
 export function isTileTrackerState(value: unknown): value is TileTrackerState {
     return (

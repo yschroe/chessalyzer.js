@@ -2,7 +2,7 @@ import { describe, it, beforeAll, expect } from 'bun:test';
 
 // Optional golden regression tests against the large corpus (test/corpus/).
 // Skipped automatically when corpus files are not present locally.
-import { analyzePGN } from 'chessalyzer';
+import { analyzePGN, getTrackerState } from 'chessalyzer';
 import type { AnalyzeResult } from 'chessalyzer';
 import type { ParsedGame } from 'chessalyzer/pgn';
 import { GameTracker, PieceTracker } from 'chessalyzer/trackers';
@@ -17,7 +17,7 @@ import { PieceHeatmapPresets } from '#trackers/heatmaps/piece-heatmaps';
 import { isTrackedPiece } from '#trackers/piece-types';
 
 import { corpusPath, getCorpusEntry } from '../helpers/fixtures';
-import { isPieceTrackerState, trackerStateAt } from '../helpers/tracker-state';
+import { isPieceTrackerState } from '../helpers/tracker-state';
 
 const pgnPath = await corpusPath('asorted');
 const corpusAvailable = pgnPath !== null;
@@ -128,7 +128,7 @@ if (corpusAvailable) {
                 beforeAll(async () => {
                     const gameTracker = new GameTracker();
                     data = await analyzePGN(path, { trackers: [gameTracker] });
-                    state = trackerStateAt(data, gameTracker);
+                    state = getTrackerState(data, gameTracker);
                 });
 
                 it('matches PGN parse game count', () => {
@@ -147,7 +147,7 @@ if (corpusAvailable) {
                 beforeAll(async () => {
                     const gameTracker = new GameTracker();
                     data = await analyzePGN(path, { trackers: [gameTracker], workers: false });
-                    state = trackerStateAt(data, gameTracker);
+                    state = getTrackerState(data, gameTracker);
                 });
 
                 it('matches PGN parse game count', () => {
@@ -165,7 +165,7 @@ if (corpusAvailable) {
                         maxGames: entry.golden.gameTracker.filterWhiteWins,
                         filter: (game: ParsedGame) => game.result === '1-0',
                     });
-                    state = trackerStateAt(data, gameTracker);
+                    state = getTrackerState(data, gameTracker);
                 });
 
                 it('counts only white wins', () => {
@@ -180,7 +180,7 @@ if (corpusAvailable) {
                 beforeAll(async () => {
                     const gameTracker = new GameTracker();
                     const data = await analyzePGN(path, { trackers: [gameTracker] });
-                    state = trackerStateAt(data, gameTracker);
+                    state = getTrackerState(data, gameTracker);
                 });
 
                 it('matches known ECO totals', () => {
@@ -197,7 +197,7 @@ if (corpusAvailable) {
                 beforeAll(async () => {
                     const pieceTracker = new PieceTracker();
                     const data = await analyzePGN(path, { trackers: [pieceTracker] });
-                    state = trackerStateAt(data, pieceTracker);
+                    state = getTrackerState(data, pieceTracker);
                 });
 
                 it('tracks the reference square pair', () => {
@@ -217,7 +217,7 @@ if (corpusAvailable) {
                         trackers: [pieceTracker],
                         workers: false,
                     });
-                    state = trackerStateAt(data, pieceTracker);
+                    state = getTrackerState(data, pieceTracker);
                 });
 
                 it('tracks the reference square pair', () => {
@@ -235,7 +235,7 @@ if (corpusAvailable) {
                 beforeAll(async () => {
                     pieceTracker = new PieceTracker();
                     const data = await analyzePGN(path, { trackers: [pieceTracker] });
-                    state = trackerStateAt(data, pieceTracker);
+                    state = getTrackerState(data, pieceTracker);
                 });
 
                 it('PIECE_CAPTURED preset', () => {
