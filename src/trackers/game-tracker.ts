@@ -1,59 +1,50 @@
-import { BaseGameTracker } from '#trackers/base-tracker';
+import { BaseGameTracker } from '#trackers/define-tracker';
 import type { ParsedGame } from '#types/parse-pgn';
 
-function isGameTracker(tracker: unknown): tracker is GameTracker {
-    return (
-        typeof tracker === 'object' && tracker !== null && 'results' in tracker && 'ECO' in tracker
-    );
-}
-
-class GameTracker extends BaseGameTracker {
-    static override readonly trackerId = 'GameTracker';
-    static override readonly workerModule = import.meta.url;
-
+export interface GameTrackerState {
     results: { white: number; black: number; draw: number };
     games: number;
-    ECO: { [eco: string]: number };
+    ECO: Record<string, number>;
+}
 
-    constructor() {
-        super();
-        this.results = { white: 0, black: 0, draw: 0 };
-        this.games = 0;
-        this.ECO = {};
+class GameTracker extends BaseGameTracker<GameTrackerState> {
+    override readonly id = 'GameTracker';
+    override readonly workerModule = import.meta.url;
+
+    init(): GameTrackerState {
+        return {
+            results: { white: 0, black: 0, draw: 0 },
+            games: 0,
+            ECO: {},
+        };
     }
 
-    override merge(tracker: unknown) {
-        if (!isGameTracker(tracker)) return;
+    merge(state: GameTrackerState, other: GameTrackerState): void {
+        state.results.white += other.results.white;
+        state.results.black += other.results.black;
+        state.results.draw += other.results.draw;
+        state.games += other.games;
 
-        this.results.white += tracker.results.white;
-        this.results.black += tracker.results.black;
-        this.results.draw += tracker.results.draw;
-        this.games += tracker.games;
-
-        for (const key of Object.keys(tracker.ECO)) {
-            const ecoCount = tracker.ECO[key];
+        for (const key of Object.keys(other.ECO)) {
+            const ecoCount = other.ECO[key];
             if (ecoCount === undefined) continue;
-            if (this.ECO[key] !== undefined) {
-                this.ECO[key] += ecoCount;
-            } else {
-                this.ECO[key] = ecoCount;
-            }
+            state.ECO[key] = (state.ECO[key] ?? 0) + ecoCount;
         }
     }
 
-    override trackGame(game: ParsedGame) {
-        this.games += 1;
+    track(state: GameTrackerState, game: ParsedGame): void {
+        state.games += 1;
         switch (game.result) {
             case '1-0':
-                this.results.white += 1;
+                state.results.white += 1;
                 break;
 
             case '1/2-1/2':
-                this.results.draw += 1;
+                state.results.draw += 1;
                 break;
 
             case '0-1':
-                this.results.black += 1;
+                state.results.black += 1;
                 break;
 
             default:
@@ -61,19 +52,15 @@ class GameTracker extends BaseGameTracker {
         }
         const eco = game.headers?.ECO;
         if (eco !== undefined) {
-            if (this.ECO[eco] !== undefined) {
-                this.ECO[eco] += 1;
-            } else {
-                this.ECO[eco] = 1;
-            }
+            state.ECO[eco] = (state.ECO[eco] ?? 0) + 1;
         }
     }
 
-    override onFinish() {
-        this.ECO = Object.keys(this.ECO)
+    override finish(state: GameTrackerState): void {
+        state.ECO = Object.keys(state.ECO)
             .toSorted()
             .reduce<Record<string, number>>((a, c) => {
-                a[c] = this.ECO[c] ?? 0;
+                a[c] = state.ECO[c] ?? 0;
                 return a;
             }, {});
     }

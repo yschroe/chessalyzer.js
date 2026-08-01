@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
 import { normalizeAnalysisConfigs, normalizeAnalyzeOptions } from '#core/analysis-config';
-import { MoveTracker } from '#trackers/base-tracker';
+import { defineMoveTracker } from '#trackers/define-tracker';
 import { GameTracker } from '#trackers/game-tracker';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { AnalyzeOptions, AnalyzeRun } from '#types/analysis';
@@ -133,7 +133,7 @@ describe('normalizeAnalysisConfigs', () => {
         expect(configs).toHaveLength(1);
     });
 
-    it('does not require trackerId for single-threaded analysis', () => {
+    it('does not require tracker metadata for single-threaded analysis', () => {
         const tracker = new TileTracker();
         const { configs } = normalizeAnalysisConfigs([{ trackers: [tracker] }], {
             multithreaded: false,
@@ -141,27 +141,52 @@ describe('normalizeAnalysisConfigs', () => {
         expect(configs[0]?.trackerData).toEqual([]);
     });
 
-    it('requires trackerId for multithreaded analysis', () => {
-        class LocalTracker extends MoveTracker {
-            override trackMoves() {}
-        }
+    it('requires id for multithreaded analysis', () => {
+        const tracker = defineMoveTracker({
+            id: '',
+            init: () => ({}),
+            track: () => {},
+            merge: () => {},
+        });
         expect(() =>
-            normalizeAnalysisConfigs([{ trackers: [new LocalTracker()] }], {
+            normalizeAnalysisConfigs([{ trackers: [tracker] }], {
                 multithreaded: true,
             }),
-        ).toThrow('static trackerId');
+        ).toThrow('non-empty id');
     });
 
     it('requires merge for multithreaded analysis', () => {
-        class BareTracker extends MoveTracker {
-            static override trackerId = 'BareTracker';
-            static override workerModule = import.meta.url;
-            override trackMoves() {}
-        }
+        const bare = {
+            id: 'BareTracker',
+            kind: 'move' as const,
+            workerModule: import.meta.url,
+            init: () => ({}),
+            track: () => {},
+        };
         expect(() =>
-            normalizeAnalysisConfigs([{ trackers: [new BareTracker()] }], {
-                multithreaded: true,
-            }),
+            normalizeAnalysisConfigs(
+                [{ trackers: [bare as import('#types/tracker').TrackerDef] }],
+                {
+                    multithreaded: true,
+                },
+            ),
         ).toThrow('must implement merge');
+    });
+
+    it('threads tracker options to worker metadata', () => {
+        const tracker = defineMoveTracker({
+            id: 'opts-tracker',
+            workerModule: import.meta.url,
+            options: { minElo: 2000 },
+            init: () => ({}),
+            track: () => {},
+            merge: () => {},
+        });
+        const { configs } = normalizeAnalysisConfigs([{ trackers: [tracker] }], {
+            multithreaded: true,
+        });
+        expect(configs[0]?.trackerData).toEqual([
+            { id: 'opts-tracker', module: import.meta.url, options: { minElo: 2000 } },
+        ]);
     });
 });

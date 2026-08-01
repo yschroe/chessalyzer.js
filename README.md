@@ -257,7 +257,7 @@ To use a custom tracker with your multithreaded analysis please see the importan
 
 The function you create for heatmap generation gets passed up to four parameters (inside `generateHeatmap(...)`):
 
-1. `data`: The data that is the basis for the heatmap. Per default this data is the Tracker you called the `generateHeatmap(...)` function from itself.
+1. `data`: Tracker state passed as the first argument to `generateHeatmap(state, ...)`.
 2. `loopSqrData`: Information about the square the current heatmap value is calculated for. The `generateHeatmap(...)` function loops over every square of the board. `loopSqrData` has this shape:
 
     ```typescript
@@ -284,28 +284,19 @@ The function you create for heatmap generation gets passed up to four parameters
 
 ## Built-in
 
-chessalyzer comes with three built-in trackers, which can be directly imported into your script:
+chessalyzer comes with three built-in trackers. Stats live on **`result.runs[n].trackers[m].state`** after `analyzePGN` returns.
 
-`GameTracker`:
+`GameTracker` state:
 
-- `results`
-  An object which counts the results of the tracked games. Contains the keys `white`, `draw` and `black`
+- `results` — `white`, `draw`, `black` win counts
+- `ECO` — ECO code counts (e.g. `'A00'`)
+- `games` — number of games processed
 
-- `ECO`
-  Counts the ECO keys of the processed games. `ECO` is an object that contains the different keys, for example 'A00'.
+`PieceTracker` state:
 
-- `games`  
-  Number of games processed
+- `b` / `w` — capture matrices (`b.Pa.Qd` = black a-pawn took white queen)
 
-`PieceTracker`:
-
-- `b`  
-  Blacks pieces. Tracks how often a specific black piece took a specific white piece. E.g. `b.Pa.Qd` tracks how often the black a-pawn took whites queen.
-
-- `w`  
-  Same for whites pieces.
-
-`TileTracker`:
+`TileTracker` state:
 
 - `tiles[][]`  
   Represents the tiles of the board. Has two objects (`b`, `w`) on the first layer, and then each piece inside these objects as a second layer (`Pa`, `Ra` etc.). For each piece following stats are tracked:
@@ -320,85 +311,104 @@ chessalyzer comes with three built-in trackers, which can be directly imported i
 
 ## Custom Trackers
 
-Want to track something the built-ins do not cover? Create your own tracker by extending `MoveTracker` (per-move stats) or `BaseGameTracker` (per-game stats like results or ECO codes). The public `Tracker` type is a discriminated union of move and game contracts — implement `trackMoves` or `trackGame` via those bases rather than implementing `Tracker` directly.
+Trackers separate **definition** (behavior) from **state** (plain accumulated data). Author with a factory (`defineGameTracker` / `defineMoveTracker`) or a class adapter (`extends MoveTracker` / `extends BaseGameTracker`). Pass definitions to `analyzePGN`; read stats from `result.runs[n].trackers[m].state`.
 
-For single-threaded analysis, implement `trackMoves` or `trackGame` and you are done. For multithreading, you need three small extras:
+**Factory (recommended for clarity):**
 
-1. Put the tracker in its **own module** with a **default export** (zero-arg constructor).
-2. Add **`static trackerId = 'YourUniqueId'`** and **`static workerModule = import.meta.url`** so workers can find and load your class.
-3. Implement **`merge(tracker)`** to add the worker's batch stats into yours. The argument is a plain object after structured clone — duck-type it (`unknown`); do **not** use `instanceof`. Framework-owned fields such as `time` are merged centrally — your `merge` only needs to combine your own stats.
+```javascript
+import { defineGameTracker } from 'chessalyzer/trackers';
 
-**Multithreaded environments:** `static workerModule = import.meta.url` requires an unbundled Node ≥ 22 or Bun runtime (bundlers may rewrite `import.meta.url`).
+const eloTracker = defineGameTracker({
+    id: 'elo-tracker',
+    workerModule: import.meta.url, // multithreaded custom trackers only
+    options: { minElo: 2000 },
+    init: () => ({ games: 0, wins: [0, 0, 0] }),
+    track: (state, game) => {
+        /* fold one game */
+    },
+    merge: (state, other) => {
+        /* fold worker state */
+    },
+    finish: (state) => {
+        /* optional end-of-analysis */
+    },
+});
+```
 
-**Move trackers:** `SanDecoder` returns a reused `Action[]` buffer each half-move. Copy fields you need to retain across moves; scalar fields (`san`, `piece`, …) are overwritten on the next decode. Override **`onGameEnd()`** for per-game flush hooks (called after each game, including skipped games).
+**Class adapter:**
+
+```javascript
+export default class MyTracker extends BaseGameTracker {
+    id = 'MyTracker';
+    workerModule = import.meta.url;
+
+    init() {
+        return { games: 0, wins: [0, 0, 0] };
+    }
+    track(state, game) {
+        /* called once per game */
+    }
+    merge(state, other) {
+        /* fold worker state into main state */
+    }
+}
+```
+
+For multithreaded analysis, custom trackers need: **own module** with **default export**, **`id`**, **`workerModule`**, and **`merge`**. Worker state is sent as plain `{ id, state }` snapshots merged by id at pool drain.
+
+**Multithreaded environments:** `workerModule = import.meta.url` requires an unbundled Node ≥ 22 or Bun runtime (bundlers may rewrite `import.meta.url`).
+
+**Move trackers:** `SanDecoder` returns a reused `Action[]` buffer each half-move. Copy fields you need to retain across moves. Override **`onGameEnd(state)`** for per-game flush hooks (called after each game, including skipped games).
 
 See [`manual-tests/custom-game-tracker.ts`](manual-tests/custom-game-tracker.ts) for a minimal working example.
 
 Heads-up on castling: it produces two move actions (king leg, then rook leg) in one batch. The rook leg carries the same `castle` flag. `TileTracker` counts castling as one move for `movesTotal`; your move tracker can skip rook legs via `action.castle` on the second leg.
 
-Example skeleton:
-
-```javascript
-export default class MyTracker extends BaseGameTracker {
-    static trackerId = 'MyTracker';
-    static workerModule = import.meta.url;
-
-    merge(tracker) {
-        /* add tracker.games, tracker.results, etc. into this */
-    }
-    trackGame(game) {
-        /* called once per game */
-    }
-}
-```
-
-Import bases and types from their canonical subpaths (each symbol has one export home):
+Import bases and types from their canonical subpaths:
 
 ```javascript
 import type { GameFilter } from 'chessalyzer';
 import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
-import type {
-    Action,
-    BaseAction,
-    CaptureAction,
-    MoveAction,
-    PlayerColor,
-    PromoteAction,
-    Square,
-} from 'chessalyzer/replay';
+import type { Action, MoveAction, CaptureAction, PlayerColor, Square } from 'chessalyzer/replay';
 import {
     BaseGameTracker,
     MoveTracker,
+    defineGameTracker,
+    defineMoveTracker,
     TileHeatmapPresets,
+    type GameTrackerDef,
     type HeatmapAnalysisFunc,
-    type HeatmapPresetEntry,
-    type MoveCoords,
-    type MoveTrackerContract,
-    type GameTrackerContract,
-    type SquareData,
-    type TileHeatmapPresetName,
-    type Tracker,
-    type TrackerBase,
-    type TrackerConfig,
+    type MoveTrackerDef,
+    type StateOf,
+    type TrackerDef,
 } from 'chessalyzer/trackers';
 ```
 
-Here is how the built-in `GameTracker` merges worker results:
+`GameTracker` merge example (state-based):
 
 ```javascript
-merge(tracker) {
-    this.results.white += tracker.results.white;
-    this.results.black += tracker.results.black;
-    this.results.draw += tracker.results.draw;
-    this.games += tracker.games;
+merge(state, other) {
+    state.results.white += other.results.white;
+    state.results.black += other.results.black;
+    state.results.draw += other.results.draw;
+    state.games += other.games;
 }
+```
+
+Read stats after analysis:
+
+```javascript
+const tracker = new GameTracker();
+const result = await analyzePGN(path, { trackers: [tracker] });
+const { state } = result.runs[0].trackers[0];
+console.log(state.games, state.results);
 ```
 
 # Heatmap Presets
 
-Built-in heatmap presets are module-level maps exported from `chessalyzer/trackers` (`TileHeatmapPresets`, `PieceHeatmapPresets`) and mirrored on `TileTracker.presets` / `PieceTracker.presets`. Preset names are typed (`TileHeatmapPresetName`, `PieceHeatmapPresetName`) for autocomplete when calling `generateHeatmap(...)`.
+Built-in heatmap presets are module-level maps exported from `chessalyzer/trackers` (`TileHeatmapPresets`, `PieceHeatmapPresets`) and mirrored on `TileTracker.presets` / `PieceTracker.presets`. Preset names are typed (`TileHeatmapPresetName`, `PieceHeatmapPresetName`) for autocomplete when calling `generateHeatmap(state, ...)`.
 
-Instead of defining your own heatmap function you can pass a preset name as the first argument, e.g. `tileTracker.generateHeatmap('TILE_OCC_BY_PIECE', 'a2')`.
+Instead of defining your own heatmap function you can pass a preset name as the second argument, e.g. `tileTracker.generateHeatmap(state, 'TILE_OCC_BY_PIECE', 'a2')`.
 
 ### Tile Tracker
 

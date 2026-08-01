@@ -1,43 +1,39 @@
 import type { ParsedGame } from 'chessalyzer/pgn';
 import { BaseGameTracker } from 'chessalyzer/trackers';
 
-function isCustomGameTracker(tracker: unknown): tracker is CustomGameTracker {
-    return (
-        typeof tracker === 'object' &&
-        tracker !== null &&
-        'wins' in tracker &&
-        Array.isArray(tracker.wins)
-    );
+export interface CustomGameTrackerState {
+    wins: [number, number, number];
+    games: number;
 }
 
-export default class CustomGameTracker extends BaseGameTracker {
-    static override trackerId = 'CustomGameTracker';
-    static override workerModule = import.meta.url;
+export default class CustomGameTracker extends BaseGameTracker<CustomGameTrackerState> {
+    override readonly id = 'CustomGameTracker';
+    override readonly workerModule = import.meta.url;
 
-    wins: [number, number, number] = [0, 0, 0];
-    games = 0;
-
-    override merge(tracker: unknown) {
-        if (!isCustomGameTracker(tracker)) return;
-        this.wins[0] += tracker.wins[0];
-        this.wins[1] += tracker.wins[1];
-        this.wins[2] += tracker.wins[2];
-        this.games += tracker.games;
+    init(): CustomGameTrackerState {
+        return { wins: [0, 0, 0], games: 0 };
     }
 
-    override trackGame(game: ParsedGame) {
-        this.games += 1;
+    merge(state: CustomGameTrackerState, other: CustomGameTrackerState): void {
+        state.wins[0] += other.wins[0];
+        state.wins[1] += other.wins[1];
+        state.wins[2] += other.wins[2];
+        state.games += other.games;
+    }
+
+    track(state: CustomGameTrackerState, game: ParsedGame): void {
+        state.games += 1;
         switch (game.result) {
             case '1-0':
-                this.wins[0] += 1;
+                state.wins[0] += 1;
                 break;
 
             case '1/2-1/2':
-                this.wins[1] += 1;
+                state.wins[1] += 1;
                 break;
 
             case '0-1':
-                this.wins[2] += 1;
+                state.wins[2] += 1;
                 break;
 
             default:

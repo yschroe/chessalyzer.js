@@ -1,12 +1,12 @@
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
 import type { AssembledGame } from '#types/parse-pgn';
-import type { Tracker, TrackerConfig } from '#types/tracker';
+import type { TrackerSnapshot } from '#types/tracker';
 
-/** One-time worker bootstrap: tracker class names, cfg, optional module paths. */
+/** One-time worker bootstrap: tracker ids, options, optional module paths. */
 export interface WorkerInitData {
     configs: {
-        trackerData: { id: string; cfg: TrackerConfig; path?: string }[];
+        trackerData: { id: string; module?: string; options?: unknown }[];
         /** When true, worker assembles games and returns them for main-thread filter/replay. */
         pgnParseOnly?: boolean;
         replayMode: ReplayMode;
@@ -41,8 +41,7 @@ export interface WorkerConfigResult {
     idxConfig: number;
     moves: number;
     games: number;
-    gameTrackers?: Tracker[];
-    moveTrackers?: Tracker[];
+    trackerSnapshots?: TrackerSnapshot[];
     skippedGames?: number;
     errors?: AnalyzeError[];
     /** Parsed games when {@link WorkerInitData.configs} entry has `pgnParseOnly: true`. */

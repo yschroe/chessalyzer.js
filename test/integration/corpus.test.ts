@@ -5,7 +5,12 @@ import { describe, it, beforeAll, expect } from 'bun:test';
 import { analyzePGN } from 'chessalyzer';
 import type { AnalyzeResult } from 'chessalyzer';
 import type { ParsedGame } from 'chessalyzer/pgn';
-import { GameTracker, PieceTracker } from 'chessalyzer/trackers';
+import {
+    GameTracker,
+    PieceTracker,
+    type GameTrackerState,
+    type PieceTrackerState,
+} from 'chessalyzer/trackers';
 import type { HeatmapAnalysisFunc } from 'chessalyzer/trackers';
 
 import { isTrackedPiece } from '#trackers/piece-types';
@@ -15,7 +20,7 @@ import { corpusPath, getCorpusEntry } from '../helpers/fixtures';
 const pgnPath = await corpusPath('asorted');
 const corpusAvailable = pgnPath !== null;
 
-function isPieceTracker(data: unknown): data is PieceTracker {
+function isPieceTrackerState(data: unknown): data is PieceTrackerState {
     return typeof data === 'object' && data !== null && 'b' in data && 'w' in data;
 }
 
@@ -104,65 +109,68 @@ if (corpusAvailable) {
         describe('GameTracker golden values', () => {
             describe('Multithreaded', () => {
                 let data: AnalyzeResult;
-                const gameTracker = new GameTracker();
+                let state: GameTrackerState;
                 beforeAll(async () => {
+                    const gameTracker = new GameTracker();
                     data = await analyzePGN(path, { trackers: [gameTracker] });
+                    state = data.runs[0]?.trackers[0]?.state as GameTrackerState;
                 });
 
                 it('matches PGN parse game count', () => {
-                    expect(data.gameCount).toBe(gameTracker.games);
+                    expect(data.gameCount).toBe(state.games);
                 });
 
                 it('sums result counts to total games', () => {
-                    const resultsSum = Object.values(gameTracker.results).reduce(
-                        (a, c) => a + c,
-                        0,
-                    );
+                    const resultsSum = Object.values(state.results).reduce((a, c) => a + c, 0);
                     expect(resultsSum).toBe(data.gameCount);
                 });
             });
 
             describe('Singlethreaded', () => {
                 let data: AnalyzeResult;
-                const gameTracker = new GameTracker();
+                let state: GameTrackerState;
                 beforeAll(async () => {
+                    const gameTracker = new GameTracker();
                     data = await analyzePGN(path, { trackers: [gameTracker], workers: false });
+                    state = data.runs[0]?.trackers[0]?.state as GameTrackerState;
                 });
 
                 it('matches PGN parse game count', () => {
-                    expect(data.gameCount).toBe(gameTracker.games);
+                    expect(data.gameCount).toBe(state.games);
                 });
             });
 
             describe('Filtered white wins', () => {
-                const gameTracker = new GameTracker();
+                let state: GameTrackerState;
                 beforeAll(async () => {
-                    await analyzePGN(path, {
+                    const gameTracker = new GameTracker();
+                    const data = await analyzePGN(path, {
                         workers: false,
                         trackers: [gameTracker],
                         maxGames: entry.golden.gameTracker.filterWhiteWins,
                         filter: (game: ParsedGame) => game.result === '1-0',
                     });
+                    state = data.runs[0]?.trackers[0]?.state as GameTrackerState;
                 });
 
                 it('counts only white wins', () => {
-                    expect(gameTracker.results.white).toBe(
-                        entry.golden.gameTracker.filterWhiteWins,
-                    );
-                    expect(gameTracker.results.black).toBe(0);
-                    expect(gameTracker.results.draw).toBe(0);
+                    expect(state.results.white).toBe(entry.golden.gameTracker.filterWhiteWins);
+                    expect(state.results.black).toBe(0);
+                    expect(state.results.draw).toBe(0);
                 });
             });
 
             describe('ECO counts', () => {
-                const gameTracker = new GameTracker();
+                let state: GameTrackerState;
                 beforeAll(async () => {
-                    await analyzePGN(path, { trackers: [gameTracker] });
+                    const gameTracker = new GameTracker();
+                    const data = await analyzePGN(path, { trackers: [gameTracker] });
+                    state = data.runs[0]?.trackers[0]?.state as GameTrackerState;
                 });
 
                 it('matches known ECO totals', () => {
                     for (const [eco, count] of Object.entries(entry.golden.gameTracker.ECO)) {
-                        expect(gameTracker.ECO[eco]).toBe(count);
+                        expect(state.ECO[eco]).toBe(count);
                     }
                 });
             });
@@ -170,14 +178,16 @@ if (corpusAvailable) {
 
         describe('PieceTracker golden values', () => {
             describe('Multithreaded', () => {
-                const pieceTracker = new PieceTracker();
+                let state: PieceTrackerState;
                 beforeAll(async () => {
-                    await analyzePGN(path, { trackers: [pieceTracker] });
+                    const pieceTracker = new PieceTracker();
+                    const data = await analyzePGN(path, { trackers: [pieceTracker] });
+                    state = data.runs[0]?.trackers[0]?.state as PieceTrackerState;
                 });
 
                 it('tracks the reference square pair', () => {
                     const { color, from, to, count } = entry.golden.pieceTracker.square;
-                    const side = color === 'b' ? pieceTracker.b : pieceTracker.w;
+                    const side = color === 'b' ? state.b : state.w;
                     if (isTrackedPiece(from) && isTrackedPiece(to)) {
                         expect(side[from][to]).toBe(count);
                     }
@@ -185,14 +195,19 @@ if (corpusAvailable) {
             });
 
             describe('Singlethreaded', () => {
-                const pieceTracker = new PieceTracker();
+                let state: PieceTrackerState;
                 beforeAll(async () => {
-                    await analyzePGN(path, { trackers: [pieceTracker], workers: false });
+                    const pieceTracker = new PieceTracker();
+                    const data = await analyzePGN(path, {
+                        trackers: [pieceTracker],
+                        workers: false,
+                    });
+                    state = data.runs[0]?.trackers[0]?.state as PieceTrackerState;
                 });
 
                 it('tracks the reference square pair', () => {
                     const { color, from, to, count } = entry.golden.pieceTracker.square;
-                    const side = color === 'b' ? pieceTracker.b : pieceTracker.w;
+                    const side = color === 'b' ? state.b : state.w;
                     if (isTrackedPiece(from) && isTrackedPiece(to)) {
                         expect(side[from][to]).toBe(count);
                     }
@@ -200,13 +215,16 @@ if (corpusAvailable) {
             });
 
             describe('Heatmaps', () => {
-                const pieceTracker = new PieceTracker();
+                let pieceTracker: PieceTracker;
+                let state: PieceTrackerState;
                 beforeAll(async () => {
-                    await analyzePGN(path, { trackers: [pieceTracker] });
+                    pieceTracker = new PieceTracker();
+                    const data = await analyzePGN(path, { trackers: [pieceTracker] });
+                    state = data.runs[0]?.trackers[0]?.state as PieceTrackerState;
                 });
 
                 it('PIECE_CAPTURED preset', () => {
-                    const data = pieceTracker.generateHeatmap('PIECE_CAPTURED', 'a8');
+                    const data = pieceTracker.generateHeatmap(state, 'PIECE_CAPTURED', 'a8');
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(
@@ -215,7 +233,7 @@ if (corpusAvailable) {
                 });
 
                 it('PIECE_CAPTURED_BY preset', () => {
-                    const data = pieceTracker.generateHeatmap('PIECE_CAPTURED_BY', 'a8');
+                    const data = pieceTracker.generateHeatmap(state, 'PIECE_CAPTURED_BY', 'a8');
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(
@@ -233,7 +251,7 @@ if (corpusAvailable) {
                             sqrPiece &&
                             loopPiece &&
                             loopPiece.color !== sqrPiece.color &&
-                            isPieceTracker(data) &&
+                            isPieceTrackerState(data) &&
                             isTrackedPiece(loopPiece.name) &&
                             isTrackedPiece(sqrPiece.name)
                         ) {
@@ -241,16 +259,20 @@ if (corpusAvailable) {
                         }
                         return val;
                     };
-                    const data = pieceTracker.generateHeatmap(customFunc, 'a8');
+                    const data = pieceTracker.generateHeatmap(state, customFunc, 'a8');
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(entry.golden.pieceTracker.heatmap.custom_a8);
                 });
 
                 it('throws when preset is missing', () => {
-                    expect(() => pieceTracker.generateHeatmap('I_DO_NOT_EXIST', 'a8')).toThrow(
-                        "Heatmap preset 'I_DO_NOT_EXIST' not found!",
-                    );
+                    expect(() =>
+                        pieceTracker.generateHeatmap(
+                            state,
+                            'I_DO_NOT_EXIST' as 'PIECE_CAPTURED',
+                            'a8',
+                        ),
+                    ).toThrow("Heatmap preset 'I_DO_NOT_EXIST' not found!");
                 });
             });
         });

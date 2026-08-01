@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'bun:test';
 import { join } from 'node:path';
 
 import { analyzePGN } from 'chessalyzer';
-import { PieceTracker, TileTracker } from 'chessalyzer/trackers';
+import { PieceTracker, TileTracker, type TileTrackerState } from 'chessalyzer/trackers';
 
 import type { WorkerMessage } from '#types/worker';
 
@@ -46,9 +46,7 @@ describe('Workers', () => {
             pool = new WorkerPool(1, workerPath, {
                 configs: [
                     {
-                        trackerData: [
-                            { id: 'DoesNotExist', cfg: { profilingActive: false }, path: '' },
-                        ],
+                        trackerData: [{ id: 'DoesNotExist' }],
                         replayMode: 'skip',
                     },
                 ],
@@ -93,7 +91,8 @@ describe('Workers', () => {
 
             expect(data.gameCount).toBe(1);
             expect(data.moveCount).toBe(15);
-            expect(tileTracker.movesTotal).toBeGreaterThan(0);
+            const state = data.runs[0]?.trackers[0]?.state as TileTrackerState;
+            expect(state.movesTotal).toBeGreaterThan(0);
         });
     });
 });

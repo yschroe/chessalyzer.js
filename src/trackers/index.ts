@@ -1,8 +1,13 @@
 // Runtime
-export { BaseGameTracker, MoveTracker } from '#trackers/base-tracker';
-export { GameTracker } from '#trackers/game-tracker';
-export { PieceTracker } from '#trackers/piece-tracker';
-export { TileTracker } from '#trackers/tile/tile-tracker';
+export {
+    BaseGameTracker,
+    MoveTracker,
+    defineGameTracker,
+    defineMoveTracker,
+} from '#trackers/define-tracker';
+export { GameTracker, type GameTrackerState } from '#trackers/game-tracker';
+export { PieceTracker, type PieceTrackerState } from '#trackers/piece-tracker';
+export { TileTracker, type TileTrackerState } from '#trackers/tile/tile-tracker';
 
 export {
     PieceHeatmapPresets,
@@ -16,12 +21,13 @@ export { isTrackedPiece } from '#trackers/piece-types';
 // Types
 export type { MoveCoords, SquareData } from '#types/game';
 export type {
-    GameTrackerContract,
+    AnalyzeTrackerResult,
+    GameTrackerDef,
     HeatmapAnalysisFunc,
     HeatmapData,
     HeatmapPresetEntry,
-    MoveTrackerContract,
-    Tracker,
-    TrackerBase,
-    TrackerConfig,
+    MoveTrackerDef,
+    StateOf,
+    TrackerDef,
+    TrackerSnapshot,
 } from '#types/tracker';

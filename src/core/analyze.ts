@@ -5,6 +5,7 @@ import { collectError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
 import GameProcessor from '#core/game-processor';
 import type { AnalyzeOptions, AnalyzeResult, AnalyzeRun, AnalyzeRunResult } from '#types/analysis';
 import type { AnalyzeError } from '#types/errors';
+import type { AnalyzeTrackerResult } from '#types/tracker';
 import type { HeatmapData } from '#types/tracker';
 
 /** Black foreground on a truecolor RGB background (ANSI). */
@@ -21,12 +22,13 @@ export function buildAnalyzeResult(
         skippedGames?: number;
         errors?: AnalyzeError[];
     }[],
+    trackerResults: AnalyzeTrackerResult[][],
     durationMs: number,
 ): AnalyzeResult {
     const runs: AnalyzeRunResult[] = counts.map(({ games, moves }, index) => ({
         gameCount: games,
         moveCount: moves,
-        trackers: inputRuns[index]?.trackers ?? [],
+        trackers: trackerResults[index] ?? [],
     }));
 
     const gameCount = runs.reduce((sum, run) => sum + run.gameCount, 0);
@@ -74,8 +76,9 @@ export async function analyzePGN(path: string, options?: AnalyzeOptions): Promis
 
     const t0 = performance.now();
     const counts = await gameProcessor.processPGN(path);
+    const trackerResults = gameProcessor.configs.map((cfg) => cfg.trackerHost.results());
     const durationMs = performance.now() - t0;
-    return buildAnalyzeResult(runs, counts, durationMs);
+    return buildAnalyzeResult(runs, counts, trackerResults, durationMs);
 }
 
 /** Print {@link HeatmapData} to the terminal. */

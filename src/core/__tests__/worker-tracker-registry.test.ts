@@ -8,9 +8,7 @@ describe('worker-tracker-registry', () => {
             initWorkerTrackers({
                 configs: [
                     {
-                        trackerData: [
-                            { id: 'DoesNotExist', cfg: { profilingActive: false }, path: '' },
-                        ],
+                        trackerData: [{ id: 'DoesNotExist' }],
                         replayMode: 'skip',
                     },
                 ],

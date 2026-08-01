@@ -1,8 +1,7 @@
+import type { TrackerHost } from '#core/tracker-host';
 import type { ReplayMode } from '#replay/replay-mode';
-import type { BaseGameTracker, MoveTracker } from '#trackers/base-tracker';
 import type { AnalyzeError } from '#types/errors';
 import type { ParsedGame } from '#types/parse-pgn';
-import type { TrackerConfig } from '#types/tracker';
 
 /** @internal Raw game/move counters from the processor. */
 export interface GameAndMoveCount {
@@ -19,9 +18,9 @@ export interface GameProcessorConfig {
     maxGames: number;
 }
 
-/** Runtime tracker buckets while processing one analysis config. */
+/** Runtime tracker host while processing one analysis config. */
 export interface GameProcessorAnalysisConfig {
-    trackers: { move: MoveTracker[]; game: BaseGameTracker[] };
+    trackerHost: TrackerHost;
     processedMoves: number;
     processedGames: number;
     skippedGames: number;
@@ -31,7 +30,7 @@ export interface GameProcessorAnalysisConfig {
 /** Main-thread processor config including serializable tracker metadata for workers. */
 export interface GameProcessorAnalysisConfigFull extends GameProcessorAnalysisConfig {
     config: GameProcessorConfig;
-    trackerData: { id: string; cfg: TrackerConfig; path: string }[];
+    trackerData: { id: string; module?: string; options?: unknown }[];
     replayMode: ReplayMode;
     readGames: number;
     isDone: boolean;

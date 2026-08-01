@@ -127,15 +127,15 @@ function processFlush(): WorkerMessage {
         if (isPgnParseOnly(idxConfig)) continue;
 
         const cfg = getCachedCfg(idxConfig);
-        const hasTrackers = cfg.trackers.game.length > 0 || cfg.trackers.move.length > 0;
+        const hasTrackers =
+            cfg.trackerHost.gameEntries.length > 0 || cfg.trackerHost.moveEntries.length > 0;
         if (!hasTrackers) continue;
 
         results.push({
             idxConfig,
             games: 0,
             moves: 0,
-            gameTrackers: cfg.trackers.game,
-            moveTrackers: cfg.trackers.move,
+            trackerSnapshots: cfg.trackerHost.snapshots(),
         });
     }
 

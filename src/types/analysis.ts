@@ -2,18 +2,15 @@ import type { PgnChunkConfig } from '#io/pgn-chunks';
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
 import type { ParsePgnOptions, ParsedGame } from '#types/parse-pgn';
-import type { Tracker } from '#types/tracker';
+import type { AnalyzeTrackerResult, TrackerDef } from '#types/tracker';
 
 /** Per-game predicate for single-threaded analysis (`workers: false`). */
 export type GameFilter = (game: ParsedGame) => boolean;
 
 /** Options for a single analysis run. */
 export interface AnalyzeRun {
-    /**
-     * Tracker instances for this run. Must be {@link BaseTracker} subclasses at runtime
-     * (`MoveTracker`, `BaseGameTracker`, or built-ins from `chessalyzer/trackers`).
-     */
-    trackers?: Tracker[];
+    /** Tracker definitions for this run (factory objects or class adapter instances). */
+    trackers?: TrackerDef[];
     /**
      * Per-game predicate. Requires {@link AnalyzeSharedOptions.workers} `false` — JavaScript
      * filters run on the main thread only.
@@ -65,10 +62,8 @@ export interface AnalyzeSharedOptions extends Omit<ParsePgnOptions, 'headers'> {
 
 /** Single-run {@link analyzePGN} options. */
 export interface AnalyzeSingleRunOptions extends AnalyzeSharedOptions {
-    /**
-     * Tracker instances for this run. Must be {@link BaseTracker} subclasses at runtime.
-     */
-    trackers?: Tracker[];
+    /** Tracker definitions for this run (factory objects or class adapter instances). */
+    trackers?: TrackerDef[];
     /**
      * Per-game predicate. Requires `workers: false` — JavaScript filters run on the main thread only.
      */
@@ -112,8 +107,8 @@ export interface AnalyzeRunResult {
     gameCount: number;
     /** Half-moves replayed or counted in this run. */
     moveCount: number;
-    /** Tracker instances passed for this run (stats accumulate in place on these refs). */
-    trackers: Tracker[];
+    /** Tracker definitions with accumulated state for this run. */
+    trackers: AnalyzeTrackerResult[];
 }
 
 /** Unified result shape from {@link analyzePGN}. */

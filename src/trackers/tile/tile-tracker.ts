@@ -6,7 +6,7 @@ import {
     type BoardCoord,
     type Square,
 } from '#board/board-coords';
-import { MoveTracker } from '#trackers/base-tracker';
+import { MoveTracker } from '#trackers/define-tracker';
 import {
     generateComparisonHeatmap,
     generateHeatmap,
@@ -25,17 +25,10 @@ import type { MoveCoords } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
 import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
 
-function isTileTrackerData(tracker: unknown): tracker is {
+export interface TileTrackerState {
     tiles: TileGrid;
     movesGame: number;
     movesTotal: number;
-} {
-    return (
-        typeof tracker === 'object' &&
-        tracker !== null &&
-        'tiles' in tracker &&
-        'movesTotal' in tracker
-    );
 }
 
 function isCastleRookLeg(action: Action): boolean {
@@ -58,29 +51,27 @@ function playerBucket(player: string): PlayerColor | undefined {
  * Grid allocation/reset/merge lives in `./tile-grid`; this class implements move/capture
  * reaction logic and multithread aggregation.
  */
-class TileTracker extends MoveTracker {
-    static override readonly trackerId = 'TileTracker';
-    static override readonly workerModule = import.meta.url;
+class TileTracker extends MoveTracker<TileTrackerState> {
+    override readonly id = 'TileTracker';
+    override readonly workerModule = import.meta.url;
     static readonly presets = TileHeatmapPresets;
 
-    movesGame: number;
-    movesTotal: number;
-    tiles: TileGrid;
-
-    constructor() {
-        super();
-        this.movesGame = 0;
-        this.movesTotal = 0;
-        this.tiles = createTileGrid();
+    init(): TileTrackerState {
+        return {
+            movesGame: 0,
+            movesTotal: 0,
+            tiles: createTileGrid(),
+        };
     }
 
     generateHeatmap(
-        analysisFunc: TileHeatmapPresetName | HeatmapAnalysisFunc<this>,
+        state: TileTrackerState,
+        analysisFunc: TileHeatmapPresetName | HeatmapAnalysisFunc<TileTrackerState>,
         square?: string | BoardCoord,
         optData?: unknown,
     ): HeatmapData {
         return generateHeatmap(
-            this,
+            state,
             resolveHeatmapFunc(TileHeatmapPresets, analysisFunc),
             square,
             optData,
@@ -88,42 +79,41 @@ class TileTracker extends MoveTracker {
     }
 
     generateComparisonHeatmap(
-        compData: this,
-        analysisFunc: TileHeatmapPresetName | HeatmapAnalysisFunc<this>,
+        state: TileTrackerState,
+        compState: TileTrackerState,
+        analysisFunc: TileHeatmapPresetName | HeatmapAnalysisFunc<TileTrackerState>,
         square?: string | BoardCoord,
         optData?: unknown,
     ): HeatmapData {
         return generateComparisonHeatmap(
-            this,
-            compData,
+            state,
+            compState,
             resolveHeatmapFunc(TileHeatmapPresets, analysisFunc),
             square,
             optData,
         );
     }
 
-    /** Merge stats from a worker batch tracker into this (main-thread) instance. */
-    override merge(tracker: unknown) {
-        if (!isTileTrackerData(tracker)) return;
-
-        this.movesGame += tracker.movesGame;
-        this.movesTotal += tracker.movesTotal;
+    merge(state: TileTrackerState, other: TileTrackerState): void {
+        state.movesGame += other.movesGame;
+        state.movesTotal += other.movesTotal;
 
         for (const row of BOARD_INDICES) {
             for (const col of BOARD_INDICES) {
-                mergeCellStats(this.tiles[row][col], tracker.tiles[row][col]);
+                mergeCellStats(state.tiles[row][col], other.tiles[row][col]);
             }
         }
     }
 
-    override trackMoves(data: Action[]) {
+    track(state: TileTrackerState, data: Action[]): void {
         for (const action of data) {
             switch (action.type) {
                 case 'move': {
                     if (!isCastleRookLeg(action)) {
-                        this.movesGame += 1;
+                        state.movesGame += 1;
                     }
                     this.processMove(
+                        state,
                         { from: action.from, to: action.to },
                         action.player,
                         action.piece ?? '',
@@ -132,6 +122,7 @@ class TileTracker extends MoveTracker {
                 }
                 case 'capture':
                     this.processCapture(
+                        state,
                         action.on,
                         action.player,
                         action.takingPiece ?? '',
@@ -148,25 +139,30 @@ class TileTracker extends MoveTracker {
      * End-of-game hook: flush occupation time for pieces still on the board,
      * then reset virtual pieces to the next game's starting layout.
      */
-    override onGameEnd() {
+    override onGameEnd(state: TileTrackerState): void {
         for (const row of BOARD_INDICES) {
             for (const col of BOARD_INDICES) {
-                const { currentPiece } = this.tiles[row][col];
+                const { currentPiece } = state.tiles[row][col];
                 if (currentPiece !== null) {
-                    this.addOccupationByRowCol(row, col);
+                    this.addOccupationByRowCol(state, row, col);
                 }
-                setStartingPiece(this.tiles, row, col);
+                setStartingPiece(state.tiles, row, col);
             }
         }
-        this.movesTotal += this.movesGame;
-        this.movesGame = 0;
+        state.movesTotal += state.movesGame;
+        state.movesGame = 0;
     }
 
     /**
      * Record a piece move: credit occupation on `from`, transfer virtual piece to `to`,
      * increment movedTo counters. Skips promoted pawns (names containing digits).
      */
-    private processMove(move: MoveCoords, player: string, piece: string) {
+    private processMove(
+        state: TileTrackerState,
+        move: MoveCoords,
+        player: string,
+        piece: string,
+    ): void {
         const fromRow = squareRow(move.from);
         const fromCol = squareCol(move.from);
         const toRow = squareRow(move.to);
@@ -183,15 +179,15 @@ class TileTracker extends MoveTracker {
             return;
         }
 
-        this.addOccupation(move.from);
+        this.addOccupation(state, move.from);
 
-        const fromCell = this.tiles[fromRow][fromCol];
-        const toCell = this.tiles[toRow][toCol];
+        const fromCell = state.tiles[fromRow][fromCol];
+        const toCell = state.tiles[toRow][toCol];
         const movingPiece = fromCell.currentPiece;
 
         toCell.currentPiece = movingPiece;
         if (movingPiece !== null) {
-            movingPiece.lastMovedOn = this.movesGame;
+            movingPiece.lastMovedOn = state.movesGame;
         }
         fromCell.currentPiece = null;
 
@@ -205,12 +201,13 @@ class TileTracker extends MoveTracker {
      * Taken piece occupation is flushed before clearing the square.
      */
     private processCapture(
+        state: TileTrackerState,
         pos: Square,
         player: string,
         takingPiece: string,
         takenPiece: string,
     ): void {
-        const cell = tileCellAt(this.tiles, pos);
+        const cell = tileCellAt(state.tiles, pos);
         const bucket = playerBucket(player);
         if (!cell || !bucket) return;
 
@@ -220,7 +217,7 @@ class TileTracker extends MoveTracker {
             const takenBucket = cell[opPlayer][takenPiece];
             if (takenBucket) takenBucket.wasCapturedOn += 1;
 
-            this.addOccupation(pos);
+            this.addOccupation(state, pos);
             cell.currentPiece = null;
         }
 
@@ -235,17 +232,17 @@ class TileTracker extends MoveTracker {
      * Add `(movesGame - lastMovedOn)` to wasOn for the piece currently on `pos`.
      * Measures how many half-moves the piece occupied the square since it arrived.
      */
-    private addOccupation(pos: Square): void {
-        this.addOccupationByRowCol(squareRow(pos), squareCol(pos));
+    private addOccupation(state: TileTrackerState, pos: Square): void {
+        this.addOccupationByRowCol(state, squareRow(pos), squareCol(pos));
     }
 
-    private addOccupationByRowCol(row: number, col: number): void {
+    private addOccupationByRowCol(state: TileTrackerState, row: number, col: number): void {
         if (!isBoardIndex(row) || !isBoardIndex(col)) return;
-        const cell = this.tiles[row][col];
+        const cell = state.tiles[row][col];
         const { currentPiece } = cell;
         if (currentPiece === null) return;
 
-        const toAdd = this.movesGame - currentPiece.lastMovedOn;
+        const toAdd = state.movesGame - currentPiece.lastMovedOn;
         cell[currentPiece.color].wasOn += toAdd;
         const pieceBucket = cell[currentPiece.color][currentPiece.piece];
         if (pieceBucket) pieceBucket.wasOn += toAdd;
