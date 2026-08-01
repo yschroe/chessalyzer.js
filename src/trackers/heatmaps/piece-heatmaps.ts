@@ -28,5 +28,3 @@ export const PieceHeatmapPresets = {
         return captureCount(data, sqrPiece.color, sqrPiece.name, loopPiece.name);
     },
 } satisfies Record<string, HeatmapAnalysisFunc<PieceTrackerState>>;
-
-export type PieceHeatmapPresetName = keyof typeof PieceHeatmapPresets;

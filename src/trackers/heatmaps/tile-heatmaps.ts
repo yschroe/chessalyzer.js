@@ -47,5 +47,3 @@ export const TileHeatmapPresets = {
         return cell[piece.color].byPiece[piece.name].movedTo;
     },
 } satisfies Record<string, HeatmapAnalysisFunc<TileTrackerState>>;
-
-export type TileHeatmapPresetName = keyof typeof TileHeatmapPresets;

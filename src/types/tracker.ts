@@ -1,4 +1,4 @@
-import type { BoardCoord, Square } from '#board/board-coords';
+import type { Square } from '#board/board-coords';
 import type { Action } from '#types/actions';
 import type { SquareData } from '#types/game';
 import type { ParsedGame } from '#types/parse-pgn';
@@ -76,5 +76,5 @@ export type HeatmapAnalysisFunc<T = unknown> = (args: HeatmapAnalysisArgs<T>) =>
 /** Options for `generateHeatmap` / `generateComparisonHeatmap`. */
 export interface GenerateHeatmapOptions {
     /** Reference square for presets that evaluate relative to a piece/square. */
-    square?: Square | BoardCoord;
+    square?: Square;
 }
