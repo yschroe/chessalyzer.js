@@ -1,4 +1,4 @@
-import { Link } from 'waku';
+import { Link } from 'fumadocs-core/link';
 
 import './home.css';
 
@@ -85,7 +85,7 @@ function HeroBoard() {
 
 export default function Home() {
     return (
-        <div className="home-page relative isolate flex flex-1 flex-col overflow-hidden">
+        <div className="home-page relative isolate flex flex-1 flex-col overflow-hidden border-fd-muted sm:m-4 sm:rounded-lg sm:border sm:border-fd-border">
             <HeroBoard />
 
             <div className="absolute inset-0 z-10"></div>
@@ -107,8 +107,8 @@ export default function Home() {
 
                     <div className="home-cta flex flex-wrap items-center gap-4">
                         <Link
-                            to="/docs"
-                            className="inline-flex items-center bg-[#e8c56a] px-5 py-3 text-sm font-semibold text-[#14241c] transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e8c56a]"
+                            href="/docs"
+                            className="inline-flex items-center rounded bg-orange-300 px-5 py-3 text-sm font-semibold text-gray-800 transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300"
                         >
                             Open Docs
                         </Link>
