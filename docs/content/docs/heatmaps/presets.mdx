@@ -1,23 +1,22 @@
 ---
 title: Heatmap presets
-description: Built-in short names for common tile and piece heatmaps.
+description: Built-in analysis functions for common tile and piece heatmaps.
 ---
 
-Instead of writing your own heatmap function, pass a preset **short name** via the `analysis` option:
+Instead of writing your own heatmap function, pass a preset from `TileHeatmapPresets` or `PieceHeatmapPresets`:
 
 ```javascript
 import { generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
 
 const { state } = result.runs[0].trackers[0];
 
-const heatmapData = generateHeatmap(state, TileHeatmapPresets, { analysis: 'TILE_OCC_ALL' });
-const pieceHeatmap = generateHeatmap(state, TileHeatmapPresets, {
-    analysis: 'TILE_OCC_BY_PIECE',
+const heatmapData = generateHeatmap(state, TileHeatmapPresets.TILE_OCC_ALL);
+const pieceHeatmap = generateHeatmap(state, TileHeatmapPresets.TILE_OCC_BY_PIECE, {
     square: 'a2',
 });
 ```
 
-Preset names are typed (`TileHeatmapPresetName`, `PieceHeatmapPresetName`), so `analysis` autocompletes when you pass the matching preset map.
+Preset keys are typed (`TileHeatmapPresetName`, `PieceHeatmapPresetName`), so property access on the preset map autocompletes.
 
 ## TileTracker presets
 

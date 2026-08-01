@@ -75,13 +75,8 @@ export interface HeatmapAnalysisArgs<T = unknown> {
 /** Signature for built-in and custom heatmap preset functions. */
 export type HeatmapAnalysisFunc<T = unknown> = (args: HeatmapAnalysisArgs<T>) => number;
 
-/**
- * Options for `generateHeatmap` / `generateComparisonHeatmap`.
- * `P` is the preset-name union of the passed preset map, so `analysis` autocompletes.
- */
-export interface GenerateHeatmapOptions<T = unknown, P extends string = string> {
-    /** Preset name or custom analysis function. */
-    analysis: P | HeatmapAnalysisFunc<T>;
+/** Options for `generateHeatmap` / `generateComparisonHeatmap`. */
+export interface GenerateHeatmapOptions {
     /** Reference square for presets that evaluate relative to a piece/square. */
     square?: Square | BoardCoord;
     /** Extra context forwarded to the analysis function. */

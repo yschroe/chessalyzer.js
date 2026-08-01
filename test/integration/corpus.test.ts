@@ -14,7 +14,6 @@ import {
 import type {
     GameTrackerState,
     HeatmapAnalysisFunc,
-    PieceHeatmapPresetName,
     PieceTrackerState,
 } from 'chessalyzer/trackers';
 
@@ -231,8 +230,7 @@ if (corpusAvailable) {
                 });
 
                 it('PIECE_CAPTURED preset', () => {
-                    const data = generateHeatmap(state, PieceHeatmapPresets, {
-                        analysis: 'PIECE_CAPTURED',
+                    const data = generateHeatmap(state, PieceHeatmapPresets.PIECE_CAPTURED, {
                         square: 'a8',
                     });
                     expect(data.map[0]?.[0]).toBe(0);
@@ -243,8 +241,7 @@ if (corpusAvailable) {
                 });
 
                 it('PIECE_CAPTURED_BY preset', () => {
-                    const data = generateHeatmap(state, PieceHeatmapPresets, {
-                        analysis: 'PIECE_CAPTURED_BY',
+                    const data = generateHeatmap(state, PieceHeatmapPresets.PIECE_CAPTURED_BY, {
                         square: 'a8',
                     });
                     expect(data.map[0]?.[0]).toBe(0);
@@ -255,21 +252,12 @@ if (corpusAvailable) {
                 });
 
                 it('custom heatmap function', () => {
-                    const data = generateHeatmap(state, PieceHeatmapPresets, {
-                        analysis: customPieceHeatmapFunc,
+                    const data = generateHeatmap(state, customPieceHeatmapFunc, {
                         square: 'a8',
                     });
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(entry.golden.pieceTracker.heatmap.custom_a8);
-                });
-
-                it('throws when preset is missing', () => {
-                    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- intentionally invalid preset name
-                    const badName = 'I_DO_NOT_EXIST' as PieceHeatmapPresetName;
-                    expect(() =>
-                        generateHeatmap(state, PieceHeatmapPresets, { analysis: badName }),
-                    ).toThrow("Heatmap preset 'I_DO_NOT_EXIST' not found!");
                 });
             });
         });
