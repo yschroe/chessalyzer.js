@@ -132,7 +132,6 @@ describe('Fixtures', () => {
         });
 
         it('handles mixed filter and unfiltered runs in one pass', async () => {
-
             const data = await analyzePGN(fixturePath('results-mix'), {
                 workers: false,
                 runs: [
@@ -153,7 +152,6 @@ describe('Fixtures', () => {
         });
 
         it('respects per-run maxGames in multi-run', async () => {
-
             const data = await analyzePGN(fixturePath('results-mix'), {
                 runs: [{ trackers: [GameTracker], maxGames: 2 }, { trackers: [GameTracker] }],
             });
