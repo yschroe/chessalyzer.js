@@ -2,13 +2,12 @@ import { describe, it, expect } from 'bun:test';
 
 import { TrackerHost } from '#core/tracker-host';
 import { createWorkerResultHandler, mergeWorkerTrackerFlush } from '#core/tracker-merge';
-import { TileTracker, type TileTrackerState } from '#trackers/tile/tile-tracker';
+import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { WorkerMessage } from '#types/worker';
 
-import CustomGameTracker, {
-    type CustomGameTrackerState,
-} from '../../../test/fixtures/custom-game-tracker';
+import CustomGameTracker from '../../../test/fixtures/custom-game-tracker';
+import { isCustomGameTrackerState, isTileTrackerState } from '../../../test/helpers/tracker-state';
 
 function baseConfig(
     overrides?: Partial<GameProcessorAnalysisConfigFull>,
@@ -39,8 +38,11 @@ describe('tracker merge', () => {
             const mainHost = new TrackerHost([tileTracker]);
             const batchHost = new TrackerHost([tileTracker]);
 
-            const mainState = mainHost.moveEntries[0]!.state as TileTrackerState;
-            const batchState = batchHost.moveEntries[0]!.state as TileTrackerState;
+            const mainState = mainHost.moveEntries[0]?.state;
+            const batchState = batchHost.moveEntries[0]?.state;
+            if (!isTileTrackerState(mainState) || !isTileTrackerState(batchState)) {
+                throw new Error('expected tile tracker state');
+            }
 
             mainState.movesTotal = 10;
             batchState.movesTotal = 7;
@@ -60,8 +62,11 @@ describe('tracker merge', () => {
             const mainHost = new TrackerHost([customTracker]);
             const batchHost = new TrackerHost([customTracker]);
 
-            const mainState = mainHost.gameEntries[0]!.state as CustomGameTrackerState;
-            const batchState = batchHost.gameEntries[0]!.state as CustomGameTrackerState;
+            const mainState = mainHost.gameEntries[0]?.state;
+            const batchState = batchHost.gameEntries[0]?.state;
+            if (!isCustomGameTrackerState(mainState) || !isCustomGameTrackerState(batchState)) {
+                throw new Error('expected custom game tracker state');
+            }
 
             mainState.wins = [2, 1, 3];
             mainState.games = 6;
@@ -118,7 +123,10 @@ describe('tracker merge', () => {
 
             expect(cfg.processedGames).toBe(2);
             expect(cfg.processedMoves).toBe(40);
-            const state = cfg.trackerHost.gameEntries[0]!.state as CustomGameTrackerState;
+            const state = cfg.trackerHost.gameEntries[0]?.state;
+            if (!isCustomGameTrackerState(state)) {
+                throw new Error('expected custom game tracker state');
+            }
             expect(state.games).toBe(0);
         });
 
@@ -156,7 +164,10 @@ describe('tracker merge', () => {
             const mainHost = new TrackerHost([tileTracker]);
             const workerHost = new TrackerHost([workerTracker]);
 
-            const workerState = workerHost.moveEntries[0]!.state as TileTrackerState;
+            const workerState = workerHost.moveEntries[0]?.state;
+            if (!isTileTrackerState(workerState)) {
+                throw new Error('expected tile tracker state');
+            }
             workerState.movesTotal = 12;
             workerState.tiles[0][0].w.movedTo = 4;
 
@@ -177,7 +188,10 @@ describe('tracker merge', () => {
                 ],
             });
 
-            const mainState = mainHost.moveEntries[0]!.state as TileTrackerState;
+            const mainState = mainHost.moveEntries[0]?.state;
+            if (!isTileTrackerState(mainState)) {
+                throw new Error('expected tile tracker state');
+            }
             expect(cfg.processedGames).toBe(50);
             expect(cfg.processedMoves).toBe(500);
             expect(mainState.movesTotal).toBe(12);

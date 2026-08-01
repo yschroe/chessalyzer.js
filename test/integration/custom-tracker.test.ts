@@ -2,8 +2,9 @@ import { describe, it, expect } from 'bun:test';
 
 import { analyzePGN } from 'chessalyzer';
 
-import CustomGameTracker, { type CustomGameTrackerState } from '../fixtures/custom-game-tracker';
+import CustomGameTracker from '../fixtures/custom-game-tracker';
 import { fixtureExpected, fixturePath } from '../helpers/fixtures';
+import { trackerStateAt } from '../helpers/tracker-state';
 
 describe('Custom tracker', () => {
     it('merges custom game tracker in worker-parse mode', async () => {
@@ -13,7 +14,7 @@ describe('Custom tracker', () => {
             trackers: [tracker],
         });
 
-        const state = data.runs[0]?.trackers[0]?.state as CustomGameTrackerState;
+        const state = trackerStateAt(data, tracker);
         expect(data.gameCount).toBe(expected.games);
         expect(state.games).toBe(expected.games);
         expect(state.wins[0] + state.wins[1] + state.wins[2]).toBe(expected.games);
@@ -27,7 +28,7 @@ describe('Custom tracker', () => {
             filter: (game) => game.result === '1-0',
         });
 
-        const state = data.runs[0]?.trackers[0]?.state as CustomGameTrackerState;
+        const state = trackerStateAt(data, tracker);
         expect(data.gameCount).toBe(3);
         expect(state.games).toBe(3);
         expect(state.wins[0]).toBe(3);

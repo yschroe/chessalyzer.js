@@ -329,7 +329,7 @@ const eloTracker = defineGameTracker({
     merge: (state, other) => {
         /* fold worker state */
     },
-    finish: (state) => {
+    onFinish: (state) => {
         /* optional end-of-analysis */
     },
 });

@@ -22,18 +22,18 @@ export function defineGameTracker<S, O = unknown>(
     return { kind: 'game', ...def };
 }
 
-function assertTrackerDefShape(tracker: TrackerDef): void {
-    const id = tracker.id || '(unknown)';
-    if (!tracker.id) {
+function assertTrackerDefShape(tracker: object): asserts tracker is TrackerDef {
+    const id = 'id' in tracker && typeof tracker.id === 'string' ? tracker.id : '(unknown)';
+    if (!('id' in tracker) || typeof tracker.id !== 'string' || !tracker.id) {
         throw new Error('Tracker definition must have a non-empty id');
     }
-    if (tracker.kind !== 'move' && tracker.kind !== 'game') {
+    if (!('kind' in tracker) || (tracker.kind !== 'move' && tracker.kind !== 'game')) {
         throw new Error(`Tracker "${id}" must set kind to "move" or "game"`);
     }
-    if (typeof tracker.init !== 'function') {
+    if (!('init' in tracker) || typeof tracker.init !== 'function') {
         throw new Error(`Tracker "${id}" must implement init()`);
     }
-    if (typeof tracker.track !== 'function') {
+    if (!('track' in tracker) || typeof tracker.track !== 'function') {
         throw new Error(`Tracker "${id}" must implement track()`);
     }
 }
@@ -43,10 +43,8 @@ export function assertTrackerDef(tracker: unknown): asserts tracker is TrackerDe
     if (typeof tracker !== 'object' || tracker === null) {
         throw new Error('Trackers must be tracker definition objects or class instances');
     }
-    assertTrackerDefShape(tracker as TrackerDef);
+    assertTrackerDefShape(tracker);
 }
-
-/** Validate multithreaded requirements on a tracker definition. */
 export function assertMultithreadTrackerDef(
     tracker: TrackerDef,
     builtinIds: ReadonlySet<string>,
@@ -71,12 +69,12 @@ export abstract class MoveTracker<S = unknown, O = unknown> implements MoveTrack
     readonly workerModule?: string;
     readonly options?: O;
 
-    abstract init(options: O): S;
+    abstract init(options?: O): S;
     abstract track(state: S, actions: Action[]): void;
     abstract merge(state: S, other: S): void;
 
     onGameEnd?(state: S): void;
-    finish?(state: S): void;
+    onFinish?(state: S): void;
 }
 
 /** Abstract base for game-level tracker class adapters. */
@@ -86,10 +84,10 @@ export abstract class BaseGameTracker<S = unknown, O = unknown> implements GameT
     readonly workerModule?: string;
     readonly options?: O;
 
-    abstract init(options: O): S;
+    abstract init(options?: O): S;
     abstract track(state: S, game: ParsedGame): void;
     abstract merge(state: S, other: S): void;
 
     onGameEnd?(state: S): void;
-    finish?(state: S): void;
+    onFinish?(state: S): void;
 }

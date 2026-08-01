@@ -3,20 +3,20 @@ import type { SquareData } from '#types/game';
 import type { ParsedGame } from '#types/parse-pgn';
 
 /** Extract state type from a tracker definition. */
-export type StateOf<D> = D extends TrackerDef<infer S, unknown> ? S : never;
+export type StateOf<D> = D extends TrackerDef<infer S> ? S : never;
 
 /** Extract options type from a tracker definition. */
 export type OptionsOf<D> = D extends TrackerDef<unknown, infer O> ? O : never;
 
 /** Shared lifecycle hooks for move and game tracker definitions. */
-export interface TrackerDefBase<S, O = unknown> {
+export interface TrackerDefBase<S = unknown, O = unknown> {
     readonly id: string;
     readonly kind: 'move' | 'game';
     /** Module URL for worker-side dynamic import of custom trackers (multithreaded only). */
     readonly workerModule?: string;
     /** Plain options cloned to workers before `init`. */
     readonly options?: O;
-    init(options: O): S;
+    init(options?: O): S;
     /**
      * Aggregate worker batch state into the main-thread state.
      * Required for multithreaded analysis (validated at normalization).
@@ -25,17 +25,17 @@ export interface TrackerDefBase<S, O = unknown> {
     /** Optional per-game hook after each game (success or skip). */
     onGameEnd?(state: S): void;
     /** Optional end-of-analysis hook (e.g. sort aggregated keys). */
-    finish?(state: S): void;
+    onFinish?(state: S): void;
 }
 
 /** Move-level tracker definition — receives {@link Action}[] per half-move. */
-export interface MoveTrackerDef<S, O = unknown> extends TrackerDefBase<S, O> {
+export interface MoveTrackerDef<S = unknown, O = unknown> extends TrackerDefBase<S, O> {
     readonly kind: 'move';
     track(state: S, actions: Action[]): void;
 }
 
 /** Game-level tracker definition — receives {@link ParsedGame} after each game. */
-export interface GameTrackerDef<S, O = unknown> extends TrackerDefBase<S, O> {
+export interface GameTrackerDef<S = unknown, O = unknown> extends TrackerDefBase<S, O> {
     readonly kind: 'game';
     track(state: S, game: ParsedGame): void;
 }

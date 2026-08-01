@@ -2,11 +2,11 @@ import { describe, expect, it } from 'bun:test';
 
 import { analyzePGN, buildAnalyzeResult } from '#core/analyze';
 import { MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
-import { TileTracker, type TileTrackerState } from '#trackers/tile/tile-tracker';
-import type { AnalyzeRun } from '#types/analysis';
+import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { ReplayError } from '#types/errors';
 
 import { fixturePath } from '../../../test/helpers/fixtures';
+import { trackerStateAt } from '../../../test/helpers/tracker-state';
 
 function replayTestError(i: number): ReplayError {
     return { code: 'replay', gameIndex: i, reason: 'IllegalMove', message: 'bad' };
@@ -25,7 +25,7 @@ describe('analyzePGN result shape', () => {
         expect(result.runs[0]?.trackers[0]?.tracker).toBe(tileTracker);
         expect(result.runs[0]).not.toHaveProperty('movesPerSecond');
         expect(result.movesPerSecond).toBeGreaterThan(0);
-        const state = result.runs[0]?.trackers[0]?.state as TileTrackerState;
+        const state = trackerStateAt(result, tileTracker);
         expect(state.movesTotal).toBe(result.moveCount);
     });
 
@@ -51,22 +51,20 @@ describe('analyzePGN result shape', () => {
         const errors = Array.from({ length: MAX_COLLECTED_ERRORS + 3 }, (_, i) =>
             replayTestError(i),
         );
-        const runs: AnalyzeRun[] = [{ trackers: [] }];
-        const result = buildAnalyzeResult(runs, [{ games: 0, moves: 0, errors }], [[]], 1);
+        const result = buildAnalyzeResult([{ games: 0, moves: 0, errors }], [[]], 1);
 
         expect(result.errors).toHaveLength(MAX_COLLECTED_ERRORS);
         expect(result.errorsTruncated).toBe(true);
     });
 
     it('omits errorsTruncated when errors fit within the cap', () => {
-        const runs: AnalyzeRun[] = [{ trackers: [] }];
         const err: ReplayError = {
             code: 'replay',
             gameIndex: 0,
             reason: 'IllegalMove',
             message: 'bad',
         };
-        const result = buildAnalyzeResult(runs, [{ games: 0, moves: 0, errors: [err] }], [[]], 1);
+        const result = buildAnalyzeResult([{ games: 0, moves: 0, errors: [err] }], [[]], 1);
 
         expect(result.errors).toHaveLength(1);
         expect(result.errorsTruncated).toBeUndefined();

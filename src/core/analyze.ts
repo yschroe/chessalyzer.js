@@ -3,7 +3,7 @@ import { performance } from 'node:perf_hooks';
 import { normalizeAnalyzeOptions } from '#core/analysis-config';
 import { collectError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
 import GameProcessor from '#core/game-processor';
-import type { AnalyzeOptions, AnalyzeResult, AnalyzeRun, AnalyzeRunResult } from '#types/analysis';
+import type { AnalyzeOptions, AnalyzeResult, AnalyzeRunResult } from '#types/analysis';
 import type { AnalyzeError } from '#types/errors';
 import type { AnalyzeTrackerResult } from '#types/tracker';
 import type { HeatmapData } from '#types/tracker';
@@ -15,7 +15,6 @@ function styleBgRgb(r: number, g: number, b: number, text: string): string {
 
 /** Build {@link AnalyzeResult} from raw counts and duration. @internal Exported for unit tests. */
 export function buildAnalyzeResult(
-    inputRuns: AnalyzeRun[],
     counts: {
         games: number;
         moves: number;
@@ -78,7 +77,7 @@ export async function analyzePGN(path: string, options?: AnalyzeOptions): Promis
     const counts = await gameProcessor.processPGN(path);
     const trackerResults = gameProcessor.configs.map((cfg) => cfg.trackerHost.results());
     const durationMs = performance.now() - t0;
-    return buildAnalyzeResult(runs, counts, trackerResults, durationMs);
+    return buildAnalyzeResult(counts, trackerResults, durationMs);
 }
 
 /** Print {@link HeatmapData} to the terminal. */

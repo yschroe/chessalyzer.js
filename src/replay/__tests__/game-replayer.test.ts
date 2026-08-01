@@ -69,8 +69,7 @@ describe('GameReplayer', () => {
 
             replayer.processGame(game(['e4', 'e5']), cfg, 'actions', 0, 'abort');
 
-            const state = cfg.trackerHost.moveEntries[0]!.state as { actionCount: number };
-            expect(state.actionCount).toBe(2);
+            expect(cfg.trackerHost.moveEntries[0]?.state).toEqual({ actionCount: 2 });
             expect(cfg.processedMoves).toBe(2);
         });
 

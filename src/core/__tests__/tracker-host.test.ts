@@ -18,7 +18,7 @@ describe('TrackerHost', () => {
         });
 
         const host = new TrackerHost([gameTracker]);
-        host.trackGame({ moves: [], result: '1-0' } as ParsedGame);
+        host.trackGame({ moves: [], result: '1-0' } satisfies ParsedGame);
 
         expect(host.results()[0]?.state).toEqual({ count: 1 });
     });
@@ -37,28 +37,32 @@ describe('TrackerHost', () => {
 
         const main = new TrackerHost([moveTracker]);
         const worker = new TrackerHost([moveTracker]);
-        const workerState = worker.moveEntries[0]!.state as { total: number };
+        const workerState = worker.moveEntries[0]?.state;
+        expect(workerState).toEqual({ total: 0 });
+        if (typeof workerState !== 'object' || workerState === null || !('total' in workerState)) {
+            throw new Error('expected object state');
+        }
         workerState.total = 5;
 
         main.mergeSnapshots(worker.snapshots());
 
-        expect((main.moveEntries[0]!.state as { total: number }).total).toBe(5);
+        expect(main.moveEntries[0]?.state).toEqual({ total: 5 });
     });
 
-    it('calls finish hooks on all trackers', () => {
+    it('calls onFinish hooks on all trackers', () => {
         let finished = false;
         const tracker = defineGameTracker({
-            id: 'finish-test',
+            id: 'on-finish-test',
             init: () => ({}),
             track: () => {},
             merge: () => {},
-            finish: () => {
+            onFinish: () => {
                 finished = true;
             },
         });
 
         const host = new TrackerHost([tracker]);
-        host.finish();
+        host.onFinish();
         expect(finished).toBe(true);
     });
 });

@@ -56,7 +56,7 @@ class GameTracker extends BaseGameTracker<GameTrackerState> {
         }
     }
 
-    override finish(state: GameTrackerState): void {
+    override onFinish(state: GameTrackerState): void {
         state.ECO = Object.keys(state.ECO)
             .toSorted()
             .reduce<Record<string, number>>((a, c) => {

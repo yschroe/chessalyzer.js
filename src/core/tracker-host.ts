@@ -9,12 +9,12 @@ import type {
 } from '#types/tracker';
 
 interface MoveEntry {
-    def: MoveTrackerDef<unknown, unknown>;
+    def: MoveTrackerDef;
     state: unknown;
 }
 
 interface GameEntry {
-    def: GameTrackerDef<unknown, unknown>;
+    def: GameTrackerDef;
     state: unknown;
 }
 
@@ -31,7 +31,7 @@ export class TrackerHost {
         this.gameEntries = [];
 
         for (const def of defs) {
-            const state = def.init(def.options as never);
+            const state = def.init(def.options);
             if (def.kind === 'move') {
                 this.moveEntries.push({ def, state });
             } else {
@@ -61,12 +61,12 @@ export class TrackerHost {
         }
     }
 
-    finish(): void {
+    onFinish(): void {
         for (const entry of this.gameEntries) {
-            entry.def.finish?.(entry.state);
+            entry.def.onFinish?.(entry.state);
         }
         for (const entry of this.moveEntries) {
-            entry.def.finish?.(entry.state);
+            entry.def.onFinish?.(entry.state);
         }
     }
 
@@ -100,10 +100,10 @@ export class TrackerHost {
     results(): AnalyzeTrackerResult[] {
         const out: AnalyzeTrackerResult[] = [];
         for (const entry of this.gameEntries) {
-            out.push({ tracker: entry.def as TrackerDef, state: entry.state });
+            out.push({ tracker: entry.def, state: entry.state });
         }
         for (const entry of this.moveEntries) {
-            out.push({ tracker: entry.def as TrackerDef, state: entry.state });
+            out.push({ tracker: entry.def, state: entry.state });
         }
         return out;
     }

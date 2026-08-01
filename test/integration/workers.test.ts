@@ -2,12 +2,13 @@ import { describe, it, expect, afterEach } from 'bun:test';
 import { join } from 'node:path';
 
 import { analyzePGN } from 'chessalyzer';
-import { PieceTracker, TileTracker, type TileTrackerState } from 'chessalyzer/trackers';
+import { PieceTracker, TileTracker } from 'chessalyzer/trackers';
 
 import type { WorkerMessage } from '#types/worker';
 
 import WorkerPool from '../../src/core/worker-pool';
 import { fixturePath } from '../helpers/fixtures';
+import { trackerStateAt } from '../helpers/tracker-state';
 
 const workerPath = join(import.meta.dirname, '../../lib/chess-worker.js');
 const badSanPath = join(import.meta.dirname, '../fixtures/bad-san-mid-file.pgn');
@@ -91,7 +92,7 @@ describe('Workers', () => {
 
             expect(data.gameCount).toBe(1);
             expect(data.moveCount).toBe(15);
-            const state = data.runs[0]?.trackers[0]?.state as TileTrackerState;
+            const state = trackerStateAt(data, tileTracker);
             expect(state.movesTotal).toBeGreaterThan(0);
         });
     });

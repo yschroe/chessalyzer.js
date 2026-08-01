@@ -28,14 +28,17 @@ function hasDefaultExport(module: unknown): module is { default: unknown } {
 
 /** Normalize a default export (class or def object) into a tracker definition. */
 function normalizeDefaultExport(value: unknown): TrackerDef {
-    if (typeof value === 'function') {
-        const TrackerClass = value as new () => TrackerDef;
-        const instance = new TrackerClass();
+    if (isTrackerConstructor(value)) {
+        const instance = new value();
         assertTrackerDef(instance);
         return instance;
     }
     assertTrackerDef(value);
     return value;
+}
+
+function isTrackerConstructor(value: unknown): value is new () => TrackerDef {
+    return typeof value === 'function';
 }
 
 function createTrackerDef(

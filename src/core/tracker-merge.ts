@@ -153,7 +153,7 @@ export function createWorkerResultHandler(
 /** Invoke tracker finish hooks and return aggregate game/move counts. */
 export function finishTrackers(configs: GameProcessorAnalysisConfigFull[]): GameAndMoveCount[] {
     for (const { trackerHost } of configs) {
-        trackerHost.finish();
+        trackerHost.onFinish();
     }
 
     return configs.map((cfg) => ({
