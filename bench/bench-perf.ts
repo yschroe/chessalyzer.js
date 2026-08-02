@@ -10,8 +10,8 @@
  *   - board — same plus internal board replay (`replay: 'board'`)
  *
  * Run:
- *   npm run bench:perf
- *   npm run bench:perf:bun
+ *   bun run bench:perf [skip,board,actions] (--single-threaded (optional))
+ *   bun run bench:perf:bun [skip,board,actions] (--single-threaded (optional))
  *
  * Pass `single-threaded` to benchmark only the single-threaded path.
  *
@@ -33,13 +33,16 @@ import {
 
 const RUNS = Number(process.env.BENCH_RUNS ?? 2);
 const WARMUP = process.env.BENCH_WARMUP !== '0';
-const isSingleThreaded = process.argv.includes('single-threaded');
-const replayModes = process.argv.slice(2).filter((arg) => !arg.startsWith('--'));
+const isSingleThreaded = process.argv.includes('--single-threaded');
+const allowedReplayModes = ['skip', 'board', 'actions'];
+const replayModes = process.argv.slice(2).filter((arg) => allowedReplayModes.includes(arg));
 
-/** Count-only replay modes exercised by this bench (no move trackers). */
-const SCENARIOS = (
-    replayModes.length > 0 ? replayModes : ['skip', 'board']
-) as readonly ReplayMode[];
+if (replayModes.length === 0) {
+    console.error('Error: No replay modes provided');
+    console.error('Usage: bun run bench:perf [skip|board]...');
+    process.exit(1);
+}
+const SCENARIOS = replayModes as readonly ReplayMode[];
 
 interface AnalyzeSample {
     games: number;

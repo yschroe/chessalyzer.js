@@ -4,8 +4,9 @@ import { TrackerHost } from '#core/tracker-host';
 import { createWorkerResultHandler, mergeWorkerTrackerFlush } from '#core/tracker-merge';
 import { TileTracker } from '#trackers/tile/tile-tracker';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
-import CustomGameTracker from '~/test/fixtures/custom-game-tracker';
-import { isCustomGameTrackerState, isTileTrackerState } from '~/test/helpers/tracker-state';
+import { isGameWinsTrackerState, isTileTrackerState } from '~/test/helpers/tracker-state';
+
+import MergeGameTracker from './fixtures/merge-game-tracker';
 
 function baseConfig(
     overrides?: Partial<GameProcessorAnalysisConfigFull>,
@@ -50,16 +51,16 @@ describe('tracker merge', () => {
         });
     });
 
-    describe('CustomGameTracker.merge', () => {
+    describe('MergeGameTracker.merge', () => {
         it('sums wins and game counts from a partial batch', () => {
-            const customTracker = CustomGameTracker;
-            const mainHost = new TrackerHost([customTracker]);
-            const batchHost = new TrackerHost([customTracker]);
+            const tracker = MergeGameTracker;
+            const mainHost = new TrackerHost([tracker]);
+            const batchHost = new TrackerHost([tracker]);
 
             const mainState = mainHost.gameEntries[0]?.state;
             const batchState = batchHost.gameEntries[0]?.state;
-            if (!isCustomGameTrackerState(mainState) || !isCustomGameTrackerState(batchState)) {
-                throw new Error('expected custom game tracker state');
+            if (!isGameWinsTrackerState(mainState) || !isGameWinsTrackerState(batchState)) {
+                throw new Error('expected merge game tracker state');
             }
 
             mainState.wins = [2, 1, 3];
@@ -90,9 +91,9 @@ describe('tracker merge', () => {
         });
 
         it('merges worker batch counters without tracker state', () => {
-            const customTracker = CustomGameTracker;
+            const tracker = MergeGameTracker;
             const cfg = baseConfig({
-                trackerHost: new TrackerHost([customTracker]),
+                trackerHost: new TrackerHost([tracker]),
                 config: { maxGames: 10 },
             });
 
@@ -113,15 +114,15 @@ describe('tracker merge', () => {
             expect(cfg.processedGames).toBe(2);
             expect(cfg.processedMoves).toBe(40);
             const state = cfg.trackerHost.gameEntries[0]?.state;
-            if (!isCustomGameTrackerState(state)) {
-                throw new Error('expected custom game tracker state');
+            if (!isGameWinsTrackerState(state)) {
+                throw new Error('expected merge game tracker state');
             }
             expect(state.games).toBe(0);
         });
 
         it('merges multi-config batch results', () => {
-            const trackerA = CustomGameTracker;
-            const trackerB = CustomGameTracker;
+            const trackerA = MergeGameTracker;
+            const trackerB = MergeGameTracker;
 
             const cfgA = baseConfig({
                 trackerHost: new TrackerHost([trackerA]),

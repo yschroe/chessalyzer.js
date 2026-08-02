@@ -68,7 +68,7 @@ Examples of deliberate choices:
 - **Readline `'line'` events instead of `for await`** in `openLineStream` / `readLines` — sync push handlers beat async-iterator pull on large PGNs; `await` only at chunk boundaries in `readPgnChunks`. See `bench/exploratory/line-reader-readline.ts`. Do not reintroduce per-line async iteration for “cleaner” ergonomics.
 - **Worker-side parsing** with transferable UTF-8 chunk bytes to minimize main-thread work and copying.
 - **Zero production dependencies.**
-- **`AssembledGame` (`moves: string[]`) vs public `ParsedGame` (`moves: ParsedMove[]`)** — the analyze/replay pipeline keeps mainline SANs as strings (`GameAssembler`, `GameReplayer`, workers). `{ san }` objects are materialized only at public boundaries (`parsePGN`, `streamParsePGN`, game trackers, filters) via `toParsedGame()` in [`src/types/parse-pgn.ts`](src/types/parse-pgn.ts). **Do not collapse this into `ParsedMove[]` everywhere** for API neatness: v4 alpha benching showed only ~1–2% regression on `replay: 'skip'` but a large regression on `replay: 'board'`, because board replay loads every move in a tight loop — `moves[i].san` (object + property) vs `moves[i]` (string). Millions of short-lived `{ san }` allocations also add GC pressure during CPU-bound replay. Re-benchmarking this split is unnecessary unless the move representation or hot-path consumers change.
+- **`AssembledGame` (`moves: string[]`) vs public `ParsedGame` (`moves: ParsedMove[]`)** — the analyze/replay pipeline keeps mainline SANs as strings (`GameAssembler`, `GameReplayer`, workers). `{ san }` objects are materialized only at public boundaries (`parsePGN`, `streamParsePGN`, game trackers, filters) via `toParsedGame()` in [`src/types/parse-pgn.ts`](src/types/parse-pgn.ts). **Do not collapse this into `ParsedMove[]` everywhere** for API neatness: v4 alpha benching showed only ~1–2% regression on `replay: 'skip'` but a large regression on `replay: 'board'`, because board replay loads every move in a tight loop — `moves[i].san` (object + property) vs `moves[i]` (string). Millions of short-lived `{ san }` allocations also add GC pressure during CPU-bound replay.
 
 ### Rules for agents
 
@@ -80,11 +80,13 @@ Examples of deliberate choices:
 
 ### Benchmarks
 
-| Command                         | Purpose                                                                |
-| ------------------------------- | ---------------------------------------------------------------------- |
-| `npm run bench:perf`            | **Primary regression check** — full `analyzePGN` on a large cached PGN |
-| `npm run bench:perf:bun`        | Same, on Bun                                                           |
-| `npm run bench:atomic -- array` | Array append micro-benchmarks                                          |
+Run `bench:perf` when performance-sensitive code changes, in all `skip`, `board` and `actions` mode (see below). Always run the scripts sequentially to not skew the results. If the results of the bench are inconclusive, check back with the user first instead of directly reverting the change that is being benchmarked.
+
+| Command                                       | Purpose                                                                |
+| --------------------------------------------- | ---------------------------------------------------------------------- |
+| `bun run bench:perf [skip,board,actions]`     | **Primary regression check** — full `analyzePGN` on a large cached PGN |
+| `bun run bench:perf:bun [skip,board,actions]` | Same, on Bun                                                           |
+| `bun run bench:atomic -- array`               | Array append micro-benchmarks                                          |
 
 **Exploratory scripts** (run directly with `bun bench/exploratory/<name>.ts`):
 
@@ -117,13 +119,14 @@ Place large Lichess exports in `pgn/` (gitignored). The perf bench automatically
 
 ### Tests
 
-- **Unit tests** — colocated under `src/<module>/__tests__/` next to the code they cover (e.g. `src/core/__tests__/worker-pool.test.ts`). Prefer `#` import aliases.
-- **Integration tests** — `test/integration/` against the built package (`chessalyzer`). See [`test/README.md`](test/README.md) for fixtures vs corpus.
+- **Unit tests** — colocated under `src/<module>/__tests__/` next to the code they cover. Import SUT via `#` aliases only (no `chessalyzer`). Run with `bun run test:unit` (no build).
+- **Integration tests** — `test/integration/` against the built package (`chessalyzer`). Require `bun run build` first (`bun run test:integration`). See [`test/README.md`](test/README.md) for import rules, fixtures vs corpus.
 
 ```bash
-npm test
-npm run typecheck
-npm run lint
+bun run test:unit
+bun run build && bun run test:integration
+bun run typecheck
+bun run lint
 ```
 
-Run tests after functional changes. Run `bench:perf` when performance-sensitive code changes.
+Run the full test suite after functional changes (`bun run build && bun test`).

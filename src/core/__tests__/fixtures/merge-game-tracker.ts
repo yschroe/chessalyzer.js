@@ -1,14 +1,20 @@
-import type { ParsedGame } from 'chessalyzer/pgn';
-import { defineGameTracker } from 'chessalyzer/trackers';
+/**
+ * Source-only game tracker for unit merge tests.
+ *
+ * Unlike `test/fixtures/custom-game-tracker.ts` (package imports + workerModule,
+ * models the public MT contract), this stub stays on `#` so `bun test src` needs
+ * no build. Merge logic under test does not require workerModule.
+ */
+import { defineGameTracker } from '#trackers/define-tracker';
+import type { ParsedGame } from '#types/parse-pgn';
 
-interface CustomGameTrackerState {
+interface MergeGameTrackerState {
     wins: [number, number, number];
     games: number;
 }
 
-export default defineGameTracker<CustomGameTrackerState>({
-    id: 'CustomGameTracker',
-    workerModule: import.meta.url,
+export default defineGameTracker<MergeGameTrackerState>({
+    id: 'MergeGameTracker',
 
     init: () => ({ wins: [0, 0, 0], games: 0 }),
 
@@ -18,15 +24,12 @@ export default defineGameTracker<CustomGameTrackerState>({
             case '1-0':
                 state.wins[0] += 1;
                 break;
-
             case '1/2-1/2':
                 state.wins[1] += 1;
                 break;
-
             case '0-1':
                 state.wins[2] += 1;
                 break;
-
             default:
                 break;
         }
