@@ -72,4 +72,4 @@ CI (`.github/workflows/ci.yml`) runs `bun run build` then `bun test`. Corpus tes
 
 ## Optional local checks
 
-- **Perf regression:** `npm run bench:perf` when a large PGN is available under `pgn/` (not run in default CI)
+- **Perf regression:** `bun run bench:perf` when a large PGN is available under `pgn/` (not run in default CI)
