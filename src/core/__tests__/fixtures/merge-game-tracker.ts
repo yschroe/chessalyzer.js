@@ -8,7 +8,7 @@
 import { defineGameTracker } from '#trackers/define-tracker';
 import type { ParsedGame } from '#types/parse-pgn';
 
-export interface MergeGameTrackerState {
+interface MergeGameTrackerState {
     wins: [number, number, number];
     games: number;
 }

@@ -1,7 +1,7 @@
 import type { ParsedGame } from 'chessalyzer/pgn';
 import { defineGameTracker } from 'chessalyzer/trackers';
 
-export interface CustomGameTrackerState {
+interface CustomGameTrackerState {
     wins: [number, number, number];
     games: number;
 }
