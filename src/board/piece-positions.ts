@@ -86,8 +86,6 @@ export default class PiecePositions {
                 return this.Q;
             case 'K':
                 return this.K;
-            default:
-                return this.K;
         }
     }
 
