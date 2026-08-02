@@ -64,7 +64,7 @@
         "lint": "oxlint",
         "format": "oxfmt",
         "typecheck": "tsc --noEmit",
-        "knip": "knip",
+        "knip": "knip-bun",
         "bench:perf": "tsx bench/bench-perf.ts",
         "bench:perf:bun": "bun bench/bench-perf.ts",
         "bench:atomic": "tsx bench/bench-atomic.ts",
