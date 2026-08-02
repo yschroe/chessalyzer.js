@@ -1,13 +1,18 @@
 import { describe, it, expect, afterEach } from 'bun:test';
+import { fileURLToPath } from 'node:url';
 
 import WorkerPool from '#core/worker-pool';
 import type { WorkerMessage } from '#types/worker';
 
 /** Valid stub — only used once a worker is actually spawned. */
-const stubWorkerPath = new URL('fixtures/stub-worker.ts', import.meta.url).pathname;
-const stubErrorWorkerPath = new URL('fixtures/stub-error-worker.ts', import.meta.url).pathname;
+const stubWorkerPath = fileURLToPath(new URL('fixtures/stub-worker.ts', import.meta.url));
+const stubErrorWorkerPath = fileURLToPath(
+    new URL('fixtures/stub-error-worker.ts', import.meta.url),
+);
 /** Guaranteed missing — used to prove filePath is validated at spawn time. */
-const missingWorkerPath = new URL('fixtures/does-not-exist-worker.ts', import.meta.url).pathname;
+const missingWorkerPath = fileURLToPath(
+    new URL('fixtures/does-not-exist-worker.ts', import.meta.url),
+);
 
 function minimalChunkBytes(): Uint8Array {
     // Fresh buffer per task: WorkerPool transfers the ArrayBuffer, which detaches it.

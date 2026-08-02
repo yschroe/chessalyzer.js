@@ -6,11 +6,12 @@
  */
 import { access, mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import corpusManifest from '~/test/corpus/manifest.json';
 import manifest from '~/test/fixtures/manifest.json';
 
-const TEST_DIR = new URL('..', import.meta.url).pathname;
+const TEST_DIR = fileURLToPath(new URL('..', import.meta.url));
 const FIXTURES_DIR = join(TEST_DIR, 'fixtures');
 const CORPUS_DIR = join(TEST_DIR, 'corpus');
 const TMP_DIR = join(TEST_DIR, '.tmp');
