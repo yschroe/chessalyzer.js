@@ -8,11 +8,12 @@
  */
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { analyzePGN } from '#core/analyze';
 import type { AnalyzeOptions } from '#types/analysis';
 
-const FIXTURES_DIR = new URL('../test/fixtures/', import.meta.url).pathname;
+const FIXTURES_DIR = fileURLToPath(new URL('../test/fixtures/', import.meta.url));
 const MANIFEST_PATH = join(FIXTURES_DIR, 'manifest.json');
 
 const descriptions: Record<string, string> = {

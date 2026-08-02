@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'bun:test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { openLineStream, readLines } from '#io/line-reader';
 
-const FIXTURES_DIR = join(new URL('../../../test/fixtures', import.meta.url).pathname);
+const FIXTURES_DIR = fileURLToPath(new URL('../../../test/fixtures', import.meta.url));
 const CRLF_FIXTURE = join(FIXTURES_DIR, 'crlf-endings.pgn');
-const TMP_DIR = join(new URL('../../../test/.tmp', import.meta.url).pathname);
+const TMP_DIR = fileURLToPath(new URL('../../../test/.tmp', import.meta.url));
 
 async function writeTmpPgn(name: string, content: string): Promise<string> {
     await mkdir(TMP_DIR, { recursive: true });

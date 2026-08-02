@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { availableParallelism } from 'node:os';
-import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import type { NormalizedAnalyzeOptions } from '#core/analysis-config';
 import {
@@ -19,7 +19,7 @@ import { toParsedGame } from '#types/parse-pgn';
 import type { WorkerBatchTask, WorkerInitData, WorkerTaskConfigEntry } from '#types/worker';
 
 /** Path to the worker file. */
-const WORKER_PATH = join(import.meta.dirname, 'chess-worker.js');
+const WORKER_PATH = fileURLToPath(new URL('chess-worker.js', import.meta.url));
 
 /**
  * Orchestrates PGN I/O, optional worker dispatch, SAN replay, and tracker merge.
