@@ -87,7 +87,7 @@
         "oxlint": "^1.76.0",
         "oxlint-tsgolint": "^7.0.2001",
         "tinybench": "^6.1.2",
-        "tsx": "^4.23.1",
+        "tsx": "^4.23.4",
         "typescript": "6.0.3"
     },
     "overrides": {
