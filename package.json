@@ -58,6 +58,8 @@
     "scripts": {
         "build": "bun scripts/create-bundle.ts",
         "test": "bun test",
+        "test:unit": "bun test src",
+        "test:integration": "bun test test/integration",
         "test:build-fixtures": "bun run build && bun scripts/build-fixture-manifest.ts",
         "lint": "oxlint",
         "format": "oxfmt",

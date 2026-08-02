@@ -119,13 +119,14 @@ Place large Lichess exports in `pgn/` (gitignored). The perf bench automatically
 
 ### Tests
 
-- **Unit tests** — colocated under `src/<module>/__tests__/` next to the code they cover (e.g. `src/core/__tests__/worker-pool.test.ts`). Prefer `#` import aliases.
-- **Integration tests** — `test/integration/` against the built package (`chessalyzer`). See [`test/README.md`](test/README.md) for fixtures vs corpus.
+- **Unit tests** — colocated under `src/<module>/__tests__/` next to the code they cover. Import SUT via `#` aliases only (no `chessalyzer`). Run with `bun run test:unit` (no build).
+- **Integration tests** — `test/integration/` against the built package (`chessalyzer`). Require `bun run build` first (`bun run test:integration`). See [`test/README.md`](test/README.md) for import rules, fixtures vs corpus.
 
 ```bash
-npm test
-npm run typecheck
-npm run lint
+bun run test:unit
+bun run build && bun run test:integration
+bun run typecheck
+bun run lint
 ```
 
-Run the full test suite after functional changes.
+Run the full test suite after functional changes (`bun run build && bun test`).

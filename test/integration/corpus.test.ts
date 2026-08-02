@@ -8,6 +8,7 @@ import type { ParsedGame } from 'chessalyzer/pgn';
 import {
     GameTracker,
     generateHeatmap,
+    isTrackedPiece,
     PieceHeatmapPresets,
     PieceTracker,
 } from 'chessalyzer/trackers';
@@ -17,7 +18,6 @@ import type {
     PieceTrackerState,
 } from 'chessalyzer/trackers';
 
-import { isTrackedPiece } from '#trackers/piece-types';
 import { corpusPath, getCorpusEntry } from '~/test/helpers/fixtures';
 import { isPieceTrackerState } from '~/test/helpers/tracker-state';
 
