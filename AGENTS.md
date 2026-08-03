@@ -19,23 +19,33 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 **Key directories:**
 
-| Path                 | Purpose                                                                                |
-| -------------------- | -------------------------------------------------------------------------------------- |
-| `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers)                     |
-| `src/io/`            | Streaming I/O (`readLines`, `readPgnChunks`, worker chunk bytes)                       |
-| `src/pgn/`           | PGN parse (`GameAssembler`, `movetext`, `parsePGN`)                                    |
-| `src/replay/`        | Replay — SAN decode + apply (`GameReplayer`, `ReplayMode`, `SanApplier`, `SanDecoder`) |
-| `src/types/`         | Public analysis types (`analysis.ts`) vs processor runtime (`analysis-runtime.ts`)     |
-| `src/trackers/`      | Built-in and base tracker implementations                                              |
-| `bench/`             | Callable performance benchmarks (`bench-*.ts`)                                         |
-| `bench/atomic/`      | Atomic micro-benchmark implementations                                                 |
-| `bench/lib/`         | Shared bench utilities — see **Bench lib** below                                       |
-| `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)                                            |
-| `test/`              | Integration tests, fixtures, corpus (unit tests live in `src/**/__tests__/`)           |
-| `pgn/`               | Local large PGN files for manual/bench runs (gitignored)                               |
-| `manual-tests/`      | Release smoke tests against the built package                                          |
+| Path                 | Purpose                                                                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `src/types/`         | Shared pipeline contracts (`analysis`, `parse-pgn`, `actions`, `tracker`, `errors`, `tokens`) — not module-private plumbing |
+| `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers, `analysis-runtime`, `worker-types`)                      |
+| `src/io/`            | Streaming I/O (`readLines`, `readPgnChunks`, worker chunk bytes)                                                            |
+| `src/pgn/`           | PGN parse (`GameAssembler`, `movetext`, `parsePGN`)                                                                         |
+| `src/replay/`        | Replay — SAN decode + apply (`GameReplayer`, `ReplayMode`, `SanApplier`, `SanDecoder`)                                      |
+| `src/trackers/`      | Built-in and base tracker implementations                                                                                   |
+| `bench/`             | Callable performance benchmarks (`bench-*.ts`)                                                                              |
+| `bench/atomic/`      | Atomic micro-benchmark implementations                                                                                      |
+| `bench/lib/`         | Shared bench utilities — see **Bench lib** below                                                                            |
+| `bench/exploratory/` | Ad-hoc profiling scripts (not wired to npm)                                                                                 |
+| `test/`              | Integration tests, fixtures, corpus (unit tests live in `src/**/__tests__/`)                                                |
+| `pgn/`               | Local large PGN files for manual/bench runs (gitignored)                                                                    |
+| `manual-tests/`      | Release smoke tests against the built package                                                                               |
 
 **Runtime:** Node ≥ 22 or Bun. Tests and benches are typically run with Bun.
+
+### Type organization
+
+Use a **hybrid** layout — not a single central types folder for everything:
+
+1. **Colocate** types with the module that owns their invariants (e.g. `io/` stream types, `board/` coords, `ReplayMode`, built-in tracker state, `core/analysis-runtime`, `core/worker-types`).
+2. **Keep in `src/types/`** only **shared pipeline contracts** used by two or more peer stages without one owning the other (`AnalyzeOptions`, `ParsedGame`/`AssembledGame`, `Action`, tracker authoring defs, errors, tokens).
+3. **Do not** put module-private plumbing in `src/types/` (worker IPC, processor runtime, heatmap types, tile `MoveCoords`, board `ChessPiece`).
+
+Public barrels (`src/index.ts`, `chessalyzer/pgn`, `/replay`, `/trackers`) re-export user-facing names; internal contracts stay off the public surface per **Public exports** above.
 
 ### Execution paths (`GameProcessor`)
 
@@ -54,7 +64,7 @@ User-facing docs: [Custom trackers](docs/content/docs/trackers/custom.mdx). Trac
 
 1. Live in a **separate module** with a **default-exported factory** (return value of `defineGameTracker` / `defineMoveTracker`).
 2. Set **`id`** and **`workerModule = import.meta.url`** so workers can load the module.
-3. Implement **`init(options?)`**, **`track(state, …)`**, and **`merge(state, other)`** — state is plain structured-cloneable data; only states cross the worker boundary as `TrackerSnapshot { index, state }`.
+3. Implement **`init(options?)`**, **`track(state, …)`**, and **`merge(state, other)`** — state is plain structured-cloneable data; only states cross the worker boundary as `TrackerSnapshot { index, state }` (defined in `core/worker-types.ts`).
 4. Pass optional **options** to the factory call (`myTracker({ minElo: 2000 })`), not on the definition. Workers import the factory and call it with those options before accumulating state.
 
 Built-ins register in [`builtin-registry.ts`](src/trackers/builtin-registry.ts); customs are loaded from `workerModule`. `workerModule = import.meta.url` requires an unbundled Node ≥ 22 or Bun runtime. Move trackers may override **`onGameEnd(state)`** for per-game flush hooks. See [`test/fixtures/custom-game-tracker.ts`](test/fixtures/custom-game-tracker.ts).
@@ -70,7 +80,7 @@ Examples of deliberate choices:
 - **Readline `'line'` events instead of `for await`** in `openLineStream` / `readLines` — sync push handlers beat async-iterator pull on large PGNs; `await` only at chunk boundaries in `readPgnChunks`. See `bench/exploratory/line-reader-readline.ts`. Do not reintroduce per-line async iteration for “cleaner” ergonomics.
 - **Worker-side parsing** with transferable UTF-8 chunk bytes to minimize main-thread work and copying.
 - **Zero production dependencies.**
-- **`AssembledGame` (`moves: string[]`) vs public `ParsedGame` (`moves: ParsedMove[]`)** — the analyze/replay pipeline keeps mainline SANs as strings (`GameAssembler`, `GameReplayer`, workers). `{ san }` objects are materialized only at public boundaries (`parsePGN`, `streamParsePGN`, game trackers, filters) via `toParsedGame()` in [`src/types/parse-pgn.ts`](src/types/parse-pgn.ts). **Do not collapse this into `ParsedMove[]` everywhere** for API neatness: v4 alpha benching showed only ~1–2% regression on `replay: 'skip'` but a large regression on `replay: 'board'`, because board replay loads every move in a tight loop — `moves[i].san` (object + property) vs `moves[i]` (string). Millions of short-lived `{ san }` allocations also add GC pressure during CPU-bound replay.
+- **`AssembledGame` (`moves: string[]`) vs public `ParsedGame` (`moves: ParsedMove[]`)** — the analyze/replay pipeline keeps mainline SANs as strings (`GameAssembler`, `GameReplayer`, workers). `{ san }` objects are materialized only at public boundaries (`parsePGN`, `streamParsePGN`, game trackers, filters) via `toParsedGame()` in [`src/pgn/to-parsed-game.ts`](src/pgn/to-parsed-game.ts). **Do not collapse this into `ParsedMove[]` everywhere** for API neatness: v4 alpha benching showed only ~1–2% regression on `replay: 'skip'` but a large regression on `replay: 'board'`, because board replay loads every move in a tight loop — `moves[i].san` (object + property) vs `moves[i]` (string). Millions of short-lived `{ san }` allocations also add GC pressure during CPU-bound replay.
 
 ### Rules for agents
 

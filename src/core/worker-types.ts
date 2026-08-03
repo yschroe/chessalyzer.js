@@ -1,6 +1,11 @@
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
-import type { TrackerSnapshot } from '#types/tracker';
+
+/** Plain state snapshot sent worker → main at pool drain (keyed by run-local index). */
+export interface TrackerSnapshot {
+    index: number;
+    state: unknown;
+}
 
 /** One-time worker bootstrap: tracker ids, options, optional module paths. */
 export interface WorkerInitData {

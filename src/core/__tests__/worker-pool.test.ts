@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'bun:test';
 import { fileURLToPath } from 'node:url';
 
 import WorkerPool from '#core/worker-pool';
-import type { WorkerMessage } from '#types/worker';
+import type { WorkerMessage } from '#core/worker-types';
 
 /** Valid stub — only used once a worker is actually spawned. */
 const stubWorkerPath = fileURLToPath(new URL('fixtures/stub-worker.ts', import.meta.url));

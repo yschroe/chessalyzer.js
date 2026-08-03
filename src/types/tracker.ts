@@ -1,5 +1,4 @@
 import type { Action } from '#types/actions';
-import type { SquareData } from '#types/game';
 import type { ParsedGame } from '#types/parse-pgn';
 
 /** Shared lifecycle hooks for move and game tracker definitions. */
@@ -71,24 +70,3 @@ export interface TrackerFactory<
     (options?: O): TrackerInstance<S, O, D>;
     readonly def: D;
 }
-
-/** Plain state snapshot sent worker → main at pool drain (keyed by run-local index). */
-export interface TrackerSnapshot {
-    index: number;
-    state: unknown;
-}
-
-/** 8×8 numeric grid plus value range for rendering. */
-export interface HeatmapData {
-    map: number[][];
-    min: number;
-    max: number;
-}
-
-/** Signature for built-in and custom heatmap preset functions. */
-export type HeatmapAnalysisFunc<T = unknown> = (args: {
-    /** Tracker state being visualized. */
-    data: T;
-    /** Square being evaluated in the current cell. */
-    loopSquare: SquareData;
-}) => number;

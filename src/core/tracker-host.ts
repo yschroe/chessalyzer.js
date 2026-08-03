@@ -1,11 +1,7 @@
+import type { TrackerSnapshot } from '#core/worker-types';
 import type { Action } from '#types/actions';
 import type { ParsedGame } from '#types/parse-pgn';
-import type {
-    GameTrackerDef,
-    MoveTrackerDef,
-    TrackerInstance,
-    TrackerSnapshot,
-} from '#types/tracker';
+import type { GameTrackerDef, MoveTrackerDef, TrackerInstance } from '#types/tracker';
 
 interface MoveEntry {
     def: MoveTrackerDef;

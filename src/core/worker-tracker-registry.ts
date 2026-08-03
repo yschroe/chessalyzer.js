@@ -2,10 +2,10 @@ import assert from 'node:assert';
 
 import type { GameProcessorAnalysisConfig } from '#core/analysis-runtime';
 import { TrackerHost } from '#core/tracker-host';
+import type { WorkerInitData } from '#core/worker-types';
 import { BUILTIN_TRACKER_FACTORIES } from '#trackers/builtin-registry';
 import { assertTrackerFactory } from '#trackers/define-tracker';
 import type { TrackerFactory, TrackerInstance } from '#types/tracker';
-import type { WorkerInitData } from '#types/worker';
 
 /**
  * Worker-thread tracker registry and per-config analysis state cache.

@@ -1,7 +1,6 @@
 import { coordsToSquare, type BoardCoord } from '#board/board-coords';
 import { getStartingPiece } from '#board/piece-names';
-import type { SquareData } from '#types/game';
-import type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
+import type { HeatmapAnalysisFunc, HeatmapData, SquareData } from '#trackers/heatmap-types';
 
 function squareData(row: number, col: number): SquareData {
     const square = coordsToSquare(row, col);

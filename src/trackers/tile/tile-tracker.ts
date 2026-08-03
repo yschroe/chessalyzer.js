@@ -14,8 +14,8 @@ import {
     tileCellAt,
 } from '#trackers/tile/tile-grid';
 import type { RuntimeTileGrid, TileGrid } from '#trackers/tile/tile-tracker-types';
+import type { MoveCoords } from '#trackers/tile/tile-tracker-types';
 import type { Action } from '#types/actions';
-import type { MoveCoords } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
 import type { MoveTrackerDef, TrackerFactory } from '#types/tracker';
 

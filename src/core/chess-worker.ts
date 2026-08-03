@@ -6,11 +6,6 @@ import {
     initWorkerTrackers,
     resetCfgBatchCounters,
 } from '#core/worker-tracker-registry';
-import { decodePgnChunkBytes } from '#io/pgn-chunks';
-import { parseGamesFromLines } from '#pgn/game-assembler';
-import GameReplayer from '#replay/game-replayer';
-import type { ReplayMode } from '#replay/replay-mode';
-import type { AssembledGame } from '#types/parse-pgn';
 import type {
     WorkerBatchConfigResult,
     WorkerBatchTask,
@@ -19,8 +14,13 @@ import type {
     WorkerMessage,
     WorkerTaskConfigEntry,
     WorkerTaskData,
-} from '#types/worker';
-import { isWorkerFlushTask } from '#types/worker';
+} from '#core/worker-types';
+import { isWorkerFlushTask } from '#core/worker-types';
+import { decodePgnChunkBytes } from '#io/pgn-chunks';
+import { parseGamesFromLines } from '#pgn/game-assembler';
+import GameReplayer from '#replay/game-replayer';
+import type { ReplayMode } from '#replay/replay-mode';
+import type { AssembledGame } from '#types/parse-pgn';
 
 assert(parentPort, 'Worker was initialized on main thread, aborting.');
 // Bind parentPort to a local variable so it is detected as non-null in the handlers as well.

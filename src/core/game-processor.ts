@@ -10,6 +10,7 @@ import {
     mergeWorkerTrackerFlush,
 } from '#core/tracker-merge';
 import WorkerPool from '#core/worker-pool';
+import type { WorkerBatchTask, WorkerInitData, WorkerTaskConfigEntry } from '#core/worker-types';
 import { readLines } from '#io/line-reader';
 import { readPgnChunks } from '#io/pgn-chunks';
 import { GameAssembler } from '#pgn/game-assembler';
@@ -17,7 +18,6 @@ import { toParsedGame } from '#pgn/to-parsed-game';
 import GameReplayer from '#replay/game-replayer';
 import type { WorkerOptions } from '#types/analysis';
 import type { ParsedGame } from '#types/parse-pgn';
-import type { WorkerBatchTask, WorkerInitData, WorkerTaskConfigEntry } from '#types/worker';
 
 /** Path to the worker file. */
 const WORKER_PATH = fileURLToPath(new URL('chess-worker.js', import.meta.url));

@@ -1,7 +1,7 @@
 import type { GameAndMoveCount } from '#core/analysis-runtime';
 import type { GameProcessorAnalysisConfigFull } from '#core/analysis-runtime';
 import { collectError } from '#core/analyze-errors';
-import type { WorkerBatchConfigResult, WorkerMessage } from '#types/worker';
+import type { WorkerBatchConfigResult, WorkerMessage } from '#core/worker-types';
 
 /**
  * Merge one worker batch into the matching main-thread config (counters only).
