@@ -1,6 +1,5 @@
 // Runtime
 export { analyzePGN, printHeatmap } from '#core/analyze';
-export { getTrackerState } from '#core/get-tracker-state';
 export { getAnalyzeError, isReplayError } from '#core/analyze-errors';
 
 // Types

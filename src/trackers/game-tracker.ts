@@ -15,7 +15,7 @@ function createInitialState(): GameTrackerState {
 }
 
 /** Built-in game-level tracker: result counts, game count, and ECO distribution. */
-export const GameTracker = defineGameTracker<GameTrackerState>({
+export const gameTracker = defineGameTracker<GameTrackerState>({
     id: 'GameTracker',
 
     init: createInitialState,

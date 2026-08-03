@@ -7,12 +7,13 @@ After running `analyzePGN`, tracker **state** holds the raw statistics. **Heatma
 
 ```javascript
 import { analyzePGN, printHeatmap } from 'chessalyzer';
-import { generateHeatmap, TileHeatmapPresets, TileTracker } from 'chessalyzer/trackers';
+import { generateHeatmap, TileHeatmapPresets, tileTracker } from 'chessalyzer/trackers';
 
-const result = await analyzePGN('<pathToPgnFile>', { trackers: [TileTracker] });
+const tiles = tileTracker();
 
-const { state } = result.runs[0].trackers[0];
-const heatmapData = generateHeatmap(state, TileHeatmapPresets.TILE_OCC_ALL);
+await analyzePGN('<pathToPgnFile>', { trackers: [tiles] });
+
+const heatmapData = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
 printHeatmap(heatmapData);
 ```
 

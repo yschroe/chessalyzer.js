@@ -1,21 +1,24 @@
-import { analyzePGN, getTrackerState, printHeatmap } from 'chessalyzer';
+import { analyzePGN, printHeatmap } from 'chessalyzer';
 import {
     generateComparisonHeatmap,
     generateHeatmap,
     TileHeatmapPresets,
-    TileTracker,
+    tileTracker,
 } from 'chessalyzer/trackers';
+
+const blackWins = tileTracker();
+const whiteWins = tileTracker();
 
 const data = await analyzePGN('./pgn/asorted-games.pgn', {
     workers: false,
     runs: [
         {
-            trackers: [TileTracker],
+            trackers: [blackWins],
             maxGames: 2000,
             filter: (game) => game.result === '0-1',
         },
         {
-            trackers: [TileTracker],
+            trackers: [whiteWins],
             maxGames: 2000,
             filter: (game) => game.result === '1-0',
         },
@@ -23,10 +26,7 @@ const data = await analyzePGN('./pgn/asorted-games.pgn', {
 });
 console.log(data);
 
-const state1 = getTrackerState(data, TileTracker, 0);
-const state2 = getTrackerState(data, TileTracker, 1);
-
 const queenMoves = TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' });
-printHeatmap(generateHeatmap(state1, queenMoves));
-printHeatmap(generateHeatmap(state2, queenMoves));
-printHeatmap(generateComparisonHeatmap(state1, state2, queenMoves));
+printHeatmap(generateHeatmap(blackWins.state, queenMoves));
+printHeatmap(generateHeatmap(whiteWins.state, queenMoves));
+printHeatmap(generateComparisonHeatmap(blackWins.state, whiteWins.state, queenMoves));

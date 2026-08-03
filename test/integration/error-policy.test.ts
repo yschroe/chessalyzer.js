@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 import { join } from 'node:path';
 
 import { analyzePGN, getAnalyzeError, isReplayError } from 'chessalyzer';
-import { PieceTracker } from 'chessalyzer/trackers';
+import { pieceTracker } from 'chessalyzer/trackers';
 
 const badSanPath = join(import.meta.dirname, '../fixtures/bad-san-mid-file.pgn');
 
@@ -10,7 +10,7 @@ describe('Error policy', () => {
     it('aborts on first bad game by default', async () => {
         let caught: unknown;
         try {
-            await analyzePGN(badSanPath, { workers: false, trackers: [PieceTracker] });
+            await analyzePGN(badSanPath, { workers: false, trackers: [pieceTracker()] });
         } catch (err) {
             caught = err;
         }
@@ -29,7 +29,7 @@ describe('Error policy', () => {
         const data = await analyzePGN(badSanPath, {
             workers: false,
             onError: 'skip-game',
-            trackers: [PieceTracker],
+            trackers: [pieceTracker()],
         });
 
         expect(data.gameCount).toBe(2);
@@ -45,7 +45,7 @@ describe('Error policy', () => {
     it('skip-game continues with error summary (worker-parse)', async () => {
         const data = await analyzePGN(badSanPath, {
             onError: 'skip-game',
-            trackers: [PieceTracker],
+            trackers: [pieceTracker()],
         });
 
         expect(data.gameCount).toBe(2);
@@ -54,9 +54,9 @@ describe('Error policy', () => {
     });
 
     it('skip-game with move tracker on actions replay path', async () => {
-        const pieceTracker = PieceTracker;
+        const pieces = pieceTracker();
         const data = await analyzePGN(badSanPath, {
-            trackers: [pieceTracker],
+            trackers: [pieces],
             workers: false,
             onError: 'skip-game',
         });

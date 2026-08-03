@@ -1,14 +1,14 @@
 import { describe, it, beforeAll, afterAll, expect } from 'bun:test';
 
-import { analyzePGN, getTrackerState } from 'chessalyzer';
+import { analyzePGN } from 'chessalyzer';
 import type { AnalyzeResult } from 'chessalyzer';
 import type { ParsedGame } from 'chessalyzer/pgn';
 import {
-    GameTracker,
+    gameTracker,
     generateHeatmap,
-    PieceTracker,
+    pieceTracker,
     TileHeatmapPresets,
-    TileTracker,
+    tileTracker,
 } from 'chessalyzer/trackers';
 
 import {
@@ -107,10 +107,10 @@ describe('Fixtures', () => {
 
         it('keeps tracker counts consistent at scale', async () => {
             const path = await repeatPgn('results-mix', 50);
-            const data = await analyzePGN(path, { trackers: [GameTracker], workers: false });
-            const state = getTrackerState(data, GameTracker);
-            expect(data.gameCount).toBe(state.games);
-            const resultsSum = Object.values(state.results).reduce((a, c) => a + c, 0);
+            const games = gameTracker();
+            const data = await analyzePGN(path, { trackers: [games], workers: false });
+            expect(data.gameCount).toBe(games.state.games);
+            const resultsSum = Object.values(games.state.results).reduce((a, c) => a + c, 0);
             expect(resultsSum).toBe(data.gameCount);
         });
     });
@@ -118,26 +118,28 @@ describe('Fixtures', () => {
     describe('worker-parse multi-run', () => {
         it('processes all runs without sharing detached chunk buffers', async () => {
             const expected = fixtureExpected('results-mix');
+            const a = gameTracker();
+            const b = gameTracker();
 
             const data = await analyzePGN(fixturePath('results-mix'), {
-                runs: [{ trackers: [GameTracker] }, { trackers: [GameTracker] }],
+                runs: [{ trackers: [a] }, { trackers: [b] }],
             });
 
             expect(data.runs[0]?.gameCount).toBe(expected.games);
             expect(data.runs[1]?.gameCount).toBe(expected.games);
-            const stateA = getTrackerState(data, GameTracker, 0);
-            const stateB = getTrackerState(data, GameTracker, 1);
-            expect(stateA.games).toBe(expected.games);
-            expect(stateB.games).toBe(expected.games);
+            expect(a.state.games).toBe(expected.games);
+            expect(b.state.games).toBe(expected.games);
         });
 
         it('handles mixed filter and unfiltered runs in one pass', async () => {
+            const all = gameTracker();
+            const whiteWins = gameTracker();
             const data = await analyzePGN(fixturePath('results-mix'), {
                 workers: false,
                 runs: [
-                    { trackers: [GameTracker] },
+                    { trackers: [all] },
                     {
-                        trackers: [GameTracker],
+                        trackers: [whiteWins],
                         filter: (game: ParsedGame) => game.result === '1-0',
                     },
                 ],
@@ -145,39 +147,37 @@ describe('Fixtures', () => {
 
             expect(data.runs[0]?.gameCount).toBe(fixtureExpected('results-mix').games);
             expect(data.runs[1]?.gameCount).toBe(3);
-            const allState = getTrackerState(data, GameTracker, 0);
-            const whiteState = getTrackerState(data, GameTracker, 1);
-            expect(allState.games).toBe(fixtureExpected('results-mix').games);
-            expect(whiteState.games).toBe(3);
+            expect(all.state.games).toBe(fixtureExpected('results-mix').games);
+            expect(whiteWins.state.games).toBe(3);
         });
 
         it('respects per-run maxGames in multi-run', async () => {
+            const capped = gameTracker();
+            const full = gameTracker();
             const data = await analyzePGN(fixturePath('results-mix'), {
-                runs: [{ trackers: [GameTracker], maxGames: 2 }, { trackers: [GameTracker] }],
+                runs: [{ trackers: [capped], maxGames: 2 }, { trackers: [full] }],
             });
 
             expect(data.runs[0]?.gameCount).toBe(2);
             expect(data.runs[1]?.gameCount).toBe(fixtureExpected('results-mix').games);
-            const cappedState = getTrackerState(data, GameTracker, 0);
-            const fullState = getTrackerState(data, GameTracker, 1);
-            expect(cappedState.games).toBe(2);
-            expect(fullState.games).toBe(fixtureExpected('results-mix').games);
+            expect(capped.state.games).toBe(2);
+            expect(full.state.games).toBe(fixtureExpected('results-mix').games);
         });
     });
 
     describe('trackers on fixtures', () => {
         it('runs GameTracker on lichess-headers', async () => {
+            const games = gameTracker();
             const data = await analyzePGN(fixturePath('lichess-headers'), {
-                trackers: [GameTracker],
+                trackers: [games],
             });
             expect(data.gameCount).toBe(1);
-            const state = getTrackerState(data, GameTracker);
-            expect(state.games).toBe(1);
+            expect(games.state.games).toBe(1);
         });
 
         it('runs PieceTracker on promotion', async () => {
             const data = await analyzePGN(fixturePath('promotion'), {
-                trackers: [PieceTracker],
+                trackers: [pieceTracker()],
             });
             expect(data.gameCount).toBe(1);
             expect(data.moveCount).toBeGreaterThan(0);
@@ -193,28 +193,28 @@ describe('Fixtures', () => {
             ['multithreaded', undefined],
         ] as const) {
             it(`matches golden values (${mode})`, async () => {
+                const tiles = tileTracker();
                 const data = await analyzePGN(fixturePath('en-passant'), {
-                    trackers: [TileTracker],
+                    trackers: [tiles],
                     ...(workers === false ? { workers: false } : {}),
                 });
 
                 expect(data.gameCount).toBe(1);
-                const state = getTrackerState(data, TileTracker);
-                expect(state.movesTotal).toBe(golden.movesTotal);
-                const heat = generateHeatmap(state, TileHeatmapPresets.TILE_OCC_ALL);
+                expect(tiles.state.movesTotal).toBe(golden.movesTotal);
+                const heat = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
                 expect(heat.map[4]?.[4]).toBe(golden.e4TileOccAll);
             });
         }
 
         it('counts castling as one move (rook leg excluded from move counter)', async () => {
-            const data = await analyzePGN(fixturePath('en-passant'), {
-                trackers: [TileTracker],
+            const tiles = tileTracker();
+            await analyzePGN(fixturePath('en-passant'), {
+                trackers: [tiles],
                 workers: false,
             });
 
-            const state = getTrackerState(data, TileTracker);
-            expect(state.movesTotal).toBe(golden.movesTotal);
-            expect(state.movesTotal).toBe(fixtureExpected('en-passant').moves);
+            expect(tiles.state.movesTotal).toBe(golden.movesTotal);
+            expect(tiles.state.movesTotal).toBe(fixtureExpected('en-passant').moves);
         });
     });
 });

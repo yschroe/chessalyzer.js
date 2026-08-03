@@ -64,7 +64,7 @@ describe('GameReplayer', () => {
                     state.actionCount += other.actionCount;
                 },
             });
-            cfg.trackerHost = new TrackerHost([counter]);
+            cfg.trackerHost = new TrackerHost([counter()]);
 
             replayer.processGame(game(['e4', 'e5']), cfg, 'actions', 0, 'abort');
 

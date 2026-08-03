@@ -9,9 +9,8 @@ Pass any function as the `analysis` argument to `generateHeatmap(state, analysis
 import { generateHeatmap } from 'chessalyzer/trackers';
 import { squareToCoords } from 'chessalyzer/replay';
 
-const { state } = result.runs[0].trackers[0];
-
-const heatmapData = generateHeatmap(state, ({ data, loopSquare }) => {
+// after analyzePGN — read state from your tracker instance
+const heatmapData = generateHeatmap(tiles.state, ({ data, loopSquare }) => {
     const [row, col] = squareToCoords(loopSquare.square);
     const val = data.tiles[row][col].w.total.wasOn;
     return (val * 100) / data.movesTotal;
@@ -23,7 +22,7 @@ Capture extra values from the outer scope when you need them (e.g. a piece of in
 ```javascript
 const queen = { color: 'w', name: 'Qd' };
 
-const heatmapData = generateHeatmap(state, ({ data, loopSquare }) => {
+const heatmapData = generateHeatmap(tiles.state, ({ data, loopSquare }) => {
     const cell = data.tiles[/* … */];
     return cell[queen.color].byPiece[queen.name].movedTo;
 });

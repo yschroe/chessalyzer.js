@@ -26,7 +26,7 @@ function createInitialState(): PieceTrackerState {
 }
 
 /** Built-in move-level tracker: capture matrix — which starting piece took which, per color. */
-export const PieceTracker = defineMoveTracker<PieceTrackerState>({
+export const pieceTracker = defineMoveTracker<PieceTrackerState>({
     id: 'PieceTracker',
 
     init: createInitialState,

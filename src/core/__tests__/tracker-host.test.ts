@@ -5,8 +5,8 @@ import { defineGameTracker, defineMoveTracker } from '#trackers/define-tracker';
 import type { ParsedGame } from '#types/parse-pgn';
 
 describe('TrackerHost', () => {
-    it('initializes state from definitions', () => {
-        const gameTracker = defineGameTracker({
+    it('initializes state from instances', () => {
+        const factory = defineGameTracker({
             id: 'test-game',
             init: () => ({ count: 0 }),
             track: (state) => {
@@ -16,15 +16,17 @@ describe('TrackerHost', () => {
                 state.count += other.count;
             },
         });
+        const instance = factory();
 
-        const host = new TrackerHost([gameTracker]);
+        const host = new TrackerHost([instance]);
         host.trackGame({ moves: [], result: '1-0' } satisfies ParsedGame);
 
-        expect(host.results()[0]?.state).toEqual({ count: 1 });
+        expect(instance.state).toEqual({ count: 1 });
+        expect(host.results()[0]).toBe(instance);
     });
 
-    it('merges snapshots by id', () => {
-        const moveTracker = defineMoveTracker({
+    it('merges snapshots by index', () => {
+        const factory = defineMoveTracker({
             id: 'test-move',
             init: () => ({ total: 0 }),
             track: (state, actions) => {
@@ -35,22 +37,20 @@ describe('TrackerHost', () => {
             },
         });
 
-        const main = new TrackerHost([moveTracker]);
-        const worker = new TrackerHost([moveTracker]);
-        const workerState = worker.moveEntries[0]?.state;
-        expect(workerState).toEqual({ total: 0 });
-        if (typeof workerState !== 'object' || workerState === null || !('total' in workerState)) {
-            throw new Error('expected object state');
-        }
-        workerState.total = 5;
+        const mainInstance = factory();
+        const workerInstance = factory();
+        const main = new TrackerHost([mainInstance]);
+        const worker = new TrackerHost([workerInstance]);
 
+        workerInstance.state.total = 5;
         main.mergeSnapshots(worker.snapshots());
 
-        expect(main.moveEntries[0]?.state).toEqual({ total: 5 });
+        expect(mainInstance.state).toEqual({ total: 5 });
+        expect(worker.snapshots()[0]?.index).toBe(0);
     });
 
     it('preserves input order in results()', () => {
-        const gameTracker = defineGameTracker({
+        const gameFactory = defineGameTracker({
             id: 'order-game',
             init: () => ({ count: 0 }),
             track: (state) => {
@@ -60,7 +60,7 @@ describe('TrackerHost', () => {
                 state.count += other.count;
             },
         });
-        const moveTracker = defineMoveTracker({
+        const moveFactory = defineMoveTracker({
             id: 'order-move',
             init: () => ({ total: 0 }),
             track: (state, actions) => {
@@ -71,16 +71,15 @@ describe('TrackerHost', () => {
             },
         });
 
-        const host = new TrackerHost([moveTracker, gameTracker]);
-        expect(host.results().map((entry) => entry.tracker.id)).toEqual([
-            'order-move',
-            'order-game',
-        ]);
+        const move = moveFactory();
+        const game = gameFactory();
+        const host = new TrackerHost([move, game]);
+        expect(host.results().map((entry) => entry.def.id)).toEqual(['order-move', 'order-game']);
     });
 
     it('calls onFinish hooks on all trackers', () => {
         let finished = false;
-        const tracker = defineGameTracker({
+        const factory = defineGameTracker({
             id: 'on-finish-test',
             init: () => ({}),
             track: () => {},
@@ -90,8 +89,20 @@ describe('TrackerHost', () => {
             },
         });
 
-        const host = new TrackerHost([tracker]);
+        const host = new TrackerHost([factory()]);
         host.onFinish();
         expect(finished).toBe(true);
+    });
+
+    it('aliases entry.state to instance.state', () => {
+        const factory = defineMoveTracker({
+            id: 'alias-test',
+            init: () => ({ total: 0 }),
+            track: () => {},
+            merge: () => {},
+        });
+        const instance = factory();
+        const host = new TrackerHost([instance]);
+        expect(host.moveEntries[0]?.state).toBe(instance.state);
     });
 });

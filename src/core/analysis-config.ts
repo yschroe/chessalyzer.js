@@ -1,10 +1,10 @@
 import { TrackerHost } from '#core/tracker-host';
 import { resolveEffectiveReplayMode } from '#replay/replay-mode';
 import { BUILTIN_TRACKER_IDS } from '#trackers/builtin-registry';
-import { assertMultithreadTrackerDef, assertTrackerDef } from '#trackers/define-tracker';
+import { assertMultithreadTrackerDef, assertTrackerInstance } from '#trackers/define-tracker';
 import type { AnalyzeOptions, AnalyzeRun, WorkerOptions } from '#types/analysis';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
-import type { TrackerDef } from '#types/tracker';
+import type { TrackerInstance } from '#types/tracker';
 
 /** Fully normalized `analyzePGN` inputs: per-run processor state plus path-selection fields. */
 export interface NormalizedAnalyzeOptions {
@@ -12,7 +12,12 @@ export interface NormalizedAnalyzeOptions {
     multithreadCfg: WorkerOptions | null;
     onError: 'abort' | 'skip-game';
     parseHeaders: boolean;
+    /** All tracker instances across runs — used for in-flight busy tracking. */
+    allInstances: TrackerInstance[];
 }
+
+/** Instances currently owned by an in-flight `analyzePGN` call. */
+const inFlightInstances = new WeakSet<object>();
 
 function resolveParseHeaders(
     explicit: boolean | 'auto' | undefined,
@@ -87,32 +92,46 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): NormalizedAna
     const multithreaded = multithreadCfg !== null;
     let needsHeaders = false;
     const configs: GameProcessorAnalysisConfigFull[] = [];
+    const seenInstances = new Set<object>();
+    const allInstances: TrackerInstance[] = [];
 
     for (const run of runs) {
-        const defs: TrackerDef[] = [];
+        const instances: TrackerInstance[] = [];
         if (run.trackers) {
             for (const tracker of run.trackers) {
-                assertTrackerDef(tracker);
-                defs.push(tracker);
-                if (tracker.kind === 'game') {
+                assertTrackerInstance(tracker);
+                if (seenInstances.has(tracker)) {
+                    throw new Error(
+                        `Tracker instance "${tracker.def.id}" appears more than once in the same analyzePGN call — pass distinct instances (e.g. tileTracker() twice)`,
+                    );
+                }
+                if (inFlightInstances.has(tracker)) {
+                    throw new Error(
+                        `Tracker instance "${tracker.def.id}" is already in use by another in-flight analyzePGN call`,
+                    );
+                }
+                seenInstances.add(tracker);
+                allInstances.push(tracker);
+                instances.push(tracker);
+                if (tracker.def.kind === 'game') {
                     needsHeaders = true;
                 }
                 if (multithreaded) {
-                    assertMultithreadTrackerDef(tracker, BUILTIN_TRACKER_IDS);
+                    assertMultithreadTrackerDef(tracker.def, BUILTIN_TRACKER_IDS);
                 }
             }
         }
 
         const trackerData = multithreaded
-            ? defs.map((tracker) => ({
-                  id: tracker.id,
-                  module: tracker.workerModule,
-                  options: tracker.options,
+            ? instances.map((instance) => ({
+                  id: instance.def.id,
+                  module: instance.def.workerModule,
+                  options: instance.options,
               }))
             : undefined;
 
         configs.push({
-            trackerHost: new TrackerHost(defs),
+            trackerHost: new TrackerHost(instances),
             trackerData,
             config: {
                 filter: run.filter,
@@ -124,7 +143,7 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): NormalizedAna
             errors: [],
             isDone: false,
             replayMode: resolveEffectiveReplayMode(
-                defs.some((def) => def.kind === 'move'),
+                instances.some((instance) => instance.def.kind === 'move'),
                 opts.replay,
             ),
         });
@@ -135,5 +154,20 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): NormalizedAna
         multithreadCfg,
         onError: opts.onError ?? 'abort',
         parseHeaders: resolveParseHeaders(opts.headers, needsHeaders),
+        allInstances,
     };
+}
+
+/** Mark instances as in-flight for the duration of an `analyzePGN` call. */
+export function markInstancesInFlight(instances: readonly TrackerInstance[]): void {
+    for (const instance of instances) {
+        inFlightInstances.add(instance);
+    }
+}
+
+/** Clear in-flight marks after an `analyzePGN` call completes (success or failure). */
+export function clearInstancesInFlight(instances: readonly TrackerInstance[]): void {
+    for (const instance of instances) {
+        inFlightInstances.delete(instance);
+    }
 }

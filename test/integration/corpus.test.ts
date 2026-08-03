@@ -2,15 +2,15 @@ import { describe, it, beforeAll, expect } from 'bun:test';
 
 // Optional golden regression tests against the large corpus (test/corpus/).
 // Skipped automatically when corpus files are not present locally.
-import { analyzePGN, getTrackerState } from 'chessalyzer';
+import { analyzePGN } from 'chessalyzer';
 import type { AnalyzeResult } from 'chessalyzer';
 import type { ParsedGame } from 'chessalyzer/pgn';
 import {
-    GameTracker,
+    gameTracker,
     generateHeatmap,
     isTrackedPiece,
     PieceHeatmapPresets,
-    PieceTracker,
+    pieceTracker,
 } from 'chessalyzer/trackers';
 import type {
     GameTrackerState,
@@ -89,7 +89,7 @@ if (corpusAvailable) {
 
         describe('Trackers', () => {
             it('runs a single tracker across the full corpus', async () => {
-                const data = await analyzePGN(path, { trackers: [GameTracker] });
+                const data = await analyzePGN(path, { trackers: [gameTracker()] });
                 expect(data.gameCount).toBe(entry.expected.games);
             });
 
@@ -99,12 +99,12 @@ if (corpusAvailable) {
                     headers: true,
                     runs: [
                         {
-                            trackers: [GameTracker],
+                            trackers: [gameTracker()],
                             maxGames: entry.expected.multiConfig.highRatedGames,
                             filter: (game: ParsedGame) => Number(game.headers?.WhiteElo) > 1500,
                         },
                         {
-                            trackers: [PieceTracker],
+                            trackers: [pieceTracker()],
                             maxGames: entry.expected.multiConfig.lowRatedGames,
                             filter: (game: ParsedGame) => Number(game.headers?.WhiteElo) < 1500,
                         },
@@ -126,8 +126,9 @@ if (corpusAvailable) {
                 let data: AnalyzeResult;
                 let state: GameTrackerState;
                 beforeAll(async () => {
-                    data = await analyzePGN(path, { trackers: [GameTracker] });
-                    state = getTrackerState(data, GameTracker);
+                    const games = gameTracker();
+                    data = await analyzePGN(path, { trackers: [games] });
+                    state = games.state;
                 });
 
                 it('matches PGN parse game count', () => {
@@ -144,8 +145,9 @@ if (corpusAvailable) {
                 let data: AnalyzeResult;
                 let state: GameTrackerState;
                 beforeAll(async () => {
-                    data = await analyzePGN(path, { trackers: [GameTracker], workers: false });
-                    state = getTrackerState(data, GameTracker);
+                    const games = gameTracker();
+                    data = await analyzePGN(path, { trackers: [games], workers: false });
+                    state = games.state;
                 });
 
                 it('matches PGN parse game count', () => {
@@ -156,13 +158,14 @@ if (corpusAvailable) {
             describe('Filtered white wins', () => {
                 let state: GameTrackerState;
                 beforeAll(async () => {
-                    const data = await analyzePGN(path, {
+                    const games = gameTracker();
+                    await analyzePGN(path, {
                         workers: false,
-                        trackers: [GameTracker],
+                        trackers: [games],
                         maxGames: entry.golden.gameTracker.filterWhiteWins,
                         filter: (game: ParsedGame) => game.result === '1-0',
                     });
-                    state = getTrackerState(data, GameTracker);
+                    state = games.state;
                 });
 
                 it('counts only white wins', () => {
@@ -175,8 +178,9 @@ if (corpusAvailable) {
             describe('ECO counts', () => {
                 let state: GameTrackerState;
                 beforeAll(async () => {
-                    const data = await analyzePGN(path, { trackers: [GameTracker] });
-                    state = getTrackerState(data, GameTracker);
+                    const games = gameTracker();
+                    await analyzePGN(path, { trackers: [games] });
+                    state = games.state;
                 });
 
                 it('matches known ECO totals', () => {
@@ -191,8 +195,9 @@ if (corpusAvailable) {
             describe('Multithreaded', () => {
                 let state: PieceTrackerState;
                 beforeAll(async () => {
-                    const data = await analyzePGN(path, { trackers: [PieceTracker] });
-                    state = getTrackerState(data, PieceTracker);
+                    const pieces = pieceTracker();
+                    await analyzePGN(path, { trackers: [pieces] });
+                    state = pieces.state;
                 });
 
                 it('tracks the reference square pair', () => {
@@ -207,11 +212,12 @@ if (corpusAvailable) {
             describe('Singlethreaded', () => {
                 let state: PieceTrackerState;
                 beforeAll(async () => {
-                    const data = await analyzePGN(path, {
-                        trackers: [PieceTracker],
+                    const pieces = pieceTracker();
+                    await analyzePGN(path, {
+                        trackers: [pieces],
                         workers: false,
                     });
-                    state = getTrackerState(data, PieceTracker);
+                    state = pieces.state;
                 });
 
                 it('tracks the reference square pair', () => {
@@ -226,8 +232,9 @@ if (corpusAvailable) {
             describe('Heatmaps', () => {
                 let state: PieceTrackerState;
                 beforeAll(async () => {
-                    const data = await analyzePGN(path, { trackers: [PieceTracker] });
-                    state = getTrackerState(data, PieceTracker);
+                    const pieces = pieceTracker();
+                    await analyzePGN(path, { trackers: [pieces] });
+                    state = pieces.state;
                 });
 
                 it('PIECE_CAPTURED preset', () => {

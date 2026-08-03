@@ -2,15 +2,15 @@ import type { PgnChunkConfig } from '#io/pgn-chunks';
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
 import type { ParsedGame } from '#types/parse-pgn';
-import type { AnalyzeTrackerResult, TrackerDef } from '#types/tracker';
+import type { TrackerInstance } from '#types/tracker';
 
 /** Per-game predicate for single-threaded analysis (`workers: false`). */
 export type GameFilter = (game: ParsedGame) => boolean;
 
 /** Options for one analysis run. */
 export interface AnalyzeRun {
-    /** Tracker definitions for this run (factory objects). */
-    trackers?: TrackerDef[];
+    /** Tracker instances for this run (from factory calls, e.g. `tileTracker()`). */
+    trackers?: TrackerInstance[];
     /**
      * Per-game predicate. Requires `workers: false` — JavaScript filters run on the main thread only.
      */
@@ -62,8 +62,11 @@ export interface AnalyzeRunResult {
     gameCount: number;
     /** Half-moves replayed or counted in this run. */
     moveCount: number;
-    /** Tracker definitions with accumulated state for this run. */
-    trackers: AnalyzeTrackerResult[];
+    /**
+     * Tracker instances for this run (same object identities passed in).
+     * Prefer reading state from the instance handles you created (`tiles.state`).
+     */
+    trackers: TrackerInstance[];
 }
 
 /** Result from `analyzePGN`. Always contains one {@link AnalyzeRunResult} per run. */

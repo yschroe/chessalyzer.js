@@ -48,12 +48,12 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 ### Custom tracker multithreaded contract
 
-User-facing docs: [README Custom Trackers](README.md#custom-trackers). Trackers are **definitions** (behavior + identity) separate from **state** (plain data owned per thread). For MT (`workers` not `false`), custom trackers must:
+User-facing docs: [Custom trackers](docs/content/docs/trackers/custom.mdx). Trackers are **definitions** (behavior + identity) separate from **state** (plain data). `defineGameTracker` / `defineMoveTracker` return a **factory** (callable); call it to get a `TrackerInstance` with `.state`. Pass instances to `analyzePGN` (e.g. `tileTracker()`), not bare definitions. For MT (`workers` not `false`), custom trackers must:
 
-1. Live in a **separate module** with a **default export** (factory object from `defineGameTracker` / `defineMoveTracker`).
+1. Live in a **separate module** with a **default-exported factory** (return value of `defineGameTracker` / `defineMoveTracker`).
 2. Set **`id`** and **`workerModule = import.meta.url`** so workers can load the module.
-3. Implement **`init()`**, **`track(state, …)`**, and **`merge(state, other)`** — state is plain structured-cloneable data; only states cross the worker boundary as `TrackerSnapshot { id, state }`.
-4. Optional **`options`** (plain data) are cloned to workers before `init()`.
+3. Implement **`init(options?)`**, **`track(state, …)`**, and **`merge(state, other)`** — state is plain structured-cloneable data; only states cross the worker boundary as `TrackerSnapshot { index, state }`.
+4. Pass optional **options** to the factory call (`myTracker({ minElo: 2000 })`), not on the definition. Workers import the factory and call it with those options before accumulating state.
 
 Built-ins register in [`builtin-registry.ts`](src/trackers/builtin-registry.ts); customs are loaded from `workerModule`. `workerModule = import.meta.url` requires an unbundled Node ≥ 22 or Bun runtime. Move trackers may override **`onGameEnd(state)`** for per-game flush hooks. See [`test/fixtures/custom-game-tracker.ts`](test/fixtures/custom-game-tracker.ts).
 

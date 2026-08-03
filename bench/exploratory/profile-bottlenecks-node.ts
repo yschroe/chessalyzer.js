@@ -8,9 +8,9 @@ import { availableParallelism } from 'node:os';
 
 import { analyzePGN } from '#core/analyze';
 import { readLines } from '#io/line-reader';
-import { GameTracker } from '#trackers/game-tracker';
-import { PieceTracker } from '#trackers/piece-tracker';
-import { TileTracker } from '#trackers/tile/tile-tracker';
+import { gameTracker } from '#trackers/game-tracker';
+import { pieceTracker } from '#trackers/piece-tracker';
+import { tileTracker } from '#trackers/tile/tile-tracker';
 import type { AnalyzeOptions } from '#types/analysis';
 import { findLargestPgn } from '~/bench/lib/pgn-fixture';
 import { getRuntimeLabel } from '~/bench/lib/report';
@@ -120,7 +120,7 @@ console.log(
 );
 
 const tile = await api({
-    trackers: [TileTracker],
+    trackers: [tileTracker()],
     workers: { chunk: { targetBytes: 4 * 1024 * 1024 } },
 });
 console.log(
@@ -128,7 +128,7 @@ console.log(
 );
 
 const all = await api({
-    trackers: [TileTracker, GameTracker, PieceTracker],
+    trackers: [tileTracker(), gameTracker(), pieceTracker()],
     workers: { chunk: { targetBytes: 4 * 1024 * 1024 } },
 });
 console.log(

@@ -2,11 +2,11 @@ import { describe, it, expect } from 'bun:test';
 
 import { TrackerHost } from '#core/tracker-host';
 import { createWorkerResultHandler, mergeWorkerTrackerFlush } from '#core/tracker-merge';
-import { TileTracker } from '#trackers/tile/tile-tracker';
+import { tileTracker } from '#trackers/tile/tile-tracker';
 import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import { isGameWinsTrackerState, isTileTrackerState } from '~/test/helpers/tracker-state';
 
-import MergeGameTracker from './fixtures/merge-game-tracker';
+import mergeGameTracker from './fixtures/merge-game-tracker';
 
 function baseConfig(
     overrides?: Partial<GameProcessorAnalysisConfigFull>,
@@ -28,10 +28,10 @@ function baseConfig(
 }
 
 describe('tracker merge', () => {
-    describe('TileTracker.merge', () => {
+    describe('tileTracker.merge', () => {
         it('sums counters and tile stats from a partial batch', () => {
-            const mainHost = new TrackerHost([TileTracker]);
-            const batchHost = new TrackerHost([TileTracker]);
+            const mainHost = new TrackerHost([tileTracker()]);
+            const batchHost = new TrackerHost([tileTracker()]);
 
             const mainState = mainHost.moveEntries[0]?.state;
             const batchState = batchHost.moveEntries[0]?.state;
@@ -53,9 +53,8 @@ describe('tracker merge', () => {
 
     describe('MergeGameTracker.merge', () => {
         it('sums wins and game counts from a partial batch', () => {
-            const tracker = MergeGameTracker;
-            const mainHost = new TrackerHost([tracker]);
-            const batchHost = new TrackerHost([tracker]);
+            const mainHost = new TrackerHost([mergeGameTracker()]);
+            const batchHost = new TrackerHost([mergeGameTracker()]);
 
             const mainState = mainHost.gameEntries[0]?.state;
             const batchState = batchHost.gameEntries[0]?.state;
@@ -91,9 +90,8 @@ describe('tracker merge', () => {
         });
 
         it('merges worker batch counters without tracker state', () => {
-            const tracker = MergeGameTracker;
             const cfg = baseConfig({
-                trackerHost: new TrackerHost([tracker]),
+                trackerHost: new TrackerHost([mergeGameTracker()]),
                 config: { maxGames: 10 },
             });
 
@@ -121,14 +119,11 @@ describe('tracker merge', () => {
         });
 
         it('merges multi-config batch results', () => {
-            const trackerA = MergeGameTracker;
-            const trackerB = MergeGameTracker;
-
             const cfgA = baseConfig({
-                trackerHost: new TrackerHost([trackerA]),
+                trackerHost: new TrackerHost([mergeGameTracker()]),
             });
             const cfgB = baseConfig({
-                trackerHost: new TrackerHost([trackerB]),
+                trackerHost: new TrackerHost([mergeGameTracker()]),
             });
 
             const handler = createWorkerResultHandler([cfgA, cfgB], () => {
@@ -149,8 +144,8 @@ describe('tracker merge', () => {
 
     describe('mergeWorkerTrackerFlush', () => {
         it('merges tracker state without touching counters', () => {
-            const mainHost = new TrackerHost([TileTracker]);
-            const workerHost = new TrackerHost([TileTracker]);
+            const mainHost = new TrackerHost([tileTracker()]);
+            const workerHost = new TrackerHost([tileTracker()]);
 
             const workerState = workerHost.moveEntries[0]?.state;
             if (!isTileTrackerState(workerState)) {

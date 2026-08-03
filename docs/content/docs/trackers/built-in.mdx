@@ -1,19 +1,21 @@
 ---
 title: Built-in trackers
-description: GameTracker, PieceTracker, and TileTracker.
+description: gameTracker, pieceTracker, and tileTracker.
 ---
 
-Chessalyzer ships three built-in trackers (`GameTracker`, `PieceTracker`, `TileTracker` — pass the definition itself, no `new`). Stats live on **`result.runs[n].trackers[m].state`** after `analyzePGN` returns.
+Chessalyzer ships three built-in tracker factories (`gameTracker`, `pieceTracker`, `tileTracker`). Call them to create instances, pass those to `analyzePGN`, then read **`instance.state`**.
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
-import { TileTracker } from 'chessalyzer/trackers';
+import { tileTracker } from 'chessalyzer/trackers';
 
-const result = await analyzePGN('<pathToPgnFile>', { trackers: [TileTracker] });
-const state = result.runs[0].trackers[0].state;
+const tiles = tileTracker();
+
+await analyzePGN('<pathToPgnFile>', { trackers: [tiles] });
+console.log(tiles.state.movesTotal);
 ```
 
-## GameTracker
+## gameTracker
 
 Per-game statistics from headers and results.
 
@@ -23,7 +25,7 @@ Per-game statistics from headers and results.
 | `ECO`     | ECO code counts (e.g. `'A00'`)          |
 | `games`   | Number of games processed               |
 
-## PieceTracker
+## pieceTracker
 
 Tracks captures between pieces.
 
@@ -32,7 +34,7 @@ Tracks captures between pieces.
 | `b`   | Black pieces — how often each black piece captured each white piece (e.g. `b.Pa.Qd`) |
 | `w`   | Same for white pieces                                                                |
 
-## TileTracker
+## tileTracker
 
 Tracks what happens on each square of the board.
 
@@ -50,4 +52,4 @@ Each tile has two color buckets (`b`, `w`). Each bucket has a `total` stats obje
 
 Use `total` for combined stats of one side on a square (e.g. `state.tiles[0][6].b.total.wasOn`), or `byPiece` for a single piece (e.g. `state.tiles[0][6].b.byPiece.Pa.wasOn`).
 
-`TileTracker` and `PieceTracker` support [heatmap generation](/docs/heatmaps) — pass state and a preset function to `generateHeatmap(state, TileHeatmapPresets.TILE_OCC_ALL)`.
+`tileTracker` and `pieceTracker` support [heatmap generation](/docs/heatmaps) — pass state and a preset function to `generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL)`.

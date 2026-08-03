@@ -17,7 +17,7 @@ When people say "PGN parser," they usually mean step 2 only. Turning a file into
 ```javascript
 import { analyzePGN } from 'chessalyzer';
 import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
-import { GameTracker } from 'chessalyzer/trackers';
+import { gameTracker } from 'chessalyzer/trackers';
 
 // Just the games — no board replay
 const games = await parsePGN('<pathToPgnFile>', { headers: true, maxGames: 100 });
@@ -28,13 +28,14 @@ for await (const game of streamParsePGN('<pathToPgnFile>', { headers: true })) {
     // process game
 }
 
-// Full pipeline — stats returned in result.runs[n].trackers
+// Full pipeline — stats accumulate on the tracker instance
+const stats = gameTracker();
 const result = await analyzePGN('<pathToPgnFile>', {
-    trackers: [GameTracker],
+    trackers: [stats],
     headers: true,
     replay: 'board', // 'skip' | 'board' | 'actions'
 });
-console.log(result.runs[0].trackers[0].state.games);
+console.log(stats.state.games, result.gameCount);
 ```
 
 ## Replay modes
