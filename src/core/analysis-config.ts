@@ -17,7 +17,7 @@ export interface NormalizedAnalyzeOptions {
 }
 
 /** Instances currently owned by an in-flight `analyzePGN` call. */
-const inFlightInstances = new WeakSet<object>();
+const inFlightInstances = new WeakSet<TrackerInstance>();
 
 function resolveParseHeaders(
     explicit: boolean | 'auto' | undefined,
@@ -35,6 +35,7 @@ function resolveParseHeaders(
     return needsHeaders;
 }
 
+/** Assert that a filter requires workers: false. */
 function assertFilterRequiresSingleThreaded(
     runs: AnalyzeRun[],
     multithreadCfg: WorkerOptions | null,
@@ -48,6 +49,7 @@ function assertFilterRequiresSingleThreaded(
     }
 }
 
+/** Assert that no conflicting run fields are set. */
 function assertNoConflictingRunFields(opts: AnalyzeOptions): void {
     if (opts.trackers !== undefined) {
         throw new Error('Cannot set both runs and top-level trackers');
@@ -60,16 +62,19 @@ function assertNoConflictingRunFields(opts: AnalyzeOptions): void {
     }
 }
 
+/** Resolve single-run sugar into an `AnalyzeRun` compatible object. */
 function resolveRuns(opts: AnalyzeOptions): AnalyzeRun[] {
-    if ('runs' in opts && opts.runs !== undefined) {
+    // Multi-run: `runs: […]`
+    if (opts.runs) {
         assertNoConflictingRunFields(opts);
         if (opts.runs.length === 0) {
             throw new Error('runs must contain at least one entry');
         }
         return [...opts.runs];
     }
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- runs branch excluded above; remaining shape is the single-run sugar
-    const single = opts as AnalyzeRun;
+
+    // Single-run sugar: `trackers: […]` / `filter: …` / `maxGames: …`
+    const single = opts;
     return [{ trackers: single.trackers, filter: single.filter, maxGames: single.maxGames }];
 }
 
@@ -77,11 +82,11 @@ function resolveRuns(opts: AnalyzeOptions): AnalyzeRun[] {
  * Convert public {@link AnalyzeOptions} into processor inputs in one pass:
  * validates, then builds per-run runtime state and path-selection fields.
  */
-export function normalizeAnalyzeOptions(options?: AnalyzeOptions): NormalizedAnalyzeOptions {
-    const opts = options ?? {};
-    const multithreadCfg: WorkerOptions | null =
-        opts.workers === false ? null : (opts.workers ?? {});
-    const runs = resolveRuns(opts);
+export function normalizeAnalyzeOptions(options: AnalyzeOptions = {}): NormalizedAnalyzeOptions {
+    const multithreadCfg = options.workers === false ? null : (options.workers ?? {});
+
+    // Resolve runs into per-run configs, converting single-run sugar.
+    const runs = resolveRuns(options);
     assertFilterRequiresSingleThreaded(runs, multithreadCfg);
 
     const multithreaded = multithreadCfg !== null;
@@ -90,6 +95,7 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): NormalizedAna
     const seenInstances = new Set<object>();
     const allInstances: TrackerInstance[] = [];
 
+    // Build per-run configs, tracking instances and header requirements.
     for (const run of runs) {
         const instances: TrackerInstance[] = [];
         if (run.trackers) {
@@ -125,6 +131,11 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): NormalizedAna
               }))
             : undefined;
 
+        const replayMode = resolveEffectiveReplayMode(
+            instances.some((instance) => instance.def.kind === 'move'),
+            options.replay,
+        );
+
         configs.push({
             trackerHost: new TrackerHost(instances),
             trackerData,
@@ -137,18 +148,15 @@ export function normalizeAnalyzeOptions(options?: AnalyzeOptions): NormalizedAna
             skippedGames: 0,
             errors: [],
             isDone: false,
-            replayMode: resolveEffectiveReplayMode(
-                instances.some((instance) => instance.def.kind === 'move'),
-                opts.replay,
-            ),
+            replayMode,
         });
     }
 
     return {
         configs,
         multithreadCfg,
-        onError: opts.onError ?? 'abort',
-        parseHeaders: resolveParseHeaders(opts.headers, needsHeaders),
+        onError: options.onError ?? 'abort',
+        parseHeaders: resolveParseHeaders(options.headers, needsHeaders),
         allInstances,
     };
 }
