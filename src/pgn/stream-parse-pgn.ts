@@ -1,7 +1,8 @@
 import { lineStreamIterable } from '#io/line-iterable';
 import { GameAssembler } from '#pgn/game-assembler';
+import { resolveStandaloneParseOptions } from '#pgn/parse-options';
+import { toParsedGame } from '#pgn/to-parsed-game';
 import type { ParsePgnOptions, ParsedGame } from '#types/parse-pgn';
-import { resolveStandaloneParseOptions, toParsedGame } from '#types/parse-pgn';
 
 /**
  * Stream a PGN file as {@link ParsedGame} objects (stage 2 only — no board replay).

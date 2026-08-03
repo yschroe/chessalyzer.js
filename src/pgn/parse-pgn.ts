@@ -1,7 +1,8 @@
 import { readLines } from '#io/line-reader';
 import { GameAssembler } from '#pgn/game-assembler';
+import { resolveStandaloneParseOptions } from '#pgn/parse-options';
+import { toParsedGame } from '#pgn/to-parsed-game';
 import type { ParsePgnOptions, ParsedGame } from '#types/parse-pgn';
-import { resolveStandaloneParseOptions, toParsedGame } from '#types/parse-pgn';
 
 /**
  * Parse a PGN file into {@link ParsedGame} objects (stage 2 only — no board replay).

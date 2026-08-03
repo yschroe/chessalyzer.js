@@ -1,9 +1,9 @@
+import type { GameProcessorAnalysisConfigFull } from '#core/analysis-runtime';
 import { TrackerHost } from '#core/tracker-host';
 import { resolveEffectiveReplayMode } from '#replay/replay-mode';
 import { BUILTIN_TRACKER_IDS } from '#trackers/builtin-registry';
 import { assertMultithreadTrackerDef, assertTrackerInstance } from '#trackers/define-tracker';
 import type { AnalyzeOptions, AnalyzeRun, WorkerOptions } from '#types/analysis';
-import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { TrackerInstance } from '#types/tracker';
 
 /** Fully normalized `analyzePGN` inputs: per-run processor state plus path-selection fields. */

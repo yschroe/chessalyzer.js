@@ -1,11 +1,6 @@
 /** Standard PGN game result tokens. */
 export type GameResult = '1-0' | '0-1' | '1/2-1/2' | '*';
 
-/** True when `value` is a standard PGN result token. */
-export function isGameResult(value: string): value is GameResult {
-    return value === '1-0' || value === '0-1' || value === '1/2-1/2' || value === '*';
-}
-
 /**
  * One half-move from parsed movetext.
  * Shape is intentionally minimal; future optional fields (`nags`, `comment`, `variations`) are additive.
@@ -17,7 +12,7 @@ export interface ParsedMove {
 /**
  * Internal assembler / analyze hot-path game shape — mainline SAN strings without per-move object allocation.
  *
- * Public APIs use {@link ParsedGame} (`ParsedMove[]`). Convert at boundaries via {@link toParsedGame}.
+ * Public APIs use {@link ParsedGame} (`ParsedMove[]`). Convert at boundaries via {@link toParsedGame} in `#pgn/to-parsed-game`.
  * Do not replace with `ParsedMove[]` on this path: board replay regresses badly (per-move `.san` + GC);
  * see AGENTS.md Performance — settled in v4 alpha API hardening.
  */
@@ -50,33 +45,4 @@ export interface ParsePgnOptions {
 export interface StandaloneParseOptions {
     parseHeaders: boolean;
     maxGames: number;
-}
-
-/**
- * Resolve {@link ParsePgnOptions} for the standalone parse entry points.
- * Unlike `analyzePGN` there is no `'auto'` inference — headers are opt-in only.
- */
-export function resolveStandaloneParseOptions(options?: ParsePgnOptions): StandaloneParseOptions {
-    return {
-        parseHeaders: options?.headers ?? false,
-        maxGames: options?.maxGames ?? Infinity,
-    };
-}
-
-/** Create a {@link ParsedMove} at the single monomorphic construction site. */
-function createParsedMove(san: string): ParsedMove {
-    return { san };
-}
-
-/** Materialize public {@link ParsedGame} from a hot-path {@link AssembledGame}. */
-export function toParsedGame(game: AssembledGame): ParsedGame {
-    const moves = new Array<ParsedMove>(game.moves.length);
-    for (let i = 0; i < game.moves.length; i++) {
-        moves[i] = createParsedMove(game.moves[i]!);
-    }
-    return {
-        moves,
-        result: game.result,
-        headers: game.headers,
-    };
 }

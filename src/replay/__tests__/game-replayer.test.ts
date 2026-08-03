@@ -2,6 +2,7 @@ import { describe, it, expect } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
 import type ChessBoard from '#board/chess-board';
+import type { GameProcessorAnalysisConfig } from '#core/analysis-runtime';
 import { TrackerHost } from '#core/tracker-host';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
@@ -9,7 +10,6 @@ import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
 import { defineMoveTracker } from '#trackers/define-tracker';
 import type { Action } from '#types/actions';
-import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { AssembledGame, GameResult } from '#types/parse-pgn';
 import { fixturePath } from '~/test/helpers/fixtures';
 

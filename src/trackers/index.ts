@@ -3,6 +3,8 @@ export { defineGameTracker, defineMoveTracker } from '#trackers/define-tracker';
 export { gameTracker, type GameTrackerState } from '#trackers/game-tracker';
 export { pieceTracker, type PieceTrackerState } from '#trackers/piece-tracker';
 export { tileTracker, type TileTrackerState } from '#trackers/tile/tile-tracker';
+export type { ColorBucket, TileCell, TileGrid, TileStats } from '#trackers/tile/tile-tracker-types';
+export type { PieceStatsMap } from '#trackers/piece-types';
 export { generateComparisonHeatmap, generateHeatmap } from '#trackers/heatmap-utils';
 export { PieceHeatmapPresets } from '#trackers/heatmaps/piece-heatmaps';
 export { TileHeatmapPresets } from '#trackers/heatmaps/tile-heatmaps';

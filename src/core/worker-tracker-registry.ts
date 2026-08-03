@@ -1,9 +1,9 @@
 import assert from 'node:assert';
 
+import type { GameProcessorAnalysisConfig } from '#core/analysis-runtime';
 import { TrackerHost } from '#core/tracker-host';
 import { BUILTIN_TRACKER_FACTORIES } from '#trackers/builtin-registry';
 import { assertTrackerFactory } from '#trackers/define-tracker';
-import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { TrackerFactory, TrackerInstance } from '#types/tracker';
 import type { WorkerInitData } from '#types/worker';
 

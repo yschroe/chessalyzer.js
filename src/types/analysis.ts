@@ -1,4 +1,3 @@
-import type { PgnChunkConfig } from '#io/pgn-chunks';
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
 import type { ParsedGame } from '#types/parse-pgn';
@@ -19,12 +18,22 @@ type HasKind<I, K extends 'move' | 'game'> = [I] extends [never]
 type ReplayForInstances<I> = HasKind<I, 'move'> extends true ? 'actions' : ReplayMode;
 type HeadersForInstances<I> = HasKind<I, 'game'> extends true ? true | 'auto' : boolean | 'auto';
 
+/** Advanced: PGN chunk sizing for worker dispatch (`workers.chunk`). */
+interface WorkerChunkOptions {
+    /** Target chunk size in bytes before extending to the next game boundary. */
+    targetBytes?: number;
+    /** Safety cap on lines per chunk. */
+    maxLines?: number;
+    /** Minimum lines before a byte-target chunk may be emitted. */
+    minLines?: number;
+}
+
 /** Worker thread pool and PGN chunking. Pass `false` via `workers` to disable. */
 export interface WorkerOptions {
     /** Worker thread count. Defaults to `os.availableParallelism()`. */
     workerCount?: number;
     /** Advanced: PGN chunk sizing for worker dispatch. */
-    chunk?: PgnChunkConfig;
+    chunk?: WorkerChunkOptions;
 }
 
 type SingleThreadedWorkers = { workers: false };

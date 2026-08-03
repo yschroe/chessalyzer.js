@@ -1,12 +1,12 @@
+import type { GameProcessorAnalysisConfig } from '#core/analysis-runtime';
 import { collectError, createReplayError, toAbortError } from '#core/analyze-errors';
+import { toParsedGame } from '#pgn/to-parsed-game';
 import { isReplayFailure } from '#replay/replay-failure';
 import type { ReplayMode } from '#replay/replay-mode';
 import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
 import SanDecoder from '#replay/san-decoder';
-import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
 import type { AssembledGame } from '#types/parse-pgn';
-import { toParsedGame } from '#types/parse-pgn';
 
 /**
  * Orchestrates per-game analysis: game trackers → optional SAN replay (decode + play) → counters.

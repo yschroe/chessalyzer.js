@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'bun:test';
 
+import type { GameProcessorAnalysisConfigFull } from '#core/analysis-runtime';
 import { TrackerHost } from '#core/tracker-host';
 import { createWorkerResultHandler, mergeWorkerTrackerFlush } from '#core/tracker-merge';
 import { tileTracker } from '#trackers/tile/tile-tracker';
-import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import { isGameWinsTrackerState, isTileTrackerState } from '~/test/helpers/tracker-state';
 
 import mergeGameTracker from './fixtures/merge-game-tracker';

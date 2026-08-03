@@ -11,7 +11,7 @@
                 "bench/*.ts",
                 "bench/{atomic,exploratory}/*.ts"
             ],
-            "ignore": ["manual-tests/**"]
+            "ignore": ["manual-tests/**", "test/types/**"]
         },
         "docs": {
             "entry": ["src/pages/**/*.{ts,tsx}", "waku.config.ts"]

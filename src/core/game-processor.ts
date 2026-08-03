@@ -3,6 +3,7 @@ import { availableParallelism } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 import type { NormalizedAnalyzeOptions } from '#core/analysis-config';
+import type { GameAndMoveCount, GameProcessorAnalysisConfigFull } from '#core/analysis-runtime';
 import {
     createWorkerResultHandler,
     finishTrackers,
@@ -12,10 +13,9 @@ import WorkerPool from '#core/worker-pool';
 import { readLines } from '#io/line-reader';
 import { readPgnChunks } from '#io/pgn-chunks';
 import { GameAssembler } from '#pgn/game-assembler';
+import { toParsedGame } from '#pgn/to-parsed-game';
 import GameReplayer from '#replay/game-replayer';
 import type { WorkerOptions } from '#types/analysis';
-import type { GameAndMoveCount, GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
-import { toParsedGame } from '#types/parse-pgn';
 import type { WorkerBatchTask, WorkerInitData, WorkerTaskConfigEntry } from '#types/worker';
 
 /** Path to the worker file. */
