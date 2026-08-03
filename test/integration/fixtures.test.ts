@@ -84,7 +84,7 @@ describe('Fixtures', () => {
             return expect(
                 analyzePGN(fixturePath('results-mix'), {
                     filter: (game: ParsedGame) => game.result === '1-0',
-                }),
+                } as unknown as import('chessalyzer').AnalyzeOptions),
             ).rejects.toThrow('filter requires workers: false');
         });
 

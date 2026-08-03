@@ -31,9 +31,7 @@ describe('normalizeAnalyzeOptions', () => {
 
     it('rejects filter without workers: false', () => {
         expect(() =>
-            normalizeAnalyzeOptions({
-                filter: () => true,
-            }),
+            normalizeAnalyzeOptions(invalidAnalyzeOptions({ filter: () => true })),
         ).toThrow('filter requires workers: false');
     });
 
@@ -48,9 +46,11 @@ describe('normalizeAnalyzeOptions', () => {
 
     it('rejects filter in multi-run without workers: false', () => {
         expect(() =>
-            normalizeAnalyzeOptions({
-                runs: [{ filter: () => true }, { trackers: [tileTracker()] }],
-            }),
+            normalizeAnalyzeOptions(
+                invalidAnalyzeOptions({
+                    runs: [{ filter: () => true }, { trackers: [tileTracker()] }],
+                }),
+            ),
         ).toThrow('filter requires workers: false');
     });
 
@@ -71,11 +71,13 @@ describe('normalizeAnalyzeOptions', () => {
 
     it('throws when headers: false with a game tracker', () => {
         expect(() =>
-            normalizeAnalyzeOptions({
-                workers: false,
-                trackers: [gameTracker()],
-                headers: false,
-            }),
+            normalizeAnalyzeOptions(
+                invalidAnalyzeOptions({
+                    workers: false,
+                    trackers: [gameTracker()],
+                    headers: false,
+                }),
+            ),
         ).toThrow('headers: false cannot be used with game trackers');
     });
 
@@ -99,11 +101,13 @@ describe('normalizeAnalyzeOptions', () => {
 
     it('throws when move trackers conflict with replay override', () => {
         expect(() =>
-            normalizeAnalyzeOptions({
-                workers: false,
-                trackers: [tileTracker()],
-                replay: 'skip',
-            }),
+            normalizeAnalyzeOptions(
+                invalidAnalyzeOptions({
+                    workers: false,
+                    trackers: [tileTracker()],
+                    replay: 'skip',
+                }),
+            ),
         ).toThrow('Move trackers require replay: "actions"');
     });
 
@@ -150,7 +154,11 @@ describe('normalizeAnalyzeOptions', () => {
             workerModule: import.meta.url,
             init: () => ({}),
             track: () => {},
+            merge: () => {},
         });
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- strip merge to test runtime guard
+        const def = factory.def as { merge?: (s: object, o: object) => void };
+        delete def.merge;
         expect(() => normalizeAnalyzeOptions({ trackers: [factory()] })).toThrow(
             'must implement merge',
         );

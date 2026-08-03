@@ -9,11 +9,8 @@ export interface TrackerDefBase<S = unknown, O = unknown> {
     /** Module URL for worker-side dynamic import of custom trackers (multithreaded only). */
     readonly workerModule?: string;
     init(options?: O): S;
-    /**
-     * Aggregate worker batch state into the main-thread state.
-     * Required for multithreaded analysis (validated at normalization).
-     */
-    merge?(state: S, other: S): void;
+    /** Aggregate worker batch state into the main-thread state. */
+    merge(state: S, other: S): void;
     /** Optional per-game hook after each game (success or skip). */
     onGameEnd?(state: S): void;
     /** Optional end-of-analysis hook (e.g. sort aggregated keys). */

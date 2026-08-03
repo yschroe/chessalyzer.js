@@ -71,7 +71,7 @@ function resolveRuns(opts: AnalyzeOptions): AnalyzeRun[] {
         if (opts.runs.length === 0) {
             throw new Error('runs must contain at least one entry');
         }
-        return opts.runs;
+        return [...opts.runs];
     }
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- runs branch excluded above; remaining shape is the single-run sugar
     const single = opts as AnalyzeRun;

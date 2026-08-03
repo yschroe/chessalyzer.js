@@ -7,9 +7,17 @@ import {
 } from '#core/analysis-config';
 import { collectError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
 import GameProcessor from '#core/game-processor';
-import type { AnalyzeOptions, AnalyzeResult, AnalyzeRunResult } from '#types/analysis';
+import type {
+    AnalyzeOptions,
+    AnalyzeResult,
+    AnalyzeRun,
+    AnalyzeRunResult,
+    MultiRunOptions,
+    MultiRunOptionsMT,
+    SingleRunOptions,
+} from '#types/analysis';
 import type { AnalyzeError } from '#types/errors';
-import type { HeatmapData } from '#types/tracker';
+import type { HeatmapData, TrackerInstance } from '#types/tracker';
 
 /** Black foreground on a truecolor RGB background (ANSI). */
 function styleBgRgb(r: number, g: number, b: number, text: string): string {
@@ -78,12 +86,28 @@ export function buildAnalyzeResult(
     return { ...buildResultBase(counts, durationMs), runs };
 }
 
+type TrackerList = readonly TrackerInstance[];
+type AnalyzeRunNoFilter = Omit<AnalyzeRun, 'filter'> & { filter?: never };
+
 /**
  * Analyze a PGN file with optional trackers, filters, and worker configuration.
  *
  * Pass tracker instances from factory calls (e.g. `tileTracker()`). Accumulated
  * state is available on the same instances after the call returns (`tiles.state`).
  */
+export function analyzePGN<const T extends TrackerList>(
+    path: string,
+    options?: SingleRunOptions<T>,
+): Promise<AnalyzeResult>;
+export function analyzePGN<const R extends readonly [AnalyzeRun, ...AnalyzeRun[]]>(
+    path: string,
+    options: MultiRunOptions<R>,
+): Promise<AnalyzeResult>;
+export function analyzePGN<const R extends readonly [AnalyzeRunNoFilter, ...AnalyzeRunNoFilter[]]>(
+    path: string,
+    options: MultiRunOptionsMT<R>,
+): Promise<AnalyzeResult>;
+export function analyzePGN(path: string, options?: AnalyzeOptions): Promise<AnalyzeResult>;
 export async function analyzePGN(path: string, options?: AnalyzeOptions): Promise<AnalyzeResult> {
     const normalized = normalizeAnalyzeOptions(options);
     markInstancesInFlight(normalized.allInstances);
