@@ -1,10 +1,9 @@
 import type { Action } from '#types/actions';
 import type { ParsedGame } from '#types/parse-pgn';
 import type {
-    AnalyzeTrackerResult,
     GameTrackerDef,
     MoveTrackerDef,
-    TrackerDef,
+    TrackerInstance,
     TrackerSnapshot,
 } from '#types/tracker';
 
@@ -21,21 +20,25 @@ interface GameEntry {
 type OrderedEntry = { kind: 'move'; entry: MoveEntry } | { kind: 'game'; entry: GameEntry };
 
 /**
- * Per-thread tracker engine: pairs definitions with mutable state,
+ * Per-thread tracker engine: pairs instances with mutable state,
  * drives hooks in the hot loop, and produces merge snapshots.
+ *
+ * `entry.state` aliases `instance.state` so the hot path keeps a direct field
+ * (no `entry.instance.state` hop). Trackers mutate state in place, so identity
+ * is preserved for the whole run.
  */
 export class TrackerHost {
     readonly moveEntries: MoveEntry[];
     readonly gameEntries: GameEntry[];
     private readonly orderedEntries: OrderedEntry[];
 
-    constructor(defs: readonly TrackerDef[]) {
+    constructor(instances: readonly TrackerInstance[]) {
         this.moveEntries = [];
         this.gameEntries = [];
         this.orderedEntries = [];
 
-        for (const def of defs) {
-            const state = def.init(def.options);
+        for (const instance of instances) {
+            const { def, state } = instance;
             if (def.kind === 'move') {
                 const entry: MoveEntry = { def, state };
                 this.moveEntries.push(entry);
@@ -79,36 +82,20 @@ export class TrackerHost {
     }
 
     snapshots(): TrackerSnapshot[] {
-        const out: TrackerSnapshot[] = [];
-        for (const entry of this.gameEntries) {
-            out.push({ id: entry.def.id, state: entry.state });
-        }
-        for (const entry of this.moveEntries) {
-            out.push({ id: entry.def.id, state: entry.state });
-        }
-        return out;
+        return this.orderedEntries.map((ordered, index) => ({
+            index,
+            state: ordered.entry.state,
+        }));
     }
 
     mergeSnapshots(snapshots: readonly TrackerSnapshot[]): void {
-        const byId = new Map(snapshots.map((snap) => [snap.id, snap.state]));
-        for (const entry of this.gameEntries) {
-            const other = byId.get(entry.def.id);
-            if (other !== undefined && entry.def.merge) {
-                entry.def.merge(entry.state, other);
-            }
-        }
-        for (const entry of this.moveEntries) {
-            const other = byId.get(entry.def.id);
-            if (other !== undefined && entry.def.merge) {
-                entry.def.merge(entry.state, other);
-            }
-        }
-    }
-
-    results(): AnalyzeTrackerResult[] {
-        return this.orderedEntries.map((ordered) => {
+        for (const snap of snapshots) {
+            const ordered = this.orderedEntries[snap.index];
+            if (!ordered) continue;
             const { def, state } = ordered.entry;
-            return { tracker: def, state };
-        });
+            if (def.merge) {
+                def.merge(state, snap.state);
+            }
+        }
     }
 }

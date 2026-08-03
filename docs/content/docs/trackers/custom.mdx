@@ -3,16 +3,20 @@ title: Custom trackers
 description: Define your own statistics with defineGameTracker and defineMoveTracker.
 ---
 
-Trackers separate **definition** (behavior) from **state** (plain data). Author with a factory (`defineGameTracker` / `defineMoveTracker`).
+Trackers separate **definition** (behavior) from **state** (plain data). `defineGameTracker` / `defineMoveTracker` return a **factory** — a callable that creates instances. Default-export that factory from its own module for multithreaded use.
 
 ```javascript
+// my-tracker.ts
 import { defineGameTracker } from 'chessalyzer/trackers';
 
-const eloTracker = defineGameTracker({
+export default defineGameTracker({
     id: 'elo-tracker',
     workerModule: import.meta.url, // multithreaded custom trackers only
-    options: { minElo: 2000 },
-    init: () => ({ games: 0, wins: [0, 0, 0] }),
+    init: (options) => ({
+        games: 0,
+        wins: [0, 0, 0],
+        minElo: options?.minElo ?? 0,
+    }),
     track: (state, game) => {
         state.games += 1;
         // fold one game into state
@@ -24,32 +28,35 @@ const eloTracker = defineGameTracker({
         // optional end-of-analysis hook
     },
 });
+```
 
-export default eloTracker; // multithreaded custom trackers only
+## Usage
+
+Call the factory to get an instance. Pass options to the factory call (not stored on the definition):
+
+```javascript
+import { analyzePGN } from 'chessalyzer';
+import myTracker from './my-tracker.ts';
+
+const t = myTracker({ minElo: 2000 });
+
+await analyzePGN(path, { trackers: [t] });
+console.log(t.state.games, t.state.wins);
 ```
 
 ## Multithreading
 
 Custom trackers need:
 
-1. **Own module** with **default export** (factory object)
+1. **Own module** with a **default-exported factory** (return value of `defineGameTracker` / `defineMoveTracker`)
 2. **`id`** and **`workerModule = import.meta.url`**
 3. **`merge(state, other)`** — both arguments are plain state after structured clone
 
-Optional **`options`** (plain data) are cloned to workers before `init()`.
-
-## Reading results
-
-```javascript
-const result = await analyzePGN(path, { trackers: [eloTracker] });
-const { state } = result.runs[0].trackers[0];
-console.log(state.games, state.wins);
-```
+Workers import the factory and call it with the options you passed on the main thread. Options must be plain structured-cloneable data.
 
 ## Imports
 
 ```javascript
-import type { GameFilter } from 'chessalyzer';
 import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
 import type { Action, Square } from 'chessalyzer/replay';
 import { defineGameTracker, defineMoveTracker } from 'chessalyzer/trackers';

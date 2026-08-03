@@ -41,7 +41,7 @@ Tests that run the full `analyzePGN` pipeline stay in `test/integration/` becaus
 
 | File                     | Focus                                                                |
 | ------------------------ | -------------------------------------------------------------------- |
-| `fixtures.test.ts`       | Small PGN fixtures, filters, TileTracker golden                      |
+| `fixtures.test.ts`       | Small PGN fixtures, filters, tileTracker golden                      |
 | `parse-pgn.test.ts`      | `chessalyzer/pgn` `parsePGN` / `streamParsePGN`, fixture move counts |
 | `workers.test.ts`        | MT `analyzePGN` abort / corrupt trailing game                        |
 | `custom-tracker.test.ts` | Custom tracker + `workerModule` in MT mode                           |
@@ -67,9 +67,9 @@ Corpus tests use `describe.skip` when `test/corpus/asorted-games.pgn` is missing
 | Basic parse counts                   | yes             | yes           | `fixtures.test.ts`, `corpus.test.ts`         |
 | Filter / maxGames                    | yes             | yes           | `fixtures.test.ts`, `corpus.test.ts`         |
 | Multi-run                            | —               | yes           | `fixtures.test.ts`                           |
-| GameTracker golden                   | yes             | yes           | `corpus.test.ts` (corpus only)               |
-| PieceTracker golden                  | yes             | yes           | `corpus.test.ts` (corpus only)               |
-| TileTracker golden                   | yes             | yes           | `fixtures.test.ts` (`en-passant.pgn`)        |
+| gameTracker golden                   | yes             | yes           | `corpus.test.ts` (corpus only)               |
+| pieceTracker golden                  | yes             | yes           | `corpus.test.ts` (corpus only)               |
+| tileTracker golden                   | yes             | yes           | `fixtures.test.ts` (`en-passant.pgn`)        |
 | Custom tracker MT                    | —               | yes           | `custom-tracker.test.ts` (incl. filter path) |
 | Replay unit                          | yes             | —             | `src/replay/__tests__/game-replayer.test.ts` |
 | Error skip-game                      | yes             | yes           | `error-policy.test.ts`                       |
@@ -77,7 +77,7 @@ Corpus tests use `describe.skip` when `test/corpus/asorted-games.pgn` is missing
 | WorkerPool unit                      | —               | —             | `src/core/__tests__/worker-pool.test.ts`     |
 | Tracker merge unit                   | —               | —             | `src/core/__tests__/tracker-merge.test.ts`   |
 
-**Corpus-only gaps:** GameTracker ECO totals, PieceTracker heatmaps, and large-scale filter counts require `test/corpus/asorted-games.pgn`.
+**Corpus-only gaps:** gameTracker ECO totals, pieceTracker heatmaps, and large-scale filter counts require `test/corpus/asorted-games.pgn`.
 
 ## Commands
 

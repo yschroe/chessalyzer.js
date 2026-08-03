@@ -143,7 +143,7 @@ Today several behaviors are hardcoded or inferred:
 - **Castling rights / en passant square** — not tracked on `ChessBoard` today; required for strict validation and FEN export
 - **Chess960** — different castling semantics; separate board or rules adapter
 
-**Done:** `TileTracker` counts castling as one move (rook leg excluded from move counter; king/rook grid updates still apply both legs).
+**Done:** `tileTracker` counts castling as one move (rook leg excluded from move counter; king/rook grid updates still apply both legs).
 
 ---
 

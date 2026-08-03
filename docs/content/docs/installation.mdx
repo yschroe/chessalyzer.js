@@ -19,7 +19,7 @@ The main entry point is `chessalyzer`. Subpath imports keep bundles focused:
 
 ```javascript
 import { analyzePGN, printHeatmap } from 'chessalyzer';
-import { TileTracker } from 'chessalyzer/trackers';
+import { tileTracker } from 'chessalyzer/trackers';
 import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
 ```
 
@@ -34,12 +34,14 @@ import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
-import { TileTracker } from 'chessalyzer/trackers';
+import { tileTracker } from 'chessalyzer/trackers';
 
-const result = await analyzePGN('<pathToPgnFile>', { trackers: [TileTracker] });
+const tiles = tileTracker();
+
+const result = await analyzePGN('<pathToPgnFile>', { trackers: [tiles] });
 
 console.log(result.gameCount, result.moveCount, result.movesPerSecond);
-console.log(result.runs[0].trackers[0].state.movesTotal);
+console.log(tiles.state.movesTotal);
 ```
 
 Next: [Basic usage](/docs/basic-usage).

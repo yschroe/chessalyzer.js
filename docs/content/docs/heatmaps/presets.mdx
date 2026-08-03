@@ -8,14 +8,13 @@ Instead of writing your own heatmap function, pass a preset from `TileHeatmapPre
 ```javascript
 import { generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
 
-const { state } = result.runs[0].trackers[0];
-
-const heatmapData = generateHeatmap(state, TileHeatmapPresets.TILE_OCC_ALL);
+// after analyzePGN — read state from your tracker instance
+const heatmapData = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
 const pieceHeatmap = generateHeatmap(
-    state,
+    tiles.state,
     TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' }),
 );
-const tileHeatmap = generateHeatmap(state, TileHeatmapPresets.TILE_OCC_BY_PIECE('e4'));
+const tileHeatmap = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_BY_PIECE('e4'));
 ```
 
 Scoped presets are **factories**: call them with a piece or square to get an analysis function. Preset property access on the map autocompletes in TypeScript.
@@ -29,7 +28,7 @@ Piece-scoped presets take a `HeatmapPieceRef`: `{ color, name }`.
 
 Names encode **file**, not just piece type (`Nb` = knight that started on the b-file). Color is required because both sides share the same names.
 
-## TileTracker presets
+## tileTracker presets
 
 | Short Name                   | Description                                                    |
 | ---------------------------- | -------------------------------------------------------------- |
@@ -40,7 +39,7 @@ Names encode **file**, not just piece type (`Nb` = knight that started on the b-
 | `TILE_OCC_BY_PIECE(square)`  | Occupation of `square` by each starting piece (% of all moves) |
 | `PIECE_MOVED_TO_TILE(piece)` | Where `piece` moved to (move-target counts per tile)           |
 
-## PieceTracker presets
+## pieceTracker presets
 
 | Short Name                 | Description                                                    |
 | -------------------------- | -------------------------------------------------------------- |

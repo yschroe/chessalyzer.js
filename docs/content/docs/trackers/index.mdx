@@ -3,40 +3,40 @@ title: Trackers
 description: Collect statistics during analysis — per move or per game.
 ---
 
-**Trackers** define what Chessalyzer measures. Pass tracker **definitions** to `analyzePGN`; the library accumulates plain **state** as games are processed and returns it in the result.
+**Trackers** define what Chessalyzer measures. Call a tracker **factory** to create an **instance**, pass that instance to `analyzePGN`, then read accumulated **state** from the same handle.
 
-| Concept        | What it is                                                                     |
-| -------------- | ------------------------------------------------------------------------------ |
-| **Definition** | Behavior + identity (`init`, `track`, `merge`, hooks) — what you pass in       |
-| **State**      | Plain accumulated data — what you read from `result.runs[n].trackers[m].state` |
+| Concept      | What it is                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------ |
+| **Factory**  | Callable from `defineMoveTracker` / `defineGameTracker` (or a built-in like `tileTracker`) |
+| **Instance** | Handle returned by the factory — what you pass to `analyzePGN`                             |
+| **State**    | Plain accumulated data — what you read from `instance.state` after analysis                |
 
 There are two kinds:
 
 | Kind             | Factory             | Receives                  | Example                       |
 | ---------------- | ------------------- | ------------------------- | ----------------------------- |
-| **Move tracker** | `defineMoveTracker` | Per-move board/actions    | `TileTracker`, `PieceTracker` |
-| **Game tracker** | `defineGameTracker` | Headers + result per game | `GameTracker`                 |
+| **Move tracker** | `defineMoveTracker` | Per-move board/actions    | `tileTracker`, `pieceTracker` |
+| **Game tracker** | `defineGameTracker` | Headers + result per game | `gameTracker`                 |
 
 Move trackers need `replay: 'actions'`. Game trackers only need headers (set `headers: true` or use `'auto'`).
 
 ## Usage
 
 ```javascript
-import { analyzePGN, getTrackerState } from 'chessalyzer';
-import { TileTracker, GameTracker } from 'chessalyzer/trackers';
+import { analyzePGN } from 'chessalyzer';
+import { tileTracker, gameTracker } from 'chessalyzer/trackers';
 
-const result = await analyzePGN('<pathToPgnFile>', {
-    trackers: [TileTracker, GameTracker],
+const tiles = tileTracker();
+const games = gameTracker();
+
+await analyzePGN('<pathToPgnFile>', {
+    trackers: [tiles, games],
 });
 
-const tileState = result.runs[0].trackers[0].state;
-const gameState = result.runs[0].trackers[1].state;
-// or: getTrackerState(result, TileTracker)
-
-console.log(tileState.movesTotal, gameState.games);
+console.log(tiles.state.movesTotal, games.state.games);
 ```
 
-Each entry in `result.runs[n].trackers` pairs the definition you passed (`tracker`) with its accumulated state (`state`). The definition is a handle — stats are not mutated in place on the instance.
+Each call to a factory returns a fresh instance with its own `.state`. Use distinct instances when you need separate cohorts in a multi-run analysis.
 
-- [Built-in trackers](/docs/trackers/built-in) — `GameTracker`, `PieceTracker`, `TileTracker`
+- [Built-in trackers](/docs/trackers/built-in) — `gameTracker`, `pieceTracker`, `tileTracker`
 - [Custom trackers](/docs/trackers/custom) — factories for your own stats

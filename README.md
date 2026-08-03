@@ -22,12 +22,13 @@ Requires Node ≥ 22 or Bun.
 
 ```javascript
 import { analyzePGN, printHeatmap } from 'chessalyzer';
-import { TileTracker, generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
+import { tileTracker, generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
 
-const result = await analyzePGN('<pathToPgnFile>', { trackers: [TileTracker] });
+const tiles = tileTracker();
 
-const { state } = result.runs[0].trackers[0];
-const heatmap = generateHeatmap(state, TileHeatmapPresets.TILE_OCC_ALL);
+await analyzePGN('<pathToPgnFile>', { trackers: [tiles] });
+
+const heatmap = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
 
 printHeatmap(heatmap);
 ```

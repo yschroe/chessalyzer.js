@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 import { join } from 'node:path';
 
-import { analyzePGN, getTrackerState } from 'chessalyzer';
-import { PieceTracker, TileTracker } from 'chessalyzer/trackers';
+import { analyzePGN } from 'chessalyzer';
+import { pieceTracker, tileTracker } from 'chessalyzer/trackers';
 
 import { fixturePath } from '~/test/helpers/fixtures';
 
@@ -13,7 +13,7 @@ describe('analyzePGN multithreaded', () => {
     it('aborts on first bad game by default', async () => {
         let caught: unknown;
         try {
-            await analyzePGN(badSanPath, { trackers: [PieceTracker] });
+            await analyzePGN(badSanPath, { trackers: [pieceTracker()] });
         } catch (err) {
             caught = err;
         }
@@ -23,9 +23,9 @@ describe('analyzePGN multithreaded', () => {
     });
 
     it('processes corrupt.pgn with an incomplete trailing game without hanging', async () => {
-        const tileTracker = TileTracker;
+        const tiles = tileTracker();
         const data = await Promise.race([
-            analyzePGN(corruptPath, { trackers: [tileTracker] }),
+            analyzePGN(corruptPath, { trackers: [tiles] }),
             new Promise<never>((_, reject) =>
                 setTimeout(() => reject(new Error('analyzePGN timed out')), 10_000),
             ),
@@ -33,7 +33,6 @@ describe('analyzePGN multithreaded', () => {
 
         expect(data.gameCount).toBe(1);
         expect(data.moveCount).toBe(15);
-        const state = getTrackerState(data, tileTracker);
-        expect(state.movesTotal).toBeGreaterThan(0);
+        expect(tiles.state.movesTotal).toBeGreaterThan(0);
     });
 });

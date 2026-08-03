@@ -3,34 +3,34 @@ title: Comparing analyses
 description: Run multiple filtered cohorts and compare their heatmaps.
 ---
 
-Use the `runs` option to analyze different game subsets in one pass — each run gets its own tracker definitions and optional filter.
+Use the `runs` option to analyze different game subsets in one pass — each run gets its own tracker instances and optional filter.
 
 This example compares tile occupation for high-rated vs low-rated white players (1000 games each):
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
-import { generateComparisonHeatmap, TileTracker } from 'chessalyzer/trackers';
+import { generateComparisonHeatmap, tileTracker } from 'chessalyzer/trackers';
 import { squareToCoords } from 'chessalyzer/replay';
 
-const result = await analyzePGN('<pathToPgnFile>', {
+const high = tileTracker();
+const low = tileTracker();
+
+await analyzePGN('<pathToPgnFile>', {
     workers: false,
     headers: true,
     runs: [
         {
-            trackers: [TileTracker],
+            trackers: [high],
             filter: (game) => Number(game.headers?.WhiteElo) > 2000,
             maxGames: 1000,
         },
         {
-            trackers: [TileTracker],
+            trackers: [low],
             filter: (game) => Number(game.headers?.WhiteElo) < 1200,
             maxGames: 1000,
         },
     ],
 });
-
-const state1 = result.runs[0].trackers[0].state;
-const state2 = result.runs[1].trackers[0].state;
 
 const compareFunc = ({ data, loopSquare }) => {
     const [row, col] = squareToCoords(loopSquare.square);
@@ -38,9 +38,9 @@ const compareFunc = ({ data, loopSquare }) => {
     return (val * 100) / data.movesTotal;
 };
 
-const heatmapData = generateComparisonHeatmap(state1, state2, compareFunc);
+const heatmapData = generateComparisonHeatmap(high.state, low.state, compareFunc);
 ```
 
 `generateComparisonHeatmap` builds two heatmaps from the same analysis function and returns per-cell percentage differences.
 
-Because filters require the main thread, pass `workers: false`. See [Filters](/docs/filters) and [Heatmaps](/docs/heatmaps).
+Pass **distinct instances** for each cohort (`tileTracker()` twice) — the same instance cannot appear more than once in one `analyzePGN` call. Because filters require the main thread, pass `workers: false`. See [Filters](/docs/filters) and [Heatmaps](/docs/heatmaps).

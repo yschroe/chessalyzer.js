@@ -7,17 +7,18 @@ You can filter games with a plain JavaScript function — for example, only anal
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
-import { TileTracker } from 'chessalyzer/trackers';
+import { tileTracker } from 'chessalyzer/trackers';
 
-const result = await analyzePGN('<pathToPgnFile>', {
+const tiles = tileTracker();
+
+await analyzePGN('<pathToPgnFile>', {
     workers: false,
-    trackers: [TileTracker],
+    trackers: [tiles],
     headers: true,
     filter: (game) => Number(game.headers?.WhiteElo) > 2000,
 });
 
-const { state } = result.runs[0].trackers[0];
-console.log(state.movesTotal);
+console.log(tiles.state.movesTotal);
 ```
 
 ## Requirements

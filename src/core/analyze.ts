@@ -1,11 +1,14 @@
 import { performance } from 'node:perf_hooks';
 
-import { normalizeAnalyzeOptions } from '#core/analysis-config';
+import {
+    clearInstancesInFlight,
+    markInstancesInFlight,
+    normalizeAnalyzeOptions,
+} from '#core/analysis-config';
 import { collectError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
 import GameProcessor from '#core/game-processor';
 import type { AnalyzeOptions, AnalyzeResult, AnalyzeRunResult } from '#types/analysis';
 import type { AnalyzeError } from '#types/errors';
-import type { AnalyzeTrackerResult } from '#types/tracker';
 import type { HeatmapData } from '#types/tracker';
 
 /** Black foreground on a truecolor RGB background (ANSI). */
@@ -65,13 +68,11 @@ export function buildAnalyzeResult(
         skippedGames?: number;
         errors?: AnalyzeError[];
     }[],
-    trackerResults: AnalyzeTrackerResult[][],
     durationMs: number,
 ): AnalyzeResult {
-    const runs: AnalyzeRunResult[] = counts.map(({ games, moves }, index) => ({
+    const runs: AnalyzeRunResult[] = counts.map(({ games, moves }) => ({
         gameCount: games,
         moveCount: moves,
-        trackers: trackerResults[index] ?? [],
     }));
 
     return { ...buildResultBase(counts, durationMs), runs };
@@ -79,15 +80,23 @@ export function buildAnalyzeResult(
 
 /**
  * Analyze a PGN file with optional trackers, filters, and worker configuration.
+ *
+ * Pass tracker instances from factory calls (e.g. `tileTracker()`). Accumulated
+ * state is available on the same instances after the call returns (`tiles.state`).
  */
 export async function analyzePGN(path: string, options?: AnalyzeOptions): Promise<AnalyzeResult> {
-    const gameProcessor = new GameProcessor(normalizeAnalyzeOptions(options));
+    const normalized = normalizeAnalyzeOptions(options);
+    markInstancesInFlight(normalized.allInstances);
+    try {
+        const gameProcessor = new GameProcessor(normalized);
 
-    const t0 = performance.now();
-    const counts = await gameProcessor.processPGN(path);
-    const trackerResults = gameProcessor.configs.map((cfg) => cfg.trackerHost.results());
-    const durationMs = performance.now() - t0;
-    return buildAnalyzeResult(counts, trackerResults, durationMs);
+        const t0 = performance.now();
+        const counts = await gameProcessor.processPGN(path);
+        const durationMs = performance.now() - t0;
+        return buildAnalyzeResult(counts, durationMs);
+    } finally {
+        clearInstancesInFlight(normalized.allInstances);
+    }
 }
 
 /** Print {@link HeatmapData} to the terminal. */

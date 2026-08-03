@@ -2,17 +2,12 @@ import type { Action } from '#types/actions';
 import type { SquareData } from '#types/game';
 import type { ParsedGame } from '#types/parse-pgn';
 
-/** Extract state type from a tracker definition. */
-export type StateOf<D> = D extends TrackerDef<infer S> ? S : never;
-
 /** Shared lifecycle hooks for move and game tracker definitions. */
 export interface TrackerDefBase<S = unknown, O = unknown> {
     readonly id: string;
     readonly kind: 'move' | 'game';
     /** Module URL for worker-side dynamic import of custom trackers (multithreaded only). */
     readonly workerModule?: string;
-    /** Plain options cloned to workers before `init`. */
-    readonly options?: O;
     init(options?: O): S;
     /**
      * Aggregate worker batch state into the main-thread state.
@@ -37,19 +32,42 @@ export interface GameTrackerDef<S = unknown, O = unknown> extends TrackerDefBase
     track(state: S, game: ParsedGame): void;
 }
 
-/** Any tracker definition passed to {@link AnalyzeOptions.trackers}. */
+/** Any tracker definition (behavior + identity; no live state). */
 export type TrackerDef<S = unknown, O = unknown> = MoveTrackerDef<S, O> | GameTrackerDef<S, O>;
 
-/** Plain state snapshot sent worker → main at pool drain. */
-export interface TrackerSnapshot {
-    id: string;
-    state: unknown;
+/**
+ * Stateful handle returned by a {@link TrackerFactory}.
+ * Pass instances to `analyzePGN`; read accumulated results from {@link state}.
+ */
+export interface TrackerInstance<
+    S = unknown,
+    O = unknown,
+    D extends TrackerDef<S, O> = TrackerDef<S, O>,
+> {
+    readonly def: D;
+    /** Accumulated state — mutated in place during analysis. Must be a non-null object. */
+    readonly state: S;
+    /** Options passed to the factory (cloned to workers before `init`). */
+    readonly options?: O;
 }
 
-/** One tracker definition plus its accumulated state in an {@link AnalyzeRunResult}. */
-export interface AnalyzeTrackerResult<D extends TrackerDef = TrackerDef> {
-    tracker: D;
-    state: StateOf<D>;
+/**
+ * Callable that creates a {@link TrackerInstance}.
+ * Carries a non-enumerable {@link def} so workers can resolve custom modules via `import.meta.url`.
+ */
+export interface TrackerFactory<
+    S = unknown,
+    O = unknown,
+    D extends TrackerDef<S, O> = TrackerDef<S, O>,
+> {
+    (options?: O): TrackerInstance<S, O, D>;
+    readonly def: D;
+}
+
+/** Plain state snapshot sent worker → main at pool drain (keyed by run-local index). */
+export interface TrackerSnapshot {
+    index: number;
+    state: unknown;
 }
 
 /** 8×8 numeric grid plus value range for rendering. */
@@ -59,13 +77,10 @@ export interface HeatmapData {
     max: number;
 }
 
-/** Arguments passed to built-in and custom heatmap analysis functions. */
-export interface HeatmapAnalysisArgs<T = unknown> {
+/** Signature for built-in and custom heatmap preset functions. */
+export type HeatmapAnalysisFunc<T = unknown> = (args: {
     /** Tracker state being visualized. */
     data: T;
     /** Square being evaluated in the current cell. */
     loopSquare: SquareData;
-}
-
-/** Signature for built-in and custom heatmap preset functions. */
-export type HeatmapAnalysisFunc<T = unknown> = (args: HeatmapAnalysisArgs<T>) => number;
+}) => number;

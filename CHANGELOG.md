@@ -9,7 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Tracker API (breaking):** Built-ins are camelCase factories — `tileTracker()`, `pieceTracker()`, `gameTracker()` — that return `TrackerInstance` handles. Pass instances to `analyzePGN`; read accumulated stats from `instance.state` (typed). Multi-run cohorts need distinct instances. `defineGameTracker` / `defineMoveTracker` return a factory; default-export that factory for MT. Options are passed to the factory call (`myTracker({ minElo: 2000 })`), not stored on the definition — workers import the factory and call it with those options. Worker merge snapshots are keyed by run-local **index** (`TrackerSnapshot { index, state }`), so two instances of the same tracker id in one run merge correctly. The same instance may accumulate across separate `analyzePGN` calls; reusing it twice in one call (or while another call is in flight) throws.
 - **Heatmaps:** Scoped presets are factories — e.g. `TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' })` and `TILE_OCC_BY_PIECE('e4')` — instead of passing `{ square }` to `generateHeatmap`. Piece-scoped presets take a `HeatmapPieceRef` (`{ color, name }` with starting-piece names like `Qd`, `Nb`, `Pa`). Dropped `GenerateHeatmapOptions` and `refSquare` from `HeatmapAnalysisArgs`; close over scope in custom functions.
+
+### Removed
+
+- **`getTrackerState`** — use `instance.state` on the handle you created.
+- **`AnalyzeTrackerResult`** — replaced by `TrackerInstance` (internal; not a public export).
+- **`AnalyzeRunResult.trackers`** — result runs hold per-cohort `gameCount` / `moveCount` only; tracker state lives on the instances you passed in.
+- **PascalCase built-in exports** `TileTracker` / `PieceTracker` / `GameTracker` — use `tileTracker` / `pieceTracker` / `gameTracker` and call them.
+- Passing bare definitions / singletons to `analyzePGN` — must call the factory first.
+- Public type exports trimmed: dropped `StateOf`, `TrackerDef` / `MoveTrackerDef` / `GameTrackerDef`, `TrackerFactory` / `TrackerInstance`, `HeatmapAnalysisArgs`, `SquareData`, `GameFilter`, `AnalyzeRun`, `AnalyzeRunResult`, and `WorkerOptions` from the package entry points (still used internally; prefer `AnalyzeOptions` / `AnalyzeResult` and built-in `*TrackerState` types).
+
+### Migration
+
+```ts
+// before
+import { TileTracker, generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
+const result = await analyzePGN(path, { trackers: [TileTracker] });
+const { state } = result.runs[0].trackers[0];
+// or: getTrackerState(result, TileTracker)
+
+// after
+import { tileTracker, generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
+const tiles = tileTracker();
+await analyzePGN(path, { trackers: [tiles] });
+generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
+```
+
+Custom trackers: default-export the factory; pass options at call time:
+
+```ts
+export default defineGameTracker({ id: 'MyTracker', workerModule: import.meta.url, init: (options?) => ({ ... }), track, merge });
+const t = myTracker({ minElo: 2000 });
+```
 
 ## [4.0.0-alpha.3] - 2026-08-02
 

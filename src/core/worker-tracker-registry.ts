@@ -2,9 +2,9 @@ import assert from 'node:assert';
 
 import { TrackerHost } from '#core/tracker-host';
 import { BUILTIN_TRACKER_FACTORIES } from '#trackers/builtin-registry';
-import { assertTrackerDef } from '#trackers/define-tracker';
+import { assertTrackerFactory } from '#trackers/define-tracker';
 import type { GameProcessorAnalysisConfig } from '#types/analysis-runtime';
-import type { TrackerDef } from '#types/tracker';
+import type { TrackerFactory, TrackerInstance } from '#types/tracker';
 import type { WorkerInitData } from '#types/worker';
 
 /**
@@ -13,10 +13,10 @@ import type { WorkerInitData } from '#types/worker';
  * Initialized once from `workerData` ({@link WorkerInitData}). Custom tracker modules
  * are dynamically imported at startup; built-ins are registered by stable id.
  * {@link cfgCache} holds reused tracker hosts — batch counters reset each dispatch
- * instead of reconstructing (important for {@link TileTracker} grid cost).
+ * instead of reconstructing (important for {@link tileTracker} grid cost).
  */
 
-const TrackerFactories: Record<string, () => TrackerDef> = { ...BUILTIN_TRACKER_FACTORIES };
+const TrackerFactories: Record<string, TrackerFactory> = { ...BUILTIN_TRACKER_FACTORIES };
 
 /** Reused analysis configs indexed by `idxConfig` from incoming batch messages. */
 const cfgCache: GameProcessorAnalysisConfig[] = [];
@@ -26,31 +26,24 @@ function hasDefaultExport(module: unknown): module is { default: unknown } {
     return typeof module === 'object' && module !== null && 'default' in module;
 }
 
-/** Normalize a default export into a tracker definition (factory object only). */
-function normalizeDefaultExport(value: unknown): TrackerDef {
-    if (typeof value === 'function') {
-        throw new Error(
-            'Custom tracker module must default-export a tracker definition object (from defineGameTracker / defineMoveTracker), not a class or function',
-        );
-    }
-    assertTrackerDef(value);
+/** Normalize a default export into a tracker factory. */
+function normalizeDefaultExport(value: unknown): TrackerFactory {
+    assertTrackerFactory(value);
     return value;
 }
 
-function createTrackerDef(id: string, options: unknown): TrackerDef {
+function createTrackerInstance(id: string, options: unknown): TrackerInstance {
     const factory = TrackerFactories[id];
     assert(factory, `Unknown tracker "${id}"`);
 
-    const def = factory();
-    if (def.id !== id) {
-        throw new Error(`Tracker factory for "${id}" returned definition with id "${def.id}"`);
+    const instance = factory(options);
+    if (instance.def.id !== id) {
+        throw new Error(
+            `Tracker factory for "${id}" returned definition with id "${instance.def.id}"`,
+        );
     }
 
-    if (options !== undefined) {
-        Object.assign(def, { options });
-    }
-
-    return def;
+    return instance;
 }
 
 /**
@@ -85,17 +78,17 @@ async function loadCustomTrackers(initData: WorkerInitData | undefined): Promise
 
                 if (!hasDefaultExport(customTracker)) {
                     throw new Error(
-                        `Custom tracker "${tracker.id}" module must default-export a tracker definition object`,
+                        `Custom tracker "${tracker.id}" module must default-export a tracker factory`,
                     );
                 }
 
-                const def = normalizeDefaultExport(customTracker.default);
-                if (def.id !== tracker.id) {
+                const factory = normalizeDefaultExport(customTracker.default);
+                if (factory.def.id !== tracker.id) {
                     throw new Error(
-                        `Custom tracker "${tracker.id}" default export has mismatched id "${def.id}"`,
+                        `Custom tracker "${tracker.id}" default export has mismatched id "${factory.def.id}"`,
                     );
                 }
-                TrackerFactories[tracker.id] = () => normalizeDefaultExport(customTracker.default);
+                TrackerFactories[tracker.id] = factory;
             }
         }
     }
@@ -117,10 +110,12 @@ function createAnalysisCfg(
         };
     }
 
-    const defs = trackerData.map((tracker) => createTrackerDef(tracker.id, tracker.options));
+    const instances = trackerData.map((tracker) =>
+        createTrackerInstance(tracker.id, tracker.options),
+    );
 
     return {
-        trackerHost: new TrackerHost(defs),
+        trackerHost: new TrackerHost(instances),
         processedMoves: 0,
         processedGames: 0,
         skippedGames: 0,

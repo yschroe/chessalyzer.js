@@ -17,7 +17,7 @@ import type { RuntimeTileGrid, TileGrid } from '#trackers/tile/tile-tracker-type
 import type { Action } from '#types/actions';
 import type { MoveCoords } from '#types/game';
 import type { PlayerColor } from '#types/tokens';
-import type { MoveTrackerDef } from '#types/tracker';
+import type { MoveTrackerDef, TrackerFactory } from '#types/tracker';
 
 /** Public TileTracker result: square counters and total move count (no per-game scratch). */
 export interface TileTrackerState {
@@ -140,7 +140,7 @@ function processCapture(
  * Maintains a virtual 8×8 grid ({@link StatsField}) parallel to the board replay.
  * Grid allocation/reset/merge lives in `./tile-grid`.
  */
-const tileTrackerDef = defineMoveTracker<TileTrackerRuntimeState>({
+const tileTrackerFactory = defineMoveTracker<TileTrackerRuntimeState>({
     id: 'TileTracker',
 
     init: () => ({
@@ -209,5 +209,10 @@ const tileTrackerDef = defineMoveTracker<TileTrackerRuntimeState>({
     },
 });
 
-/** Public tracker definition — result state is typed without runtime scratch fields. */
-export const TileTracker: MoveTrackerDef<TileTrackerState> = tileTrackerDef;
+/** Public tracker factory — result state is typed without runtime scratch fields. */
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- public state omits runtime scratch fields
+export const tileTracker = tileTrackerFactory as TrackerFactory<
+    TileTrackerState,
+    unknown,
+    MoveTrackerDef<TileTrackerState>
+>;
