@@ -1,11 +1,15 @@
+import type { OpenUnion } from '#types/open-union';
+
 /**
  * Board replay mode for one game (string discriminant — no allocations).
- * Union is open — new modes may be added without a major version bump.
+ * Known modes:
  * - `skip` — no board replay (PGN parse + game trackers + counts only)
  * - `board` — SAN decode + apply on board ({@link SanApplier}); no {@link Action} objects
  * - `actions` — SAN decode + {@link Action}[] for move trackers ({@link SanDecoder})
+ *
+ * Additional string modes may be added in future releases.
  */
-export type ReplayMode = 'skip' | 'board' | 'actions';
+export type ReplayMode = OpenUnion<'skip' | 'board' | 'actions'>;
 
 /**
  * Resolve replay mode from tracker presence.

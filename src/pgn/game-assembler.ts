@@ -1,6 +1,6 @@
+import { isGameResult } from '#pgn/game-result';
 import { extractGameResult, extractMoves, parseHeaderTag, stripComments } from '#pgn/movetext';
 import type { AssembledGame } from '#types/parse-pgn';
-import { isGameResult } from '#types/parse-pgn';
 
 export interface GameAssemblerOptions {
     parseHeaders: boolean;

@@ -73,7 +73,8 @@ function manifestAnalyzeOptions(
 ): AnalyzeOptions | undefined {
     if (!policy || policy === 'manual') return undefined;
     const { workers: _workers, ...rest } = policy;
-    return Object.keys(rest).length > 0 ? rest : undefined;
+    if (Object.keys(rest).length === 0) return undefined;
+    return { workers: false, ...rest };
 }
 
 const existing = await loadExistingManifest();

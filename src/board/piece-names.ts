@@ -1,5 +1,6 @@
 import { isBoardIndex, type BoardCoord } from '#board/board-coords';
 import type { ChessPiece } from '#types/game';
+import type { PromotionToken } from '#types/tokens';
 
 /**
  * Canonical starting-position piece names used across board replay, tile tracking,
@@ -14,6 +15,25 @@ export const PAWN_TEMPLATE = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'] as
 
 /** Starting back-rank piece names by file: Ra, Nb, Bc, Qd, Ke, Bf, Ng, Rh. */
 export const PIECE_TEMPLATE = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'] as const;
+
+/** Starting-position piece names (`Pa`…`Ph`, `Ra`…`Rh`). */
+export type Piece = (typeof PAWN_TEMPLATE)[number] | (typeof PIECE_TEMPLATE)[number];
+
+/**
+ * Internal name assigned to a promoted pawn on the board replay path (`Q17`, `R25`, …).
+ * Format: promotion letter (R/N/B/Q) + numeric tile index.
+ */
+export type PromotedPieceName = `${PromotionToken}${number}`;
+
+/** Starting or promoted piece identity returned by board replay ({@link MoveAction.piece}, captures, …). */
+export type BoardPieceName = Piece | PromotedPieceName;
+
+const promotedPieceNameRe = /^[RNBQ]\d+$/;
+
+/** True when `name` matches the promoted-pawn naming scheme from {@link ChessBoard.promotePiece}. */
+export function isPromotedPieceName(name: string): name is PromotedPieceName {
+    return promotedPieceNameRe.test(name);
+}
 
 /**
  * Return the standard starting piece on `coords`, or null for empty ranks.

@@ -1,11 +1,16 @@
 import { squareToCoords } from '#board/board-coords';
 import type { BoardCoord } from '#board/board-coords';
 import type { MutableBoardCoord } from '#board/board-coords';
-import { PAWN_TEMPLATE, PIECE_TEMPLATE } from '#board/piece-names';
+import {
+    PAWN_TEMPLATE,
+    PIECE_TEMPLATE,
+    type BoardPieceName,
+    type PromotedPieceName,
+} from '#board/piece-names';
 import PiecePositions from '#board/piece-positions';
 import type { Action, MoveAction, CaptureAction, PromoteAction } from '#types/actions';
 import type { ChessPiece } from '#types/game';
-import type { PieceToken, PlayerColor } from '#types/tokens';
+import type { PieceToken, PlayerColor, PromotionToken } from '#types/tokens';
 
 /** Bit mask for the color of a piece. */
 const COLOR_BIT_MASK = 0b10000000;
@@ -44,7 +49,7 @@ class ChessBoard {
     ]);
 
     /** Index → piece name for standard pieces (index 0 unused). Derived from the starting-position templates. */
-    private static pieceLookupList: ReadonlyArray<string | null> = [
+    private static pieceLookupList: ReadonlyArray<BoardPieceName | null> = [
         null,
         ...PIECE_TEMPLATE,
         ...PAWN_TEMPLATE,
@@ -54,8 +59,8 @@ class ChessBoard {
     private pieces: { w: PiecePositions; b: PiecePositions };
     /** Names for promoted pawns; indexed by (pieceIdx - pieceLookupList.length - 1). */
     private promotedPieces: {
-        w: string[];
-        b: string[];
+        w: BoardPieceName[];
+        b: BoardPieceName[];
     };
 
     constructor() {
@@ -71,7 +76,7 @@ class ChessBoard {
     }
 
     /** Hot-path helper: piece name only, no object allocation. */
-    getPieceNameOnCoords(coords: BoardCoord): string | null {
+    getPieceNameOnCoords(coords: BoardCoord): BoardPieceName | null {
         return this.getPieceNameAt(coords[0], coords[1]);
     }
 
@@ -89,7 +94,7 @@ class ChessBoard {
         return idx >= 9 && idx <= 16;
     }
 
-    getPieceNameAt(row: number, col: number): string | null {
+    getPieceNameAt(row: number, col: number): BoardPieceName | null {
         const pieceNumber = this.tiles[row * 8 + col]!;
         if (pieceNumber === 0) return null;
 
@@ -198,14 +203,14 @@ class ChessBoard {
      * Replace the pawn on `on` with a promoted piece.
      * Assigns a new tile index beyond the standard lookup table and records the name.
      */
-    promotePiece(player: PlayerColor, on: BoardCoord, to: string): void {
+    promotePiece(player: PlayerColor, on: BoardCoord, to: PromotionToken): void {
         const onIdx = on[0] * 8 + on[1];
 
         const pieceNumber =
             (player === 'w' ? 0b00000000 : COLOR_BIT_MASK) |
             (this.promotedPieces[player].length + ChessBoard.pieceLookupList.length + 1);
 
-        const piecename = `${to}${pieceNumber}`;
+        const piecename: PromotedPieceName = `${to}${pieceNumber}`;
 
         this.promotedPieces[player].push(piecename);
         this.tiles[onIdx] = pieceNumber;

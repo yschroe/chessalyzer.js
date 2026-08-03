@@ -1,9 +1,9 @@
+import type { GameProcessorAnalysisConfigFull } from '#core/analysis-runtime';
 import { TrackerHost } from '#core/tracker-host';
 import { resolveEffectiveReplayMode } from '#replay/replay-mode';
 import { BUILTIN_TRACKER_IDS } from '#trackers/builtin-registry';
 import { assertMultithreadTrackerDef, assertTrackerInstance } from '#trackers/define-tracker';
 import type { AnalyzeOptions, AnalyzeRun, WorkerOptions } from '#types/analysis';
-import type { GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
 import type { TrackerInstance } from '#types/tracker';
 
 /** Fully normalized `analyzePGN` inputs: per-run processor state plus path-selection fields. */
@@ -49,18 +49,13 @@ function assertFilterRequiresSingleThreaded(
 }
 
 function assertNoConflictingRunFields(opts: AnalyzeOptions): void {
-    const extra = opts as AnalyzeOptions & {
-        trackers?: unknown;
-        filter?: unknown;
-        maxGames?: unknown;
-    };
-    if (extra.trackers !== undefined) {
+    if (opts.trackers !== undefined) {
         throw new Error('Cannot set both runs and top-level trackers');
     }
-    if (extra.filter !== undefined) {
+    if (opts.filter !== undefined) {
         throw new Error('Cannot set both runs and top-level filter');
     }
-    if (extra.maxGames !== undefined) {
+    if (opts.maxGames !== undefined) {
         throw new Error('Cannot set both runs and top-level maxGames');
     }
 }
@@ -71,7 +66,7 @@ function resolveRuns(opts: AnalyzeOptions): AnalyzeRun[] {
         if (opts.runs.length === 0) {
             throw new Error('runs must contain at least one entry');
         }
-        return opts.runs;
+        return [...opts.runs];
     }
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- runs branch excluded above; remaining shape is the single-run sugar
     const single = opts as AnalyzeRun;

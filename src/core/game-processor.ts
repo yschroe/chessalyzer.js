@@ -3,6 +3,7 @@ import { availableParallelism } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 import type { NormalizedAnalyzeOptions } from '#core/analysis-config';
+import type { GameAndMoveCount, GameProcessorAnalysisConfigFull } from '#core/analysis-runtime';
 import {
     createWorkerResultHandler,
     finishTrackers,
@@ -12,10 +13,10 @@ import WorkerPool from '#core/worker-pool';
 import { readLines } from '#io/line-reader';
 import { readPgnChunks } from '#io/pgn-chunks';
 import { GameAssembler } from '#pgn/game-assembler';
+import { toParsedGame } from '#pgn/to-parsed-game';
 import GameReplayer from '#replay/game-replayer';
 import type { WorkerOptions } from '#types/analysis';
-import type { GameAndMoveCount, GameProcessorAnalysisConfigFull } from '#types/analysis-runtime';
-import { toParsedGame } from '#types/parse-pgn';
+import type { ParsedGame } from '#types/parse-pgn';
 import type { WorkerBatchTask, WorkerInitData, WorkerTaskConfigEntry } from '#types/worker';
 
 /** Path to the worker file. */
@@ -63,15 +64,24 @@ class GameProcessor {
             // Continue with the next line if no full game was read-in yet.
             if (!game) return;
 
-            for (const cfg of this.configs) {
-                if (cfg.isDone || cfg.config.filter?.(toParsedGame(game)) === false) continue;
+            let parsedGame: ParsedGame | undefined;
 
-                gameReplayer.processGame(
+            for (const cfg of this.configs) {
+                if (cfg.isDone) continue;
+
+                const filter = cfg.config.filter;
+                if (filter) {
+                    parsedGame ??= toParsedGame(game);
+                    if (!filter(parsedGame)) continue;
+                }
+
+                parsedGame = gameReplayer.processGame(
                     game,
                     cfg,
                     cfg.replayMode,
                     cfg.processedGames + cfg.skippedGames,
                     this.onError,
+                    parsedGame,
                 );
                 // maxGames caps attempts (accepted games), so skipped games count toward it.
                 if (cfg.processedGames + cfg.skippedGames >= cfg.config.maxGames) {

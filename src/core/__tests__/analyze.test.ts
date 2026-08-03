@@ -65,6 +65,29 @@ describe('analyzePGN result shape', () => {
         expect(result.errorsTruncated).toBeUndefined();
     });
 
+    it('includes per-run skippedGames and errors on AnalyzeRunResult', () => {
+        const err: ReplayError = {
+            code: 'replay',
+            gameIndex: 1,
+            reason: 'IllegalMove',
+            message: 'bad',
+        };
+        const result = buildAnalyzeResult(
+            [
+                { games: 2, moves: 40, skippedGames: 1, errors: [err] },
+                { games: 3, moves: 60 },
+            ],
+            10,
+        );
+
+        expect(result.runs[0]?.skippedGames).toBe(1);
+        expect(result.runs[0]?.errors).toEqual([err]);
+        expect(result.runs[1]?.skippedGames).toBeUndefined();
+        expect(result.runs[1]?.errors).toBeUndefined();
+        expect(result.skippedGames).toBe(1);
+        expect(result.errors).toEqual([err]);
+    });
+
     it('rejects concurrent reuse of an in-flight instance', async () => {
         const { normalizeAnalyzeOptions } = await import('#core/analysis-config');
         const tiles = tileTracker();

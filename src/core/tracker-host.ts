@@ -93,9 +93,7 @@ export class TrackerHost {
             const ordered = this.orderedEntries[snap.index];
             if (!ordered) continue;
             const { def, state } = ordered.entry;
-            if (def.merge) {
-                def.merge(state, snap.state);
-            }
+            def.merge(state, snap.state);
         }
     }
 }
