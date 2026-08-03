@@ -35,7 +35,17 @@ const result = await analyzePGN('<pathToPgnFile>', { onError: 'skip-game' });
 console.log(result.gameCount, result.skippedGames, result.errors, result.errorsTruncated);
 ```
 
-`result.errors` holds up to 100 typed replay errors (`gameIndex`, `moveIndex`, `san`, `reason`). If more than 100 games fail, `result.errorsTruncated` is `true`.
+`result.errors` holds up to 100 typed replay errors (`gameIndex`, `moveIndex`, `san`, `reason`) summed across all runs. If more than 100 games fail, `result.errorsTruncated` is `true`.
+
+With multiple `runs`, each `result.runs[i]` may also include `skippedGames` and `errors` for that cohort only (omitted when zero).
+
+```javascript
+for (const [i, run] of result.runs.entries()) {
+    if (run.errors?.length) {
+        console.log(`Run ${i}: ${run.skippedGames} skipped, ${run.errors.length} errors`);
+    }
+}
+```
 
 The library never logs to the console for you — you decide what to do with the errors.
 

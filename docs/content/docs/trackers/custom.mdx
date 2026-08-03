@@ -25,10 +25,57 @@ export default defineGameTracker({
         // fold worker state into main state
     },
     onFinish: (state) => {
-        // optional end-of-analysis hook
+        // optional end-of-analysis hook (main thread only)
     },
 });
 ```
+
+## `defineMoveTracker` walkthrough
+
+Move trackers receive decoded **`Action[]`** per half-move. They require `replay: 'actions'` (inferred automatically when you pass a move tracker to `analyzePGN`).
+
+This example counts half-moves and captures:
+
+```javascript
+// half-move-counter.ts
+import { defineMoveTracker } from 'chessalyzer/trackers';
+
+export default defineMoveTracker({
+    id: 'half-move-counter',
+    workerModule: import.meta.url,
+    init: () => ({ halfMoves: 0, captures: 0 }),
+    track: (state, actions) => {
+        state.halfMoves += 1;
+        for (const action of actions) {
+            if (action.type === 'capture') {
+                state.captures += 1;
+            }
+        }
+    },
+    merge: (state, other) => {
+        state.halfMoves += other.halfMoves;
+        state.captures += other.captures;
+    },
+});
+```
+
+```javascript
+import { analyzePGN } from 'chessalyzer';
+import halfMoveCounter from './half-move-counter.ts';
+
+const counter = halfMoveCounter();
+
+await analyzePGN(path, { trackers: [counter] });
+// replay: 'actions' is inferred from the move tracker
+
+console.log(counter.state.halfMoves, counter.state.captures);
+```
+
+**Action tips:**
+
+- `SanDecoder` reuses the same `Action` objects each half-move — copy fields you need to retain across moves.
+- **Castling** produces two move actions (king leg, then rook leg). The rook leg carries the same `castle` flag.
+- `action.piece` / `takingPiece` / `takenPiece` use `BoardPieceName` (`Pa`, `Nb`, … or promoted names like `Q17`). Use `isTrackedPiece()` when indexing starting-piece matrices.
 
 ## Usage
 
@@ -54,20 +101,30 @@ Custom trackers need:
 
 Workers import the factory and call it with the options you passed on the main thread. Options must be plain structured-cloneable data.
 
+### Hook lifecycle
+
+| Hook        | Single-threaded (`workers: false`)      | Worker thread (default pool)    | Main thread (default pool)                 |
+| ----------- | --------------------------------------- | ------------------------------- | ------------------------------------------ |
+| `init`      | At factory call                         | Worker calls factory + `init`   | Factory + `init` on your instances         |
+| `track`     | Each game / half-move                   | Each game / half-move on worker | —                                          |
+| `onGameEnd` | After each game (including replay skip) | Same on worker                  | —                                          |
+| `merge`     | —                                       | —                               | When worker snapshots arrive at pool drain |
+| `onFinish`  | Once at end of analysis                 | —                               | Once after all merges (`finishTrackers`)   |
+
+Under multithreading the main thread only drives **`merge`** and **`onFinish`** on your instances. Per-game hooks run on workers. State must be plain data (structured-cloneable) so snapshots can cross the worker boundary.
+
 ## Imports
 
 ```javascript
 import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
-import type { Action, Square } from 'chessalyzer/replay';
+import type { Action, BoardPieceName, Square } from 'chessalyzer/replay';
 import { defineGameTracker, defineMoveTracker } from 'chessalyzer/trackers';
 ```
 
 ## Notes
 
 - **`workerModule = import.meta.url`** requires an unbundled Node ≥ 22 or Bun runtime.
-- **Move trackers:** `SanDecoder` reuses an `Action[]` buffer each half-move. Copy fields you need to retain across moves.
-- **Castling** produces two move actions (king leg, then rook leg). The rook leg carries the same `castle` flag.
-- Override **`onGameEnd(state)`** for per-game flush hooks and **`onFinish(state)`** for end-of-analysis hooks.
+- Override **`onGameEnd(state)`** for per-game flush hooks and **`onFinish(state)`** for end-of-analysis hooks on the main thread.
 
 See [`manual-tests/custom-game-tracker.ts`](https://github.com/yschroe/chessalyzer/blob/main/manual-tests/custom-game-tracker.ts) for a minimal working example.
 

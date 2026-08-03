@@ -8,16 +8,18 @@ For what exists now, see [README.md](./README.md) and [AGENTS.md](./AGENTS.md).
 
 ## Current scope (baseline)
 
-Today the library is optimized for **batch analysis**, not general-purpose PGN I/O:
+Today the library is optimized for **batch analysis** on trusted Lichess-style PGN:
 
-- Single public entry point: `analyzePGN(path, options?)`
-- Internal pipeline: I/O (stream lines) → PGN parse → replay when needed → analyze (trackers)
+- **Analysis:** `analyzePGN(path, options?)` — full pipeline with optional trackers, filters (single-threaded), and worker pool (default).
+- **Parse-only:** `chessalyzer/pgn` exports `parsePGN` and `streamParsePGN` for headers + mainline SAN strings without board replay.
+- **Replay types:** `chessalyzer/replay` exports `Action`, `ReplayMode`, `BoardPieceName`, and board coordinate helpers.
+- Internal pipeline: I/O (stream lines or worker chunks) → PGN parse → replay when needed → analyze (trackers)
 - Count-only runs (no move trackers): board replay skipped by default; move counts come from the parsed SAN list length
 - When replay runs without move trackers: `SanApplier` (direct board mutation, no `Action` objects)
 - Tracker path: `SanDecoder` → `Action[]` → `board.applyActions()`
 - Assumes **standard chess from the initial position**, **valid Lichess-style PGN**, **mainline only** (parentheses stripped)
 
-There is no exported parse API, no configurable parsing mode, and no move legality validation beyond disambiguation heuristics.
+Filters are JavaScript predicates (`workers: false` only). There is no serializable filter DSL, no move legality validation beyond disambiguation heuristics, and no per-run `replay` / `onError` overrides yet.
 
 ---
 

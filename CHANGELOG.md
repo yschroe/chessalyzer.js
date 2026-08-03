@@ -7,9 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`chessalyzer/pgn`** — `parsePGN` and `streamParsePGN` for parse-only workflows (no board replay).
+- **Per-run error fields** — `AnalyzeRunResult.skippedGames` and `AnalyzeRunResult.errors` when `onError: 'skip-game'` (call-level totals unchanged).
+- **Piece identity on replay actions** — `BoardPieceName`, `PromotedPieceName`, and `isPromotedPieceName()`; `MoveAction.piece` and capture fields use `BoardPieceName | null` instead of `string | null`. Exported from `chessalyzer/replay` and `chessalyzer/trackers`.
+- **Built-in state sub-shapes** on `/trackers` — `TileStats`, `ColorBucket`, `TileCell`, `TileGrid`, `PieceStatsMap`.
+- **`HeatmapData`** re-exported from the main `chessalyzer` entry (alongside `printHeatmap`).
+
 ### Changed
 
 - **Tracker API (breaking):** Built-ins are camelCase factories — `tileTracker()`, `pieceTracker()`, `gameTracker()` — that return `TrackerInstance` handles. Pass instances to `analyzePGN`; read accumulated stats from `instance.state` (typed). Multi-run cohorts need distinct instances. `defineGameTracker` / `defineMoveTracker` return a factory; default-export that factory for MT. Options are passed to the factory call (`myTracker({ minElo: 2000 })`), not stored on the definition — workers import the factory and call it with those options. Worker merge snapshots are keyed by run-local **index** (`TrackerSnapshot { index, state }`), so two instances of the same tracker id in one run merge correctly. The same instance may accumulate across separate `analyzePGN` calls; reusing it twice in one call (or while another call is in flight) throws.
+- **`AnalyzeOptions` (breaking):** Discriminated threading union — `filter` requires `workers: false`; cannot combine `runs` with top-level `trackers` / `filter` / `maxGames`; `runs` must be non-empty. `replay` and `headers` are inferred from tracker instances where possible (`move` trackers require `replay: 'actions'`; game trackers require headers). `merge` is required on custom tracker definitions.
+- **Open union types:** `AnalyzeError.code`, `ReplayErrorReason`, and `ReplayMode` use `OpenUnion<T>` (`T | (string & {})`) so future literal values type-check without forcing `string`.
+- **Export hygiene:** `WorkerChunkOptions` replaces the internal `PgnChunkConfig` leak in public `.d.ts` files; runtime helpers moved out of `src/types/` (`toParsedGame`, `isGameResult`, `resolveStandaloneParseOptions` → `#pgn/`).
+- **Single-threaded filters:** `toParsedGame` is materialized at most once per game and shared across filtered runs and game trackers in the same pass (~14% faster on multi-run filtered ST benchmarks).
 - **Heatmaps:** Scoped presets are factories — e.g. `TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' })` and `TILE_OCC_BY_PIECE('e4')` — instead of passing `{ square }` to `generateHeatmap`. Piece-scoped presets take a `HeatmapPieceRef` (`{ color, name }` with starting-piece names like `Qd`, `Nb`, `Pa`). Dropped `GenerateHeatmapOptions` and `refSquare` from `HeatmapAnalysisArgs`; close over scope in custom functions.
 
 ### Removed
