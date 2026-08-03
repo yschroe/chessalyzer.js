@@ -92,34 +92,33 @@ export function normalizeAnalyzeOptions(options: AnalyzeOptions = {}): Normalize
     const multithreaded = multithreadCfg !== null;
     let needsHeaders = false;
     const configs: GameProcessorAnalysisConfigFull[] = [];
-    const seenInstances = new Set<object>();
+    const seenInstances = new Set<TrackerInstance>();
     const allInstances: TrackerInstance[] = [];
 
     // Build per-run configs, tracking instances and header requirements.
     for (const run of runs) {
         const instances: TrackerInstance[] = [];
-        if (run.trackers) {
-            for (const tracker of run.trackers) {
-                assertTrackerInstance(tracker);
-                if (seenInstances.has(tracker)) {
-                    throw new Error(
-                        `Tracker instance "${tracker.def.id}" appears more than once in the same analyzePGN call — pass distinct instances (e.g. tileTracker() twice)`,
-                    );
-                }
-                if (inFlightInstances.has(tracker)) {
-                    throw new Error(
-                        `Tracker instance "${tracker.def.id}" is already in use by another in-flight analyzePGN call`,
-                    );
-                }
-                seenInstances.add(tracker);
-                allInstances.push(tracker);
-                instances.push(tracker);
-                if (tracker.def.kind === 'game') {
-                    needsHeaders = true;
-                }
-                if (multithreaded) {
-                    assertMultithreadTrackerDef(tracker.def, BUILTIN_TRACKER_IDS);
-                }
+
+        for (const tracker of run.trackers ?? []) {
+            assertTrackerInstance(tracker);
+            if (seenInstances.has(tracker)) {
+                throw new Error(
+                    `Tracker instance "${tracker.def.id}" appears more than once in the same analyzePGN call — pass distinct instances (e.g. tileTracker() twice)`,
+                );
+            }
+            if (inFlightInstances.has(tracker)) {
+                throw new Error(
+                    `Tracker instance "${tracker.def.id}" is already in use by another in-flight analyzePGN call`,
+                );
+            }
+            seenInstances.add(tracker);
+            allInstances.push(tracker);
+            instances.push(tracker);
+            if (tracker.def.kind === 'game') {
+                needsHeaders = true;
+            }
+            if (multithreaded) {
+                assertMultithreadTrackerDef(tracker.def, BUILTIN_TRACKER_IDS);
             }
         }
 
