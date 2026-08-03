@@ -3,7 +3,7 @@
  * Positive paths and `@ts-expect-error` guards for illegal analyzePGN options.
  */
 import { analyzePGN } from '#core/analyze';
-import { defineGameTracker } from '#trackers/define-tracker';
+import { defineGameTracker, defineMoveTracker } from '#trackers/define-tracker';
 import { gameTracker } from '#trackers/game-tracker';
 import { tileTracker } from '#trackers/tile/tile-tracker';
 
@@ -33,6 +33,23 @@ async function validMultiRun() {
             { trackers: [whiteWins], filter: (game) => game.result === '1-0' },
         ],
     });
+}
+
+async function validMoveTracker() {
+    const counter = defineMoveTracker({
+        id: 'moves',
+        workerModule: import.meta.url,
+        init: () => ({ n: 0 }),
+        track: (s, actions) => {
+            s.n += actions.length;
+        },
+        merge: (s, o) => {
+            s.n += o.n;
+        },
+    })();
+    await analyzePGN('x', { trackers: [counter] });
+    const n: number = counter.state.n;
+    return n;
 }
 
 async function invalidConfigs() {
@@ -69,4 +86,5 @@ async function invalidConfigs() {
 void validSingleRun();
 void validFilteredRun();
 void validMultiRun();
+void validMoveTracker();
 void invalidConfigs();

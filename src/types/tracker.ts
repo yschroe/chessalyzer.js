@@ -9,11 +9,22 @@ export interface TrackerDefBase<S = unknown, O = unknown> {
     /** Module URL for worker-side dynamic import of custom trackers (multithreaded only). */
     readonly workerModule?: string;
     init(options?: O): S;
-    /** Aggregate worker batch state into the main-thread state. */
+    /**
+     * Aggregate worker batch state into the main-thread state (multithreaded only).
+     * Called on the main thread when worker snapshots are merged at pool drain.
+     */
     merge(state: S, other: S): void;
-    /** Optional per-game hook after each game (success or skip). */
+    /**
+     * Optional per-game hook after each game completes processing.
+     * Runs on the worker in multithreaded mode and on the main thread when `workers: false`.
+     * Still called when replay fails and `onError: 'skip-game'` skips the game (after `track` for that game).
+     */
     onGameEnd?(state: S): void;
-    /** Optional end-of-analysis hook (e.g. sort aggregated keys). */
+    /**
+     * Optional end-of-analysis hook (e.g. sort aggregated keys).
+     * Runs once on the main thread after all games are processed (`finishTrackers`).
+     * Not invoked on worker threads — use `merge` to fold worker-local finalization if needed.
+     */
     onFinish?(state: S): void;
 }
 

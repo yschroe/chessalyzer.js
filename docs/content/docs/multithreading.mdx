@@ -22,7 +22,7 @@ console.log(tiles.state.movesTotal);
 
 The `workers` option lets you tune the thread count and PGN chunk size; defaults are fine for most files.
 
-Workers accumulate tracker state locally and send plain `{ index, state }` snapshots back at pool drain. The main thread merges them into your instance handles.
+Workers accumulate tracker state locally and send plain `{ index, state }` snapshots back at pool drain. The main thread merges them with **`merge`** on your instances, then runs **`onFinish`** once. Per-game **`onGameEnd`** hooks run on workers, not on the main thread. See [Custom trackers](/docs/trackers/custom#hook-lifecycle).
 
 ## Single-threaded mode
 
