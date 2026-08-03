@@ -77,13 +77,10 @@ export interface HeatmapData {
     max: number;
 }
 
-/** Arguments passed to built-in and custom heatmap analysis functions. */
-interface HeatmapAnalysisArgs<T = unknown> {
+/** Signature for built-in and custom heatmap preset functions. */
+export type HeatmapAnalysisFunc<T = unknown> = (args: {
     /** Tracker state being visualized. */
     data: T;
     /** Square being evaluated in the current cell. */
     loopSquare: SquareData;
-}
-
-/** Signature for built-in and custom heatmap preset functions. */
-export type HeatmapAnalysisFunc<T = unknown> = (args: HeatmapAnalysisArgs<T>) => number;
+}) => number;
