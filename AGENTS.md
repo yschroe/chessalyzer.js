@@ -63,7 +63,7 @@ Do **not** mandate a `types.ts` file in every submodule — use one when a modul
 | **`src/replay/`**   | Replay policy and decode internals              | `ReplayMode` (internal), `PawnResolution`, `ReplayFailure`                                                                               |
 | **`src/pgn/`**      | Parse-only options resolved at the pgn boundary | `StandaloneParseOptions`, `resolveStandaloneParseOptions`                                                                                |
 | **`src/trackers/`** | Tracker state, heatmap API, built-in shapes     | `TileTrackerState`, `HeatmapData`, `HeatmapPieceRef`, `MoveCoords`                                                                       |
-| **`src/core/`**     | Analyze orchestration and worker plumbing       | `GameProcessorAnalysisConfig`, `WorkerMessage`, `TrackerSnapshot`, `NormalizedAnalyzeOptions`                                            |
+| **`src/core/`**     | Analyze orchestration and worker plumbing       | `GameProcessorConfig`, `AnalyzeRunState`, `WorkerMessage`, `TrackerSnapshot`, `NormalizedAnalyzeOptions`                                 |
 | **`src/io/`**       | Stream/chunk interfaces                         | `LineStream`, `PgnChunk` types (fully self-contained; no `#types` imports)                                                               |
 
 #### `src/types/` file map

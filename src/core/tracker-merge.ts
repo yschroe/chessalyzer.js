@@ -1,5 +1,5 @@
 import type { GameAndMoveCount } from '#core/analysis-runtime';
-import type { GameProcessorAnalysisConfigFull } from '#core/analysis-runtime';
+import type { GameProcessorConfig } from '#core/analysis-runtime';
 import { collectError } from '#core/analyze-errors';
 import type { WorkerBatchConfigResult, WorkerMessage } from '#core/worker-types';
 
@@ -7,10 +7,7 @@ import type { WorkerBatchConfigResult, WorkerMessage } from '#core/worker-types'
  * Merge one worker batch into the matching main-thread config (counters only).
  * Callers must already have rejected batch-level `result.error` / transport errors when aborting.
  */
-function mergeWorkerResult(
-    configs: GameProcessorAnalysisConfigFull[],
-    result: WorkerBatchConfigResult,
-): void {
+function mergeWorkerResult(configs: GameProcessorConfig[], result: WorkerBatchConfigResult): void {
     const { idxConfig, moves, games, skippedGames, errors } = result;
 
     const cfg = configs[idxConfig];
@@ -27,14 +24,14 @@ function mergeWorkerResult(
     }
 
     // maxGames caps attempts (accepted games), so skipped games count toward it.
-    if (cfg.processedGames + cfg.skippedGames >= cfg.config.maxGames) {
+    if (cfg.processedGames + cfg.skippedGames >= cfg.limits.maxGames) {
         cfg.isDone = true;
     }
 }
 
 /** Merge tracker state from a pool flush (counters were merged per batch). */
 export function mergeWorkerTrackerFlush(
-    configs: GameProcessorAnalysisConfigFull[],
+    configs: GameProcessorConfig[],
     result: WorkerMessage,
 ): void {
     if (result.error) throw new Error(result.error);
@@ -47,10 +44,7 @@ export function mergeWorkerTrackerFlush(
     }
 }
 
-function mergeWorkerMessage(
-    configs: GameProcessorAnalysisConfigFull[],
-    result: WorkerMessage,
-): void {
+function mergeWorkerMessage(configs: GameProcessorConfig[], result: WorkerMessage): void {
     for (const configResult of result.results) {
         // Flush payloads carry tracker state and are merged at pool drain, never per batch.
         if ('trackerSnapshots' in configResult) continue;
@@ -64,7 +58,7 @@ function mergeWorkerMessage(
  * failure is forwarded — late results after a fatal error are discarded.
  */
 export function createWorkerResultHandler(
-    configs: GameProcessorAnalysisConfigFull[],
+    configs: GameProcessorConfig[],
     onFatal: (err: Error) => void,
 ): { onResult: (result: WorkerMessage) => void; onError: (err: unknown) => void } {
     let fatal = false;
@@ -88,7 +82,7 @@ export function createWorkerResultHandler(
 }
 
 /** Invoke tracker finish hooks and return aggregate game/move counts. */
-export function finishTrackers(configs: GameProcessorAnalysisConfigFull[]): GameAndMoveCount[] {
+export function finishTrackers(configs: GameProcessorConfig[]): GameAndMoveCount[] {
     for (const { trackerHost } of configs) {
         trackerHost.onFinish();
     }

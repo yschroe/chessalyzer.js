@@ -20,7 +20,7 @@ function minimalChunkBytes(): Uint8Array {
 }
 
 const emptyInit = {
-    configs: [{ trackerData: [] as { id: string }[], replayMode: 'skip' as const }],
+    configs: [{ trackerSpecs: [] as { id: string }[], replayMode: 'skip' as const }],
 };
 
 async function runTaskWithTimeout(

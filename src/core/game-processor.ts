@@ -3,7 +3,7 @@ import { availableParallelism } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 import type { NormalizedAnalyzeOptions } from '#core/analysis-config';
-import type { GameAndMoveCount, GameProcessorAnalysisConfigFull } from '#core/analysis-runtime';
+import type { GameAndMoveCount, GameProcessorConfig } from '#core/analysis-runtime';
 import {
     createWorkerResultHandler,
     finishTrackers,
@@ -27,7 +27,7 @@ const WORKER_PATH = fileURLToPath(new URL('chess-worker.js', import.meta.url));
  * Config normalization and merge helpers live in sibling modules.
  */
 class GameProcessor {
-    configs: GameProcessorAnalysisConfigFull[];
+    configs: GameProcessorConfig[];
     parseHeaders: boolean;
     multithreadConfig: WorkerOptions | null;
     readonly onError: 'abort' | 'skip-game';
@@ -69,7 +69,7 @@ class GameProcessor {
             for (const cfg of this.configs) {
                 if (cfg.isDone) continue;
 
-                const filter = cfg.config.filter;
+                const filter = cfg.limits.filter;
                 if (filter) {
                     parsedGame ??= toParsedGame(game);
                     if (!filter(parsedGame)) continue;
@@ -84,7 +84,7 @@ class GameProcessor {
                     parsedGame,
                 );
                 // maxGames caps attempts (accepted games), so skipped games count toward it.
-                if (cfg.processedGames + cfg.skippedGames >= cfg.config.maxGames) {
+                if (cfg.processedGames + cfg.skippedGames >= cfg.limits.maxGames) {
                     cfg.isDone = true;
                     if (this.configs.every((c) => c.isDone)) return false;
                 }
@@ -102,7 +102,7 @@ class GameProcessor {
 
         const workerInitData: WorkerInitData = {
             configs: this.configs.map((cfg) => ({
-                trackerData: cfg.trackerData ?? [],
+                trackerSpecs: cfg.trackerSpecs ?? [],
                 replayMode: cfg.replayMode,
             })),
             onError: this.onError,
@@ -129,10 +129,10 @@ class GameProcessor {
                         parseHeaders: this.parseHeaders,
                     };
 
-                    if (cfg.config.maxGames !== Infinity) {
+                    if (cfg.limits.maxGames !== Infinity) {
                         // maxGames caps attempts (accepted games), so skipped games count toward it.
                         const remaining =
-                            cfg.config.maxGames - (cfg.processedGames + cfg.skippedGames);
+                            cfg.limits.maxGames - (cfg.processedGames + cfg.skippedGames);
                         if (remaining <= 0) continue;
                         entry.remainingGames = remaining;
                     }

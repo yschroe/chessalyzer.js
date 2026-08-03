@@ -1,3 +1,4 @@
+import type { TrackerSpec } from '#core/analysis-runtime';
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
 
@@ -10,7 +11,7 @@ export interface TrackerSnapshot {
 /** One-time worker bootstrap: tracker ids, options, optional module paths. */
 export interface WorkerInitData {
     configs: {
-        trackerData: { id: string; module?: string; options?: unknown }[];
+        trackerSpecs: TrackerSpec[];
         replayMode: ReplayMode;
     }[];
     onError?: 'abort' | 'skip-game';

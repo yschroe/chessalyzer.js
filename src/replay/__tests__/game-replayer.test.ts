@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
 import type ChessBoard from '#board/chess-board';
-import type { GameProcessorAnalysisConfig } from '#core/analysis-runtime';
+import type { AnalyzeRunState } from '#core/analysis-runtime';
 import { TrackerHost } from '#core/tracker-host';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
@@ -13,7 +13,7 @@ import type { Action } from '#types/actions';
 import type { AssembledGame, GameResult } from '#types/parse-pgn';
 import { fixturePath } from '~/test/helpers/fixtures';
 
-function emptyCfg(): GameProcessorAnalysisConfig {
+function emptyCfg(): AnalyzeRunState {
     return {
         trackerHost: new TrackerHost([]),
         processedMoves: 0,

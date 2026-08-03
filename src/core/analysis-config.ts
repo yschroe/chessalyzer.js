@@ -1,4 +1,4 @@
-import type { GameProcessorAnalysisConfigFull } from '#core/analysis-runtime';
+import type { GameProcessorConfig } from '#core/analysis-runtime';
 import { TrackerHost } from '#core/tracker-host';
 import { resolveEffectiveReplayMode } from '#replay/replay-mode';
 import { BUILTIN_TRACKER_IDS } from '#trackers/builtin-registry';
@@ -8,7 +8,7 @@ import type { TrackerInstance } from '#types/tracker';
 
 /** Fully normalized `analyzePGN` inputs: per-run processor state plus path-selection fields. */
 export interface NormalizedAnalyzeOptions {
-    configs: GameProcessorAnalysisConfigFull[];
+    configs: GameProcessorConfig[];
     multithreadCfg: WorkerOptions | null;
     onError: 'abort' | 'skip-game';
     parseHeaders: boolean;
@@ -91,7 +91,7 @@ export function normalizeAnalyzeOptions(options: AnalyzeOptions = {}): Normalize
 
     const multithreaded = multithreadCfg !== null;
     let needsHeaders = false;
-    const configs: GameProcessorAnalysisConfigFull[] = [];
+    const configs: GameProcessorConfig[] = [];
     const seenInstances = new Set<TrackerInstance>();
     const allInstances: TrackerInstance[] = [];
 
@@ -122,7 +122,7 @@ export function normalizeAnalyzeOptions(options: AnalyzeOptions = {}): Normalize
             }
         }
 
-        const trackerData = multithreaded
+        const trackerSpecs = multithreaded
             ? instances.map((instance) => ({
                   id: instance.def.id,
                   module: instance.def.workerModule,
@@ -137,8 +137,8 @@ export function normalizeAnalyzeOptions(options: AnalyzeOptions = {}): Normalize
 
         configs.push({
             trackerHost: new TrackerHost(instances),
-            trackerData,
-            config: {
+            trackerSpecs,
+            limits: {
                 filter: run.filter,
                 maxGames: run.maxGames ?? Infinity,
             },
