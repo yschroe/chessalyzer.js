@@ -11,31 +11,40 @@ import { generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
 const { state } = result.runs[0].trackers[0];
 
 const heatmapData = generateHeatmap(state, TileHeatmapPresets.TILE_OCC_ALL);
-const pieceHeatmap = generateHeatmap(state, TileHeatmapPresets.TILE_OCC_BY_PIECE, {
-    square: 'a2',
-});
+const pieceHeatmap = generateHeatmap(
+    state,
+    TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' }),
+);
+const tileHeatmap = generateHeatmap(state, TileHeatmapPresets.TILE_OCC_BY_PIECE('e4'));
 ```
 
-Preset property access on the map autocompletes in TypeScript.
+Scoped presets are **factories**: call them with a piece or square to get an analysis function. Preset property access on the map autocompletes in TypeScript.
+
+## Piece identity
+
+Piece-scoped presets take a `HeatmapPieceRef`: `{ color, name }`.
+
+- `color`: `'w'` | `'b'`
+- `name`: starting-piece id — pawns `Pa`…`Ph`, back rank `Ra`, `Nb`, `Bc`, `Qd`, `Ke`, `Bf`, `Ng`, `Rh`
+
+Names encode **file**, not just piece type (`Nb` = knight that started on the b-file). Color is required because both sides share the same names.
 
 ## TileTracker presets
 
-| Short Name            | Description                                                  |
-| --------------------- | ------------------------------------------------------------ |
-| `TILE_OCC_ALL`        | How often each square had any piece on it (% of all moves)   |
-| `TILE_OCC_WHITE`      | Same, white pieces only                                      |
-| `TILE_OCC_BLACK`      | Same, black pieces only                                      |
-| `TILE_CAPTURE_COUNT`  | Count of captures on each square                             |
-| `TILE_OCC_BY_PIECE`   | Occupation by each piece; pass a square (e.g. `'a2'`)        |
-| `PIECE_MOVED_TO_TILE` | Where the piece starting on a square moved to; pass a square |
+| Short Name                   | Description                                                    |
+| ---------------------------- | -------------------------------------------------------------- |
+| `TILE_OCC_ALL`               | How often each square had any piece on it (% of all moves)     |
+| `TILE_OCC_WHITE`             | Same, white pieces only                                        |
+| `TILE_OCC_BLACK`             | Same, black pieces only                                        |
+| `TILE_CAPTURE_COUNT`         | Count of captures on each square                               |
+| `TILE_OCC_BY_PIECE(square)`  | Occupation of `square` by each starting piece (% of all moves) |
+| `PIECE_MOVED_TO_TILE(piece)` | Where `piece` moved to (move-target counts per tile)           |
 
 ## PieceTracker presets
 
-| Short Name          | Description                                                           |
-| ------------------- | --------------------------------------------------------------------- |
-| `PIECE_CAPTURED_BY` | How often the piece on a square was captured by others; pass a square |
-| `PIECE_CAPTURED`    | How often the piece on a square captured others; pass a square        |
-
-Tile-specific presets need a square argument (starting position of the piece).
+| Short Name                 | Description                                                    |
+| -------------------------- | -------------------------------------------------------------- |
+| `PIECE_CAPTURED_BY(piece)` | How often `piece` was captured by each opposing starting piece |
+| `PIECE_CAPTURED(piece)`    | How often `piece` captured each opposing starting piece        |
 
 For full control, see [Custom heatmap functions](/docs/heatmaps/custom-functions).

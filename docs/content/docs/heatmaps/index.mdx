@@ -26,4 +26,4 @@ printHeatmap(heatmapData);
 - **[Custom functions](/docs/heatmaps/custom-functions)** — write your own per-square calculation
 - **[Comparing analyses](/docs/comparing-analyses)** — `generateComparisonHeatmap(state, otherState, analysis)` for side-by-side cohorts
 
-Use `generateHeatmap(state, analysis, options?)` and `generateComparisonHeatmap(state, otherState, analysis, options?)` from `chessalyzer/trackers`. Pass a preset from `TileHeatmapPresets` / `PieceHeatmapPresets`, or any custom function with the same signature.
+Use `generateHeatmap(state, analysis)` and `generateComparisonHeatmap(state, otherState, analysis)` from `chessalyzer/trackers`. Pass a preset from `TileHeatmapPresets` / `PieceHeatmapPresets` (call factories for scoped ones), or any custom function with the same signature.
