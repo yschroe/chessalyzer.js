@@ -1,8 +1,8 @@
-import { PAWN_TEMPLATE, PIECE_TEMPLATE } from '#board/piece-names';
+import { PAWN_TEMPLATE, PIECE_TEMPLATE, type Piece } from '#board/piece-names';
 import type { PlayerColor } from '#types/tokens';
 
-/** Starting-position piece names (`Pa`…`Ph`, `Ra`…`Rh`), derived from the canonical templates. */
-export type Piece = (typeof PAWN_TEMPLATE)[number] | (typeof PIECE_TEMPLATE)[number];
+export type { BoardPieceName, Piece, PromotedPieceName } from '#board/piece-names';
+export { isPromotedPieceName } from '#board/piece-names';
 
 /**
  * Starting-position piece identity for piece-scoped heatmap presets.

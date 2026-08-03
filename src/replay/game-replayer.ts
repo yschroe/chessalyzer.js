@@ -90,22 +90,27 @@ class GameReplayer {
         let moveIndex = 0;
 
         try {
-            if (replayMode === 'actions') {
-                for (; moveIndex < moves.length; moveIndex += 1) {
-                    const san = moves[moveIndex];
-                    if (!san) continue;
-                    const currentMoveActions = this.sanDecoder.decodeSan(san);
-                    trackerHost.trackMoves(currentMoveActions);
-                    board.applyActions(currentMoveActions);
-                    this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
-                }
-            } else {
-                for (; moveIndex < moves.length; moveIndex += 1) {
-                    const san = moves[moveIndex];
-                    if (!san) continue;
-                    this.applier.apply(san);
-                    this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
-                }
+            switch (replayMode) {
+                case 'actions':
+                    for (; moveIndex < moves.length; moveIndex += 1) {
+                        const san = moves[moveIndex];
+                        if (!san) continue;
+                        const currentMoveActions = this.sanDecoder.decodeSan(san);
+                        trackerHost.trackMoves(currentMoveActions);
+                        board.applyActions(currentMoveActions);
+                        this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
+                    }
+                    break;
+                case 'board':
+                    for (; moveIndex < moves.length; moveIndex += 1) {
+                        const san = moves[moveIndex];
+                        if (!san) continue;
+                        this.applier.apply(san);
+                        this.ctx.activePlayer = this.ctx.activePlayer === 'w' ? 'b' : 'w';
+                    }
+                    break;
+                default:
+                    throw new Error(`Unknown replay mode: ${replayMode}`);
             }
         } catch (err) {
             if (process.env.CHESSALYZER_DEBUG_REPLAY) {

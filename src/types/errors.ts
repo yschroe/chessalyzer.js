@@ -1,15 +1,17 @@
+import type { OpenUnion } from '#types/open-union';
+
 export interface AnalyzeError {
-    /** Error category. Open union — new codes (e.g. `'parse'`) may be added without a major version bump. */
-    code: 'replay';
+    /** Error category. Known value `'replay'`; additional codes may appear in future releases. */
+    code: OpenUnion<'replay'>;
     message: string;
     cause?: unknown;
 }
 
 /**
  * Reason for a replay failure.
- * Union is open — new reasons may be added without a major version bump.
+ * Known values are listed; additional string reasons may appear in future releases.
  */
-export type ReplayErrorReason = 'IllegalMove' | 'UnknownToken';
+export type ReplayErrorReason = OpenUnion<'IllegalMove' | 'UnknownToken'>;
 
 export interface ReplayError extends AnalyzeError {
     code: 'replay';

@@ -1,6 +1,7 @@
 import { squareToCoords } from '#board/board-coords';
 import type SanContext from '#replay/san-context';
 import { resolveCastle, resolvePawnMove, resolvePieceMove } from '#replay/san-resolver';
+import { isPromotionToken } from '#types/tokens';
 
 /**
  * Apply one SAN on the board without building {@link Action} objects.
@@ -36,6 +37,9 @@ export default class SanApplier {
         board.moveByToken(player, 80 /* P */, ctx.fromBuf, r.to);
 
         if (r.promotesTo) {
+            if (!isPromotionToken(r.promotesTo)) {
+                throw new Error(`Unknown promotion piece in SAN: ${san}`);
+            }
             board.promotePiece(player, r.to, r.promotesTo);
         }
     }

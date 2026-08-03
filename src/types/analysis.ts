@@ -105,6 +105,10 @@ export interface AnalyzeRunResult {
     gameCount: number;
     /** Half-moves replayed or counted in this run. */
     moveCount: number;
+    /** Games skipped in this run when `onError: 'skip-game'`. Omitted when zero. */
+    skippedGames?: number;
+    /** Replay errors collected in this run when `onError: 'skip-game'`. Omitted when empty. */
+    errors?: AnalyzeError[];
 }
 
 /** Result from `analyzePGN`. Always contains one {@link AnalyzeRunResult} per run. */

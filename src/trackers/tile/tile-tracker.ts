@@ -6,7 +6,7 @@ import {
     type Square,
 } from '#board/board-coords';
 import { defineMoveTracker } from '#trackers/define-tracker';
-import { isTrackedPiece } from '#trackers/piece-types';
+import { isTrackedPiece, type BoardPieceName } from '#trackers/piece-types';
 import {
     createTileGrid,
     mergeCellStats,
@@ -70,7 +70,7 @@ function processMove(
     state: TileTrackerRuntimeState,
     move: MoveCoords,
     player: PlayerColor,
-    piece: string | null | undefined,
+    piece: BoardPieceName | null | undefined,
 ): void {
     const fromRow = squareRow(move.from);
     const fromCol = squareCol(move.from);
@@ -111,8 +111,8 @@ function processCapture(
     state: TileTrackerRuntimeState,
     pos: Square,
     player: PlayerColor,
-    takingPiece: string | null | undefined,
-    takenPiece: string | null | undefined,
+    takingPiece: BoardPieceName | null | undefined,
+    takenPiece: BoardPieceName | null | undefined,
 ): void {
     const cell = tileCellAt(state.tiles, pos);
     if (!cell) return;

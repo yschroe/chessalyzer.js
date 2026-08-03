@@ -78,10 +78,16 @@ export function buildAnalyzeResult(
     }[],
     durationMs: number,
 ): AnalyzeResult {
-    const runs: AnalyzeRunResult[] = counts.map(({ games, moves }) => ({
-        gameCount: games,
-        moveCount: moves,
-    }));
+    const runs: AnalyzeRunResult[] = counts.map(({ games, moves, skippedGames, errors }) => {
+        const run: AnalyzeRunResult = { gameCount: games, moveCount: moves };
+        if (skippedGames !== undefined && skippedGames > 0) {
+            run.skippedGames = skippedGames;
+        }
+        if (errors !== undefined && errors.length > 0) {
+            run.errors = errors;
+        }
+        return run;
+    });
 
     return { ...buildResultBase(counts, durationMs), runs };
 }
