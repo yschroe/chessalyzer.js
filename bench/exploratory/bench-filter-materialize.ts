@@ -9,35 +9,34 @@
  */
 import { analyzePGN } from '#core/analyze';
 import { gameTracker } from '#trackers/game-tracker';
+import type { ParsedGame } from '#types/parse-pgn';
 import { resolvePerfPgn } from '~/bench/lib/pgn-fixture';
 import { formatSeconds, runTimed } from '~/bench/lib/timing';
 
 const RUNS = Number(process.env.BENCH_RUNS ?? 3);
 const WARMUP = process.env.BENCH_WARMUP !== '0';
 
-const filters = [
-    (game: { result?: string }) => game.result === '1-0',
-    (game: { result?: string }) => game.result === '0-1',
-    (game: { result?: string }) => game.result === '1/2-1/2',
-    (game: { result?: string }) => game.result === '*',
-] as const;
-
 async function main(): Promise<void> {
     const { path } = await resolvePerfPgn();
     console.log(`PGN: ${path}`);
     console.log(`Runs per timed iteration: ${RUNS} (warmup ${WARMUP ? 'on' : 'off'})\n`);
 
-    const trackers = filters.map(() => gameTracker());
+    const white = gameTracker();
+    const black = gameTracker();
+    const draws = gameTracker();
+    const unknown = gameTracker();
 
     const timed = await runTimed(
         'multi-run filter (ST, game trackers)',
         async () => {
             const result = await analyzePGN(path, {
                 workers: false,
-                runs: filters.map((filter, i) => ({
-                    trackers: [trackers[i]!],
-                    filter,
-                })),
+                runs: [
+                    { trackers: [white], filter: (g: ParsedGame) => g.result === '1-0' },
+                    { trackers: [black], filter: (g: ParsedGame) => g.result === '0-1' },
+                    { trackers: [draws], filter: (g: ParsedGame) => g.result === '1/2-1/2' },
+                    { trackers: [unknown], filter: (g: ParsedGame) => g.result === '*' },
+                ],
             });
             return { games: result.gameCount, moves: result.moveCount };
         },
