@@ -72,7 +72,7 @@ function assertTrackerDefShape(tracker: object): asserts tracker is TrackerDef {
 }
 
 /** Runtime validation for tracker definitions. */
-export function assertTrackerDef(tracker: unknown): asserts tracker is TrackerDef {
+function assertTrackerDef(tracker: unknown): asserts tracker is TrackerDef {
     if (typeof tracker !== 'object' || tracker === null) {
         throw new Error('Tracker definition must be an object');
     }
