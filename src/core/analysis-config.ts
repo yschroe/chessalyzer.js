@@ -49,18 +49,13 @@ function assertFilterRequiresSingleThreaded(
 }
 
 function assertNoConflictingRunFields(opts: AnalyzeOptions): void {
-    const extra = opts as AnalyzeOptions & {
-        trackers?: unknown;
-        filter?: unknown;
-        maxGames?: unknown;
-    };
-    if (extra.trackers !== undefined) {
+    if (opts.trackers !== undefined) {
         throw new Error('Cannot set both runs and top-level trackers');
     }
-    if (extra.filter !== undefined) {
+    if (opts.filter !== undefined) {
         throw new Error('Cannot set both runs and top-level filter');
     }
-    if (extra.maxGames !== undefined) {
+    if (opts.maxGames !== undefined) {
         throw new Error('Cannot set both runs and top-level maxGames');
     }
 }

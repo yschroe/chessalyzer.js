@@ -81,11 +81,14 @@ describe('Fixtures', () => {
         });
 
         it('rejects filter without workers: false', () => {
-            return expect(
-                analyzePGN(fixturePath('results-mix'), {
-                    filter: (game: ParsedGame) => game.result === '1-0',
-                } as unknown as import('chessalyzer').AnalyzeOptions),
-            ).rejects.toThrow('filter requires workers: false');
+            const options = {
+                filter: (game: ParsedGame) => game.result === '1-0',
+            };
+
+            // @ts-expect-error - test case
+            expect(analyzePGN(fixturePath('results-mix'), options)).rejects.toThrow(
+                'filter requires workers: false',
+            );
         });
 
         it('combines filter and count (single-threaded)', async () => {
