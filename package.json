@@ -46,6 +46,10 @@
             "types": "./lib/pgn/index.d.ts",
             "import": "./lib/pgn/index.js"
         },
+        "./board": {
+            "types": "./lib/board/index.d.ts",
+            "import": "./lib/board/index.js"
+        },
         "./replay": {
             "types": "./lib/replay/index.d.ts",
             "import": "./lib/replay/index.js"

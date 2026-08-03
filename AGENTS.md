@@ -8,7 +8,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 **Main entry points:** `analyzePGN(path, options?)` in [`src/core/analyze.ts`](src/core/analyze.ts) (full pipeline); `parsePGN(path, options?)` in [`src/pgn/parse-pgn.ts`](src/pgn/parse-pgn.ts) via `chessalyzer/pgn`; trackers via `chessalyzer/trackers`.
 
-**Public exports:** Keep [`src/index.ts`](src/index.ts) and [`src/trackers/index.ts`](src/trackers/index.ts) lean. Only re-export values and types users actually name in application code (e.g. `AnalyzeResult`, `TileTrackerState`, `HeatmapData`). Prefer TypeScript inference for nested option/result shapes (`AnalyzeRun`, `GameFilter`, …). Do not export internal authoring or plumbing types (`TrackerDef`, `TrackerFactory`, `TrackerInstance`, `StateOf`, …) — they clutter autocomplete and suggest a wider API than intended.
+**Public exports:** Keep public barrels lean — each subpath exports only concepts that module owns. [`src/index.ts`](src/index.ts) is the analyze entry (`analyzePGN`, `printHeatmap`, error helpers, `AnalyzeOptions` / `AnalyzeResult`). [`src/board/index.ts`](src/board/index.ts) → `chessalyzer/board` (coords, piece names). [`src/replay/index.ts`](src/replay/index.ts) → `chessalyzer/replay` (action types only). [`src/pgn/index.ts`](src/pgn/index.ts) and [`src/trackers/index.ts`](src/trackers/index.ts) export their own runtime + types. Do not re-export another module's concepts from the wrong barrel (e.g. board types via `/replay`). [`src/trackers/index.ts`](src/trackers/index.ts) may dual-export piece-name aliases used by tracker APIs (`Piece`, `isTrackedPiece`). Prefer TypeScript inference for nested option shapes (`AnalyzeRun`, `GameFilter`, …). Do not export internal plumbing (`TrackerDef`, `TrackerFactory`, `TrackerInstance`, `ReplayMode`, …).
 
 **Pipeline (high level):**
 
@@ -25,7 +25,8 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 | `src/core/`          | Orchestration (`GameProcessor`, worker pool, config/merge helpers, `analysis-runtime`, `worker-types`)                      |
 | `src/io/`            | Streaming I/O (`readLines`, `readPgnChunks`, worker chunk bytes)                                                            |
 | `src/pgn/`           | PGN parse (`GameAssembler`, `movetext`, `parsePGN`)                                                                         |
-| `src/replay/`        | Replay — SAN decode + apply (`GameReplayer`, `ReplayMode`, `SanApplier`, `SanDecoder`)                                      |
+| `src/board/`         | Board coords, piece names (`chessalyzer/board` public barrel)                                                               |
+| `src/replay/`        | Replay — SAN decode + apply (`GameReplayer`, `ReplayMode` internal, `SanApplier`, `SanDecoder`)                             |
 | `src/trackers/`      | Built-in and base tracker implementations                                                                                   |
 | `bench/`             | Callable performance benchmarks (`bench-*.ts`)                                                                              |
 | `bench/atomic/`      | Atomic micro-benchmark implementations                                                                                      |
@@ -45,7 +46,7 @@ Use a **hybrid** layout — not a single central types folder for everything:
 2. **Keep in `src/types/`** only **shared pipeline contracts** used by two or more peer stages without one owning the other (`AnalyzeOptions`, `ParsedGame`/`AssembledGame`, `Action`, tracker authoring defs, errors, tokens).
 3. **Do not** put module-private plumbing in `src/types/` (worker IPC, processor runtime, heatmap types, tile `MoveCoords`, board `ChessPiece`).
 
-Public barrels (`src/index.ts`, `chessalyzer/pgn`, `/replay`, `/trackers`) re-export user-facing names; internal contracts stay off the public surface per **Public exports** above.
+Public barrels (`src/index.ts`, `chessalyzer/board`, `/pgn`, `/replay`, `/trackers`) re-export user-facing names from the owning module; internal contracts stay off the public surface per **Public exports** above.
 
 ### Execution paths (`GameProcessor`)
 

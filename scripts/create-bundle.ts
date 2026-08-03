@@ -9,6 +9,7 @@ const result = await Bun.build({
         './src/index.ts',
         './src/chess-worker.ts',
         './src/pgn/index.ts',
+        './src/board/index.ts',
         './src/replay/index.ts',
         './src/trackers/index.ts',
     ],

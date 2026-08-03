@@ -12,7 +12,8 @@ Today the library is optimized for **batch analysis** on trusted Lichess-style P
 
 - **Analysis:** `analyzePGN(path, options?)` — full pipeline with optional trackers, filters (single-threaded), and worker pool (default).
 - **Parse-only:** `chessalyzer/pgn` exports `parsePGN` and `streamParsePGN` for headers + mainline SAN strings without board replay.
-- **Replay types:** `chessalyzer/replay` exports `Action`, `ReplayMode`, `BoardPieceName`, and board coordinate helpers.
+- **Board:** `chessalyzer/board` exports `Square`, coord helpers, and piece-name types.
+- **Replay types:** `chessalyzer/replay` exports `Action` and related action variants for move trackers.
 - Internal pipeline: I/O (stream lines or worker chunks) → PGN parse → replay when needed → analyze (trackers)
 - Count-only runs (no move trackers): board replay skipped by default; move counts come from the parsed SAN list length
 - When replay runs without move trackers: `SanApplier` (direct board mutation, no `Action` objects)
@@ -227,7 +228,7 @@ This keeps v4 honesty (no pretending JS filters are worker-native) while leaving
 
 ## Ecosystem & packaging
 
-- **Subpath exports** — `chessalyzer/io`, `/pgn`, `/replay`, `/trackers` (shipped); optional `/board` later for advanced users without bloating the default import
+- **Subpath exports** — `chessalyzer/io`, `/pgn`, `/replay`, `/trackers` (shipped); **`chessalyzer/board`** for coords and piece identity
 - **Browser build** — WASM or lightweight bundle if parse-only mode exists (no `worker_threads`)
 - **Write PGN** — out of scope today; only mentioned if parse tree exists
 

@@ -117,7 +117,8 @@ Under multithreading the main thread only drives **`merge`** and **`onFinish`** 
 
 ```javascript
 import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
-import type { Action, BoardPieceName, Square } from 'chessalyzer/replay';
+import type { Action } from 'chessalyzer/replay';
+import type { BoardPieceName, Square } from 'chessalyzer/board';
 import { defineGameTracker, defineMoveTracker } from 'chessalyzer/trackers';
 ```
 

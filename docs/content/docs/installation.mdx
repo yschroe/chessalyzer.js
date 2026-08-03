@@ -23,12 +23,13 @@ import { tileTracker } from 'chessalyzer/trackers';
 import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
 ```
 
-| Subpath                | Use for                                          |
-| ---------------------- | ------------------------------------------------ |
-| `chessalyzer`          | `analyzePGN`, heatmap helpers, filters           |
-| `chessalyzer/trackers` | Built-in trackers, factories, heatmap helpers    |
-| `chessalyzer/pgn`      | Parse-only PGN access                            |
-| `chessalyzer/replay`   | Replay action types, `Square`, and coord helpers |
+| Subpath                | Use for                                       |
+| ---------------------- | --------------------------------------------- |
+| `chessalyzer`          | `analyzePGN`, `printHeatmap`, filters         |
+| `chessalyzer/trackers` | Built-in trackers, factories, heatmap helpers |
+| `chessalyzer/pgn`      | Parse-only PGN access                         |
+| `chessalyzer/board`    | `Square`, coord helpers, piece-name types     |
+| `chessalyzer/replay`   | Replay action types (`Action`, …)             |
 
 ## Quick check
 

@@ -14,14 +14,14 @@ test/helpers/               Shared test utilities
 
 Never mix `#…` and `chessalyzer` in the same test file.
 
-| Layer                                            | Import the code under test from                            | Notes                                                                                         |
-| ------------------------------------------------ | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Unit (`src/**/__tests__`)                        | `#…` → source                                              | No `chessalyzer` imports (not even transitively via fixtures). `bun test src` needs no build. |
-| Integration (`test/integration`)                 | `chessalyzer` / `chessalyzer/pgn` / `chessalyzer/trackers` | Asserts the published package graph. Requires `bun run build` first.                          |
-| Shared helpers (`test/helpers`)                  | `#…` for types/shapes; stay package-free at runtime        | Helpers assert shapes, not package exports.                                                   |
-| Package-contract fixtures (`test/fixtures/*.ts`) | `chessalyzer/*`                                            | Models the public custom-tracker MT contract (`workerModule`, etc.). Integration only.        |
-| Manual release (`manual-tests/test-release*.ts`) | `chessalyzer`                                              | Smoke against the built package.                                                              |
-| Manual dev (`manual-tests/test-dev.ts`)          | `#…`                                                       | Local source smoke without a build.                                                           |
+| Layer                                            | Import the code under test from                                                                         | Notes                                                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Unit (`src/**/__tests__`)                        | `#…` → source                                                                                           | No `chessalyzer` imports (not even transitively via fixtures). `bun test src` needs no build. |
+| Integration (`test/integration`)                 | `chessalyzer` / `chessalyzer/pgn` / `chessalyzer/board` / `chessalyzer/replay` / `chessalyzer/trackers` | Asserts the published package graph. Requires `bun run build` first.                          |
+| Shared helpers (`test/helpers`)                  | `#…` for types/shapes; stay package-free at runtime                                                     | Helpers assert shapes, not package exports.                                                   |
+| Package-contract fixtures (`test/fixtures/*.ts`) | `chessalyzer/*`                                                                                         | Models the public custom-tracker MT contract (`workerModule`, etc.). Integration only.        |
+| Manual release (`manual-tests/test-release*.ts`) | `chessalyzer`                                                                                           | Smoke against the built package.                                                              |
+| Manual dev (`manual-tests/test-dev.ts`)          | `#…`                                                                                                    | Local source smoke without a build.                                                           |
 
 Use `~/test/…` (tsconfig `paths`) for fixture/helper paths. Prefer `fixturePath(…)` from `~/test/helpers/fixtures` over ad-hoc relative paths.
 
@@ -46,6 +46,7 @@ Tests that run the full `analyzePGN` pipeline stay in `test/integration/` becaus
 | `workers.test.ts`        | MT `analyzePGN` abort / corrupt trailing game                        |
 | `custom-tracker.test.ts` | Custom tracker + `workerModule` in MT mode                           |
 | `error-policy.test.ts`   | `onError: 'abort'` / `'skip-game'`                                   |
+| `exports.test.ts`        | `chessalyzer/board` subpath and `replay` option on `analyzePGN`      |
 | `corpus.test.ts`         | Optional large-file golden regression                                |
 
 ### Fixtures vs corpus
