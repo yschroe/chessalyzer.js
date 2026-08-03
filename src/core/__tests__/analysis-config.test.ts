@@ -196,6 +196,6 @@ describe('normalizeAnalyzeOptions', () => {
             workers: false,
             trackers: [tileTracker(), tileTracker()],
         });
-        expect(configs[0]?.trackerHost.results()).toHaveLength(2);
+        expect(configs[0]?.trackerHost.moveEntries).toHaveLength(2);
     });
 });

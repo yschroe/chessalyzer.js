@@ -56,17 +56,12 @@ interface AnalyzeSharedFields {
 export type AnalyzeOptions = AnalyzeSharedFields &
     (AnalyzeRun | { runs: [AnalyzeRun, ...AnalyzeRun[]] });
 
-/** Per-run counters and tracker results returned from `analyzePGN`. */
+/** Per-run counters returned from `analyzePGN`. Tracker state lives on the instances you passed in. */
 export interface AnalyzeRunResult {
     /** Games processed in this run (after filter / maxGames). */
     gameCount: number;
     /** Half-moves replayed or counted in this run. */
     moveCount: number;
-    /**
-     * Tracker instances for this run (same object identities passed in).
-     * Prefer reading state from the instance handles you created (`tiles.state`).
-     */
-    trackers: TrackerInstance[];
 }
 
 /** Result from `analyzePGN`. Always contains one {@link AnalyzeRunResult} per run. */
@@ -88,6 +83,9 @@ export interface AnalyzeResult {
     errors?: AnalyzeError[];
     /** True when more than 100 replay errors occurred and {@link errors} was truncated. */
     errorsTruncated?: boolean;
-    /** One entry per run (length 1 for single-run calls). */
+    /**
+     * One entry per run (length 1 for single-run calls).
+     * Holds per-cohort counts only — read tracker state from the instances you created.
+     */
     runs: AnalyzeRunResult[];
 }

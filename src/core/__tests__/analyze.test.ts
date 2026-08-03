@@ -19,7 +19,7 @@ describe('analyzePGN result shape', () => {
         });
 
         expect(result.runs).toHaveLength(1);
-        expect(result.runs[0]?.trackers[0]).toBe(tiles);
+        expect(result.runs[0]?.gameCount).toBe(result.gameCount);
         expect(result.movesPerSecond).toBeGreaterThan(0);
         expect(tiles.state.movesTotal).toBe(result.moveCount);
     });
@@ -38,15 +38,15 @@ describe('analyzePGN result shape', () => {
         expect(result.runs[0]?.gameCount).toBe(2);
         expect(result.runs[1]?.gameCount).toBe(3);
         expect(result.gameCount).toBe(5);
-        expect(result.runs[0]?.trackers[0]).toBe(tilesA);
-        expect(result.runs[1]?.trackers[0]).toBe(tilesB);
+        expect(tilesA.state.movesTotal).toBeGreaterThan(0);
+        expect(tilesB.state.movesTotal).toBeGreaterThan(0);
     });
 
     it('sets errorsTruncated when more than MAX_COLLECTED_ERRORS are collected', () => {
         const errors = Array.from({ length: MAX_COLLECTED_ERRORS + 3 }, (_, i) =>
             replayTestError(i),
         );
-        const result = buildAnalyzeResult([{ games: 0, moves: 0, errors }], [[]], 1);
+        const result = buildAnalyzeResult([{ games: 0, moves: 0, errors }], 1);
 
         expect(result.errors).toHaveLength(MAX_COLLECTED_ERRORS);
         expect(result.errorsTruncated).toBe(true);
@@ -59,7 +59,7 @@ describe('analyzePGN result shape', () => {
             reason: 'IllegalMove',
             message: 'bad',
         };
-        const result = buildAnalyzeResult([{ games: 0, moves: 0, errors: [err] }], [[]], 1);
+        const result = buildAnalyzeResult([{ games: 0, moves: 0, errors: [err] }], 1);
 
         expect(result.errors).toHaveLength(1);
         expect(result.errorsTruncated).toBeUndefined();

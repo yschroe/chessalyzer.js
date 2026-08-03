@@ -22,7 +22,7 @@ describe('TrackerHost', () => {
         host.trackGame({ moves: [], result: '1-0' } satisfies ParsedGame);
 
         expect(instance.state).toEqual({ count: 1 });
-        expect(host.results()[0]).toBe(instance);
+        expect(host.gameEntries[0]?.state).toBe(instance.state);
     });
 
     it('merges snapshots by index', () => {
@@ -49,7 +49,7 @@ describe('TrackerHost', () => {
         expect(worker.snapshots()[0]?.index).toBe(0);
     });
 
-    it('preserves input order in results()', () => {
+    it('preserves input order in snapshots()', () => {
         const gameFactory = defineGameTracker({
             id: 'order-game',
             init: () => ({ count: 0 }),
@@ -74,7 +74,9 @@ describe('TrackerHost', () => {
         const move = moveFactory();
         const game = gameFactory();
         const host = new TrackerHost([move, game]);
-        expect(host.results().map((entry) => entry.def.id)).toEqual(['order-move', 'order-game']);
+        expect(host.snapshots().map((snap) => snap.index)).toEqual([0, 1]);
+        expect(host.moveEntries[0]?.def.id).toBe('order-move');
+        expect(host.gameEntries[0]?.def.id).toBe('order-game');
     });
 
     it('calls onFinish hooks on all trackers', () => {

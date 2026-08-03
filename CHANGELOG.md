@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`getTrackerState`** — use `instance.state` on the handle you created.
 - **`AnalyzeTrackerResult`** — replaced by `TrackerInstance`.
+- **`AnalyzeRunResult.trackers`** — result runs hold per-cohort `gameCount` / `moveCount` only; tracker state lives on the instances you passed in.
 - **PascalCase built-in exports** `TileTracker` / `PieceTracker` / `GameTracker` — use `tileTracker` / `pieceTracker` / `gameTracker` and call them.
 - Passing bare definitions / singletons to `analyzePGN` — must call the factory first.
 

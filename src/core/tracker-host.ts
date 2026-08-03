@@ -10,13 +10,11 @@ import type {
 interface MoveEntry {
     def: MoveTrackerDef;
     state: unknown;
-    instance: TrackerInstance;
 }
 
 interface GameEntry {
     def: GameTrackerDef;
     state: unknown;
-    instance: TrackerInstance;
 }
 
 type OrderedEntry = { kind: 'move'; entry: MoveEntry } | { kind: 'game'; entry: GameEntry };
@@ -33,22 +31,20 @@ export class TrackerHost {
     readonly moveEntries: MoveEntry[];
     readonly gameEntries: GameEntry[];
     private readonly orderedEntries: OrderedEntry[];
-    private readonly instances: TrackerInstance[];
 
     constructor(instances: readonly TrackerInstance[]) {
         this.moveEntries = [];
         this.gameEntries = [];
         this.orderedEntries = [];
-        this.instances = [...instances];
 
         for (const instance of instances) {
             const { def, state } = instance;
             if (def.kind === 'move') {
-                const entry: MoveEntry = { def, state, instance };
+                const entry: MoveEntry = { def, state };
                 this.moveEntries.push(entry);
                 this.orderedEntries.push({ kind: 'move', entry });
             } else {
-                const entry: GameEntry = { def, state, instance };
+                const entry: GameEntry = { def, state };
                 this.gameEntries.push(entry);
                 this.orderedEntries.push({ kind: 'game', entry });
             }
@@ -101,10 +97,5 @@ export class TrackerHost {
                 def.merge(state, snap.state);
             }
         }
-    }
-
-    /** Return the tracker instances in input order (same object identities). */
-    results(): TrackerInstance[] {
-        return this.instances;
     }
 }

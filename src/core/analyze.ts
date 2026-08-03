@@ -9,7 +9,7 @@ import { collectError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
 import GameProcessor from '#core/game-processor';
 import type { AnalyzeOptions, AnalyzeResult, AnalyzeRunResult } from '#types/analysis';
 import type { AnalyzeError } from '#types/errors';
-import type { HeatmapData, TrackerInstance } from '#types/tracker';
+import type { HeatmapData } from '#types/tracker';
 
 /** Black foreground on a truecolor RGB background (ANSI). */
 function styleBgRgb(r: number, g: number, b: number, text: string): string {
@@ -68,13 +68,11 @@ export function buildAnalyzeResult(
         skippedGames?: number;
         errors?: AnalyzeError[];
     }[],
-    trackerResults: TrackerInstance[][],
     durationMs: number,
 ): AnalyzeResult {
-    const runs: AnalyzeRunResult[] = counts.map(({ games, moves }, index) => ({
+    const runs: AnalyzeRunResult[] = counts.map(({ games, moves }) => ({
         gameCount: games,
         moveCount: moves,
-        trackers: trackerResults[index] ?? [],
     }));
 
     return { ...buildResultBase(counts, durationMs), runs };
@@ -94,9 +92,8 @@ export async function analyzePGN(path: string, options?: AnalyzeOptions): Promis
 
         const t0 = performance.now();
         const counts = await gameProcessor.processPGN(path);
-        const trackerResults = gameProcessor.configs.map((cfg) => cfg.trackerHost.results());
         const durationMs = performance.now() - t0;
-        return buildAnalyzeResult(counts, trackerResults, durationMs);
+        return buildAnalyzeResult(counts, durationMs);
     } finally {
         clearInstancesInFlight(normalized.allInstances);
     }
