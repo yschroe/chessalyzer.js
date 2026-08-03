@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0-alpha.4] - 2026-08-03
+
 ### Added
 
 - **`chessalyzer/board`** — `Square`, `BoardCoord`, piece-name types (`Piece`, `BoardPieceName`, `PromotedPieceName`), `PlayerColor`, coord helpers (`squareToCoords`, `coordsToSquare`, `algebraicToCoords`), and `isPromotedPieceName()`.
@@ -29,9 +31,6 @@ import type { HeatmapData } from 'chessalyzer/trackers';
 // ReplayMode: use AnalyzeOptions['replay'] or literal 'board' | 'skip' | 'actions'
 ```
 
-### Added (prior)
-
-- **`chessalyzer/pgn`** — `parsePGN` and `streamParsePGN` for parse-only workflows (no board replay).
 - **Per-run error fields** — `AnalyzeRunResult.skippedGames` and `AnalyzeRunResult.errors` when `onError: 'skip-game'` (call-level totals unchanged).
 - **Piece identity on replay actions** — `BoardPieceName`, `PromotedPieceName`, and `isPromotedPieceName()`; `MoveAction.piece` and capture fields use `BoardPieceName | null` instead of `string | null`. Exported from `chessalyzer/board` and `chessalyzer/trackers`.
 - **Built-in state sub-shapes** on `/trackers` — `TileStats`, `ColorBucket`, `TileCell`, `TileGrid`, `PieceStatsMap`.
