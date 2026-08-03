@@ -1,6 +1,7 @@
 import { squareToCoords } from '#board/board-coords';
 import type { BoardCoord } from '#board/board-coords';
 import type { MutableBoardCoord } from '#board/board-coords';
+import type { ChessPiece } from '#board/chess-piece';
 import {
     PAWN_TEMPLATE,
     PIECE_TEMPLATE,
@@ -9,7 +10,6 @@ import {
 } from '#board/piece-names';
 import PiecePositions from '#board/piece-positions';
 import type { Action, MoveAction, CaptureAction, PromoteAction } from '#types/actions';
-import type { ChessPiece } from '#types/game';
 import type { PieceToken, PlayerColor, PromotionToken } from '#types/tokens';
 
 /** Bit mask for the color of a piece. */

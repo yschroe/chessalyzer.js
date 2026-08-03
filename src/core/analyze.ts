@@ -7,6 +7,7 @@ import {
 } from '#core/analysis-config';
 import { collectError, MAX_COLLECTED_ERRORS } from '#core/analyze-errors';
 import GameProcessor from '#core/game-processor';
+import type { HeatmapData } from '#trackers/heatmap-types';
 import type {
     AnalyzeOptions,
     AnalyzeResult,
@@ -17,7 +18,7 @@ import type {
     SingleRunOptions,
 } from '#types/analysis';
 import type { AnalyzeError } from '#types/errors';
-import type { HeatmapData, TrackerInstance } from '#types/tracker';
+import type { TrackerInstance } from '#types/tracker';
 
 /** Black foreground on a truecolor RGB background (ANSI). */
 function styleBgRgb(r: number, g: number, b: number, text: string): string {

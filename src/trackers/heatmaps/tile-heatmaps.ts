@@ -1,8 +1,8 @@
 import type { Square } from '#board/board-coords';
+import type { HeatmapAnalysisFunc } from '#trackers/heatmap-types';
 import { isTrackedPiece, type HeatmapPieceRef } from '#trackers/piece-types';
 import { tileCellAt } from '#trackers/tile/tile-grid';
 import type { TileTrackerState } from '#trackers/tile/tile-tracker';
-import type { HeatmapAnalysisFunc } from '#types/tracker';
 
 export const TileHeatmapPresets = {
     /** Tile had a piece on it for X% of all moves. */

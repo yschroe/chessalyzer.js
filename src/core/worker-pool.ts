@@ -1,6 +1,11 @@
 import { Worker } from 'node:worker_threads';
 
-import type { WorkerBatchTask, WorkerInitData, WorkerMessage, WorkerTaskData } from '#types/worker';
+import type {
+    WorkerBatchTask,
+    WorkerInitData,
+    WorkerMessage,
+    WorkerTaskData,
+} from '#core/worker-types';
 
 interface TaskSettlement {
     resolve: (result: WorkerMessage) => void;

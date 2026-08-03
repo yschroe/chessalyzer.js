@@ -1,6 +1,6 @@
+import type { HeatmapAnalysisFunc } from '#trackers/heatmap-types';
 import type { PieceTrackerState } from '#trackers/piece-tracker';
 import { isTrackedPiece, type HeatmapPieceRef } from '#trackers/piece-types';
-import type { HeatmapAnalysisFunc } from '#types/tracker';
 
 function captureCount(
     data: PieceTrackerState,

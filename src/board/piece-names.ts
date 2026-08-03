@@ -1,5 +1,5 @@
 import { isBoardIndex, type BoardCoord } from '#board/board-coords';
-import type { ChessPiece } from '#types/game';
+import type { ChessPiece } from '#board/chess-piece';
 import type { PromotionToken } from '#types/tokens';
 
 /**

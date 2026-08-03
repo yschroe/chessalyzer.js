@@ -17,4 +17,4 @@ export type {
     Piece,
     PromotedPieceName,
 } from '#trackers/piece-types';
-export type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';
+export type { HeatmapAnalysisFunc, HeatmapData } from '#trackers/heatmap-types';

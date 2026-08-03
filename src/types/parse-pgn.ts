@@ -40,9 +40,3 @@ export interface ParsePgnOptions {
     headers?: boolean;
     maxGames?: number;
 }
-
-/** Resolved standalone-parse options shared by {@link parsePGN} and {@link streamParsePGN}. */
-export interface StandaloneParseOptions {
-    parseHeaders: boolean;
-    maxGames: number;
-}

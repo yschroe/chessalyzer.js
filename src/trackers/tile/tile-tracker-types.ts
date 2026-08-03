@@ -6,7 +6,14 @@
  * clone across the worker boundary.
  */
 
+import type { Square } from '#board/board-coords';
 import { pieceList, type Piece } from '#trackers/piece-types';
+
+/** Board square pair used in tile move tracking. */
+export interface MoveCoords {
+    from: Square;
+    to: Square;
+}
 
 /** Counters for one color on one square (aggregate or per-piece-name). */
 export interface TileStats {
@@ -45,7 +52,7 @@ export interface TileCell {
 }
 
 /**
- * Virtual piece used for occupation tracking — not the same as board {@link ChessPiece}.
+ * Virtual piece used for occupation tracking — not the same as board {@link ChessPiece} from `#board/chess-piece`.
  * `lastMovedOn` stores the move index when this piece last arrived on its square.
  */
 export interface TilePiece {
