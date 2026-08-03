@@ -8,17 +8,6 @@ export { PieceHeatmapPresets } from '#trackers/heatmaps/piece-heatmaps';
 export { TileHeatmapPresets } from '#trackers/heatmaps/tile-heatmaps';
 export { isTrackedPiece } from '#trackers/piece-types';
 
-// Types
+// Types — built-in state shapes, heatmap authors, piece refs for scoped presets
 export type { HeatmapPieceRef, Piece } from '#trackers/piece-types';
-export type { SquareData } from '#types/game';
-export type {
-    GameTrackerDef,
-    HeatmapAnalysisArgs,
-    HeatmapAnalysisFunc,
-    HeatmapData,
-    MoveTrackerDef,
-    StateOf,
-    TrackerDef,
-    TrackerFactory,
-    TrackerInstance,
-} from '#types/tracker';
+export type { HeatmapAnalysisFunc, HeatmapData } from '#types/tracker';

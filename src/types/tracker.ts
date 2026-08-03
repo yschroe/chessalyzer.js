@@ -2,16 +2,6 @@ import type { Action } from '#types/actions';
 import type { SquareData } from '#types/game';
 import type { ParsedGame } from '#types/parse-pgn';
 
-/** Extract state type from a tracker factory, definition, or instance. */
-export type StateOf<T> =
-    T extends TrackerInstance<infer S>
-        ? S
-        : T extends TrackerFactory<infer S>
-          ? S
-          : T extends TrackerDef<infer S>
-            ? S
-            : never;
-
 /** Shared lifecycle hooks for move and game tracker definitions. */
 export interface TrackerDefBase<S = unknown, O = unknown> {
     readonly id: string;
@@ -88,7 +78,7 @@ export interface HeatmapData {
 }
 
 /** Arguments passed to built-in and custom heatmap analysis functions. */
-export interface HeatmapAnalysisArgs<T = unknown> {
+interface HeatmapAnalysisArgs<T = unknown> {
     /** Tracker state being visualized. */
     data: T;
     /** Square being evaluated in the current cell. */

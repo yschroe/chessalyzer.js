@@ -8,6 +8,8 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 **Main entry points:** `analyzePGN(path, options?)` in [`src/core/analyze.ts`](src/core/analyze.ts) (full pipeline); `parsePGN(path, options?)` in [`src/pgn/parse-pgn.ts`](src/pgn/parse-pgn.ts) via `chessalyzer/pgn`; trackers via `chessalyzer/trackers`.
 
+**Public exports:** Keep [`src/index.ts`](src/index.ts) and [`src/trackers/index.ts`](src/trackers/index.ts) lean. Only re-export values and types users actually name in application code (e.g. `AnalyzeResult`, `TileTrackerState`, `HeatmapData`). Prefer TypeScript inference for nested option/result shapes (`AnalyzeRun`, `GameFilter`, …). Do not export internal authoring or plumbing types (`TrackerDef`, `TrackerFactory`, `TrackerInstance`, `StateOf`, …) — they clutter autocomplete and suggest a wider API than intended.
+
 **Pipeline (high level):**
 
 1. **I/O** — `readLines` / `openLineStream` in [`src/io/line-reader.ts`](src/io/line-reader.ts) and `readPgnChunks` in [`src/io/pgn-chunks.ts`](src/io/pgn-chunks.ts) stream the file with minimal overhead. In multithreaded mode, chunking splits the PGN into byte-sized batches aligned to complete games for worker dispatch (parallel I/O, not a semantic stage).

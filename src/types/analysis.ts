@@ -5,7 +5,7 @@ import type { ParsedGame } from '#types/parse-pgn';
 import type { TrackerInstance } from '#types/tracker';
 
 /** Per-game predicate for single-threaded analysis (`workers: false`). */
-export type GameFilter = (game: ParsedGame) => boolean;
+type GameFilter = (game: ParsedGame) => boolean;
 
 /** Options for one analysis run. */
 export interface AnalyzeRun {
