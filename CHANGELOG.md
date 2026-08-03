@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Heatmaps:** Scoped presets are factories — e.g. `TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' })` and `TILE_OCC_BY_PIECE('e4')` — instead of passing `{ square }` to `generateHeatmap`. Piece-scoped presets take a `HeatmapPieceRef` (`{ color, name }` with starting-piece names like `Qd`, `Nb`, `Pa`). Dropped `GenerateHeatmapOptions` and `refSquare` from `HeatmapAnalysisArgs`; close over scope in custom functions.
+
 ## [4.0.0-alpha.3] - 2026-08-02
 
 ### Changed

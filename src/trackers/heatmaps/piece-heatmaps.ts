@@ -1,5 +1,5 @@
 import type { PieceTrackerState } from '#trackers/piece-tracker';
-import { isTrackedPiece } from '#trackers/piece-types';
+import { isTrackedPiece, type HeatmapPieceRef } from '#trackers/piece-types';
 import type { HeatmapAnalysisFunc } from '#types/tracker';
 
 function captureCount(
@@ -13,18 +13,21 @@ function captureCount(
 }
 
 export const PieceHeatmapPresets = {
-    /** Reference piece was taken by piece X Y times. Requires `square`. */
-    PIECE_CAPTURED_BY: ({ data, loopSquare, refSquare }) => {
-        const sqrPiece = refSquare.piece;
-        const loopPiece = loopSquare.piece;
-        if (!sqrPiece || !loopPiece || loopPiece.color === sqrPiece.color) return 0;
-        return captureCount(data, loopPiece.color, loopPiece.name, sqrPiece.name);
-    },
-    /** Reference piece took piece X Y times. Requires `square`. */
-    PIECE_CAPTURED: ({ data, loopSquare, refSquare }) => {
-        const sqrPiece = refSquare.piece;
-        const loopPiece = loopSquare.piece;
-        if (!sqrPiece || !loopPiece || loopPiece.color === sqrPiece.color) return 0;
-        return captureCount(data, sqrPiece.color, sqrPiece.name, loopPiece.name);
-    },
-} satisfies Record<string, HeatmapAnalysisFunc<PieceTrackerState>>;
+    /** How often `piece` was captured by each opposing starting piece. */
+    PIECE_CAPTURED_BY:
+        (piece: HeatmapPieceRef): HeatmapAnalysisFunc<PieceTrackerState> =>
+        ({ data, loopSquare }) => {
+            const loopPiece = loopSquare.piece;
+            if (!loopPiece || loopPiece.color === piece.color) return 0;
+            return captureCount(data, loopPiece.color, loopPiece.name, piece.name);
+        },
+
+    /** How often `piece` captured each opposing starting piece. */
+    PIECE_CAPTURED:
+        (piece: HeatmapPieceRef): HeatmapAnalysisFunc<PieceTrackerState> =>
+        ({ data, loopSquare }) => {
+            const loopPiece = loopSquare.piece;
+            if (!loopPiece || loopPiece.color === piece.color) return 0;
+            return captureCount(data, piece.color, piece.name, loopPiece.name);
+        },
+};

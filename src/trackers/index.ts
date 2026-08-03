@@ -9,12 +9,11 @@ export { TileHeatmapPresets } from '#trackers/heatmaps/tile-heatmaps';
 export { isTrackedPiece } from '#trackers/piece-types';
 
 // Types
-export type { Piece } from '#trackers/piece-types';
+export type { HeatmapPieceRef, Piece } from '#trackers/piece-types';
 export type { SquareData } from '#types/game';
 export type {
     AnalyzeTrackerResult,
     GameTrackerDef,
-    GenerateHeatmapOptions,
     HeatmapAnalysisArgs,
     HeatmapAnalysisFunc,
     HeatmapData,

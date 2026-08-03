@@ -24,22 +24,23 @@ import { isPieceTrackerState } from '~/test/helpers/tracker-state';
 const pgnPath = await corpusPath('asorted');
 const corpusAvailable = pgnPath !== null;
 
-const customPieceHeatmapFunc: HeatmapAnalysisFunc = ({ data, loopSquare, refSquare }) => {
-    const sqrPiece = refSquare.piece;
-    const loopPiece = loopSquare.piece;
-    let val = 0;
-    if (
-        sqrPiece &&
-        loopPiece &&
-        loopPiece.color !== sqrPiece.color &&
-        isPieceTrackerState(data) &&
-        isTrackedPiece(loopPiece.name) &&
-        isTrackedPiece(sqrPiece.name)
-    ) {
-        val = data[loopPiece.color][loopPiece.name][sqrPiece.name];
-    }
-    return val;
-};
+/** Custom analysis scoped to a starting piece via outer closure (same idea as preset factories). */
+const customPieceHeatmapFunc =
+    (piece: { color: 'b' | 'w'; name: string }): HeatmapAnalysisFunc =>
+    ({ data, loopSquare }) => {
+        const loopPiece = loopSquare.piece;
+        let val = 0;
+        if (
+            loopPiece &&
+            loopPiece.color !== piece.color &&
+            isPieceTrackerState(data) &&
+            isTrackedPiece(loopPiece.name) &&
+            isTrackedPiece(piece.name)
+        ) {
+            val = data[loopPiece.color][loopPiece.name][piece.name];
+        }
+        return val;
+    };
 
 if (corpusAvailable) {
     describe('Corpus regression (asorted)', () => {
@@ -230,9 +231,10 @@ if (corpusAvailable) {
                 });
 
                 it('PIECE_CAPTURED preset', () => {
-                    const data = generateHeatmap(state, PieceHeatmapPresets.PIECE_CAPTURED, {
-                        square: 'a8',
-                    });
+                    const data = generateHeatmap(
+                        state,
+                        PieceHeatmapPresets.PIECE_CAPTURED({ color: 'b', name: 'Ra' }),
+                    );
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(
@@ -241,9 +243,10 @@ if (corpusAvailable) {
                 });
 
                 it('PIECE_CAPTURED_BY preset', () => {
-                    const data = generateHeatmap(state, PieceHeatmapPresets.PIECE_CAPTURED_BY, {
-                        square: 'a8',
-                    });
+                    const data = generateHeatmap(
+                        state,
+                        PieceHeatmapPresets.PIECE_CAPTURED_BY({ color: 'b', name: 'Ra' }),
+                    );
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(
@@ -252,9 +255,10 @@ if (corpusAvailable) {
                 });
 
                 it('custom heatmap function', () => {
-                    const data = generateHeatmap(state, customPieceHeatmapFunc, {
-                        square: 'a8',
-                    });
+                    const data = generateHeatmap(
+                        state,
+                        customPieceHeatmapFunc({ color: 'b', name: 'Ra' }),
+                    );
                     expect(data.map[0]?.[0]).toBe(0);
                     expect(data.map[1]?.[0]).toBe(0);
                     expect(data.map[7]?.[0]).toBe(entry.golden.pieceTracker.heatmap.custom_a8);
