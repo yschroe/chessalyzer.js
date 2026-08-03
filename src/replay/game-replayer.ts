@@ -6,7 +6,7 @@ import type { ReplayMode } from '#replay/replay-mode';
 import SanApplier from '#replay/san-applier';
 import SanContext from '#replay/san-context';
 import SanDecoder from '#replay/san-decoder';
-import type { AssembledGame } from '#types/parse-pgn';
+import type { AssembledGame, ParsedGame } from '#types/parse-pgn';
 
 /**
  * Orchestrates per-game analysis: game trackers → optional SAN replay (decode + play) → counters.
@@ -37,6 +37,8 @@ class GameReplayer {
      * @param replayMode `'skip'` | `'board'` | `'actions'` — see {@link ReplayMode}.
      * @param gameIndex Zero-based index of this game in the processing stream.
      * @param onError `'abort'` throws on replay failure; `'skip-game'` records and continues.
+     * @param parsedGame Optional pre-materialized {@link ParsedGame} (shared across runs when filtering).
+     * @returns `parsedGame` when it was used or created for game trackers (pass to later runs).
      */
     processGame(
         game: AssembledGame,
@@ -44,10 +46,13 @@ class GameReplayer {
         replayMode: ReplayMode,
         gameIndex: number,
         onError: 'abort' | 'skip-game',
-    ): void {
+        parsedGame?: ParsedGame,
+    ): ParsedGame | undefined {
+        let parsed = parsedGame;
         const { trackerHost } = analysisCfg;
         if (trackerHost.gameEntries.length > 0) {
-            trackerHost.trackGame(toParsedGame(game));
+            parsed ??= toParsedGame(game);
+            trackerHost.trackGame(parsed);
         }
 
         const { moves } = game;
@@ -67,12 +72,13 @@ class GameReplayer {
         trackerHost.onGameEnd();
 
         if (!replayOk) {
-            return;
+            return parsed;
         }
 
         analysisCfg.processedMoves += moves.length;
         analysisCfg.processedGames += 1;
         this.ctx.reset();
+        return parsed;
     }
 
     /** Replay movetext onto the board; optionally emit actions for move trackers. Returns false when skipped. */

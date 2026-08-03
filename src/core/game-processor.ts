@@ -16,6 +16,7 @@ import { GameAssembler } from '#pgn/game-assembler';
 import { toParsedGame } from '#pgn/to-parsed-game';
 import GameReplayer from '#replay/game-replayer';
 import type { WorkerOptions } from '#types/analysis';
+import type { ParsedGame } from '#types/parse-pgn';
 import type { WorkerBatchTask, WorkerInitData, WorkerTaskConfigEntry } from '#types/worker';
 
 /** Path to the worker file. */
@@ -63,15 +64,24 @@ class GameProcessor {
             // Continue with the next line if no full game was read-in yet.
             if (!game) return;
 
-            for (const cfg of this.configs) {
-                if (cfg.isDone || cfg.config.filter?.(toParsedGame(game)) === false) continue;
+            let parsedGame: ParsedGame | undefined;
 
-                gameReplayer.processGame(
+            for (const cfg of this.configs) {
+                if (cfg.isDone) continue;
+
+                const filter = cfg.config.filter;
+                if (filter) {
+                    parsedGame ??= toParsedGame(game);
+                    if (!filter(parsedGame)) continue;
+                }
+
+                parsedGame = gameReplayer.processGame(
                     game,
                     cfg,
                     cfg.replayMode,
                     cfg.processedGames + cfg.skippedGames,
                     this.onError,
+                    parsedGame,
                 );
                 // maxGames caps attempts (accepted games), so skipped games count toward it.
                 if (cfg.processedGames + cfg.skippedGames >= cfg.config.maxGames) {
