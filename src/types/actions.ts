@@ -11,12 +11,8 @@ interface BaseAction {
 
 export interface MoveAction extends BaseAction {
     type: 'move';
-    /**
-     * Piece name from the starting layout (`'Pa'`, `'Nb'`, …) or a promoted pawn
-     * name (`'Q17'`, …). `null` when the origin square has no piece (should not occur
-     * on a successfully decoded move).
-     */
-    piece: PieceName | null;
+    /** Piece on the origin square after a successful SAN decode. */
+    piece: PieceName;
     from: Square;
     to: Square;
     /** Present on the king leg when the SAN is a castle. */
@@ -25,8 +21,8 @@ export interface MoveAction extends BaseAction {
 
 export interface CaptureAction extends BaseAction {
     type: 'capture';
-    takingPiece: PieceName | null;
-    takenPiece: PieceName | null;
+    takingPiece: PieceName;
+    takenPiece: PieceName;
     on: Square;
     /** Origin square of the capturing piece (en passant: differs from the paired move's `to`). */
     from?: Square;

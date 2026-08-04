@@ -65,14 +65,13 @@ function processMove(
     state: TileTrackerRuntimeState,
     move: MoveCoords,
     player: PlayerColor,
-    piece: PieceName | null | undefined,
+    piece: PieceName,
 ): void {
     const fromRow = squareRow(move.from);
     const fromCol = squareCol(move.from);
     const toRow = squareRow(move.to);
     const toCol = squareCol(move.to);
     if (
-        !piece ||
         !isStartingPieceName(piece) ||
         !isBoardIndex(fromRow) ||
         !isBoardIndex(fromCol) ||
@@ -106,13 +105,13 @@ function processCapture(
     state: TileTrackerRuntimeState,
     pos: Square,
     player: PlayerColor,
-    takingPiece: PieceName | null | undefined,
-    takenPiece: PieceName | null | undefined,
+    takingPiece: PieceName,
+    takenPiece: PieceName,
 ): void {
     const cell = tileAt(state.tiles, pos);
     if (!cell) return;
 
-    if (takenPiece && isStartingPieceName(takenPiece)) {
+    if (isStartingPieceName(takenPiece)) {
         const opPlayer: PlayerColor = player === 'w' ? 'b' : 'w';
         const takenBucket = cell[opPlayer];
         takenBucket.total.losses += 1;
@@ -122,7 +121,7 @@ function processCapture(
         cell.currentPiece = null;
     }
 
-    if (takingPiece && isStartingPieceName(takingPiece)) {
+    if (isStartingPieceName(takingPiece)) {
         const takingBucket = cell[player];
         takingBucket.total.captures += 1;
         takingBucket.byPiece[takingPiece].captures += 1;

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`HeatmapSquare`** and **`HeatmapFn`** exported from `chessalyzer/trackers`; `Action` dual-exported from `/trackers` so move-tracker authors can use one import path.
 - **`isStartingPieceName()`** on `chessalyzer/board` and `chessalyzer/trackers`.
 - **`workers: number`** shorthand on `AnalyzeOptions` (equivalent to `{ count: n }`).
+- **`heatmapToString(data)`** on `chessalyzer/trackers` — ANSI string form of `printHeatmap` for tests and piping.
 
 ### Changed
 
@@ -30,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`coordsToSquare`** now takes `BoardCoord` (inverse of `squareToCoords`); two-arg `(row, col)` removed from the public API (internal hot path uses `squareAt`).
 - **`printHeatmap`** moved from `chessalyzer` to `chessalyzer/trackers`.
 - **`TileTracker` `onFinish`:** strips runtime scratch fields (`currentPiece` on cells, `movesGame` on state) so `tiles.state` matches the public `TileTrackerState` shape after analysis.
+- **Filters infer `headers`:** a `filter` callback enables tag-pair parsing automatically; `headers: false` throws when a filter or game tracker needs headers.
+- **Abort errors:** thrown replay failures copy `code` / `gameIndex` / `moveIndex` / `san` / `reason` onto the error — `isReplayError(err)` works directly in `catch` blocks (`getAnalyzeError` still available).
+- **`MoveAction.piece` and capture piece fields** are non-null `PieceName` after a successful SAN decode (promoted names included).
+- **`printHeatmap`** delegates to `heatmapToString` internally.
 
 ### Removed
 

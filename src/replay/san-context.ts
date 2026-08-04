@@ -60,7 +60,7 @@ export default class SanContext {
             type: 'move',
             san: '',
             player: 'w',
-            piece: null,
+            piece: 'Pe',
             from: 'a1',
             to: 'a1',
         };
@@ -70,8 +70,8 @@ export default class SanContext {
             san: '',
             player: 'w',
             on: 'a1',
-            takingPiece: null,
-            takenPiece: null,
+            takingPiece: 'Pa',
+            takenPiece: 'Pb',
         };
 
         this.promoteAction = {

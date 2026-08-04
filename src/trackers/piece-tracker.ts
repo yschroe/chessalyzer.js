@@ -40,7 +40,6 @@ export const pieceTracker = defineMoveTracker<PieceTrackerState>({
         for (const action of data) {
             if (action.type !== 'capture') continue;
             const { takingPiece, takenPiece, player } = action;
-            if (!takingPiece || !takenPiece) continue;
             if (isStartingPieceName(takingPiece) && isStartingPieceName(takenPiece)) {
                 state[player][takingPiece][takenPiece] += 1;
             }

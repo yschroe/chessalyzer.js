@@ -258,7 +258,6 @@ class ChessBoard {
     }
 
     private move(action: MoveAction): void {
-        if (!action.piece) return;
         this.movePiece(
             action.player,
             action.piece,
@@ -268,7 +267,6 @@ class ChessBoard {
     }
 
     private capture(action: CaptureAction): void {
-        if (!action.takenPiece) return;
         this.capturePiece(action.player, action.takenPiece, squareToCoords(action.on));
     }
 

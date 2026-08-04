@@ -16,13 +16,15 @@ describe('Error policy', () => {
         }
 
         expect(caught).toBeDefined();
+        expect(isReplayError(caught)).toBe(true);
+        if (isReplayError(caught)) {
+            expect(caught.gameIndex).toBe(1);
+            expect(caught.reason).toBe('IllegalMove');
+        }
+
         const analyzeError = getAnalyzeError(caught);
         expect(analyzeError).toBeDefined();
         expect(isReplayError(analyzeError)).toBe(true);
-        if (isReplayError(analyzeError)) {
-            expect(analyzeError.gameIndex).toBe(1);
-            expect(analyzeError.reason).toBe('IllegalMove');
-        }
     });
 
     it('skip-game continues with error summary (single-threaded)', async () => {

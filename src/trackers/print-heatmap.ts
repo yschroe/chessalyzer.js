@@ -5,8 +5,7 @@ function styleBgRgb(r: number, g: number, b: number, text: string): string {
     return `\x1b[30;48;2;${r};${g};${b}m${text}\x1b[0m`;
 }
 
-/** Print {@link HeatmapData} to the terminal. */
-export function printHeatmap(data: HeatmapData): void {
+function renderHeatmap(data: HeatmapData, write: (chunk: string) => void): void {
     const color1 = [255, 128, 0];
     const color2 = [0, 128, 255];
     const bgColor = [255, 255, 255];
@@ -37,10 +36,26 @@ export function printHeatmap(data: HeatmapData): void {
                 ];
 
                 const [outR = 0, outG = 0, outB = 0] = colorOut;
-                process.stdout.write(styleBgRgb(outR, outG, outB, '    '));
+                write(styleBgRgb(outR, outG, outB, '    '));
             }
 
-            process.stdout.write('\n');
+            write('\n');
         }
     }
+}
+
+/** Render {@link HeatmapData} as an ANSI-colored string (same output as {@link printHeatmap}). */
+export function heatmapToString(data: HeatmapData): string {
+    const parts: string[] = [];
+    renderHeatmap(data, (chunk) => {
+        parts.push(chunk);
+    });
+    return parts.join('');
+}
+
+/** Print {@link HeatmapData} to the terminal. */
+export function printHeatmap(data: HeatmapData): void {
+    renderHeatmap(data, (chunk) => {
+        process.stdout.write(chunk);
+    });
 }

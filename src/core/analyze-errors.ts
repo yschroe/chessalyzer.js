@@ -34,24 +34,23 @@ export function isReplayError(err: unknown): err is ReplayError {
     return err.code === 'replay' && typeof err.gameIndex === 'number';
 }
 
-/** Thrown in abort mode; carries the typed replay error for callers. */
-class AnalyzeAbortError extends Error {
-    readonly analyzeError: ReplayError;
-
-    constructor(replayError: ReplayError) {
-        super(replayError.message);
-        this.name = 'AnalyzeAbortError';
-        this.analyzeError = replayError;
-    }
-}
-
+/** Thrown in abort mode; replay fields are copied onto the error for {@link isReplayError}. */
 export function toAbortError(replayError: ReplayError): Error {
-    return new AnalyzeAbortError(replayError);
+    const err = new Error(replayError.message);
+    err.name = 'AnalyzeAbortError';
+    Object.assign(err, {
+        code: replayError.code,
+        gameIndex: replayError.gameIndex,
+        moveIndex: replayError.moveIndex,
+        san: replayError.san,
+        reason: replayError.reason,
+        cause: replayError.cause,
+    });
+    return err;
 }
 
 export function getAnalyzeError(err: unknown): AnalyzeError | undefined {
     if (isReplayError(err)) return err;
-    if (err instanceof AnalyzeAbortError) return err.analyzeError;
     return undefined;
 }
 

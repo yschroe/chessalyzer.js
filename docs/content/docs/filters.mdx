@@ -14,7 +14,6 @@ const tiles = tileTracker();
 await analyzePGN('<pathToPgnFile>', {
     workers: false,
     trackers: [tiles],
-    headers: true,
     filter: (game) => Number(game.headers?.WhiteElo) > 2000,
 });
 
@@ -23,8 +22,9 @@ console.log(tiles.state.movesTotal);
 
 ## Requirements
 
-- **`headers: true`** — your filter reads tag pairs from `game.headers`.
 - **`workers: false`** — filters are regular JS callbacks and must run on the main thread. The library will let you know if you forget.
+
+Tag-pair headers are parsed automatically when a filter is present (so `game.headers` is populated). Set `headers: false` only when your filter does not read headers.
 
 Filters receive a `ParsedGame` with headers and moves. Combine with `maxGames` to cap how many matching games are processed.
 
