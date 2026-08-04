@@ -7,45 +7,43 @@ import type { TileTrackerState } from '#trackers/tile/tile-tracker';
 export const TileHeatmapPresets = {
     /** Tile had a piece on it for X% of all moves. */
     TILE_OCC_ALL: (({ data, square }) => {
-        const cell = tileAt(data.tiles, square.square);
+        const cell = tileAt(data.tiles, square);
         if (!cell) return 0;
         return ((cell.w.total.occupiedFor + cell.b.total.occupiedFor) * 100) / data.movesTotal;
     }) satisfies HeatmapFn<TileTrackerState>,
 
     /** Tile had a white piece on it for X% of all moves. */
     TILE_OCC_WHITE: (({ data, square }) => {
-        const cell = tileAt(data.tiles, square.square);
+        const cell = tileAt(data.tiles, square);
         if (!cell) return 0;
         return (cell.w.total.occupiedFor * 100) / data.movesTotal;
     }) satisfies HeatmapFn<TileTrackerState>,
 
     /** Tile had a black piece on it for X% of all moves. */
     TILE_OCC_BLACK: (({ data, square }) => {
-        const cell = tileAt(data.tiles, square.square);
+        const cell = tileAt(data.tiles, square);
         if (!cell) return 0;
         return (cell.b.total.occupiedFor * 100) / data.movesTotal;
     }) satisfies HeatmapFn<TileTrackerState>,
 
     /** Count of pieces that were taken on each tile. */
     TILE_CAPTURE_COUNT: (({ data, square }) => {
-        const cell = tileAt(data.tiles, square.square);
+        const cell = tileAt(data.tiles, square);
         if (!cell) return 0;
         return cell.b.total.losses + cell.w.total.losses;
     }) satisfies HeatmapFn<TileTrackerState>,
 
     /**
      * How often each starting piece occupied `square` (% of all moves).
-     * Heatmap cells correspond to starting pieces (via `square.piece`).
+     * Heatmap cells correspond to starting pieces (via `startingPiece`).
      */
     TILE_OCC_BY_PIECE:
         (target: Square): HeatmapFn<TileTrackerState> =>
-        ({ data, square }) => {
-            const { piece } = square;
-
+        ({ data, startingPiece }) => {
             let val = 0;
             const cell = tileAt(data.tiles, target);
-            if (piece && cell) {
-                val = cell[piece.color].byPiece[piece.name].occupiedFor;
+            if (startingPiece && cell) {
+                val = cell[startingPiece.color].byPiece[startingPiece.name].occupiedFor;
             }
             return (val * 100) / data.movesTotal;
         },
@@ -54,7 +52,7 @@ export const TileHeatmapPresets = {
     PIECE_MOVED_TO_TILE:
         (piece: HeatmapPieceRef): HeatmapFn<TileTrackerState> =>
         ({ data, square }) => {
-            const cell = tileAt(data.tiles, square.square);
+            const cell = tileAt(data.tiles, square);
             if (!cell) return 0;
             return cell[piece.color].byPiece[piece.name].movedTo;
         },

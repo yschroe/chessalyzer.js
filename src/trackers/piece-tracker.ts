@@ -6,8 +6,11 @@ import {
     type PieceStatsMap,
 } from '#trackers/piece-types';
 
+/** Accumulated state from {@link pieceTracker} after `analyzePGN` completes. */
 export interface PieceTrackerState {
+    /** Capture matrix for black starting pieces. */
     b: PieceStatsMap;
+    /** Capture matrix for white starting pieces. */
     w: PieceStatsMap;
 }
 
@@ -30,7 +33,7 @@ function createInitialState(): PieceTrackerState {
     };
 }
 
-/** Built-in move-level tracker: capture matrix — which starting piece took which, per color. */
+/** Built-in move tracker: which starting piece captured which, per color. */
 export const pieceTracker = defineMoveTracker<PieceTrackerState>({
     id: 'PieceTracker',
 

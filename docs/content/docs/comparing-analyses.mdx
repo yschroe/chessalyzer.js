@@ -32,7 +32,7 @@ await analyzePGN('<pathToPgnFile>', {
 });
 
 const compareFunc = ({ data, square }) => {
-    const cell = tileAt(data.tiles, square.square);
+    const cell = tileAt(data.tiles, square);
     if (!cell) return 0;
     return (cell.w.total.occupiedFor * 100) / data.movesTotal;
 };

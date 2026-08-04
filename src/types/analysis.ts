@@ -3,7 +3,7 @@ import type { AnalyzeError } from '#types/errors';
 import type { ParsedGame } from '#types/parse-pgn';
 import type { TrackerInstance } from '#types/tracker';
 
-/** Per-game predicate for single-threaded analysis (`workers: false`). */
+/** Per-game predicate for single-threaded analysis (`workers: false` only). */
 export type GameFilter = (game: ParsedGame) => boolean;
 
 type TrackerList = readonly TrackerInstance[];

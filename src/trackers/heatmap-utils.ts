@@ -1,18 +1,13 @@
 import { squareAt, type BoardCoord } from '#board/board-coords';
 import { getStartingPiece, isStartingPieceName } from '#board/piece-names';
-import type { HeatmapFn, HeatmapData, HeatmapSquare } from '#trackers/heatmap-types';
+import type { HeatmapFn, HeatmapData } from '#trackers/heatmap-types';
+import type { HeatmapPieceRef } from '#trackers/piece-types';
 
-function heatmapSquare(row: number, col: number): HeatmapSquare {
-    const square = squareAt(row, col);
-    const loopSqrCoords: BoardCoord = [row, col];
-    const starting = getStartingPiece(loopSqrCoords);
-    return {
-        square,
-        piece:
-            starting && isStartingPieceName(starting.name)
-                ? { color: starting.color, name: starting.name }
-                : null,
-    };
+function startingPieceAt(row: number, col: number): HeatmapPieceRef | null {
+    const coords: BoardCoord = [row, col];
+    const starting = getStartingPiece(coords);
+    if (!starting || !isStartingPieceName(starting.name)) return null;
+    return { color: starting.color, name: starting.name };
 }
 
 /** Evaluate `fun` at every square and collect min/max for normalization. */
@@ -24,8 +19,11 @@ function renderHeatmap<T>(data: T, fun: HeatmapFn<T>): HeatmapData {
     for (let i = 0; i < 8; i += 1) {
         const dataRow: number[] = [];
         for (let j = 0; j < 8; j += 1) {
-            const square = heatmapSquare(i, j);
-            const heatVal = fun({ data, square });
+            const heatVal = fun({
+                data,
+                square: squareAt(i, j),
+                startingPiece: startingPieceAt(i, j),
+            });
             dataRow.push(heatVal);
             max = Math.max(max, heatVal);
             min = Math.min(min, heatVal);
@@ -38,8 +36,19 @@ function renderHeatmap<T>(data: T, fun: HeatmapFn<T>): HeatmapData {
 
 /**
  * Generate an 8×8 heatmap from tracker state.
- * `analysis` is a preset function (e.g. `TileHeatmapPresets.TILE_OCC_ALL`) or a custom function.
- * Scoped presets are factories — call them first, e.g. `TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' })`.
+ *
+ * Pass a built-in preset (e.g. `TileHeatmapPresets.TILE_OCC_ALL`) or a custom {@link HeatmapFn}.
+ * Scoped presets are factories — call them first, e.g.
+ * `TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' })`.
+ *
+ * @example
+ * ```ts
+ * import { generateHeatmap, tileTracker, TileHeatmapPresets } from 'chessalyzer/trackers';
+ *
+ * const tiles = tileTracker();
+ * // await analyzePGN(..., { trackers: [tiles] });
+ * const heat = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
+ * ```
  */
 export function generateHeatmap<T>(state: T, analysis: HeatmapFn<T>): HeatmapData {
     return renderHeatmap(state, analysis);

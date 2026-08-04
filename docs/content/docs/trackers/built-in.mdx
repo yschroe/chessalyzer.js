@@ -19,11 +19,11 @@ console.log(tiles.state.movesTotal);
 
 Per-game statistics from headers and results.
 
-| Field     | Description                             |
-| --------- | --------------------------------------- |
-| `results` | Counts of white wins, draws, black wins |
-| `ECO`     | ECO code counts (e.g. `'A00'`)          |
-| `games`   | Number of games processed               |
+| Field       | Description                             |
+| ----------- | --------------------------------------- |
+| `results`   | Counts of white wins, draws, black wins |
+| `eco`       | ECO code counts (e.g. `'A00'`)          |
+| `gameCount` | Number of games processed               |
 
 ## pieceTracker
 
@@ -50,6 +50,13 @@ Each tile has two color buckets (`b`, `w`). Each bucket has a `total` stats obje
 - `captures` — captures made on this square
 - `losses` — times the piece was lost on this square
 
-Use `total` for combined stats of one side on a square (e.g. `state.tiles[0][6].b.total.occupiedFor`), or `byPiece` for a single piece (e.g. `state.tiles[0][6].b.byPiece.Pa.occupiedFor`).
+Use `tileAt(state.tiles, square)` to read a square by name. Then take `total` for the combined stats of one side (e.g. `cell.b.total.occupiedFor`), or `byPiece` for a single piece (e.g. `cell.b.byPiece.Pa.occupiedFor`):
+
+```javascript
+import { tileAt } from 'chessalyzer/trackers';
+
+const cell = tileAt(tiles.state.tiles, 'g8');
+console.log(cell?.b.total.occupiedFor, cell?.b.byPiece.Pa.occupiedFor);
+```
 
 `tileTracker` and `pieceTracker` support [heatmap generation](/docs/heatmaps) — pass state and a preset function to `generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL)`.

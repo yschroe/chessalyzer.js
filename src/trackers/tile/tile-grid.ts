@@ -27,10 +27,10 @@ function addTileStats(dst: TileStats, src: TileStats): void {
 }
 
 /**
- * Grid lifecycle helpers for {@link TileTracker}: allocation, reset, merge.
+ * Grid lifecycle helpers for the tile tracker: allocation, reset, merge.
  *
- * The tile grid is an 8×8 array of {@link StatsField} cells. Each cell contains
- * aggregate stats for black/white plus per-piece-name {@link TileStats} objects.
+ * The runtime grid is an 8×8 array of cells holding aggregate stats for black/white
+ * plus per-piece-name {@link TileStats} objects, alongside the live occupant.
  * These helpers keep init / track / onGameEnd DRY.
  */
 
@@ -101,13 +101,26 @@ export function mergeCellStats(dst: StatsField, src: StatsField): void {
     }
 }
 
-/** Resolve an interned {@link Square} to a grid cell when indices are in range. */
-export function tileAt(tiles: RuntimeTileGrid, square: Square): StatsField | undefined;
-export function tileAt(tiles: TileGrid, square: Square): TileCell | undefined;
-export function tileAt(
-    tiles: TileGrid | RuntimeTileGrid,
-    square: Square,
-): TileCell | StatsField | undefined {
+/**
+ * Look up the tile cell for an algebraic {@link Square}.
+ *
+ * Prefer this over `tiles[row][col]` — it avoids `noUncheckedIndexedAccess` issues and
+ * matches how heatmap presets access the grid.
+ */
+export function tileAt(tiles: TileGrid, square: Square): TileCell | undefined {
+    const row = squareRow(square);
+    const col = squareCol(square);
+    if (!isBoardIndex(row) || !isBoardIndex(col)) {
+        return undefined;
+    }
+    return tiles[row][col];
+}
+
+/**
+ * Internal counterpart of {@link tileAt} that keeps the live occupant on the returned cell.
+ * Kept separate so `RuntimeTileGrid` / `StatsField` stay out of the public type surface.
+ */
+export function runtimeTileAt(tiles: RuntimeTileGrid, square: Square): StatsField | undefined {
     const row = squareRow(square);
     const col = squareCol(square);
     if (!isBoardIndex(row) || !isBoardIndex(col)) {

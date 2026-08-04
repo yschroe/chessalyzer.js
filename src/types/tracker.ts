@@ -43,8 +43,8 @@ export interface GameTrackerDef<S = unknown, O = unknown> extends TrackerDefBase
 export type TrackerDef<S = unknown, O = unknown> = MoveTrackerDef<S, O> | GameTrackerDef<S, O>;
 
 /**
- * Stateful handle returned by a {@link TrackerFactory}.
- * Pass instances to `analyzePGN`; read accumulated results from {@link state}.
+ * Stateful handle returned by a tracker factory (`tileTracker()`, custom `defineMoveTracker`, …).
+ * Pass instances to {@link analyzePGN}; read accumulated results from {@link state}.
  */
 export interface TrackerInstance<
     S = unknown,

@@ -73,7 +73,7 @@ console.log(counter.state.halfMoves, counter.state.captures);
 
 **Action tips:**
 
-- `SanDecoder` reuses the same `Action` objects each half-move — copy fields you need to retain across moves.
+- Replay reuses the same `Action` objects each half-move — copy fields you need to retain across moves.
 - **Castling** produces two move actions (king leg, then rook leg). The rook leg carries the same `castle` flag.
 - `action.piece` / `takingPiece` / `takenPiece` use `PieceName` (`Pa`, `Nb`, … or promoted names like `Q17`). Use `isStartingPieceName()` when indexing starting-piece matrices.
 

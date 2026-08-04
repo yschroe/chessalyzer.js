@@ -39,7 +39,30 @@ function createFactory<S, O, D extends TrackerDef<S, O>>(def: D): TrackerFactory
     return factory as TrackerFactory<S, O, D>;
 }
 
-/** Create a move-level tracker factory (core authoring primitive). */
+/**
+ * Define a move-level tracker factory.
+ *
+ * Call the returned factory to create an instance (`myTracker()`), then pass that instance to
+ * {@link analyzePGN}. For multithreaded runs, set `id` and `workerModule = import.meta.url` on
+ * the definition and implement `merge()`.
+ *
+ * @example
+ * ```ts
+ * import { defineMoveTracker } from 'chessalyzer/trackers';
+ *
+ * export default defineMoveTracker<{ count: number }>({
+ *   id: 'half-move-count',
+ *   workerModule: import.meta.url,
+ *   init: () => ({ count: 0 }),
+ *   track(state, actions) {
+ *     state.count += actions.length;
+ *   },
+ *   merge(state, other) {
+ *     state.count += other.count;
+ *   },
+ * });
+ * ```
+ */
 export function defineMoveTracker<S, O = unknown>(
     def: DefInput<S, O, 'move'>,
 ): TrackerFactory<S, O, MoveTrackerDef<S, O>> {
@@ -47,7 +70,32 @@ export function defineMoveTracker<S, O = unknown>(
     return createFactory(fullDef);
 }
 
-/** Create a game-level tracker factory (core authoring primitive). */
+/**
+ * Define a game-level tracker factory.
+ *
+ * Receives one {@link ParsedGame} per game (after optional filter). Game trackers require
+ * header parsing — use `headers: true` or `'auto'` on {@link analyzePGN}.
+ *
+ * @example
+ * ```ts
+ * import { defineGameTracker } from 'chessalyzer/trackers';
+ *
+ * export default defineGameTracker<{ openings: Record<string, number> }>({
+ *   id: 'eco-count',
+ *   workerModule: import.meta.url,
+ *   init: () => ({ openings: {} }),
+ *   track(state, game) {
+ *     const eco = game.headers?.ECO;
+ *     if (eco) state.openings[eco] = (state.openings[eco] ?? 0) + 1;
+ *   },
+ *   merge(state, other) {
+ *     for (const [eco, n] of Object.entries(other.openings)) {
+ *       state.openings[eco] = (state.openings[eco] ?? 0) + n;
+ *     }
+ *   },
+ * });
+ * ```
+ */
 export function defineGameTracker<S, O = unknown>(
     def: DefInput<S, O, 'game'>,
 ): TrackerFactory<S, O, GameTrackerDef<S, O>> {

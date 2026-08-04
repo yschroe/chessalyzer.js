@@ -7,16 +7,23 @@ import {
 } from '#board/board-coords';
 import { defineMoveTracker } from '#trackers/define-tracker';
 import { isStartingPieceName, type PieceName } from '#trackers/piece-types';
-import { createTileGrid, mergeCellStats, setStartingPiece, tileAt } from '#trackers/tile/tile-grid';
+import {
+    createTileGrid,
+    mergeCellStats,
+    runtimeTileAt,
+    setStartingPiece,
+} from '#trackers/tile/tile-grid';
 import type { RuntimeTileGrid, StatsField, TileGrid } from '#trackers/tile/tile-tracker-types';
 import type { MoveCoords } from '#trackers/tile/tile-tracker-types';
 import type { Action } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
 import type { MoveTrackerDef, TrackerFactory } from '#types/tracker';
 
-/** Public TileTracker result: square counters and total move count (no per-game scratch). */
+/** Accumulated state from {@link tileTracker} after `analyzePGN` completes. */
 export interface TileTrackerState {
+    /** Per-square counters (8×8 grid). Use {@link tileAt} for square-based access. */
     tiles: TileGrid;
+    /** Total half-moves processed across all games. */
     movesTotal: number;
 }
 
@@ -108,7 +115,7 @@ function processCapture(
     takingPiece: PieceName,
     takenPiece: PieceName,
 ): void {
-    const cell = tileAt(state.tiles, pos);
+    const cell = runtimeTileAt(state.tiles, pos);
     if (!cell) return;
 
     if (isStartingPieceName(takenPiece)) {
@@ -139,10 +146,10 @@ function stripRuntimeScratch(state: TileTrackerRuntimeState): void {
 }
 
 /**
- * Tracks per-square statistics: moves to, time occupied, captures on, pieces captured on.
+ * Built-in move tracker: per-square statistics (moves to, occupation time, captures, losses).
  *
- * Maintains a virtual 8×8 grid ({@link StatsField}) parallel to the board replay.
- * Grid allocation/reset/merge lives in `./tile-grid`.
+ * Maintains an 8×8 grid parallel to the board. After analysis, read `tiles.state` — runtime
+ * scratch fields are stripped in `onFinish`.
  */
 const tileTrackerFactory = defineMoveTracker<TileTrackerRuntimeState>({
     id: 'TileTracker',
@@ -217,7 +224,19 @@ const tileTrackerFactory = defineMoveTracker<TileTrackerRuntimeState>({
     },
 });
 
-/** Public tracker factory — result state is typed without runtime scratch fields. */
+/**
+ * Built-in tile tracker factory — pass `tileTracker()` to {@link analyzePGN}.
+ *
+ * @example
+ * ```ts
+ * import { analyzePGN } from 'chessalyzer';
+ * import { tileTracker, generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
+ *
+ * const tiles = tileTracker();
+ * await analyzePGN('games.pgn', { trackers: [tiles] });
+ * const heat = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
+ * ```
+ */
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- public state omits runtime scratch fields
 export const tileTracker = tileTrackerFactory as TrackerFactory<
     TileTrackerState,

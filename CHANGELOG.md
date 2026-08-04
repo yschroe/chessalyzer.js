@@ -13,16 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Analysis types on the root entry:** `AnalyzeRun`, `AnalyzeRunResult`, `GameFilter`, `WorkerOptions`.
 - **`TrackerInstance`** exported from `chessalyzer/trackers` for typing tracker arrays.
 - **`tileAt(tiles, square)`** on `chessalyzer/trackers` — square-based tile grid access (avoids raw `[row][col]` indexing under `noUncheckedIndexedAccess`).
-- **`HeatmapSquare`** and **`HeatmapFn`** exported from `chessalyzer/trackers`; `Action` dual-exported from `/trackers` so move-tracker authors can use one import path.
+- **`HeatmapFn`** exported from `chessalyzer/trackers`; `Action` dual-exported from `/trackers` so move-tracker authors can use one import path.
 - **`isStartingPieceName()`** on `chessalyzer/board` and `chessalyzer/trackers`.
 - **`workers: number`** shorthand on `AnalyzeOptions` (equivalent to `{ count: n }`).
 - **`heatmapToString(data)`** on `chessalyzer/trackers` — ANSI string form of `printHeatmap` for tests and piping.
+- **JSDoc pass** on public APIs: user-facing descriptions, field docs on exported types, `@example` on main entry points (`analyzePGN`, `parsePGN`, `streamParsePGN`, tracker factories, heatmap helpers), and removal of internal-only wording from shipped `.d.ts` comments.
 
 ### Changed
 
 - **`ReplayMode` (breaking):** no longer an open union — only `'skip' | 'board' | 'actions'` type-check.
 - **Piece-name types (breaking):** `Piece` → `StartingPieceName`, `BoardPieceName` → `PieceName`; `isTrackedPiece` → `isStartingPieceName`.
-- **Heatmap callback API (breaking):** `HeatmapAnalysisFunc` → `HeatmapFn`; `SquareData` → `HeatmapSquare` (now exported); callback arg `loopSquare` → `square`; `square.piece.name` is `StartingPieceName` (no runtime guard needed in presets).
+- **Heatmap callback API (breaking):** `HeatmapAnalysisFunc` → `HeatmapFn`, and its argument object is now flat — `({ data, square, startingPiece })` where `square` is a `Square` and `startingPiece` is `HeatmapPieceRef | null`. Replaces the nested `loopSquare: SquareData` wrapper, so `square.square` / `square.piece` become `square` / `startingPiece`. `startingPiece.name` is `StartingPieceName`, so presets need no runtime guard.
 - **`TileStats` fields (breaking):** `wasOn` → `occupiedFor`, `capturedOn` → `captures`, `wasCapturedOn` → `losses`.
 - **`ColorBucket` → `TileColorStats`** (breaking).
 - **`GameTrackerState` (breaking):** `games` → `gameCount`, `ECO` → `eco`.
@@ -33,13 +34,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`TileTracker` `onFinish`:** strips runtime scratch fields (`currentPiece` on cells, `movesGame` on state) so `tiles.state` matches the public `TileTrackerState` shape after analysis.
 - **Filters infer `headers`:** a `filter` callback enables tag-pair parsing automatically; `headers: false` throws when a filter or game tracker needs headers.
 - **Abort errors:** thrown replay failures copy `code` / `gameIndex` / `moveIndex` / `san` / `reason` onto the error — `isReplayError(err)` works directly in `catch` blocks (`getAnalyzeError` still available).
-- **`MoveAction.piece` and capture piece fields** are non-null `PieceName` after a successful SAN decode (promoted names included).
+- **`MoveAction.piece` and capture piece fields** are non-null `PieceName` after a successful SAN decode (promoted names included). Replay now enforces this: a SAN whose origin or capture target resolves to an empty square fails as an `IllegalMove` replay error instead of decoding an action with `null` piece fields. Previously such games surfaced an internal `TypeError` message and could hand `null` to move trackers when `onError: 'skip-game'` was set.
 - **`printHeatmap`** delegates to `heatmapToString` internally.
 
 ### Removed
 
 - **`algebraicToCoords`** from `chessalyzer/board` (still available internally; use `squareToCoords` for known `Square` values).
 - **`BaseAction`** from `chessalyzer/replay` (use `Action` or the specific variant types).
+- **Internal tile grid types out of the public `.d.ts`:** `tileAt` no longer carries a `RuntimeTileGrid` overload, so `RuntimeTileGrid`, `StatsField`, and `TilePiece` no longer appear in the shipped `chessalyzer/trackers` types. `tileAt(tiles: TileGrid, square)` is the single public signature.
+- **`HeatmapSquare`** — the wrapper was flattened into the `HeatmapFn` argument object; use `square` and `startingPiece` directly, and `HeatmapPieceRef` to name the piece shape.
 
 ### Migration
 
@@ -48,10 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 import type { StartingPieceName, PieceName } from 'chessalyzer/board';
 import { isStartingPieceName } from 'chessalyzer/trackers';
 
-// heatmaps
+// heatmaps — flat callback args: square is a Square, startingPiece replaces square.piece
 import { generateHeatmap, HeatmapFn, tileAt, printHeatmap } from 'chessalyzer/trackers';
 generateHeatmap(tiles.state, ({ data, square }) => {
-    const cell = tileAt(data.tiles, square.square);
+    const cell = tileAt(data.tiles, square);
     return cell?.w.total.occupiedFor ?? 0;
 });
 

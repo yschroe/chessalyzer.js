@@ -21,8 +21,13 @@ Requires Node ≥ 22 or Bun.
 ## Getting started
 
 ```javascript
-import { analyzePGN, printHeatmap } from 'chessalyzer';
-import { tileTracker, generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
+import { analyzePGN } from 'chessalyzer';
+import {
+    tileTracker,
+    generateHeatmap,
+    TileHeatmapPresets,
+    printHeatmap,
+} from 'chessalyzer/trackers';
 
 const tiles = tileTracker();
 
