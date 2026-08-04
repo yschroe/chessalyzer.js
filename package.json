@@ -87,11 +87,11 @@
         "bumpp": "^12.1.1",
         "bun-plugin-dts": "^0.4.0",
         "knip": "^6.31.0",
-        "oxfmt": "^0.61.0",
-        "oxlint": "^1.76.0",
+        "oxfmt": "^0.62.0",
+        "oxlint": "^1.77.0",
         "oxlint-tsgolint": "^7.0.2001",
         "tinybench": "^6.1.2",
-        "tsx": "^4.23.4",
+        "tsx": "^4.23.5",
         "typescript": "6.0.3"
     },
     "overrides": {
