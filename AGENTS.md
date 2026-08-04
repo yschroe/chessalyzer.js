@@ -40,13 +40,65 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 ### Type organization
 
-Use a **hybrid** layout — not a single central types folder for everything:
+Use a **hybrid** layout. **Where a type file lives** and **which public subpath exports it** are separate decisions — e.g. `ParsedGame` is defined in `src/types/parse-pgn.ts` but exported from `chessalyzer/pgn`; board coords live under `src/board/` and export from `chessalyzer/board`.
 
-1. **Colocate** types with the module that owns their invariants (e.g. `io/` stream types, `board/` coords, `ReplayMode`, built-in tracker state, `core/analysis-runtime`, `core/worker-types`).
-2. **Keep in `src/types/`** only **shared pipeline contracts** used by two or more peer stages without one owning the other (`AnalyzeOptions`, `ParsedGame`/`AssembledGame`, `Action`, tracker authoring defs, errors, tokens).
-3. **Do not** put module-private plumbing in `src/types/` (worker IPC, processor runtime, heatmap types, tile `MoveCoords`, board `ChessPiece`).
+#### Decision guide
 
-Public barrels (`src/index.ts`, `chessalyzer/board`, `/pgn`, `/replay`, `/trackers`) re-export user-facing names from the owning module; internal contracts stay off the public surface per **Public exports** above.
+| Question                                                                                     | If yes →                                                             | If no →    |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ---------- |
+| Does one module invent and own the invariant?                                                | Colocate with that module's runtime code                             | Continue ↓ |
+| Do two or more **peer** pipeline stages share it, with neither owning the other?             | `src/types/` (shared contract)                                       | Continue ↓ |
+| Is it internal plumbing for a single stage (worker IPC, processor config, resolver helpers)? | Colocate in that stage (`core/`, `replay/`, …), **not** `src/types/` | —          |
+
+**Default:** colocate. Only add to `src/types/` when moving the type into one submodule would force an awkward dependency (e.g. `replay` importing `trackers` only for a type, or `core` owning game-parse shapes).
+
+Do **not** mandate a `types.ts` file in every submodule — use one when a module has a **cluster** of related types (`tile-tracker-types.ts`, `heatmap-types.ts`), otherwise keep small shapes next to the function or class that owns them (`GameAssemblerOptions`, `ReplayMode`).
+
+#### Where types belong (current layout)
+
+| Location            | Put here                                        | Examples                                                                                                                                 |
+| ------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **`src/types/`**    | Cross-stage pipeline contracts                  | `AnalyzeOptions`, `ParsedGame` / `AssembledGame`, `Action`, `TrackerDef` / `TrackerInstance`, `AnalyzeError`, `PlayerColor` / SAN tokens |
+| **`src/board/`**    | Board geometry and piece identity               | `Square`, `BoardCoord`, `Piece`, `BoardPieceName`, `ChessPiece`                                                                          |
+| **`src/replay/`**   | Replay policy and decode internals              | `ReplayMode` (internal), `PawnResolution`, `ReplayFailure`                                                                               |
+| **`src/pgn/`**      | Parse-only options resolved at the pgn boundary | `StandaloneParseOptions`, `resolveStandaloneParseOptions`                                                                                |
+| **`src/trackers/`** | Tracker state, heatmap API, built-in shapes     | `TileTrackerState`, `HeatmapData`, `HeatmapPieceRef`, `MoveCoords`                                                                       |
+| **`src/core/`**     | Analyze orchestration and worker plumbing       | `GameProcessorConfig`, `AnalyzeRunState`, `WorkerMessage`, `TrackerSnapshot`, `NormalizedAnalyzeOptions`                                 |
+| **`src/io/`**       | Stream/chunk interfaces                         | `LineStream`, `PgnChunk` types (fully self-contained; no `#types` imports)                                                               |
+
+#### `src/types/` file map
+
+| File            | Role                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `analysis.ts`   | Public `analyzePGN` options and result shapes                                                                                  |
+| `parse-pgn.ts`  | Game shapes at the parse ↔ replay ↔ analyze boundary (`AssembledGame` is internal hot-path; `ParsedGame` is public via `/pgn`) |
+| `actions.ts`    | Move-level replay output consumed by board and move trackers (public via `/replay`)                                            |
+| `tracker.ts`    | Tracker authoring contract only (`TrackerDef*`, `TrackerFactory`, `TrackerInstance`) — not heatmap or worker snapshot types    |
+| `errors.ts`     | Shared analyze/replay error model (public via root)                                                                            |
+| `tokens.ts`     | Small cross-cutting literals (`PlayerColor`, `PieceToken`, …)                                                                  |
+| `open-union.ts` | `OpenUnion<T>` helper for extensible string unions                                                                             |
+
+#### Public exports vs internal types
+
+Public barrels re-export **user-facing** names from the **owning** module. Internal contracts stay off the public surface even if they live in `src/types/`.
+
+| Subpath                | Owns (exports)                                         | Does **not** export                                          |
+| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
+| `chessalyzer`          | `analyzePGN`, `printHeatmap`, `AnalyzeOptions`, errors | `ReplayMode`, `HeatmapData`, `TrackerInstance`, worker types |
+| `chessalyzer/board`    | coords, piece names, `PlayerColor`                     | `ChessPiece` (internal board helper shape)                   |
+| `chessalyzer/replay`   | `Action*` only                                         | board types, `ReplayMode`                                    |
+| `chessalyzer/pgn`      | parse API + `ParsedGame`                               | `AssembledGame`                                              |
+| `chessalyzer/trackers` | factories, state shapes, heatmaps                      | `TrackerDef` / `TrackerFactory` (infer from factories)       |
+
+`/trackers` may **dual-export** piece-name aliases (`Piece`, `BoardPieceName`) that also appear on `/board` when tracker APIs return or accept them (`isTrackedPiece`, `HeatmapPieceRef`) — structural aliases, not a second owner.
+
+#### Anti-patterns
+
+- Putting worker IPC or processor runtime in `src/types/` — belongs in `core/worker-types.ts`, `core/analysis-runtime.ts`.
+- Re-exporting board concepts from `chessalyzer/replay` — use `/board` (or `/trackers` for tracker-centric aliases).
+- A catch-all `game.ts` or mixed-concern hub file — split by real owner (`ChessPiece` → board, `MoveCoords` → tile tracker, heatmap squares → trackers).
+- Exporting every type from the root entry — keep `src/index.ts` to analyze + errors; domain types live on subpaths.
+- Collapsing `AssembledGame` (`moves: string[]`) into `ParsedGame` (`ParsedMove[]`) on hot paths — see **Performance** below.
 
 ### Execution paths (`GameProcessor`)
 

@@ -41,7 +41,7 @@ describe('normalizeAnalyzeOptions', () => {
             filter: () => true,
         });
         expect(multithreadCfg).toBeNull();
-        expect(configs[0]?.config.filter).toBeDefined();
+        expect(configs[0]?.limits.filter).toBeDefined();
     });
 
     it('rejects filter in multi-run without workers: false', () => {
@@ -121,8 +121,8 @@ describe('normalizeAnalyzeOptions', () => {
 
     it('normalizes maxGames on each config', () => {
         const { configs } = normalizeAnalyzeOptions({ workers: false, maxGames: 100 });
-        expect(configs[0]?.config.maxGames).toBe(100);
-        expect(configs[0]?.config.filter).toBeUndefined();
+        expect(configs[0]?.limits.maxGames).toBe(100);
+        expect(configs[0]?.limits.filter).toBeUndefined();
     });
 
     it('returns one normalized config per run', () => {
@@ -135,7 +135,7 @@ describe('normalizeAnalyzeOptions', () => {
             workers: false,
             trackers: [tileTracker()],
         });
-        expect(configs[0]?.trackerData).toBeUndefined();
+        expect(configs[0]?.trackerSpecs).toBeUndefined();
     });
 
     it('requires id for multithreaded analysis', () => {
@@ -174,7 +174,7 @@ describe('normalizeAnalyzeOptions', () => {
         });
         const instance = factory({ minElo: 2000 });
         const { configs } = normalizeAnalyzeOptions({ trackers: [instance] });
-        expect(configs[0]?.trackerData).toEqual([
+        expect(configs[0]?.trackerSpecs).toEqual([
             { id: 'opts-tracker', module: import.meta.url, options: { minElo: 2000 } },
         ]);
     });

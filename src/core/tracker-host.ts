@@ -3,16 +3,8 @@ import type { Action } from '#types/actions';
 import type { ParsedGame } from '#types/parse-pgn';
 import type { GameTrackerDef, MoveTrackerDef, TrackerInstance } from '#types/tracker';
 
-interface MoveEntry {
-    def: MoveTrackerDef;
-    state: unknown;
-}
-
-interface GameEntry {
-    def: GameTrackerDef;
-    state: unknown;
-}
-
+type MoveEntry = TrackerInstance<unknown, unknown, MoveTrackerDef>;
+type GameEntry = TrackerInstance<unknown, unknown, GameTrackerDef>;
 type OrderedEntry = { kind: 'move'; entry: MoveEntry } | { kind: 'game'; entry: GameEntry };
 
 /**

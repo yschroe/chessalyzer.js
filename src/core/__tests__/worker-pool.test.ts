@@ -20,7 +20,7 @@ function minimalChunkBytes(): Uint8Array {
 }
 
 const emptyInit = {
-    configs: [{ trackerData: [] as { id: string }[], replayMode: 'skip' as const }],
+    configs: [{ trackerSpecs: [] as { id: string }[], replayMode: 'skip' as const }],
 };
 
 async function runTaskWithTimeout(
@@ -62,6 +62,7 @@ describe('WorkerPool', () => {
         const { err } = await runTaskWithTimeout(
             pool,
             {
+                type: 'batch',
                 pgnChunkBytes: minimalChunkBytes(),
                 configs: [{ idxConfig: 0, parseHeaders: false }],
             },
@@ -79,6 +80,7 @@ describe('WorkerPool', () => {
         const { err, result } = await runTaskWithTimeout(
             pool,
             {
+                type: 'batch',
                 pgnChunkBytes: minimalChunkBytes(),
                 configs: [{ idxConfig: 0, parseHeaders: false }],
             },
@@ -96,6 +98,7 @@ describe('WorkerPool', () => {
         const { err, result } = await runTaskWithTimeout(
             pool,
             {
+                type: 'batch',
                 pgnChunkBytes: minimalChunkBytes(),
                 configs: [{ idxConfig: 0, parseHeaders: false }],
             },

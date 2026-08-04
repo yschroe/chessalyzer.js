@@ -1,4 +1,4 @@
-import type { GameProcessorAnalysisConfig } from '#core/analysis-runtime';
+import type { AnalyzeRunState } from '#core/analysis-runtime';
 import { collectError, createReplayError, toAbortError } from '#core/analyze-errors';
 import { toParsedGame } from '#pgn/to-parsed-game';
 import { isReplayFailure } from '#replay/replay-failure';
@@ -42,7 +42,7 @@ class GameReplayer {
      */
     processGame(
         game: AssembledGame,
-        analysisCfg: GameProcessorAnalysisConfig,
+        analysisCfg: AnalyzeRunState,
         replayMode: ReplayMode,
         gameIndex: number,
         onError: 'abort' | 'skip-game',
@@ -84,11 +84,11 @@ class GameReplayer {
     /** Replay movetext onto the board; optionally emit actions for move trackers. Returns false when skipped. */
     private replayMoves(
         game: AssembledGame,
-        trackerHost: GameProcessorAnalysisConfig['trackerHost'],
+        trackerHost: AnalyzeRunState['trackerHost'],
         replayMode: ReplayMode,
         gameIndex: number,
         onError: 'abort' | 'skip-game',
-        analysisCfg: GameProcessorAnalysisConfig,
+        analysisCfg: AnalyzeRunState,
     ): boolean {
         const { moves } = game;
         const board = this.ctx.board;

@@ -8,7 +8,7 @@ describe('worker-tracker-registry', () => {
             initWorkerTrackers({
                 configs: [
                     {
-                        trackerData: [{ id: 'DoesNotExist' }],
+                        trackerSpecs: [{ id: 'DoesNotExist' }],
                         replayMode: 'skip',
                     },
                 ],
@@ -18,7 +18,7 @@ describe('worker-tracker-registry', () => {
 
     it('throws on invalid analysis config index', async () => {
         await initWorkerTrackers({
-            configs: [{ trackerData: [], replayMode: 'skip' }],
+            configs: [{ trackerSpecs: [], replayMode: 'skip' }],
         });
 
         expect(() => getCachedCfg(99)).toThrow('Invalid analysis config index: 99');

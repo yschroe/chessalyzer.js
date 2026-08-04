@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
-import type { GameProcessorAnalysisConfigFull } from '#core/analysis-runtime';
+import type { GameProcessorConfig } from '#core/analysis-runtime';
 import { TrackerHost } from '#core/tracker-host';
 import { createWorkerResultHandler, mergeWorkerTrackerFlush } from '#core/tracker-merge';
 import { tileTracker } from '#trackers/tile/tile-tracker';
@@ -8,14 +8,12 @@ import { isGameWinsTrackerState, isTileTrackerState } from '~/test/helpers/track
 
 import mergeGameTracker from './fixtures/merge-game-tracker';
 
-function baseConfig(
-    overrides?: Partial<GameProcessorAnalysisConfigFull>,
-): GameProcessorAnalysisConfigFull {
+function baseConfig(overrides?: Partial<GameProcessorConfig>): GameProcessorConfig {
     return {
-        config: {
+        limits: {
             maxGames: Infinity,
         },
-        trackerData: [],
+        trackerSpecs: [],
         isDone: false,
         trackerHost: new TrackerHost([]),
         processedMoves: 0,
@@ -92,7 +90,7 @@ describe('tracker merge', () => {
         it('merges worker batch counters without tracker state', () => {
             const cfg = baseConfig({
                 trackerHost: new TrackerHost([mergeGameTracker()]),
-                config: { maxGames: 10 },
+                limits: { maxGames: 10 },
             });
 
             const handler = createWorkerResultHandler([cfg], () => {

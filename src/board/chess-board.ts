@@ -54,9 +54,13 @@ class ChessBoard {
         ...PIECE_TEMPLATE,
         ...PAWN_TEMPLATE,
     ];
+
     /** Dense 64-byte board; index always 0..63 for on-board row/col (reads use `!`). */
     private tiles: Uint8Array;
+
+    /** Piece positions for each side. */
     private pieces: { w: PiecePositions; b: PiecePositions };
+
     /** Names for promoted pawns; indexed by (pieceIdx - pieceLookupList.length - 1). */
     private promotedPieces: {
         w: BoardPieceName[];
@@ -80,20 +84,23 @@ class ChessBoard {
         return this.getPieceNameAt(coords[0], coords[1]);
     }
 
+    /** True if square is empty. */
     isEmpty(coords: BoardCoord): boolean {
         return this.tiles[coords[0] * 8 + coords[1]] === 0;
     }
 
+    /** True if square is empty. */
     isEmptyAt(row: number, col: number): boolean {
         return this.tiles[row * 8 + col] === 0;
     }
 
-    /** True if square holds a pawn (standard piece indices 9–16). */
+    /** True if square holds a pawn. */
     isPawnAt(row: number, col: number): boolean {
         const idx = this.tiles[row * 8 + col]! & PIECE_INDEX_BIT_MASK;
         return idx >= 9 && idx <= 16;
     }
 
+    /** Piece name at given coordinates. */
     getPieceNameAt(row: number, col: number): BoardPieceName | null {
         const pieceNumber = this.tiles[row * 8 + col]!;
         if (pieceNumber === 0) return null;
@@ -108,6 +115,7 @@ class ChessBoard {
         );
     }
 
+    /** Piece at given coordinates. */
     getPieceAt(row: number, col: number): ChessPiece | null {
         const name = this.getPieceNameAt(row, col);
         if (name === null) return null;
@@ -116,6 +124,7 @@ class ChessBoard {
         return { name, color };
     }
 
+    /** Piece color at given coordinates. */
     getPieceColorAt(row: number, col: number): PlayerColor | null {
         const pieceNumber = this.tiles[row * 8 + col]!;
         if (pieceNumber === 0) return null;
@@ -155,6 +164,7 @@ class ChessBoard {
         }
     }
 
+    /** Move piece by name. */
     movePiece(player: PlayerColor, piece: string, from: BoardCoord, to: BoardCoord): void {
         this.moveByToken(player, piece.charCodeAt(0), from, to);
     }
@@ -171,6 +181,7 @@ class ChessBoard {
         this.pieces[player].moveByChar(tokenChar, from, to);
     }
 
+    /** Capture piece by name. */
     capturePiece(player: PlayerColor, takenPiece: string, on: BoardCoord): void {
         this.pieces[player === 'w' ? 'b' : 'w'].capture(takenPiece, on);
         this.tiles[on[0] * 8 + on[1]] = 0;

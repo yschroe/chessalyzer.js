@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import type { GameProcessorAnalysisConfig } from '#core/analysis-runtime';
+import type { AnalyzeRunState } from '#core/analysis-runtime';
 import { TrackerHost } from '#core/tracker-host';
 import type { WorkerInitData } from '#core/worker-types';
 import { BUILTIN_TRACKER_FACTORIES } from '#trackers/builtin-registry';
@@ -19,7 +19,7 @@ import type { TrackerFactory, TrackerInstance } from '#types/tracker';
 const TrackerFactories: Record<string, TrackerFactory> = { ...BUILTIN_TRACKER_FACTORIES };
 
 /** Reused analysis configs indexed by `idxConfig` from incoming batch messages. */
-const cfgCache: GameProcessorAnalysisConfig[] = [];
+const cfgCache: AnalyzeRunState[] = [];
 
 /** Check if a dynamic import resolved to a module with a default export. */
 function hasDefaultExport(module: unknown): module is { default: unknown } {
@@ -63,7 +63,7 @@ export async function initWorkerTrackers(initData: WorkerInitData | undefined): 
 async function loadCustomTrackers(initData: WorkerInitData | undefined): Promise<void> {
     if (!initData) return;
     for (const cfg of initData.configs) {
-        for (const tracker of cfg.trackerData) {
+        for (const tracker of cfg.trackerSpecs) {
             if (tracker.module && !(tracker.id in TrackerFactories)) {
                 let customTracker: unknown;
                 try {
@@ -98,9 +98,9 @@ async function loadCustomTrackers(initData: WorkerInitData | undefined): Promise
 function createAnalysisCfg(
     initData: WorkerInitData | undefined,
     idxConfig: number,
-): GameProcessorAnalysisConfig {
-    const trackerData = initData?.configs[idxConfig]?.trackerData;
-    if (!trackerData || trackerData.length === 0) {
+): AnalyzeRunState {
+    const trackerSpecs = initData?.configs[idxConfig]?.trackerSpecs;
+    if (!trackerSpecs || trackerSpecs.length === 0) {
         return {
             trackerHost: new TrackerHost([]),
             processedMoves: 0,
@@ -110,7 +110,7 @@ function createAnalysisCfg(
         };
     }
 
-    const instances = trackerData.map((tracker) =>
+    const instances = trackerSpecs.map((tracker) =>
         createTrackerInstance(tracker.id, tracker.options),
     );
 
@@ -124,7 +124,7 @@ function createAnalysisCfg(
 }
 
 /** Reset per-batch counters only; tracker state accumulates until pool flush. */
-export function resetCfgBatchCounters(cfg: GameProcessorAnalysisConfig): void {
+export function resetCfgBatchCounters(cfg: AnalyzeRunState): void {
     cfg.processedMoves = 0;
     cfg.processedGames = 0;
     cfg.skippedGames = 0;
@@ -132,7 +132,7 @@ export function resetCfgBatchCounters(cfg: GameProcessorAnalysisConfig): void {
 }
 
 /** Cached config for the given analysis index. */
-export function getCachedCfg(idxConfig: number): GameProcessorAnalysisConfig {
+export function getCachedCfg(idxConfig: number): AnalyzeRunState {
     const cfg = cfgCache[idxConfig];
     assert(cfg, `Invalid analysis config index: ${idxConfig}`);
 

@@ -15,16 +15,15 @@ import type {
     WorkerTaskConfigEntry,
     WorkerTaskData,
 } from '#core/worker-types';
-import { isWorkerFlushTask } from '#core/worker-types';
 import { decodePgnChunkBytes } from '#io/pgn-chunks';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AssembledGame } from '#types/parse-pgn';
 
-assert(parentPort, 'Worker was initialized on main thread, aborting.');
 // Bind parentPort to a local variable so it is detected as non-null in the handlers as well.
 const port = parentPort;
+assert(port, 'Worker was initialized on main thread, aborting.');
 
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- workerData is untyped at worker entry; shape validated at use sites
 const initData = workerData as WorkerInitData | undefined;
@@ -123,7 +122,7 @@ function processFlush(): WorkerMessage {
 }
 
 function handleTask(msg: WorkerTaskData): WorkerMessage {
-    if (isWorkerFlushTask(msg)) return processFlush();
+    if (msg.type === 'flush') return processFlush();
     return processBatch(msg);
 }
 

@@ -1,3 +1,4 @@
+import type { TrackerSpec } from '#core/analysis-runtime';
 import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
 
@@ -10,7 +11,7 @@ export interface TrackerSnapshot {
 /** One-time worker bootstrap: tracker ids, options, optional module paths. */
 export interface WorkerInitData {
     configs: {
-        trackerData: { id: string; module?: string; options?: unknown }[];
+        trackerSpecs: TrackerSpec[];
         replayMode: ReplayMode;
     }[];
     onError?: 'abort' | 'skip-game';
@@ -26,13 +27,14 @@ export interface WorkerTaskConfigEntry {
 
 /** Per-batch payload sent main → worker (tracker config lives in workerData). */
 export interface WorkerBatchTask {
+    type: 'batch';
     /** UTF-8 PGN chunk; transferred zero-copy from main to worker. */
     pgnChunkBytes: Uint8Array;
     configs: WorkerTaskConfigEntry[];
 }
 
 /** Request accumulated tracker state from a worker at pool drain. */
-export interface WorkerFlushTask {
+interface WorkerFlushTask {
     type: 'flush';
 }
 
@@ -60,9 +62,4 @@ export interface WorkerMessage {
     results: WorkerConfigResult[];
     /** Set when batch processing failed catastrophically; main thread should abort. */
     error?: string;
-}
-
-/** Type guard for {@link WorkerFlushTask}. */
-export function isWorkerFlushTask(task: WorkerTaskData): task is WorkerFlushTask {
-    return 'type' in task && task.type === 'flush';
 }

@@ -34,11 +34,11 @@ function renderHeatmap<T>(data: T, fun: HeatmapAnalysisFunc<T>): HeatmapData {
 
 /**
  * Generate an 8×8 heatmap from tracker state.
- * `analysis` is a preset function (e.g. `TileHeatmapPresets.TILE_OCC_ALL`) or a custom function.
+ * `analysisFunc` is a preset function (e.g. `TileHeatmapPresets.TILE_OCC_ALL`) or a custom function.
  * Scoped presets are factories — call them first, e.g. `TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' })`.
  */
-export function generateHeatmap<T>(state: T, analysis: HeatmapAnalysisFunc<T>): HeatmapData {
-    return renderHeatmap(state, analysis);
+export function generateHeatmap<T>(state: T, analysisFunc: HeatmapAnalysisFunc<T>): HeatmapData {
+    return renderHeatmap(state, analysisFunc);
 }
 
 /**
@@ -48,14 +48,14 @@ export function generateHeatmap<T>(state: T, analysis: HeatmapAnalysisFunc<T>): 
 export function generateComparisonHeatmap<T>(
     state: T,
     compState: T,
-    analysis: HeatmapAnalysisFunc<T>,
+    analysisFunc: HeatmapAnalysisFunc<T>,
 ): HeatmapData {
     const map: number[][] = [];
     let max = -Infinity;
     let min = Infinity;
 
-    const map0 = renderHeatmap(state, analysis);
-    const map1 = renderHeatmap(compState, analysis);
+    const map0 = renderHeatmap(state, analysisFunc);
+    const map1 = renderHeatmap(compState, analysisFunc);
 
     for (let i = 0; i < 8; i += 1) {
         const dataRow: number[] = [];

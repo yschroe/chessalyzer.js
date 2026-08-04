@@ -42,20 +42,20 @@ export default class PiecePositions {
         const row = this.startRow;
         this.ra[0] = row;
         this.ra[1] = 0;
-        this.rh[0] = row;
-        this.rh[1] = 7;
         this.nb[0] = row;
         this.nb[1] = 1;
-        this.ng[0] = row;
-        this.ng[1] = 6;
         this.bc[0] = row;
         this.bc[1] = 2;
-        this.bf[0] = row;
-        this.bf[1] = 5;
         this.qd[0] = row;
         this.qd[1] = 3;
         this.ke[0] = row;
         this.ke[1] = 4;
+        this.bf[0] = row;
+        this.bf[1] = 5;
+        this.ng[0] = row;
+        this.ng[1] = 6;
+        this.rh[0] = row;
+        this.rh[1] = 7;
 
         this.R.length = 0;
         this.N.length = 0;

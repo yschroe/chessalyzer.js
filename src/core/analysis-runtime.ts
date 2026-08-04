@@ -11,14 +11,21 @@ export interface GameAndMoveCount {
     errors?: AnalyzeError[];
 }
 
-/** Normalized per-config processor state (filter, game limit). */
-interface GameProcessorConfig {
+/** Immutable per-run filter / game-cap settings. */
+interface AnalyzeRunLimits {
     filter?: (game: ParsedGame) => boolean;
     maxGames: number;
 }
 
-/** Runtime tracker host while processing one analysis config. */
-export interface GameProcessorAnalysisConfig {
+/** Spec for constructing a tracker instance in a worker (id + factory module + options). */
+export interface TrackerSpec {
+    id: string;
+    module?: string;
+    options?: unknown;
+}
+
+/** Mutable per-run processing state (shared by GameReplayer and worker cache). */
+export interface AnalyzeRunState {
     trackerHost: TrackerHost;
     processedMoves: number;
     processedGames: number;
@@ -26,11 +33,12 @@ export interface GameProcessorAnalysisConfig {
     errors: AnalyzeError[];
 }
 
-/** Main-thread processor config including serializable tracker metadata for workers. */
-export interface GameProcessorAnalysisConfigFull extends GameProcessorAnalysisConfig {
-    config: GameProcessorConfig;
-    /** Serializable tracker metadata for worker bootstrap; set only when multithreaded. */
-    trackerData?: { id: string; module?: string; options?: unknown }[];
+/** Main-thread per-run: limits + live state + worker bootstrap metadata. */
+export interface GameProcessorConfig extends AnalyzeRunState {
+    limits: AnalyzeRunLimits;
+    /** Present only when multithreaded; used to bootstrap worker tracker instances. */
+    trackerSpecs?: TrackerSpec[];
     replayMode: ReplayMode;
+    /** True once maxGames attempts (accepted + skipped) are exhausted. */
     isDone: boolean;
 }
