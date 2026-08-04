@@ -34,7 +34,7 @@ export interface WorkerBatchTask {
 }
 
 /** Request accumulated tracker state from a worker at pool drain. */
-export interface WorkerFlushTask {
+interface WorkerFlushTask {
     type: 'flush';
 }
 
