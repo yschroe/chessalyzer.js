@@ -6,7 +6,7 @@ export { tileTracker } from '#trackers/tile/tile-tracker';
 export { tileAt } from '#trackers/tile/tile-grid';
 
 export { generateComparisonHeatmap, generateHeatmap } from '#trackers/heatmap-utils';
-export { printHeatmap } from '#trackers/print-heatmap';
+export { heatmapToString, printHeatmap } from '#trackers/print-heatmap';
 export { PieceHeatmapPresets } from '#trackers/heatmaps/piece-heatmaps';
 export { TileHeatmapPresets } from '#trackers/heatmaps/tile-heatmaps';
 export { isPromotedPieceName, isStartingPieceName } from '#trackers/piece-types';

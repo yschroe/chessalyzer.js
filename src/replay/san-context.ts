@@ -58,24 +58,27 @@ export default class SanContext {
 
         this.moveAction = {
             type: 'move',
+            // Prefilled with placeholder values to avoid conditional checks.
             san: '',
             player: 'w',
-            piece: null,
+            piece: 'Pa',
             from: 'a1',
             to: 'a1',
         };
 
         this.captureAction = {
             type: 'capture',
+            // Prefilled with placeholder values to avoid conditional checks.
             san: '',
             player: 'w',
             on: 'a1',
-            takingPiece: null,
-            takenPiece: null,
+            takingPiece: 'Pa',
+            takenPiece: 'Pa',
         };
 
         this.promoteAction = {
             type: 'promote',
+            // Prefilled with placeholder values to avoid conditional checks.
             san: '',
             player: 'w',
             on: 'a1',

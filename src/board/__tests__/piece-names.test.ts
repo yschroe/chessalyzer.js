@@ -24,8 +24,8 @@ describe('piece-names', () => {
             from: 'e2',
             to: 'e4',
         };
-        const name: PieceName | null = action.piece;
-        if (name !== null && isStartingPieceName(name)) {
+        const name: PieceName = action.piece;
+        if (isStartingPieceName(name)) {
             const starting: StartingPieceName = name;
             expect(starting).toBe('Pe');
         }

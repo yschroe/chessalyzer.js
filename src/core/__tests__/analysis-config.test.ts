@@ -54,9 +54,21 @@ describe('normalizeAnalyzeOptions', () => {
         ).toThrow('filter requires workers: false');
     });
 
-    it('does not parse headers when only a filter is present', () => {
+    it('parses headers when a filter is present', () => {
         const { parseHeaders } = normalizeAnalyzeOptions({ workers: false, filter: () => true });
-        expect(parseHeaders).toBe(false);
+        expect(parseHeaders).toBe(true);
+    });
+
+    it('throws when headers: false with a filter', () => {
+        expect(() =>
+            normalizeAnalyzeOptions(
+                invalidAnalyzeOptions({
+                    workers: false,
+                    filter: () => true,
+                    headers: false,
+                }),
+            ),
+        ).toThrow('headers: false cannot be used when tag-pair headers are required');
     });
 
     it('sets parseHeaders false when maxGames is finite without filter', () => {
@@ -78,7 +90,7 @@ describe('normalizeAnalyzeOptions', () => {
                     headers: false,
                 }),
             ),
-        ).toThrow('headers: false cannot be used with game trackers');
+        ).toThrow('headers: false cannot be used when tag-pair headers are required');
     });
 
     it('honors explicit headers: false when no game tracker', () => {

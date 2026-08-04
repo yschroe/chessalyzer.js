@@ -46,8 +46,8 @@ export default class SanDecoder {
             const cap = ctx.captureAction;
             cap.san = san;
             cap.player = player;
-            cap.takingPiece = board.getPieceNameOnCoords(from);
-            cap.takenPiece = board.getPieceNameOnCoords(takenOn);
+            cap.takingPiece = board.getPieceNameOnCoords(from)!;
+            cap.takenPiece = board.getPieceNameOnCoords(takenOn)!;
             cap.on = squareAt(takenOn[0], takenOn[1]);
             cap.from = coordsToSquare(from);
             if (r.enPassant) {
@@ -61,7 +61,7 @@ export default class SanDecoder {
         const mov = ctx.moveAction;
         mov.san = san;
         mov.player = player;
-        mov.piece = board.getPieceNameOnCoords(from);
+        mov.piece = board.getPieceNameOnCoords(from)!;
         mov.from = coordsToSquare(from);
         mov.to = squareAt(toRow, toCol);
         delete mov.castle;
@@ -95,7 +95,7 @@ export default class SanDecoder {
 
         const from = r.from;
         const to = r.to;
-        const piece = board.getPieceNameOnCoords(from);
+        const piece = board.getPieceNameOnCoords(from)!;
         const [fromRow, fromCol] = from;
         const [toRow, toCol] = to;
 
@@ -105,7 +105,7 @@ export default class SanDecoder {
             cap.player = player;
             cap.on = squareAt(toRow, toCol);
             cap.takingPiece = piece;
-            cap.takenPiece = board.getPieceNameOnCoords(to);
+            cap.takenPiece = board.getPieceNameOnCoords(to)!;
             cap.from = squareAt(fromRow, fromCol);
             delete cap.enPassant;
             actions.push(cap);

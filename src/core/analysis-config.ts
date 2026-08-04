@@ -27,7 +27,7 @@ function resolveParseHeaders(
     if (explicit === false) {
         if (needsHeaders) {
             throw new Error(
-                'headers: false cannot be used with game trackers (game trackers require tag-pair headers)',
+                'headers: false cannot be used when tag-pair headers are required (game trackers or filters)',
             );
         }
         return false;
@@ -96,6 +96,7 @@ export function normalizeAnalyzeOptions(options: AnalyzeOptions = {}): Normalize
     const runs = resolveRuns(options);
     assertFilterRequiresSingleThreaded(runs, multithreadCfg);
 
+    const hasFilter = runs.some((run) => run.filter !== undefined);
     const multithreaded = multithreadCfg !== null;
     let needsHeaders = false;
     const configs: GameProcessorConfig[] = [];
@@ -162,7 +163,7 @@ export function normalizeAnalyzeOptions(options: AnalyzeOptions = {}): Normalize
         configs,
         multithreadCfg,
         onError: options.onError ?? 'abort',
-        parseHeaders: resolveParseHeaders(options.headers, needsHeaders),
+        parseHeaders: resolveParseHeaders(options.headers, needsHeaders || hasFilter),
         allInstances,
     };
 }
