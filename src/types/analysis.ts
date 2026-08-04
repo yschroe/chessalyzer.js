@@ -4,7 +4,7 @@ import type { ParsedGame } from '#types/parse-pgn';
 import type { TrackerInstance } from '#types/tracker';
 
 /** Per-game predicate for single-threaded analysis (`workers: false`). */
-type GameFilter = (game: ParsedGame) => boolean;
+export type GameFilter = (game: ParsedGame) => boolean;
 
 type TrackerList = readonly TrackerInstance[];
 
@@ -31,13 +31,13 @@ interface WorkerChunkOptions {
 /** Worker thread pool and PGN chunking. Pass `false` via `workers` to disable. */
 export interface WorkerOptions {
     /** Worker thread count. Defaults to `os.availableParallelism()`. */
-    workerCount?: number;
+    count?: number;
     /** Advanced: PGN chunk sizing for worker dispatch. */
     chunk?: WorkerChunkOptions;
 }
 
 type SingleThreadedWorkers = { workers: false };
-type MultithreadedWorkers = { workers?: WorkerOptions; filter?: never };
+type MultithreadedWorkers = { workers?: WorkerOptions | number; filter?: never };
 
 type SharedAnalyzeFields<I> = {
     headers?: HeadersForInstances<I>;

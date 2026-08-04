@@ -1,4 +1,4 @@
-import { coordsToSquare } from '#board/board-coords';
+import { coordsToSquare, squareAt } from '#board/board-coords';
 import { ReplayFailure } from '#replay/replay-failure';
 import type SanContext from '#replay/san-context';
 import { resolveCastle, resolvePawnMove, resolvePieceMove } from '#replay/san-resolver';
@@ -48,8 +48,8 @@ export default class SanDecoder {
             cap.player = player;
             cap.takingPiece = board.getPieceNameOnCoords(from);
             cap.takenPiece = board.getPieceNameOnCoords(takenOn);
-            cap.on = coordsToSquare(takenOn[0], takenOn[1]);
-            cap.from = coordsToSquare(from[0], from[1]);
+            cap.on = squareAt(takenOn[0], takenOn[1]);
+            cap.from = coordsToSquare(from);
             if (r.enPassant) {
                 cap.enPassant = true;
             } else {
@@ -62,8 +62,8 @@ export default class SanDecoder {
         mov.san = san;
         mov.player = player;
         mov.piece = board.getPieceNameOnCoords(from);
-        mov.from = coordsToSquare(from[0], from[1]);
-        mov.to = coordsToSquare(toRow, toCol);
+        mov.from = coordsToSquare(from);
+        mov.to = squareAt(toRow, toCol);
         delete mov.castle;
         actions.push(mov);
 
@@ -74,7 +74,7 @@ export default class SanDecoder {
             const promo = ctx.promoteAction;
             promo.san = san;
             promo.player = player;
-            promo.on = coordsToSquare(toRow, toCol);
+            promo.on = squareAt(toRow, toCol);
             promo.promotion = r.promotesTo;
             actions.push(promo);
         }
@@ -103,10 +103,10 @@ export default class SanDecoder {
             const cap = ctx.captureAction;
             cap.san = san;
             cap.player = player;
-            cap.on = coordsToSquare(toRow, toCol);
+            cap.on = squareAt(toRow, toCol);
             cap.takingPiece = piece;
             cap.takenPiece = board.getPieceNameOnCoords(to);
-            cap.from = coordsToSquare(fromRow, fromCol);
+            cap.from = squareAt(fromRow, fromCol);
             delete cap.enPassant;
             actions.push(cap);
         }
@@ -115,8 +115,8 @@ export default class SanDecoder {
         mov.san = san;
         mov.player = player;
         mov.piece = piece;
-        mov.from = coordsToSquare(fromRow, fromCol);
-        mov.to = coordsToSquare(toRow, toCol);
+        mov.from = squareAt(fromRow, fromCol);
+        mov.to = squareAt(toRow, toCol);
         delete mov.castle;
         actions.push(mov);
 

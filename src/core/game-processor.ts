@@ -173,7 +173,7 @@ class GameProcessor {
 
     /** Resolve the number of worker threads to use. */
     private resolveWorkerCount(): number {
-        const configured = this.multithreadConfig?.workerCount;
+        const configured = this.multithreadConfig?.count;
         if (configured !== undefined) return Math.max(1, configured);
         return availableParallelism();
     }

@@ -33,7 +33,7 @@ await analyzePGN('<pathToPgnFile>', {
     trackers: [tiles, games],
 });
 
-console.log(tiles.state.movesTotal, games.state.games);
+console.log(tiles.state.movesTotal, games.state.gameCount);
 ```
 
 Each call to a factory returns a fresh instance with its own `.state`. Use distinct instances when you need separate cohorts in a multi-run analysis.

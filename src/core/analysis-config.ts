@@ -78,12 +78,19 @@ function resolveRuns(opts: AnalyzeOptions): AnalyzeRun[] {
     return [{ trackers: single.trackers, filter: single.filter, maxGames: single.maxGames }];
 }
 
+/** Resolve `workers` option to multithread config or `null` for single-threaded. */
+function resolveMultithreadCfg(workers: AnalyzeOptions['workers']): WorkerOptions | null {
+    if (workers === false) return null;
+    if (typeof workers === 'number') return { count: workers };
+    return workers ?? {};
+}
+
 /**
  * Convert public {@link AnalyzeOptions} into processor inputs in one pass:
  * validates, then builds per-run runtime state and path-selection fields.
  */
 export function normalizeAnalyzeOptions(options: AnalyzeOptions = {}): NormalizedAnalyzeOptions {
-    const multithreadCfg = options.workers === false ? null : (options.workers ?? {});
+    const multithreadCfg = resolveMultithreadCfg(options.workers);
 
     // Resolve runs into per-run configs, converting single-run sugar.
     const runs = resolveRuns(options);

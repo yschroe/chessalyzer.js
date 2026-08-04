@@ -1,5 +1,10 @@
 import { defineMoveTracker } from '#trackers/define-tracker';
-import { isTrackedPiece, pieceList, type Piece, type PieceStatsMap } from '#trackers/piece-types';
+import {
+    isStartingPieceName,
+    pieceList,
+    type StartingPieceName,
+    type PieceStatsMap,
+} from '#trackers/piece-types';
 
 export interface PieceTrackerState {
     b: PieceStatsMap;
@@ -9,7 +14,7 @@ export interface PieceTrackerState {
 function createEmptyPieceStatsMap(): PieceStatsMap {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries cannot infer PieceStats mapped type
     const emptyPieceStats = Object.fromEntries(pieceList.map((val) => [val, 0])) as {
-        [piece in Piece]: number;
+        [piece in StartingPieceName]: number;
     };
 
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries cannot infer PieceStatsMap mapped type
@@ -36,7 +41,7 @@ export const pieceTracker = defineMoveTracker<PieceTrackerState>({
             if (action.type !== 'capture') continue;
             const { takingPiece, takenPiece, player } = action;
             if (!takingPiece || !takenPiece) continue;
-            if (isTrackedPiece(takingPiece) && isTrackedPiece(takenPiece)) {
+            if (isStartingPieceName(takingPiece) && isStartingPieceName(takenPiece)) {
                 state[player][takingPiece][takenPiece] += 1;
             }
         }

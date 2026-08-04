@@ -7,7 +7,7 @@
  */
 
 import type { Square } from '#board/board-coords';
-import { pieceList, type Piece } from '#trackers/piece-types';
+import { pieceList, type StartingPieceName } from '#trackers/piece-types';
 
 /** Board square pair used in tile move tracking. */
 export interface MoveCoords {
@@ -18,27 +18,27 @@ export interface MoveCoords {
 /** Counters for one color on one square (aggregate or per-piece-name). */
 export interface TileStats {
     movedTo: number;
-    wasOn: number;
-    capturedOn: number;
-    wasCapturedOn: number;
+    occupiedFor: number;
+    captures: number;
+    losses: number;
 }
 
 function createTileStats(): TileStats {
-    return { movedTo: 0, wasOn: 0, capturedOn: 0, wasCapturedOn: 0 };
+    return { movedTo: 0, occupiedFor: 0, captures: 0, losses: 0 };
 }
 
 /**
- * Per-color bucket on a square: aggregate counters plus one slot per starting piece.
- * Access via `cell.w.total.wasOn` (aggregate) or `cell.w.byPiece.Nb.wasOn` (per piece).
+ * Per-color stats on a square: aggregate counters plus one slot per starting piece.
+ * Access via `cell.w.total.occupiedFor` (aggregate) or `cell.w.byPiece.Nb.occupiedFor` (per piece).
  */
-export interface ColorBucket {
+export interface TileColorStats {
     total: TileStats;
-    byPiece: Record<Piece, TileStats>;
+    byPiece: Record<StartingPieceName, TileStats>;
 }
 
-export function createColorBucket(): ColorBucket {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- filled for every Piece in the loop below
-    const byPiece = {} as Record<Piece, TileStats>;
+export function createTileColorStats(): TileColorStats {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- filled for every StartingPieceName in the loop below
+    const byPiece = {} as Record<StartingPieceName, TileStats>;
     for (const name of pieceList) {
         byPiece[name] = createTileStats();
     }
@@ -47,8 +47,8 @@ export function createColorBucket(): ColorBucket {
 
 /** Public per-square counters (what callers see on {@link TileTrackerState.tiles}). */
 export interface TileCell {
-    b: ColorBucket;
-    w: ColorBucket;
+    b: TileColorStats;
+    w: TileColorStats;
 }
 
 /**
@@ -72,6 +72,10 @@ export interface StatsField extends TileCell {
 
 type TileRow = [TileCell, TileCell, TileCell, TileCell, TileCell, TileCell, TileCell, TileCell];
 
+/**
+ * 8×8 tile grid indexed by internal board coordinates.
+ * Row 0 is rank 8; column 0 is the a-file. Use {@link tileAt} for square-based access.
+ */
 export type TileGrid = [TileRow, TileRow, TileRow, TileRow, TileRow, TileRow, TileRow, TileRow];
 
 export type RuntimeTileRow = [

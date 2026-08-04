@@ -9,8 +9,7 @@ This example compares tile occupation for high-rated vs low-rated white players 
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
-import { generateComparisonHeatmap, tileTracker } from 'chessalyzer/trackers';
-import { squareToCoords } from 'chessalyzer/board';
+import { generateComparisonHeatmap, tileAt, tileTracker } from 'chessalyzer/trackers';
 
 const high = tileTracker();
 const low = tileTracker();
@@ -32,10 +31,10 @@ await analyzePGN('<pathToPgnFile>', {
     ],
 });
 
-const compareFunc = ({ data, loopSquare }) => {
-    const [row, col] = squareToCoords(loopSquare.square);
-    const val = data.tiles[row][col].w.total.wasOn;
-    return (val * 100) / data.movesTotal;
+const compareFunc = ({ data, square }) => {
+    const cell = tileAt(data.tiles, square.square);
+    if (!cell) return 0;
+    return (cell.w.total.occupiedFor * 100) / data.movesTotal;
 };
 
 const heatmapData = generateComparisonHeatmap(high.state, low.state, compareFunc);

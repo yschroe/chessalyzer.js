@@ -8,8 +8,13 @@ A typical workflow: create a tracker instance, run `analyzePGN`, read state from
 This example tracks **tile occupation** — how often each square had a piece on it — using the built-in `tileTracker`:
 
 ```javascript
-import { analyzePGN, printHeatmap } from 'chessalyzer';
-import { generateHeatmap, TileHeatmapPresets, tileTracker } from 'chessalyzer/trackers';
+import { analyzePGN } from 'chessalyzer';
+import {
+    generateHeatmap,
+    printHeatmap,
+    tileTracker,
+    TileHeatmapPresets,
+} from 'chessalyzer/trackers';
 
 const tiles = tileTracker();
 

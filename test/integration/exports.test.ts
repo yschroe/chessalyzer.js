@@ -21,6 +21,6 @@ describe('package exports', () => {
             replay: 'board',
             maxGames: 1,
         });
-        expect(games.state.games).toBe(1);
+        expect(games.state.gameCount).toBe(1);
     });
 });

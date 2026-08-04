@@ -8,15 +8,11 @@ import type { ParsedGame } from 'chessalyzer/pgn';
 import {
     gameTracker,
     generateHeatmap,
-    isTrackedPiece,
+    isStartingPieceName,
     PieceHeatmapPresets,
     pieceTracker,
 } from 'chessalyzer/trackers';
-import type {
-    GameTrackerState,
-    HeatmapAnalysisFunc,
-    PieceTrackerState,
-} from 'chessalyzer/trackers';
+import type { GameTrackerState, HeatmapFn, PieceTrackerState } from 'chessalyzer/trackers';
 
 import { corpusPath, getCorpusEntry } from '~/test/helpers/fixtures';
 import { isPieceTrackerState } from '~/test/helpers/tracker-state';
@@ -26,18 +22,18 @@ const corpusAvailable = pgnPath !== null;
 
 /** Custom analysis scoped to a starting piece via outer closure (same idea as preset factories). */
 const customPieceHeatmapFunc =
-    (piece: { color: 'b' | 'w'; name: string }): HeatmapAnalysisFunc =>
-    ({ data, loopSquare }) => {
-        const loopPiece = loopSquare.piece;
+    (piece: { color: 'b' | 'w'; name: string }): HeatmapFn =>
+    ({ data, square }) => {
+        const squarePiece = square.piece;
         let val = 0;
         if (
-            loopPiece &&
-            loopPiece.color !== piece.color &&
+            squarePiece &&
+            squarePiece.color !== piece.color &&
             isPieceTrackerState(data) &&
-            isTrackedPiece(loopPiece.name) &&
-            isTrackedPiece(piece.name)
+            isStartingPieceName(squarePiece.name) &&
+            isStartingPieceName(piece.name)
         ) {
-            val = data[loopPiece.color][loopPiece.name][piece.name];
+            val = data[squarePiece.color][squarePiece.name][piece.name];
         }
         return val;
     };
@@ -132,7 +128,7 @@ if (corpusAvailable) {
                 });
 
                 it('matches PGN parse game count', () => {
-                    expect(data.gameCount).toBe(state.games);
+                    expect(data.gameCount).toBe(state.gameCount);
                 });
 
                 it('sums result counts to total games', () => {
@@ -151,7 +147,7 @@ if (corpusAvailable) {
                 });
 
                 it('matches PGN parse game count', () => {
-                    expect(data.gameCount).toBe(state.games);
+                    expect(data.gameCount).toBe(state.gameCount);
                 });
             });
 
@@ -184,8 +180,8 @@ if (corpusAvailable) {
                 });
 
                 it('matches known ECO totals', () => {
-                    for (const [eco, count] of Object.entries(entry.golden.gameTracker.ECO)) {
-                        expect(state.ECO[eco]).toBe(count);
+                    for (const [eco, count] of Object.entries(entry.golden.gameTracker.eco)) {
+                        expect(state.eco[eco]).toBe(count);
                     }
                 });
             });
@@ -203,7 +199,7 @@ if (corpusAvailable) {
                 it('tracks the reference square pair', () => {
                     const { color, from, to, count } = entry.golden.pieceTracker.square;
                     const side = color === 'b' ? state.b : state.w;
-                    if (isTrackedPiece(from) && isTrackedPiece(to)) {
+                    if (isStartingPieceName(from) && isStartingPieceName(to)) {
                         expect(side[from][to]).toBe(count);
                     }
                 });
@@ -223,7 +219,7 @@ if (corpusAvailable) {
                 it('tracks the reference square pair', () => {
                     const { color, from, to, count } = entry.golden.pieceTracker.square;
                     const side = color === 'b' ? state.b : state.w;
-                    if (isTrackedPiece(from) && isTrackedPiece(to)) {
+                    if (isStartingPieceName(from) && isStartingPieceName(to)) {
                         expect(side[from][to]).toBe(count);
                     }
                 });

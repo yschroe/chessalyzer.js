@@ -75,9 +75,14 @@ export function algebraicToCoordsAt(san: string, end: number): BoardCoord {
     return algebraicToCoordsTable[file * 8 + rank]!;
 }
 
-/** Convert internal `[row, col]` to interned {@link Square}. */
-export function coordsToSquare(row: number, col: number): Square {
+/** Convert internal `[row, col]` to interned {@link Square}. Internal hot-path helper. */
+export function squareAt(row: number, col: number): Square {
     return SQUARES[row * 8 + col]!;
+}
+
+/** Convert internal board coordinates to interned {@link Square}. */
+export function coordsToSquare(coord: BoardCoord): Square {
+    return squareAt(coord[0], coord[1]);
 }
 
 /** Convert interned {@link Square} to internal `[row, col]`. */

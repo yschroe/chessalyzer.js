@@ -6,14 +6,9 @@ import {
     type Square,
 } from '#board/board-coords';
 import { defineMoveTracker } from '#trackers/define-tracker';
-import { isTrackedPiece, type BoardPieceName } from '#trackers/piece-types';
-import {
-    createTileGrid,
-    mergeCellStats,
-    setStartingPiece,
-    tileCellAt,
-} from '#trackers/tile/tile-grid';
-import type { RuntimeTileGrid, TileGrid } from '#trackers/tile/tile-tracker-types';
+import { isStartingPieceName, type PieceName } from '#trackers/piece-types';
+import { createTileGrid, mergeCellStats, setStartingPiece, tileAt } from '#trackers/tile/tile-grid';
+import type { RuntimeTileGrid, StatsField, TileGrid } from '#trackers/tile/tile-tracker-types';
 import type { MoveCoords } from '#trackers/tile/tile-tracker-types';
 import type { Action } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
@@ -41,7 +36,7 @@ function isCastleRookLeg(action: Action): boolean {
 }
 
 /**
- * Add `(movesGame - lastMovedOn)` to wasOn for the piece currently on `pos`.
+ * Add `(movesGame - lastMovedOn)` to occupiedFor for the piece currently on `pos`.
  * Measures how many half-moves the piece occupied the square since it arrived.
  */
 function addOccupation(state: TileTrackerRuntimeState, pos: Square): void {
@@ -56,9 +51,9 @@ function addOccupationByRowCol(state: TileTrackerRuntimeState, row: number, col:
 
     const toAdd = state.movesGame - currentPiece.lastMovedOn;
     const bucket = cell[currentPiece.color];
-    bucket.total.wasOn += toAdd;
-    if (isTrackedPiece(currentPiece.piece)) {
-        bucket.byPiece[currentPiece.piece].wasOn += toAdd;
+    bucket.total.occupiedFor += toAdd;
+    if (isStartingPieceName(currentPiece.piece)) {
+        bucket.byPiece[currentPiece.piece].occupiedFor += toAdd;
     }
 }
 
@@ -70,7 +65,7 @@ function processMove(
     state: TileTrackerRuntimeState,
     move: MoveCoords,
     player: PlayerColor,
-    piece: BoardPieceName | null | undefined,
+    piece: PieceName | null | undefined,
 ): void {
     const fromRow = squareRow(move.from);
     const fromCol = squareCol(move.from);
@@ -78,7 +73,7 @@ function processMove(
     const toCol = squareCol(move.to);
     if (
         !piece ||
-        !isTrackedPiece(piece) ||
+        !isStartingPieceName(piece) ||
         !isBoardIndex(fromRow) ||
         !isBoardIndex(fromCol) ||
         !isBoardIndex(toRow) ||
@@ -111,27 +106,37 @@ function processCapture(
     state: TileTrackerRuntimeState,
     pos: Square,
     player: PlayerColor,
-    takingPiece: BoardPieceName | null | undefined,
-    takenPiece: BoardPieceName | null | undefined,
+    takingPiece: PieceName | null | undefined,
+    takenPiece: PieceName | null | undefined,
 ): void {
-    const cell = tileCellAt(state.tiles, pos);
+    const cell = tileAt(state.tiles, pos);
     if (!cell) return;
 
-    if (takenPiece && isTrackedPiece(takenPiece)) {
+    if (takenPiece && isStartingPieceName(takenPiece)) {
         const opPlayer: PlayerColor = player === 'w' ? 'b' : 'w';
         const takenBucket = cell[opPlayer];
-        takenBucket.total.wasCapturedOn += 1;
-        takenBucket.byPiece[takenPiece].wasCapturedOn += 1;
+        takenBucket.total.losses += 1;
+        takenBucket.byPiece[takenPiece].losses += 1;
 
         addOccupation(state, pos);
         cell.currentPiece = null;
     }
 
-    if (takingPiece && isTrackedPiece(takingPiece)) {
+    if (takingPiece && isStartingPieceName(takingPiece)) {
         const takingBucket = cell[player];
-        takingBucket.total.capturedOn += 1;
-        takingBucket.byPiece[takingPiece].capturedOn += 1;
+        takingBucket.total.captures += 1;
+        takingBucket.byPiece[takingPiece].captures += 1;
     }
+}
+
+function stripRuntimeScratch(state: TileTrackerRuntimeState): void {
+    for (const row of BOARD_INDICES) {
+        for (const col of BOARD_INDICES) {
+            const cell = state.tiles[row][col] as Partial<StatsField>;
+            delete cell.currentPiece;
+        }
+    }
+    delete (state as Partial<TileTrackerRuntimeState>).movesGame;
 }
 
 /**
@@ -206,6 +211,10 @@ const tileTrackerFactory = defineMoveTracker<TileTrackerRuntimeState>({
         }
         state.movesTotal += state.movesGame;
         state.movesGame = 0;
+    },
+
+    onFinish(state) {
+        stripRuntimeScratch(state);
     },
 });
 

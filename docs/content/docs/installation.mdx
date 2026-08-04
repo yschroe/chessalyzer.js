@@ -18,14 +18,15 @@ npm install chessalyzer
 The main entry point is `chessalyzer`. Subpath imports keep bundles focused:
 
 ```javascript
-import { analyzePGN, printHeatmap } from 'chessalyzer';
+import { analyzePGN } from 'chessalyzer';
+import { printHeatmap } from 'chessalyzer/trackers';
 import { tileTracker } from 'chessalyzer/trackers';
 import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
 ```
 
 | Subpath                | Use for                                       |
 | ---------------------- | --------------------------------------------- |
-| `chessalyzer`          | `analyzePGN`, `printHeatmap`, filters         |
+| `chessalyzer`          | `analyzePGN`, error helpers, analysis types   |
 | `chessalyzer/trackers` | Built-in trackers, factories, heatmap helpers |
 | `chessalyzer/pgn`      | Parse-only PGN access                         |
 | `chessalyzer/board`    | `Square`, coord helpers, piece-name types     |

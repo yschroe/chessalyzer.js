@@ -8,7 +8,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 
 **Main entry points:** `analyzePGN(path, options?)` in [`src/core/analyze.ts`](src/core/analyze.ts) (full pipeline); `parsePGN(path, options?)` in [`src/pgn/parse-pgn.ts`](src/pgn/parse-pgn.ts) via `chessalyzer/pgn`; trackers via `chessalyzer/trackers`.
 
-**Public exports:** Keep public barrels lean — each subpath exports only concepts that module owns. [`src/index.ts`](src/index.ts) is the analyze entry (`analyzePGN`, `printHeatmap`, error helpers, `AnalyzeOptions` / `AnalyzeResult`). [`src/board/index.ts`](src/board/index.ts) → `chessalyzer/board` (coords, piece names). [`src/replay/index.ts`](src/replay/index.ts) → `chessalyzer/replay` (action types only). [`src/pgn/index.ts`](src/pgn/index.ts) and [`src/trackers/index.ts`](src/trackers/index.ts) export their own runtime + types. Do not re-export another module's concepts from the wrong barrel (e.g. board types via `/replay`). [`src/trackers/index.ts`](src/trackers/index.ts) may dual-export piece-name aliases used by tracker APIs (`Piece`, `isTrackedPiece`). Prefer TypeScript inference for nested option shapes (`AnalyzeRun`, `GameFilter`, …). Do not export internal plumbing (`TrackerDef`, `TrackerFactory`, `TrackerInstance`, `ReplayMode`, …).
+**Public exports:** Keep public barrels lean — each subpath exports only concepts that module owns. [`src/index.ts`](src/index.ts) is the analyze entry (`analyzePGN`, error helpers, `AnalyzeOptions` / `AnalyzeResult`, `ReplayMode`, `GameFilter`, …). [`src/board/index.ts`](src/board/index.ts) → `chessalyzer/board` (coords, piece names). [`src/replay/index.ts`](src/replay/index.ts) → `chessalyzer/replay` (action types only). [`src/pgn/index.ts`](src/pgn/index.ts) and [`src/trackers/index.ts`](src/trackers/index.ts) export their own runtime + types. Do not re-export another module's concepts from the wrong barrel (e.g. board types via `/replay`). [`src/trackers/index.ts`](src/trackers/index.ts) may dual-export piece-name aliases used by tracker APIs (`StartingPieceName`, `isStartingPieceName`). Prefer TypeScript inference for nested option shapes (`AnalyzeRun`, `GameFilter`, …). Do not export internal plumbing (`TrackerDef`, `TrackerFactory`, `ReplayMode` on `/replay`, …). Export `TrackerInstance` from `/trackers` for typing tracker arrays.
 
 **Pipeline (high level):**
 
@@ -59,7 +59,7 @@ Do **not** mandate a `types.ts` file in every submodule — use one when a modul
 | Location            | Put here                                        | Examples                                                                                                                                 |
 | ------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | **`src/types/`**    | Cross-stage pipeline contracts                  | `AnalyzeOptions`, `ParsedGame` / `AssembledGame`, `Action`, `TrackerDef` / `TrackerInstance`, `AnalyzeError`, `PlayerColor` / SAN tokens |
-| **`src/board/`**    | Board geometry and piece identity               | `Square`, `BoardCoord`, `Piece`, `BoardPieceName`, `ChessPiece`                                                                          |
+| **`src/board/`**    | Board geometry and piece identity               | `Square`, `BoardCoord`, `StartingPieceName`, `PieceName`, `ChessPiece`                                                                   |
 | **`src/replay/`**   | Replay policy and decode internals              | `ReplayMode` (internal), `PawnResolution`, `ReplayFailure`                                                                               |
 | **`src/pgn/`**      | Parse-only options resolved at the pgn boundary | `StandaloneParseOptions`, `resolveStandaloneParseOptions`                                                                                |
 | **`src/trackers/`** | Tracker state, heatmap API, built-in shapes     | `TileTrackerState`, `HeatmapData`, `HeatmapPieceRef`, `MoveCoords`                                                                       |
@@ -82,15 +82,15 @@ Do **not** mandate a `types.ts` file in every submodule — use one when a modul
 
 Public barrels re-export **user-facing** names from the **owning** module. Internal contracts stay off the public surface even if they live in `src/types/`.
 
-| Subpath                | Owns (exports)                                         | Does **not** export                                          |
-| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
-| `chessalyzer`          | `analyzePGN`, `printHeatmap`, `AnalyzeOptions`, errors | `ReplayMode`, `HeatmapData`, `TrackerInstance`, worker types |
-| `chessalyzer/board`    | coords, piece names, `PlayerColor`                     | `ChessPiece` (internal board helper shape)                   |
-| `chessalyzer/replay`   | `Action*` only                                         | board types, `ReplayMode`                                    |
-| `chessalyzer/pgn`      | parse API + `ParsedGame`                               | `AssembledGame`                                              |
-| `chessalyzer/trackers` | factories, state shapes, heatmaps                      | `TrackerDef` / `TrackerFactory` (infer from factories)       |
+| Subpath                | Owns (exports)                                                     | Does **not** export                                    |
+| ---------------------- | ------------------------------------------------------------------ | ------------------------------------------------------ |
+| `chessalyzer`          | `analyzePGN`, `AnalyzeOptions`, errors, `ReplayMode`, `GameFilter` | `HeatmapData`, `TrackerInstance` (use `/trackers`)     |
+| `chessalyzer/board`    | coords, piece names, `PlayerColor`                                 | `ChessPiece` (internal board helper shape)             |
+| `chessalyzer/replay`   | `Action*` only                                                     | board types, `ReplayMode`                              |
+| `chessalyzer/pgn`      | parse API + `ParsedGame`                                           | `AssembledGame`                                        |
+| `chessalyzer/trackers` | factories, state shapes, heatmaps                                  | `TrackerDef` / `TrackerFactory` (infer from factories) |
 
-`/trackers` may **dual-export** piece-name aliases (`Piece`, `BoardPieceName`) that also appear on `/board` when tracker APIs return or accept them (`isTrackedPiece`, `HeatmapPieceRef`) — structural aliases, not a second owner.
+`/trackers` may **dual-export** piece-name aliases (`StartingPieceName`, `PieceName`) that also appear on `/board` when tracker APIs return or accept them (`isStartingPieceName`, `HeatmapPieceRef`) — structural aliases, not a second owner.
 
 #### Anti-patterns
 

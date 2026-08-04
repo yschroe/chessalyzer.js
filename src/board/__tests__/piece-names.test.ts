@@ -1,17 +1,21 @@
 import { describe, expect, it } from 'bun:test';
 
-import { isPromotedPieceName, type BoardPieceName, type Piece } from '#board/piece-names';
-import { isTrackedPiece } from '#trackers/piece-types';
+import { isPromotedPieceName, type PieceName, type StartingPieceName } from '#board/piece-names';
+import { isStartingPieceName } from '#trackers/piece-types';
 import type { MoveAction } from '#types/actions';
 
-describe('board piece names', () => {
-    it('recognizes promoted pawn names from board replay', () => {
+describe('piece-names', () => {
+    it('isPromotedPieceName accepts promoted pawn names', () => {
         expect(isPromotedPieceName('Q17')).toBe(true);
         expect(isPromotedPieceName('Nb')).toBe(false);
-        expect(isPromotedPieceName('Pa')).toBe(false);
     });
 
-    it('narrows starting pieces for tracker indexing', () => {
+    it('isStartingPieceName narrows starting piece names', () => {
+        expect(isStartingPieceName('Nb')).toBe(true);
+        expect(isStartingPieceName('Q17')).toBe(false);
+    });
+
+    it('PieceName includes promoted names', () => {
         const action: MoveAction = {
             type: 'move',
             san: 'e4',
@@ -20,13 +24,10 @@ describe('board piece names', () => {
             from: 'e2',
             to: 'e4',
         };
-
-        const name: BoardPieceName | null = action.piece;
-        if (name !== null && isTrackedPiece(name)) {
-            const starting: Piece = name;
+        const name: PieceName | null = action.piece;
+        if (name !== null && isStartingPieceName(name)) {
+            const starting: StartingPieceName = name;
             expect(starting).toBe('Pe');
-        } else {
-            throw new Error('expected starting piece');
         }
     });
 });

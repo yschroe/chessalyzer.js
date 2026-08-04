@@ -32,7 +32,7 @@ export interface ParsedGame {
 }
 
 /** Options for {@link parsePGN} and {@link streamParsePGN}. */
-export interface ParsePgnOptions {
+export interface ParsePGNOptions {
     /**
      * Parse tag-pair headers. Default `false`.
      * (`analyzePGN` additionally accepts `'auto'`, which infers from game trackers.)
