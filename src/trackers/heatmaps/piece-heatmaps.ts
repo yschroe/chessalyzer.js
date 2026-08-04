@@ -1,14 +1,13 @@
 import type { HeatmapFn } from '#trackers/heatmap-types';
 import type { PieceTrackerState } from '#trackers/piece-tracker';
-import { isStartingPieceName, type HeatmapPieceRef } from '#trackers/piece-types';
+import type { HeatmapPieceRef, StartingPieceName } from '#trackers/piece-types';
 
 function captureCount(
     data: PieceTrackerState,
     takerColor: 'b' | 'w',
-    takerName: string,
-    takenName: string,
+    takerName: StartingPieceName,
+    takenName: StartingPieceName,
 ): number {
-    if (!isStartingPieceName(takerName) || !isStartingPieceName(takenName)) return 0;
     return data[takerColor][takerName][takenName];
 }
 

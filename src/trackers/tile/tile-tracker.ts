@@ -7,7 +7,12 @@ import {
 } from '#board/board-coords';
 import { defineMoveTracker } from '#trackers/define-tracker';
 import { isStartingPieceName, type PieceName } from '#trackers/piece-types';
-import { createTileGrid, mergeCellStats, setStartingPiece, tileAt } from '#trackers/tile/tile-grid';
+import {
+    createTileGrid,
+    mergeCellStats,
+    runtimeTileAt,
+    setStartingPiece,
+} from '#trackers/tile/tile-grid';
 import type { RuntimeTileGrid, StatsField, TileGrid } from '#trackers/tile/tile-tracker-types';
 import type { MoveCoords } from '#trackers/tile/tile-tracker-types';
 import type { Action } from '#types/actions';
@@ -110,7 +115,7 @@ function processCapture(
     takingPiece: PieceName,
     takenPiece: PieceName,
 ): void {
-    const cell = tileAt(state.tiles, pos);
+    const cell = runtimeTileAt(state.tiles, pos);
     if (!cell) return;
 
     if (isStartingPieceName(takenPiece)) {

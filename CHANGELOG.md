@@ -34,13 +34,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`TileTracker` `onFinish`:** strips runtime scratch fields (`currentPiece` on cells, `movesGame` on state) so `tiles.state` matches the public `TileTrackerState` shape after analysis.
 - **Filters infer `headers`:** a `filter` callback enables tag-pair parsing automatically; `headers: false` throws when a filter or game tracker needs headers.
 - **Abort errors:** thrown replay failures copy `code` / `gameIndex` / `moveIndex` / `san` / `reason` onto the error — `isReplayError(err)` works directly in `catch` blocks (`getAnalyzeError` still available).
-- **`MoveAction.piece` and capture piece fields** are non-null `PieceName` after a successful SAN decode (promoted names included).
+- **`MoveAction.piece` and capture piece fields** are non-null `PieceName` after a successful SAN decode (promoted names included). Replay now enforces this: a SAN whose origin or capture target resolves to an empty square fails as an `IllegalMove` replay error instead of decoding an action with `null` piece fields. Previously such games surfaced an internal `TypeError` message and could hand `null` to move trackers when `onError: 'skip-game'` was set.
 - **`printHeatmap`** delegates to `heatmapToString` internally.
 
 ### Removed
 
 - **`algebraicToCoords`** from `chessalyzer/board` (still available internally; use `squareToCoords` for known `Square` values).
 - **`BaseAction`** from `chessalyzer/replay` (use `Action` or the specific variant types).
+- **Internal tile grid types out of the public `.d.ts`:** `tileAt` no longer carries a `RuntimeTileGrid` overload, so `RuntimeTileGrid`, `StatsField`, and `TilePiece` no longer appear in the shipped `chessalyzer/trackers` types. `tileAt(tiles: TileGrid, square)` is the single public signature.
 
 ### Migration
 

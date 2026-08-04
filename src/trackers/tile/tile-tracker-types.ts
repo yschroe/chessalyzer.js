@@ -56,7 +56,10 @@ export interface TileCell {
     w: TileColorStats;
 }
 
-/** Internal runtime cell — includes live occupant for occupation tracking (stripped after analysis). */
+/**
+ * Virtual occupant tracked per square while replaying — distinct from a board piece.
+ * `lastMovedOn` holds the move index at which this piece arrived on its square.
+ */
 export interface TilePiece {
     piece: string;
     color: 'b' | 'w';

@@ -1,9 +1,27 @@
-import { coordsToSquare, squareAt } from '#board/board-coords';
+import { coordsToSquare, squareAt, type BoardCoord } from '#board/board-coords';
+import type { PieceName } from '#board/piece-names';
 import { ReplayFailure } from '#replay/replay-failure';
 import type SanContext from '#replay/san-context';
 import { resolveCastle, resolvePawnMove, resolvePieceMove } from '#replay/san-resolver';
 import type { Action } from '#types/actions';
 import { isPromotionToken } from '#types/tokens';
+
+/**
+ * Guarantee the non-null piece fields on {@link Action}.
+ *
+ * Pawn captures resolve their origin arithmetically, so illegal SAN can point at an
+ * empty square. Failing here keeps `null` out of decoded actions and reports the game
+ * as a replay failure instead of surfacing a downstream error from the board.
+ */
+function requirePiece(name: PieceName | null, coords: BoardCoord, san: string): PieceName {
+    if (name === null) {
+        throw new ReplayFailure(
+            'IllegalMove',
+            `SAN "${san}" references an empty square at ${coordsToSquare(coords)}`,
+        );
+    }
+    return name;
+}
 
 /**
  * SAN decode for move trackers — builds reusable {@link Action} objects.
@@ -40,14 +58,15 @@ export default class SanDecoder {
 
         const from = ctx.fromBuf;
         const [toRow, toCol] = r.to;
+        const piece = requirePiece(board.getPieceNameOnCoords(from), from, san);
 
         if (r.capture) {
             const takenOn = ctx.takenOnBuf;
             const cap = ctx.captureAction;
             cap.san = san;
             cap.player = player;
-            cap.takingPiece = board.getPieceNameOnCoords(from)!;
-            cap.takenPiece = board.getPieceNameOnCoords(takenOn)!;
+            cap.takingPiece = piece;
+            cap.takenPiece = requirePiece(board.getPieceNameOnCoords(takenOn), takenOn, san);
             cap.on = squareAt(takenOn[0], takenOn[1]);
             cap.from = coordsToSquare(from);
             if (r.enPassant) {
@@ -61,7 +80,7 @@ export default class SanDecoder {
         const mov = ctx.moveAction;
         mov.san = san;
         mov.player = player;
-        mov.piece = board.getPieceNameOnCoords(from)!;
+        mov.piece = piece;
         mov.from = coordsToSquare(from);
         mov.to = squareAt(toRow, toCol);
         delete mov.castle;
@@ -95,7 +114,7 @@ export default class SanDecoder {
 
         const from = r.from;
         const to = r.to;
-        const piece = board.getPieceNameOnCoords(from)!;
+        const piece = requirePiece(board.getPieceNameOnCoords(from), from, san);
         const [fromRow, fromCol] = from;
         const [toRow, toCol] = to;
 
@@ -105,7 +124,7 @@ export default class SanDecoder {
             cap.player = player;
             cap.on = squareAt(toRow, toCol);
             cap.takingPiece = piece;
-            cap.takenPiece = board.getPieceNameOnCoords(to)!;
+            cap.takenPiece = requirePiece(board.getPieceNameOnCoords(to), to, san);
             cap.from = squareAt(fromRow, fromCol);
             delete cap.enPassant;
             actions.push(cap);

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
 import type ChessBoard from '#board/chess-board';
+import { isReplayError } from '#core/analyze-errors';
 import type { AnalyzeRunState } from '#core/analysis-runtime';
 import { TrackerHost } from '#core/tracker-host';
 import { parseGamesFromLines } from '#pgn/game-assembler';
@@ -81,6 +82,43 @@ describe('GameReplayer', () => {
             expect(cfg.processedGames).toBe(0);
             expect(cfg.skippedGames).toBe(1);
             expect(cfg.errors).toHaveLength(1);
+        });
+
+        it('fails a pawn capture from an empty square instead of emitting null piece fields', () => {
+            const replayer = new GameReplayer();
+            const cfg = emptyCfg();
+
+            const probe = defineMoveTracker({
+                id: 'null-probe',
+                init: () => ({ nulls: 0 }),
+                track: (state, actions: Action[]) => {
+                    for (const action of actions) {
+                        if (action.type === 'move' && (action.piece as unknown) == null) {
+                            state.nulls += 1;
+                        }
+                        if (
+                            action.type === 'capture' &&
+                            ((action.takingPiece as unknown) == null ||
+                                (action.takenPiece as unknown) == null)
+                        ) {
+                            state.nulls += 1;
+                        }
+                    }
+                },
+                merge: (state, other) => {
+                    state.nulls += other.nulls;
+                },
+            });
+            cfg.trackerHost = new TrackerHost([probe()]);
+
+            // `cxd5` resolves its origin to c4 arithmetically, but no pawn stands there.
+            replayer.processGame(game(['e4', 'd5', 'cxd5']), cfg, 'actions', 0, 'skip-game');
+
+            expect(cfg.skippedGames).toBe(1);
+            const [error] = cfg.errors;
+            expect(isReplayError(error) && error.reason).toBe('IllegalMove');
+            expect(error?.message).toContain('empty square');
+            expect(cfg.trackerHost.moveEntries[0]?.state).toEqual({ nulls: 0 });
         });
 
         it('reset restores the starting position', () => {
