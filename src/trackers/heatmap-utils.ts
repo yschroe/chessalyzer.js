@@ -38,8 +38,19 @@ function renderHeatmap<T>(data: T, fun: HeatmapFn<T>): HeatmapData {
 
 /**
  * Generate an 8×8 heatmap from tracker state.
- * `analysis` is a preset function (e.g. `TileHeatmapPresets.TILE_OCC_ALL`) or a custom function.
- * Scoped presets are factories — call them first, e.g. `TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' })`.
+ *
+ * Pass a built-in preset (e.g. `TileHeatmapPresets.TILE_OCC_ALL`) or a custom {@link HeatmapFn}.
+ * Scoped presets are factories — call them first, e.g.
+ * `TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' })`.
+ *
+ * @example
+ * ```ts
+ * import { generateHeatmap, tileTracker, TileHeatmapPresets } from 'chessalyzer/trackers';
+ *
+ * const tiles = tileTracker();
+ * // await analyzePGN(..., { trackers: [tiles] });
+ * const heat = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
+ * ```
  */
 export function generateHeatmap<T>(state: T, analysis: HeatmapFn<T>): HeatmapData {
     return renderHeatmap(state, analysis);

@@ -1,8 +1,12 @@
 import { defineGameTracker } from '#trackers/define-tracker';
 
+/** Accumulated state from {@link gameTracker} after `analyzePGN` completes. */
 export interface GameTrackerState {
+    /** Win counts by side and draws (`1-0`, `0-1`, `1/2-1/2`). */
     results: { white: number; black: number; draw: number };
+    /** Number of games processed. */
     gameCount: number;
+    /** ECO code → game count (requires `headers: true` or `'auto'`). */
     eco: Record<string, number>;
 }
 
@@ -14,7 +18,7 @@ function createInitialState(): GameTrackerState {
     };
 }
 
-/** Built-in game-level tracker: result counts, game count, and ECO distribution. */
+/** Built-in game tracker: result counts, game count, and ECO distribution. Requires headers. */
 export const gameTracker = defineGameTracker<GameTrackerState>({
     id: 'GameTracker',
 

@@ -20,8 +20,8 @@ export const PIECE_TEMPLATE = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'] a
 export type StartingPieceName = (typeof PAWN_TEMPLATE)[number] | (typeof PIECE_TEMPLATE)[number];
 
 /**
- * Internal name assigned to a promoted pawn on the board replay path (`Q17`, `R25`, …).
- * Format: promotion letter (R/N/B/Q) + numeric tile index.
+ * Name assigned to a promoted pawn during board replay (`Q17`, `R25`, …).
+ * Format: promotion letter (`R`/`N`/`B`/`Q`) plus a numeric disambiguator.
  */
 export type PromotedPieceName = `${PromotionToken}${number}`;
 

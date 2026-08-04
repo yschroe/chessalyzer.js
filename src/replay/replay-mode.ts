@@ -1,8 +1,9 @@
 /**
- * Board replay mode for one game.
- * - `skip` — no board replay (PGN parse + game trackers + counts only)
- * - `board` — SAN decode + apply on board; no {@link Action} objects
- * - `actions` — SAN decode + {@link Action}[] for move trackers
+ * How far `analyzePGN` replays each game's movetext.
+ *
+ * - `skip` — parse and count only (fastest when you do not need board data)
+ * - `board` — decode and apply moves on an internal board (no {@link Action} objects)
+ * - `actions` — decode into {@link Action} arrays for move trackers (required when move trackers are present)
  */
 export type ReplayMode = 'skip' | 'board' | 'actions';
 

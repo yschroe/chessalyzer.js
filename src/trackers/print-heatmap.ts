@@ -53,7 +53,18 @@ export function heatmapToString(data: HeatmapData): string {
     return parts.join('');
 }
 
-/** Print {@link HeatmapData} to the terminal. */
+/**
+ * Print a heatmap to the terminal using ANSI background colors.
+ *
+ * @example
+ * ```ts
+ * import { generateHeatmap, printHeatmap, tileTracker, TileHeatmapPresets } from 'chessalyzer/trackers';
+ *
+ * const tiles = tileTracker();
+ * // await analyzePGN(..., { trackers: [tiles] });
+ * printHeatmap(generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL));
+ * ```
+ */
 export function printHeatmap(data: HeatmapData): void {
     renderHeatmap(data, (chunk) => {
         process.stdout.write(chunk);

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`isStartingPieceName()`** on `chessalyzer/board` and `chessalyzer/trackers`.
 - **`workers: number`** shorthand on `AnalyzeOptions` (equivalent to `{ count: n }`).
 - **`heatmapToString(data)`** on `chessalyzer/trackers` — ANSI string form of `printHeatmap` for tests and piping.
+- **JSDoc pass** on public APIs: user-facing descriptions, field docs on exported types, `@example` on main entry points (`analyzePGN`, `parsePGN`, `streamParsePGN`, tracker factories, heatmap helpers), and removal of internal-only wording from shipped `.d.ts` comments.
 
 ### Changed
 

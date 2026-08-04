@@ -14,9 +14,11 @@ import type { Action } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
 import type { MoveTrackerDef, TrackerFactory } from '#types/tracker';
 
-/** Public TileTracker result: square counters and total move count (no per-game scratch). */
+/** Accumulated state from {@link tileTracker} after `analyzePGN` completes. */
 export interface TileTrackerState {
+    /** Per-square counters (8×8 grid). Use {@link tileAt} for square-based access. */
     tiles: TileGrid;
+    /** Total half-moves processed across all games. */
     movesTotal: number;
 }
 
@@ -139,10 +141,10 @@ function stripRuntimeScratch(state: TileTrackerRuntimeState): void {
 }
 
 /**
- * Tracks per-square statistics: moves to, time occupied, captures on, pieces captured on.
+ * Built-in move tracker: per-square statistics (moves to, occupation time, captures, losses).
  *
- * Maintains a virtual 8×8 grid ({@link StatsField}) parallel to the board replay.
- * Grid allocation/reset/merge lives in `./tile-grid`.
+ * Maintains an 8×8 grid parallel to the board. After analysis, read `tiles.state` — runtime
+ * scratch fields are stripped in `onFinish`.
  */
 const tileTrackerFactory = defineMoveTracker<TileTrackerRuntimeState>({
     id: 'TileTracker',
@@ -217,7 +219,19 @@ const tileTrackerFactory = defineMoveTracker<TileTrackerRuntimeState>({
     },
 });
 
-/** Public tracker factory — result state is typed without runtime scratch fields. */
+/**
+ * Built-in tile tracker factory — pass `tileTracker()` to {@link analyzePGN}.
+ *
+ * @example
+ * ```ts
+ * import { analyzePGN } from 'chessalyzer';
+ * import { tileTracker, generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
+ *
+ * const tiles = tileTracker();
+ * await analyzePGN('games.pgn', { trackers: [tiles] });
+ * const heat = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
+ * ```
+ */
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- public state omits runtime scratch fields
 export const tileTracker = tileTrackerFactory as TrackerFactory<
     TileTrackerState,

@@ -95,6 +95,17 @@ type AnalyzeRunNoFilter = Omit<AnalyzeRun, 'filter'> & { filter?: never };
  *
  * Pass tracker instances from factory calls (e.g. `tileTracker()`). Accumulated
  * state is available on the same instances after the call returns (`tiles.state`).
+ * The returned {@link AnalyzeResult} holds throughput and per-run counts only.
+ *
+ * @example
+ * ```ts
+ * import { analyzePGN } from 'chessalyzer';
+ * import { tileTracker } from 'chessalyzer/trackers';
+ *
+ * const tiles = tileTracker();
+ * const result = await analyzePGN('games.pgn', { trackers: [tiles] });
+ * console.log(result.gameCount, tiles.state.movesTotal);
+ * ```
  */
 export function analyzePGN<const T extends TrackerList>(
     path: string,

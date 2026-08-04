@@ -1,9 +1,8 @@
 /**
- * Data model for {@link TileTracker}: per-square stats and virtual piece tracking.
+ * Data model for {@link tileTracker}: per-square stats and virtual piece tracking.
  *
- * Piece names come from the canonical starting-position templates (via `piece-list`).
- * All tracker state is plain data (no class instances) so it survives structured
- * clone across the worker boundary.
+ * Piece names use the canonical starting-position templates (`Pa`…`Ph`, `Ra`…`Rh`).
+ * Tracker state is plain data so it can be merged across worker threads.
  */
 
 import type { Square } from '#board/board-coords';
@@ -15,11 +14,15 @@ export interface MoveCoords {
     to: Square;
 }
 
-/** Counters for one color on one square (aggregate or per-piece-name). */
+/** Counters for one color on one square (aggregate or per starting piece). */
 export interface TileStats {
+    /** Times a piece moved onto this square. */
     movedTo: number;
+    /** Half-moves pieces spent occupying this square (summed across arrivals). */
     occupiedFor: number;
+    /** Captures made on this square by this color. */
     captures: number;
+    /** Pieces of this color lost on this square. */
     losses: number;
 }
 
@@ -32,7 +35,9 @@ function createTileStats(): TileStats {
  * Access via `cell.w.total.occupiedFor` (aggregate) or `cell.w.byPiece.Nb.occupiedFor` (per piece).
  */
 export interface TileColorStats {
+    /** Totals across all starting pieces of this color on the square. */
     total: TileStats;
+    /** Per starting-piece-name counters (`Pa`, `Nb`, `Qd`, …). */
     byPiece: Record<StartingPieceName, TileStats>;
 }
 
@@ -51,10 +56,7 @@ export interface TileCell {
     w: TileColorStats;
 }
 
-/**
- * Virtual piece used for occupation tracking — not the same as board {@link ChessPiece} from `#board/chess-piece`.
- * `lastMovedOn` stores the move index when this piece last arrived on its square.
- */
+/** Internal runtime cell — includes live occupant for occupation tracking (stripped after analysis). */
 export interface TilePiece {
     piece: string;
     color: 'b' | 'w';
@@ -74,7 +76,7 @@ type TileRow = [TileCell, TileCell, TileCell, TileCell, TileCell, TileCell, Tile
 
 /**
  * 8×8 tile grid indexed by internal board coordinates.
- * Row 0 is rank 8; column 0 is the a-file. Use {@link tileAt} for square-based access.
+ * Row 0 is rank 8; column 0 is the a-file. Prefer {@link tileAt} for square-based access.
  */
 export type TileGrid = [TileRow, TileRow, TileRow, TileRow, TileRow, TileRow, TileRow, TileRow];
 

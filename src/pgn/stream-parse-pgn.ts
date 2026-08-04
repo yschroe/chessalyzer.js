@@ -5,10 +5,19 @@ import { toParsedGame } from '#pgn/to-parsed-game';
 import type { ParsePGNOptions, ParsedGame } from '#types/parse-pgn';
 
 /**
- * Stream a PGN file as {@link ParsedGame} objects (stage 2 only — no board replay).
+ * Stream a PGN file as {@link ParsedGame} objects one game at a time (structural parse only — no board replay).
  *
- * Yields one completed game at a time with backpressure via {@link lineStreamIterable}
- * pause/resume. Prefer {@link parsePGN} when you need all games in memory.
+ * Uses backpressure-friendly line I/O — suitable when you process games incrementally without loading
+ * the whole file into memory. Use {@link parsePGN} when you need all games in an array.
+ *
+ * @example
+ * ```ts
+ * import { streamParsePGN } from 'chessalyzer/pgn';
+ *
+ * for await (const game of streamParsePGN('games.pgn', { headers: true })) {
+ *   console.log(game.moves.length, game.result);
+ * }
+ * ```
  */
 export function streamParsePGN(path: string, options?: ParsePGNOptions): AsyncIterable<ParsedGame> {
     const { parseHeaders, maxGames } = resolveStandaloneParseOptions(options);

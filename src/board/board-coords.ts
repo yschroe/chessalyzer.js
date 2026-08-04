@@ -2,14 +2,13 @@
  * Algebraic ↔ internal board coordinate conversion.
  *
  * Internal coords: `[row, col]` where row 0 = rank 8, row 7 = rank 1, col 0 = a-file.
- * Public APIs use interned {@link Square} strings (`'a1'`…`'h8'`) for ergonomics;
- * hot paths index {@link SQUARES} by internal row/col without allocating.
+ * Public APIs use {@link Square} strings (`'a1'`…`'h8'`).
  */
 
 export type BoardIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 // oxfmt-ignore
-/** Interned algebraic square (`'a1'`…`'h8'`). */
+/** Algebraic square literal (`'a1'`…`'h8'`). */
 export type Square =
     | 'a1' | 'a2' | 'a3' | 'a4' | 'a5' | 'a6' | 'a7' | 'a8'
     | 'b1' | 'b2' | 'b3' | 'b4' | 'b5' | 'b6' | 'b7' | 'b8'
@@ -75,27 +74,27 @@ export function algebraicToCoordsAt(san: string, end: number): BoardCoord {
     return algebraicToCoordsTable[file * 8 + rank]!;
 }
 
-/** Convert internal `[row, col]` to interned {@link Square}. Internal hot-path helper. */
+/** Convert internal `[row, col]` to a {@link Square}. Internal hot-path helper. */
 export function squareAt(row: number, col: number): Square {
     return SQUARES[row * 8 + col]!;
 }
 
-/** Convert internal board coordinates to interned {@link Square}. */
+/** Convert {@link BoardCoord} to {@link Square} (inverse of {@link squareToCoords}). */
 export function coordsToSquare(coord: BoardCoord): Square {
     return squareAt(coord[0], coord[1]);
 }
 
-/** Convert interned {@link Square} to internal `[row, col]`. */
+/** Convert {@link Square} to {@link BoardCoord} (`[row, col]`, row 0 = rank 8). */
 export function squareToCoords(square: Square): BoardCoord {
     return algebraicToCoords(square)!;
 }
 
-/** Grid row index from an interned {@link Square} (0 = rank 8). */
+/** Grid row index from a {@link Square} (0 = rank 8). */
 export function squareRow(square: Square): number {
     return 7 - (square.charCodeAt(1) - 49);
 }
 
-/** Grid column index from an interned {@link Square} (0 = a-file). */
+/** Grid column index from a {@link Square} (0 = a-file). */
 export function squareCol(square: Square): number {
     return square.charCodeAt(0) - 97;
 }

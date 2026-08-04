@@ -101,7 +101,12 @@ export function mergeCellStats(dst: StatsField, src: StatsField): void {
     }
 }
 
-/** Resolve an interned {@link Square} to a grid cell when indices are in range. */
+/**
+ * Look up the tile cell for an algebraic {@link Square}.
+ *
+ * Prefer this over `tiles[row][col]` — it avoids `noUncheckedIndexedAccess` issues and
+ * matches how heatmap presets access the grid.
+ */
 export function tileAt(tiles: RuntimeTileGrid, square: Square): StatsField | undefined;
 export function tileAt(tiles: TileGrid, square: Square): TileCell | undefined;
 export function tileAt(

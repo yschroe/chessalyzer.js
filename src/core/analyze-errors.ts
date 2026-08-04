@@ -29,6 +29,23 @@ export function createReplayError(
     };
 }
 
+/**
+ * Type guard for replay failures from `analyzePGN`.
+ *
+ * Works on errors thrown in abort mode (`onError: 'abort'`, the default) and on
+ * entries in `AnalyzeResult.errors` when using `onError: 'skip-game'`.
+ *
+ * @example
+ * ```ts
+ * try {
+ *   await analyzePGN('games.pgn');
+ * } catch (err) {
+ *   if (isReplayError(err)) {
+ *     console.error(`Game ${err.gameIndex}, move ${err.moveIndex}: ${err.san}`);
+ *   }
+ * }
+ * ```
+ */
 export function isReplayError(err: unknown): err is ReplayError {
     if (!isRecord(err)) return false;
     return err.code === 'replay' && typeof err.gameIndex === 'number';
@@ -49,6 +66,12 @@ export function toAbortError(replayError: ReplayError): Error {
     return err;
 }
 
+/**
+ * Extract a typed {@link AnalyzeError} from an unknown caught value.
+ *
+ * Equivalent to `isReplayError(err) ? err : undefined` — useful when you want
+ * `AnalyzeError | undefined` without a separate type-narrowing branch.
+ */
 export function getAnalyzeError(err: unknown): AnalyzeError | undefined {
     if (isReplayError(err)) return err;
     return undefined;
