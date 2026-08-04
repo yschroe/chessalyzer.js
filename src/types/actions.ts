@@ -1,9 +1,9 @@
 import type { Square } from '#board/board-coords';
-import type { BoardPieceName } from '#board/piece-names';
+import type { PieceName } from '#board/piece-names';
 import type { PlayerColor, PromotionToken } from '#types/tokens';
 
 /** Shared fields on replay {@link Action} variants. */
-export interface BaseAction {
+interface BaseAction {
     type: 'move' | 'capture' | 'promote';
     san: string;
     player: PlayerColor;
@@ -12,11 +12,11 @@ export interface BaseAction {
 export interface MoveAction extends BaseAction {
     type: 'move';
     /**
-     * Internal piece name from the starting layout (`'Pa'`, `'Nb'`, …) or a promoted pawn
+     * Piece name from the starting layout (`'Pa'`, `'Nb'`, …) or a promoted pawn
      * name (`'Q17'`, …). `null` when the origin square has no piece (should not occur
      * on a successfully decoded move).
      */
-    piece: BoardPieceName | null;
+    piece: PieceName | null;
     from: Square;
     to: Square;
     /** Present on the king leg when the SAN is a castle. */
@@ -25,8 +25,8 @@ export interface MoveAction extends BaseAction {
 
 export interface CaptureAction extends BaseAction {
     type: 'capture';
-    takingPiece: BoardPieceName | null;
-    takenPiece: BoardPieceName | null;
+    takingPiece: PieceName | null;
+    takenPiece: PieceName | null;
     on: Square;
     /** Origin square of the capturing piece (en passant: differs from the paired move's `to`). */
     from?: Square;

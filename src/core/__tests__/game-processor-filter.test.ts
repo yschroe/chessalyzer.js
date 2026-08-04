@@ -47,7 +47,7 @@ describe('GameProcessor filter materialization', () => {
         const processor = new GameProcessor(normalized);
         await processor.processPGN(fixturePath('results-mix'));
 
-        expect(games.state.games).toBeGreaterThan(0);
+        expect(games.state.gameCount).toBeGreaterThan(0);
         expect(spy.mock.calls.length).toBe(fixtureExpected('results-mix').games);
     });
 });

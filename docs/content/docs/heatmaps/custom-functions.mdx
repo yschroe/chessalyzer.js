@@ -6,14 +6,13 @@ description: Write your own per-square calculation for generateHeatmap.
 Pass any function as the `analysis` argument to `generateHeatmap(state, analysis)`. The function is called for every square on the board.
 
 ```javascript
-import { generateHeatmap } from 'chessalyzer/trackers';
-import { squareToCoords } from 'chessalyzer/board';
+import { generateHeatmap, tileAt } from 'chessalyzer/trackers';
 
 // after analyzePGN — read state from your tracker instance
-const heatmapData = generateHeatmap(tiles.state, ({ data, loopSquare }) => {
-    const [row, col] = squareToCoords(loopSquare.square);
-    const val = data.tiles[row][col].w.total.wasOn;
-    return (val * 100) / data.movesTotal;
+const heatmapData = generateHeatmap(tiles.state, ({ data, square }) => {
+    const cell = tileAt(data.tiles, square.square);
+    if (!cell) return 0;
+    return (cell.w.total.occupiedFor * 100) / data.movesTotal;
 });
 ```
 
@@ -22,31 +21,31 @@ Capture extra values from the outer scope when you need them (e.g. a piece of in
 ```javascript
 const queen = { color: 'w', name: 'Qd' };
 
-const heatmapData = generateHeatmap(tiles.state, ({ data, loopSquare }) => {
-    const cell = data.tiles[/* … */];
+const heatmapData = generateHeatmap(tiles.state, ({ data, square }) => {
+    const cell = tileAt(data.tiles, square.square);
+    if (!cell) return 0;
     return cell[queen.color].byPiece[queen.name].movedTo;
 });
 ```
 
 ## Analysis function arguments
 
-| Property     | Description                                                         |
-| ------------ | ------------------------------------------------------------------- |
-| `data`       | Tracker state passed to `generateHeatmap` (e.g. `TileTrackerState`) |
-| `loopSquare` | Info about the square being calculated                              |
+| Property | Description                                                         |
+| -------- | ------------------------------------------------------------------- |
+| `data`   | Tracker state passed to `generateHeatmap` (e.g. `TileTrackerState`) |
+| `square` | Info about the square being calculated                              |
 
-### `loopSquare` shape
+### `square` shape
+
+Import `HeatmapSquare` from `chessalyzer/trackers`:
 
 ```typescript
+import type { HeatmapSquare } from 'chessalyzer/trackers';
 import type { Square } from 'chessalyzer/board';
 
-interface SquareData {
-    square: Square; // e.g. 'a2'
-    piece: {
-        name: string; // e.g. 'Pa'
-        color: 'b' | 'w';
-    } | null;
-}
+// HeatmapSquare:
+//   square: Square — e.g. 'a2'
+//   piece: { name: StartingPieceName; color: 'b' | 'w' } | null
 ```
 
 See [Presets](/docs/heatmaps/presets) for built-in functions you can study or reuse.

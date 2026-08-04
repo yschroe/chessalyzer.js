@@ -5,7 +5,7 @@ import type { ChessPiece } from '#board/chess-piece';
 import {
     PAWN_TEMPLATE,
     PIECE_TEMPLATE,
-    type BoardPieceName,
+    type PieceName,
     type PromotedPieceName,
 } from '#board/piece-names';
 import PiecePositions from '#board/piece-positions';
@@ -49,7 +49,7 @@ class ChessBoard {
     ]);
 
     /** Index → piece name for standard pieces (index 0 unused). Derived from the starting-position templates. */
-    private static pieceLookupList: ReadonlyArray<BoardPieceName | null> = [
+    private static pieceLookupList: ReadonlyArray<PieceName | null> = [
         null,
         ...PIECE_TEMPLATE,
         ...PAWN_TEMPLATE,
@@ -63,8 +63,8 @@ class ChessBoard {
 
     /** Names for promoted pawns; indexed by (pieceIdx - pieceLookupList.length - 1). */
     private promotedPieces: {
-        w: BoardPieceName[];
-        b: BoardPieceName[];
+        w: PieceName[];
+        b: PieceName[];
     };
 
     constructor() {
@@ -80,7 +80,7 @@ class ChessBoard {
     }
 
     /** Hot-path helper: piece name only, no object allocation. */
-    getPieceNameOnCoords(coords: BoardCoord): BoardPieceName | null {
+    getPieceNameOnCoords(coords: BoardCoord): PieceName | null {
         return this.getPieceNameAt(coords[0], coords[1]);
     }
 
@@ -101,7 +101,7 @@ class ChessBoard {
     }
 
     /** Piece name at given coordinates. */
-    getPieceNameAt(row: number, col: number): BoardPieceName | null {
+    getPieceNameAt(row: number, col: number): PieceName | null {
         const pieceNumber = this.tiles[row * 8 + col]!;
         if (pieceNumber === 0) return null;
 

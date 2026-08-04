@@ -20,7 +20,7 @@
             },
             "golden": {
                 "gameTracker": {
-                    "ECO": { "A00": 1177, "B00": 632, "C00": 805 },
+                    "eco": { "A00": 1177, "B00": 632, "C00": 805 },
                     "filterWhiteWins": 500
                 },
                 "pieceTracker": {

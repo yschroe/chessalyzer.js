@@ -1,18 +1,22 @@
-import { coordsToSquare, type BoardCoord } from '#board/board-coords';
-import { getStartingPiece } from '#board/piece-names';
-import type { HeatmapAnalysisFunc, HeatmapData, SquareData } from '#trackers/heatmap-types';
+import { squareAt, type BoardCoord } from '#board/board-coords';
+import { getStartingPiece, isStartingPieceName } from '#board/piece-names';
+import type { HeatmapFn, HeatmapData, HeatmapSquare } from '#trackers/heatmap-types';
 
-function squareData(row: number, col: number): SquareData {
-    const square = coordsToSquare(row, col);
+function heatmapSquare(row: number, col: number): HeatmapSquare {
+    const square = squareAt(row, col);
     const loopSqrCoords: BoardCoord = [row, col];
+    const starting = getStartingPiece(loopSqrCoords);
     return {
         square,
-        piece: getStartingPiece(loopSqrCoords),
+        piece:
+            starting && isStartingPieceName(starting.name)
+                ? { color: starting.color, name: starting.name }
+                : null,
     };
 }
 
 /** Evaluate `fun` at every square and collect min/max for normalization. */
-function renderHeatmap<T>(data: T, fun: HeatmapAnalysisFunc<T>): HeatmapData {
+function renderHeatmap<T>(data: T, fun: HeatmapFn<T>): HeatmapData {
     const map: number[][] = [];
     let max = -Infinity;
     let min = Infinity;
@@ -20,8 +24,8 @@ function renderHeatmap<T>(data: T, fun: HeatmapAnalysisFunc<T>): HeatmapData {
     for (let i = 0; i < 8; i += 1) {
         const dataRow: number[] = [];
         for (let j = 0; j < 8; j += 1) {
-            const loopSquare = squareData(i, j);
-            const heatVal = fun({ data, loopSquare });
+            const square = heatmapSquare(i, j);
+            const heatVal = fun({ data, square });
             dataRow.push(heatVal);
             max = Math.max(max, heatVal);
             min = Math.min(min, heatVal);
@@ -34,11 +38,11 @@ function renderHeatmap<T>(data: T, fun: HeatmapAnalysisFunc<T>): HeatmapData {
 
 /**
  * Generate an 8×8 heatmap from tracker state.
- * `analysisFunc` is a preset function (e.g. `TileHeatmapPresets.TILE_OCC_ALL`) or a custom function.
+ * `analysis` is a preset function (e.g. `TileHeatmapPresets.TILE_OCC_ALL`) or a custom function.
  * Scoped presets are factories — call them first, e.g. `TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' })`.
  */
-export function generateHeatmap<T>(state: T, analysisFunc: HeatmapAnalysisFunc<T>): HeatmapData {
-    return renderHeatmap(state, analysisFunc);
+export function generateHeatmap<T>(state: T, analysis: HeatmapFn<T>): HeatmapData {
+    return renderHeatmap(state, analysis);
 }
 
 /**
@@ -48,14 +52,14 @@ export function generateHeatmap<T>(state: T, analysisFunc: HeatmapAnalysisFunc<T
 export function generateComparisonHeatmap<T>(
     state: T,
     compState: T,
-    analysisFunc: HeatmapAnalysisFunc<T>,
+    analysis: HeatmapFn<T>,
 ): HeatmapData {
     const map: number[][] = [];
     let max = -Infinity;
     let min = Infinity;
 
-    const map0 = renderHeatmap(state, analysisFunc);
-    const map1 = renderHeatmap(compState, analysisFunc);
+    const map0 = renderHeatmap(state, analysis);
+    const map1 = renderHeatmap(compState, analysis);
 
     for (let i = 0; i < 8; i += 1) {
         const dataRow: number[] = [];

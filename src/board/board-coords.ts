@@ -58,7 +58,7 @@ export function isBoardIndex(n: number | undefined): n is BoardIndex {
  * Convert algebraic square (e.g. `'e4'`) to board coords.
  * @returns 0-indexed `[row, col]` array, or `undefined` if out of range.
  */
-export function algebraicToCoords(square: string): BoardCoord | undefined {
+function algebraicToCoords(square: string): BoardCoord | undefined {
     const file = square.charCodeAt(0) - 97; // 'a' → 0
     const rank = square.charCodeAt(1) - 49; // '1' → 0
     return algebraicToCoordsTable[file * 8 + rank];
@@ -75,9 +75,14 @@ export function algebraicToCoordsAt(san: string, end: number): BoardCoord {
     return algebraicToCoordsTable[file * 8 + rank]!;
 }
 
-/** Convert internal `[row, col]` to interned {@link Square}. */
-export function coordsToSquare(row: number, col: number): Square {
+/** Convert internal `[row, col]` to interned {@link Square}. Internal hot-path helper. */
+export function squareAt(row: number, col: number): Square {
     return SQUARES[row * 8 + col]!;
+}
+
+/** Convert internal board coordinates to interned {@link Square}. */
+export function coordsToSquare(coord: BoardCoord): Square {
+    return squareAt(coord[0], coord[1]);
 }
 
 /** Convert interned {@link Square} to internal `[row, col]`. */

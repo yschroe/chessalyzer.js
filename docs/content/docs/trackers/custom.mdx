@@ -75,7 +75,7 @@ console.log(counter.state.halfMoves, counter.state.captures);
 
 - `SanDecoder` reuses the same `Action` objects each half-move — copy fields you need to retain across moves.
 - **Castling** produces two move actions (king leg, then rook leg). The rook leg carries the same `castle` flag.
-- `action.piece` / `takingPiece` / `takenPiece` use `BoardPieceName` (`Pa`, `Nb`, … or promoted names like `Q17`). Use `isTrackedPiece()` when indexing starting-piece matrices.
+- `action.piece` / `takingPiece` / `takenPiece` use `PieceName` (`Pa`, `Nb`, … or promoted names like `Q17`). Use `isStartingPieceName()` when indexing starting-piece matrices.
 
 ## Usage
 
@@ -118,7 +118,7 @@ Under multithreading the main thread only drives **`merge`** and **`onFinish`** 
 ```javascript
 import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
 import type { Action } from 'chessalyzer/replay';
-import type { BoardPieceName, Square } from 'chessalyzer/board';
+import type { PieceName, Square } from 'chessalyzer/board';
 import { defineGameTracker, defineMoveTracker } from 'chessalyzer/trackers';
 ```
 

@@ -1,4 +1,5 @@
-import { analyzePGN, printHeatmap } from 'chessalyzer';
+import { analyzePGN } from 'chessalyzer';
+import { printHeatmap } from 'chessalyzer/trackers';
 import {
     generateComparisonHeatmap,
     generateHeatmap,

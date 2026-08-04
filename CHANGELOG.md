@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`ReplayMode`** exported from `chessalyzer` (closed union `'skip' | 'board' | 'actions'`).
+- **Analysis types on the root entry:** `AnalyzeRun`, `AnalyzeRunResult`, `GameFilter`, `WorkerOptions`.
+- **`TrackerInstance`** exported from `chessalyzer/trackers` for typing tracker arrays.
+- **`tileAt(tiles, square)`** on `chessalyzer/trackers` — square-based tile grid access (avoids raw `[row][col]` indexing under `noUncheckedIndexedAccess`).
+- **`HeatmapSquare`** and **`HeatmapFn`** exported from `chessalyzer/trackers`; `Action` dual-exported from `/trackers` so move-tracker authors can use one import path.
+- **`isStartingPieceName()`** on `chessalyzer/board` and `chessalyzer/trackers`.
+- **`workers: number`** shorthand on `AnalyzeOptions` (equivalent to `{ count: n }`).
+
+### Changed
+
+- **`ReplayMode` (breaking):** no longer an open union — only `'skip' | 'board' | 'actions'` type-check.
+- **Piece-name types (breaking):** `Piece` → `StartingPieceName`, `BoardPieceName` → `PieceName`; `isTrackedPiece` → `isStartingPieceName`.
+- **Heatmap callback API (breaking):** `HeatmapAnalysisFunc` → `HeatmapFn`; `SquareData` → `HeatmapSquare` (now exported); callback arg `loopSquare` → `square`; `square.piece.name` is `StartingPieceName` (no runtime guard needed in presets).
+- **`TileStats` fields (breaking):** `wasOn` → `occupiedFor`, `capturedOn` → `captures`, `wasCapturedOn` → `losses`.
+- **`ColorBucket` → `TileColorStats`** (breaking).
+- **`GameTrackerState` (breaking):** `games` → `gameCount`, `ECO` → `eco`.
+- **`WorkerOptions` (breaking):** `workerCount` → `count`.
+- **`ParsePgnOptions` → `ParsePGNOptions`** (breaking).
+- **`coordsToSquare`** now takes `BoardCoord` (inverse of `squareToCoords`); two-arg `(row, col)` removed from the public API (internal hot path uses `squareAt`).
+- **`printHeatmap`** moved from `chessalyzer` to `chessalyzer/trackers`.
+- **`TileTracker` `onFinish`:** strips runtime scratch fields (`currentPiece` on cells, `movesGame` on state) so `tiles.state` matches the public `TileTrackerState` shape after analysis.
+
+### Removed
+
+- **`algebraicToCoords`** from `chessalyzer/board` (still available internally; use `squareToCoords` for known `Square` values).
+- **`BaseAction`** from `chessalyzer/replay` (use `Action` or the specific variant types).
+
+### Migration
+
+```ts
+// piece names
+import type { StartingPieceName, PieceName } from 'chessalyzer/board';
+import { isStartingPieceName } from 'chessalyzer/trackers';
+
+// heatmaps
+import { generateHeatmap, HeatmapFn, tileAt, printHeatmap } from 'chessalyzer/trackers';
+generateHeatmap(tiles.state, ({ data, square }) => {
+    const cell = tileAt(data.tiles, square.square);
+    return cell?.w.total.occupiedFor ?? 0;
+});
+
+// game tracker state
+console.log(games.state.gameCount, games.state.eco);
+
+// workers
+await analyzePGN(path, { trackers: [tiles], workers: 8 });
+// or: workers: { count: 8, chunk: { targetBytes: 4 * 1024 * 1024 } }
+
+// analysis types
+import type {
+    AnalyzeRun,
+    AnalyzeRunResult,
+    GameFilter,
+    ReplayMode,
+    WorkerOptions,
+} from 'chessalyzer';
+```
+
 ## [4.0.0-alpha.4] - 2026-08-03
 
 ### Added

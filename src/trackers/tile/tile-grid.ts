@@ -9,7 +9,7 @@ import {
 import { getStartingPiece } from '#board/piece-names';
 import { pieceList } from '#trackers/piece-types';
 import {
-    createColorBucket,
+    createTileColorStats,
     createTilePiece,
     type RuntimeTileGrid,
     type RuntimeTileRow,
@@ -21,9 +21,9 @@ import {
 
 function addTileStats(dst: TileStats, src: TileStats): void {
     dst.movedTo += src.movedTo;
-    dst.wasOn += src.wasOn;
-    dst.capturedOn += src.capturedOn;
-    dst.wasCapturedOn += src.wasCapturedOn;
+    dst.occupiedFor += src.occupiedFor;
+    dst.captures += src.captures;
+    dst.losses += src.losses;
 }
 
 /**
@@ -72,8 +72,8 @@ export function createTileGrid(): RuntimeTileGrid {
 /** Build one empty cell with aggregate + per-piece stat slots (all zero). */
 function createEmptyCell(): StatsField {
     return {
-        b: createColorBucket(),
-        w: createColorBucket(),
+        b: createTileColorStats(),
+        w: createTileColorStats(),
         currentPiece: null,
     };
 }
@@ -102,9 +102,9 @@ export function mergeCellStats(dst: StatsField, src: StatsField): void {
 }
 
 /** Resolve an interned {@link Square} to a grid cell when indices are in range. */
-export function tileCellAt(tiles: RuntimeTileGrid, square: Square): StatsField | undefined;
-export function tileCellAt(tiles: TileGrid, square: Square): TileCell | undefined;
-export function tileCellAt(
+export function tileAt(tiles: RuntimeTileGrid, square: Square): StatsField | undefined;
+export function tileAt(tiles: TileGrid, square: Square): TileCell | undefined;
+export function tileAt(
     tiles: TileGrid | RuntimeTileGrid,
     square: Square,
 ): TileCell | StatsField | undefined {

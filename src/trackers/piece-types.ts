@@ -1,8 +1,8 @@
-import { PAWN_TEMPLATE, PIECE_TEMPLATE, type Piece } from '#board/piece-names';
+import { PAWN_TEMPLATE, PIECE_TEMPLATE, type StartingPieceName } from '#board/piece-names';
 import type { PlayerColor } from '#types/tokens';
 
-export type { BoardPieceName, Piece, PromotedPieceName } from '#board/piece-names';
-export { isPromotedPieceName } from '#board/piece-names';
+export type { PieceName, PromotedPieceName, StartingPieceName } from '#board/piece-names';
+export { isPromotedPieceName, isStartingPieceName } from '#board/piece-names';
 
 /**
  * Starting-position piece identity for piece-scoped heatmap presets.
@@ -10,16 +10,10 @@ export { isPromotedPieceName } from '#board/piece-names';
  */
 export interface HeatmapPieceRef {
     color: PlayerColor;
-    name: Piece;
+    name: StartingPieceName;
 }
 
-type PieceStats = { [piece in Piece]: number };
-export type PieceStatsMap = { [piece in Piece]: PieceStats };
+type PieceStats = { [piece in StartingPieceName]: number };
+export type PieceStatsMap = { [piece in StartingPieceName]: PieceStats };
 
-export const pieceList: Piece[] = [...PAWN_TEMPLATE, ...PIECE_TEMPLATE];
-
-const trackedPieceSet = new Set<string>(pieceList);
-
-export function isTrackedPiece(name: string): name is Piece {
-    return trackedPieceSet.has(name);
-}
+export const pieceList: StartingPieceName[] = [...PAWN_TEMPLATE, ...PIECE_TEMPLATE];

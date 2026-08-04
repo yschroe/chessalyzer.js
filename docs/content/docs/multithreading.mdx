@@ -14,7 +14,7 @@ const tiles = tileTracker();
 await analyzePGN('<pathToPgnFile>', {
     trackers: [tiles],
     maxGames: 10000,
-    workers: { workerCount: 8, chunk: { targetBytes: 4 * 1024 * 1024 } },
+    workers: { count: 8, chunk: { targetBytes: 4 * 1024 * 1024 } },
 });
 
 console.log(tiles.state.movesTotal);

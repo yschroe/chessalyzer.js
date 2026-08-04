@@ -17,7 +17,7 @@ export const PAWN_TEMPLATE = ['Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph'] as
 export const PIECE_TEMPLATE = ['Ra', 'Nb', 'Bc', 'Qd', 'Ke', 'Bf', 'Ng', 'Rh'] as const;
 
 /** Starting-position piece names (`Pa`…`Ph`, `Ra`…`Rh`). */
-export type Piece = (typeof PAWN_TEMPLATE)[number] | (typeof PIECE_TEMPLATE)[number];
+export type StartingPieceName = (typeof PAWN_TEMPLATE)[number] | (typeof PIECE_TEMPLATE)[number];
 
 /**
  * Internal name assigned to a promoted pawn on the board replay path (`Q17`, `R25`, …).
@@ -26,13 +26,20 @@ export type Piece = (typeof PAWN_TEMPLATE)[number] | (typeof PIECE_TEMPLATE)[num
 export type PromotedPieceName = `${PromotionToken}${number}`;
 
 /** Starting or promoted piece identity returned by board replay ({@link MoveAction.piece}, captures, …). */
-export type BoardPieceName = Piece | PromotedPieceName;
+export type PieceName = StartingPieceName | PromotedPieceName;
 
 const promotedPieceNameRe = /^[RNBQ]\d+$/;
 
-/** True when `name` matches the promoted-pawn naming scheme from {@link ChessBoard.promotePiece}. */
+/** True when `name` matches the promoted-pawn naming scheme from board replay. */
 export function isPromotedPieceName(name: string): name is PromotedPieceName {
     return promotedPieceNameRe.test(name);
+}
+
+const startingPieceSet = new Set<string>([...PAWN_TEMPLATE, ...PIECE_TEMPLATE]);
+
+/** True when `name` is a starting-position piece identity (`Pa`, `Nb`, `Qd`, …). */
+export function isStartingPieceName(name: string): name is StartingPieceName {
+    return startingPieceSet.has(name);
 }
 
 /**
