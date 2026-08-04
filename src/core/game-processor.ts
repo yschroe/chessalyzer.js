@@ -146,6 +146,7 @@ class GameProcessor {
                 }
 
                 const task: WorkerBatchTask = {
+                    type: 'batch',
                     pgnChunkBytes: chunk.bytes,
                     configs: taskConfigs,
                 };

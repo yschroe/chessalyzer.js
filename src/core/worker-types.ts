@@ -27,6 +27,7 @@ export interface WorkerTaskConfigEntry {
 
 /** Per-batch payload sent main → worker (tracker config lives in workerData). */
 export interface WorkerBatchTask {
+    type: 'batch';
     /** UTF-8 PGN chunk; transferred zero-copy from main to worker. */
     pgnChunkBytes: Uint8Array;
     configs: WorkerTaskConfigEntry[];
@@ -61,9 +62,4 @@ export interface WorkerMessage {
     results: WorkerConfigResult[];
     /** Set when batch processing failed catastrophically; main thread should abort. */
     error?: string;
-}
-
-/** Type guard for {@link WorkerFlushTask}. */
-export function isWorkerFlushTask(task: WorkerTaskData): task is WorkerFlushTask {
-    return 'type' in task && task.type === 'flush';
 }
