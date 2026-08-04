@@ -10,7 +10,7 @@ import { generateHeatmap, tileAt } from 'chessalyzer/trackers';
 
 // after analyzePGN — read state from your tracker instance
 const heatmapData = generateHeatmap(tiles.state, ({ data, square }) => {
-    const cell = tileAt(data.tiles, square.square);
+    const cell = tileAt(data.tiles, square);
     if (!cell) return 0;
     return (cell.w.total.occupiedFor * 100) / data.movesTotal;
 });
@@ -22,7 +22,7 @@ Capture extra values from the outer scope when you need them (e.g. a piece of in
 const queen = { color: 'w', name: 'Qd' };
 
 const heatmapData = generateHeatmap(tiles.state, ({ data, square }) => {
-    const cell = tileAt(data.tiles, square.square);
+    const cell = tileAt(data.tiles, square);
     if (!cell) return 0;
     return cell[queen.color].byPiece[queen.name].movedTo;
 });
@@ -30,22 +30,27 @@ const heatmapData = generateHeatmap(tiles.state, ({ data, square }) => {
 
 ## Analysis function arguments
 
-| Property | Description                                                         |
-| -------- | ------------------------------------------------------------------- |
-| `data`   | Tracker state passed to `generateHeatmap` (e.g. `TileTrackerState`) |
-| `square` | Info about the square being calculated                              |
+Your function receives a single object with three properties:
 
-### `square` shape
+| Property        | Type                      | Description                                                          |
+| --------------- | ------------------------- | -------------------------------------------------------------------- |
+| `data`          | your tracker state        | State passed to `generateHeatmap` (e.g. `TileTrackerState`)          |
+| `square`        | `Square`                  | Square being calculated, e.g. `'a2'`                                 |
+| `startingPiece` | `HeatmapPieceRef \| null` | Piece that starts the game on `square`, or `null` if it starts empty |
 
-Import `HeatmapSquare` from `chessalyzer/trackers`:
+Use `square` when each cell means a **board location**, and `startingPiece` when each cell means a **piece identity** (how `PIECE_CAPTURED` and `TILE_OCC_BY_PIECE` work):
 
 ```typescript
-import type { HeatmapSquare } from 'chessalyzer/trackers';
-import type { Square } from 'chessalyzer/board';
+import type { HeatmapFn, HeatmapPieceRef } from 'chessalyzer/trackers';
 
-// HeatmapSquare:
-//   square: Square — e.g. 'a2'
-//   piece: { name: StartingPieceName; color: 'b' | 'w' } | null
+// HeatmapPieceRef: { color: 'b' | 'w'; name: StartingPieceName }
+
+const byPieceIdentity: HeatmapFn = ({ data, startingPiece }) => {
+    if (!startingPiece) return 0;
+    return lookUp(data, startingPiece.color, startingPiece.name);
+};
 ```
+
+You can also type the whole function with `HeatmapFn<YourState>` to get full inference on `data`.
 
 See [Presets](/docs/heatmaps/presets) for built-in functions you can study or reuse.

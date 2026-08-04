@@ -21,7 +21,7 @@ export type {
 export type { GameTrackerState } from '#trackers/game-tracker';
 export type { PieceTrackerState } from '#trackers/piece-tracker';
 export type { TileTrackerState } from '#trackers/tile/tile-tracker';
-export type { HeatmapData, HeatmapFn, HeatmapSquare } from '#trackers/heatmap-types';
+export type { HeatmapData, HeatmapFn } from '#trackers/heatmap-types';
 export type { Action, CaptureAction, MoveAction, PromoteAction } from '#types/actions';
 export type { TrackerInstance } from '#types/tracker';
 export type {

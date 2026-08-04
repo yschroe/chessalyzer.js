@@ -15,18 +15,16 @@ export const PieceHeatmapPresets = {
     /** How often `piece` was captured by each opposing starting piece. */
     PIECE_CAPTURED_BY:
         (piece: HeatmapPieceRef): HeatmapFn<PieceTrackerState> =>
-        ({ data, square }) => {
-            const squarePiece = square.piece;
-            if (!squarePiece || squarePiece.color === piece.color) return 0;
-            return captureCount(data, squarePiece.color, squarePiece.name, piece.name);
+        ({ data, startingPiece }) => {
+            if (!startingPiece || startingPiece.color === piece.color) return 0;
+            return captureCount(data, startingPiece.color, startingPiece.name, piece.name);
         },
 
     /** How often `piece` captured each opposing starting piece. */
     PIECE_CAPTURED:
         (piece: HeatmapPieceRef): HeatmapFn<PieceTrackerState> =>
-        ({ data, square }) => {
-            const squarePiece = square.piece;
-            if (!squarePiece || squarePiece.color === piece.color) return 0;
-            return captureCount(data, piece.color, piece.name, squarePiece.name);
+        ({ data, startingPiece }) => {
+            if (!startingPiece || startingPiece.color === piece.color) return 0;
+            return captureCount(data, piece.color, piece.name, startingPiece.name);
         },
 };

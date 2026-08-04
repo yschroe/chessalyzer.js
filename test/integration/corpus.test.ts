@@ -23,17 +23,15 @@ const corpusAvailable = pgnPath !== null;
 /** Custom analysis scoped to a starting piece via outer closure (same idea as preset factories). */
 const customPieceHeatmapFunc =
     (piece: { color: 'b' | 'w'; name: string }): HeatmapFn =>
-    ({ data, square }) => {
-        const squarePiece = square.piece;
+    ({ data, startingPiece }) => {
         let val = 0;
         if (
-            squarePiece &&
-            squarePiece.color !== piece.color &&
+            startingPiece &&
+            startingPiece.color !== piece.color &&
             isPieceTrackerState(data) &&
-            isStartingPieceName(squarePiece.name) &&
             isStartingPieceName(piece.name)
         ) {
-            val = data[squarePiece.color][squarePiece.name][piece.name];
+            val = data[startingPiece.color][startingPiece.name][piece.name];
         }
         return val;
     };

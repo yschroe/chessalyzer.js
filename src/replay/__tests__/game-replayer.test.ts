@@ -2,8 +2,8 @@ import { describe, it, expect } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
 import type ChessBoard from '#board/chess-board';
-import { isReplayError } from '#core/analyze-errors';
 import type { AnalyzeRunState } from '#core/analysis-runtime';
+import { isReplayError } from '#core/analyze-errors';
 import { TrackerHost } from '#core/tracker-host';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';

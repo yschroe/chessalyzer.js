@@ -1,14 +1,5 @@
 import type { Square } from '#board/board-coords';
-import type { StartingPieceName } from '#board/piece-names';
-import type { PlayerColor } from '#types/tokens';
-
-/** Context for one square when evaluating heatmap functions. */
-export interface HeatmapSquare {
-    /** Algebraic square (`'a1'`…`'h8'`). */
-    square: Square;
-    /** Starting piece on this square, or `null` when the square is empty in the initial position. */
-    piece: { color: PlayerColor; name: StartingPieceName } | null;
-}
+import type { HeatmapPieceRef } from '#trackers/piece-types';
 
 /** Numeric heatmap grid plus value range for rendering or normalization. */
 export interface HeatmapData {
@@ -20,10 +11,25 @@ export interface HeatmapData {
     max: number;
 }
 
-/** Signature for built-in and custom heatmap preset functions. */
+/**
+ * Signature for built-in and custom heatmap functions. Called once per square.
+ *
+ * @example
+ * ```ts
+ * const occupation: HeatmapFn<TileTrackerState> = ({ data, square }) => {
+ *     const cell = tileAt(data.tiles, square);
+ *     return cell ? cell.w.total.occupiedFor : 0;
+ * };
+ * ```
+ */
 export type HeatmapFn<T = unknown> = (args: {
     /** Tracker state being visualized. */
     data: T;
-    /** Square being evaluated in the current cell. */
-    square: HeatmapSquare;
+    /** Square being evaluated (`'a1'`…`'h8'`). */
+    square: Square;
+    /**
+     * Piece that starts the game on `square`, or `null` when that square starts empty.
+     * Lets a heatmap map each cell to a piece identity rather than a board location.
+     */
+    startingPiece: HeatmapPieceRef | null;
 }) => number;
