@@ -3,7 +3,7 @@ import type { PieceName } from '#board/piece-names';
 import type { PlayerColor, PromotionToken } from '#types/tokens';
 
 /** Shared fields on replay {@link Action} variants. */
-export interface BaseAction {
+interface BaseAction {
     type: 'move' | 'capture' | 'promote';
     san: string;
     player: PlayerColor;

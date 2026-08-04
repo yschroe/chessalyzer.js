@@ -58,7 +58,7 @@ export function isBoardIndex(n: number | undefined): n is BoardIndex {
  * Convert algebraic square (e.g. `'e4'`) to board coords.
  * @returns 0-indexed `[row, col]` array, or `undefined` if out of range.
  */
-export function algebraicToCoords(square: string): BoardCoord | undefined {
+function algebraicToCoords(square: string): BoardCoord | undefined {
     const file = square.charCodeAt(0) - 97; // 'a' → 0
     const rank = square.charCodeAt(1) - 49; // '1' → 0
     return algebraicToCoordsTable[file * 8 + rank];
