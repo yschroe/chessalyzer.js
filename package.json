@@ -84,14 +84,14 @@
     "devDependencies": {
         "@types/bun": "^1.3.14",
         "@types/node": "^26.1.2",
-        "bumpp": "^12.1.1",
+        "bumpp": "^12.2.0",
         "bun-plugin-dts": "^0.4.0",
-        "knip": "^6.31.0",
+        "knip": "^6.32.0",
         "oxfmt": "^0.62.0",
         "oxlint": "^1.77.0",
         "oxlint-tsgolint": "^7.0.2001",
         "tinybench": "^6.1.2",
-        "tsx": "^4.23.5",
+        "tsx": "^4.23.9",
         "typescript": "6.0.3"
     },
     "overrides": {
