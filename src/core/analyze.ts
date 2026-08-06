@@ -10,10 +10,7 @@ import GameProcessor from '#core/game-processor';
 import type {
     AnalyzeOptions,
     AnalyzeResult,
-    AnalyzeRun,
     AnalyzeRunResult,
-    MultiRunOptions,
-    MultiRunOptionsMT,
     SingleRunOptions,
 } from '#types/analysis';
 import type { AnalyzeError } from '#types/errors';
@@ -88,7 +85,6 @@ export function buildAnalyzeResult(
 }
 
 type TrackerList = readonly TrackerInstance[];
-type AnalyzeRunNoFilter = Omit<AnalyzeRun, 'filter'> & { filter?: never };
 
 /**
  * Analyze a PGN file with optional trackers, filters, and worker configuration.
@@ -96,6 +92,9 @@ type AnalyzeRunNoFilter = Omit<AnalyzeRun, 'filter'> & { filter?: never };
  * Pass tracker instances from factory calls (e.g. `tileTracker()`). Accumulated
  * state is available on the same instances after the call returns (`tiles.state`).
  * The returned {@link AnalyzeResult} holds throughput and per-run counts only.
+ *
+ * A JavaScript `filter` implies single-threaded analysis (workers are omitted
+ * or `workers: false`). Combining a filter with an explicit worker pool throws.
  *
  * @example
  * ```ts
@@ -110,14 +109,6 @@ type AnalyzeRunNoFilter = Omit<AnalyzeRun, 'filter'> & { filter?: never };
 export function analyzePGN<const T extends TrackerList>(
     path: string,
     options?: SingleRunOptions<T>,
-): Promise<AnalyzeResult>;
-export function analyzePGN<const R extends readonly [AnalyzeRun, ...AnalyzeRun[]]>(
-    path: string,
-    options: MultiRunOptions<R>,
-): Promise<AnalyzeResult>;
-export function analyzePGN<const R extends readonly [AnalyzeRunNoFilter, ...AnalyzeRunNoFilter[]]>(
-    path: string,
-    options: MultiRunOptionsMT<R>,
 ): Promise<AnalyzeResult>;
 export function analyzePGN(path: string, options?: AnalyzeOptions): Promise<AnalyzeResult>;
 export async function analyzePGN(path: string, options?: AnalyzeOptions): Promise<AnalyzeResult> {

@@ -12,7 +12,6 @@ import { tileTracker } from 'chessalyzer/trackers';
 const tiles = tileTracker();
 
 await analyzePGN('<pathToPgnFile>', {
-    workers: false,
     trackers: [tiles],
     filter: (game) => Number(game.headers?.WhiteElo) > 2000,
 });
@@ -22,7 +21,7 @@ console.log(tiles.state.movesTotal);
 
 ## Requirements
 
-- **`workers: false`** — filters are regular JS callbacks and must run on the main thread. The library will let you know if you forget.
+- Filters are regular JS callbacks and run on the main thread. When a `filter` is present, analysis is single-threaded automatically (`workers` may be omitted or set to `false`). Passing an explicit worker pool with a filter is an error.
 
 Tag-pair headers are parsed automatically when a filter is present (so `game.headers` is populated). Set `headers: false` only when your filter does not read headers.
 

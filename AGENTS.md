@@ -105,7 +105,7 @@ Public barrels re-export **user-facing** names from the **owning** module. Inter
 `analyzePGN` picks one of two internal paths:
 
 1. **Single-threaded** — `workers: false`. Main thread: I/O (`readLines`) → PGN parse (`GameAssembler`) → replay (`GameReplayer`, mode from per-config `replayMode`) → analyze (trackers).
-2. **Multithreaded (worker-chunk)** — default. Main thread: I/O + chunking (`readPgnChunks`) → workers PGN-parse once per chunk (once per chunk for all `runs` in a multi-run task). Workers replay and accumulate tracker state; per-batch worker→main posts counts/errors only, tracker payloads flush at pool drain. `maxGames` is enforced on workers. **JavaScript `filter` predicates require `workers: false`** (validated in `normalizeAnalyzeOptions`).
+2. **Multithreaded (worker-chunk)** — default. Main thread: I/O + chunking (`readPgnChunks`) → workers PGN-parse once per chunk (once per chunk for all `runs` in a multi-run task). Workers replay and accumulate tracker state; per-batch worker→main posts counts/errors only, tracker payloads flush at pool drain. `maxGames` is enforced on workers. **JavaScript `filter` predicates imply single-threaded analysis** (`workers` omitted or `false`); an explicit worker pool with a filter is rejected in `normalizeAnalyzeOptions`.
 
 **Replay mode:** Default from `resolveReplayMode(hasMoveTrackers)`; override via `AnalyzeOptions.replay` (`resolveEffectiveReplayMode`). Move trackers require `'actions'`. Per-config `replayMode` is stored at normalization and passed to workers via `WorkerInitData`. Count-only runs skip board replay by default (`SKIP_REPLAY_WITHOUT_MOVE_TRACKERS = true` in [`src/replay/replay-mode.ts`](src/replay/replay-mode.ts)).
 
