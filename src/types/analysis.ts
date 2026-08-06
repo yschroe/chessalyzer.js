@@ -3,7 +3,12 @@ import type { AnalyzeError } from '#types/errors';
 import type { ParsedGame } from '#types/parse-pgn';
 import type { TrackerInstance } from '#types/tracker';
 
-/** Per-game predicate for single-threaded analysis (`workers: false` only). */
+/**
+ * Per-game predicate for analysis.
+ * Closures cannot run on worker threads — when a filter is set, analysis is
+ * single-threaded (`workers` omitted or `workers: false`). Explicit worker
+ * pool options with a filter are a type and runtime error.
+ */
 export type GameFilter = (game: ParsedGame) => boolean;
 
 type TrackerList = readonly TrackerInstance[];
@@ -36,8 +41,10 @@ export interface WorkerOptions {
     chunk?: WorkerChunkOptions;
 }
 
-type SingleThreadedWorkers = { workers: false };
-type MultithreadedWorkers = { workers?: WorkerOptions | number; filter?: never };
+/** Filter present → single-threaded (`workers` omitted or explicitly `false`). */
+type WithFilter = { filter: GameFilter; workers?: false };
+/** No filter → default worker pool, or `workers: false` for explicit single-threaded. */
+type WithoutFilter = { filter?: never; workers?: WorkerOptions | number | false };
 
 type SharedAnalyzeFields<I> = {
     headers?: HeadersForInstances<I>;
@@ -54,7 +61,7 @@ interface AnalyzeRunBase {
 type AnalyzeRunWithFilter = AnalyzeRunBase & { filter?: GameFilter };
 type AnalyzeRunNoFilter = AnalyzeRunBase & { filter?: never };
 
-/** Options for one analysis run (filter allowed — requires `workers: false` on the call). */
+/** Options for one analysis run (optional filter — implies single-threaded on the call). */
 export type AnalyzeRun = AnalyzeRunWithFilter;
 
 /** Single-run `analyzePGN` options (top-level `trackers` / `filter` / `maxGames` sugar). */
@@ -64,31 +71,26 @@ export type SingleRunOptions<T extends TrackerList = TrackerInstance[]> = Shared
     trackers?: T;
     maxGames?: number;
     runs?: never;
-} & ((SingleThreadedWorkers & { filter?: GameFilter }) | MultithreadedWorkers);
+} & (WithFilter | WithoutFilter);
 
 type AllRunInstances<R extends readonly AnalyzeRunBase[]> = NonNullable<
     R[number]['trackers']
 >[number];
 
-/** Multi-run `analyzePGN` options when `workers: false` (per-run filters allowed). */
-export type MultiRunOptions<R extends readonly [AnalyzeRunWithFilter, ...AnalyzeRunWithFilter[]]> =
-    SharedAnalyzeFields<AllRunInstances<R>> &
-        SingleThreadedWorkers & {
-            runs: R;
-            trackers?: never;
-            filter?: never;
-            maxGames?: never;
-        };
+type MultiRunBase<R extends readonly AnalyzeRunBase[]> = SharedAnalyzeFields<AllRunInstances<R>> & {
+    runs: R;
+    trackers?: never;
+    filter?: never;
+    maxGames?: never;
+};
 
-/** Multi-run `analyzePGN` options with the default worker pool (no filters). */
+/** Multi-run options when any run may include a filter (`workers` omitted or `false`). */
+export type MultiRunOptions<R extends readonly [AnalyzeRunWithFilter, ...AnalyzeRunWithFilter[]]> =
+    MultiRunBase<R> & { workers?: false };
+
+/** Multi-run options with no filters (default worker pool allowed). */
 export type MultiRunOptionsMT<R extends readonly [AnalyzeRunNoFilter, ...AnalyzeRunNoFilter[]]> =
-    SharedAnalyzeFields<AllRunInstances<R>> &
-        MultithreadedWorkers & {
-            runs: R;
-            trackers?: never;
-            filter?: never;
-            maxGames?: never;
-        };
+    MultiRunBase<R> & { workers?: WorkerOptions | number | false };
 
 /**
  * Options passed to `analyzePGN`: shared fields plus either a single run

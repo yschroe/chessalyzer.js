@@ -75,19 +75,19 @@ describe('Fixtures', () => {
         it('filters by result (single-threaded)', async () => {
             const data = await analyzePGN(fixturePath('results-mix'), {
                 filter: (game: ParsedGame) => game.result === '1-0',
-                workers: false,
             });
             expect(data.gameCount).toBe(3);
         });
 
-        it('rejects filter without workers: false', () => {
+        it('rejects filter with an explicit worker pool', () => {
             const options = {
                 filter: (game: ParsedGame) => game.result === '1-0',
+                workers: 2,
             };
 
             // @ts-expect-error - test case
             expect(analyzePGN(fixturePath('results-mix'), options)).rejects.toThrow(
-                'filter requires workers: false',
+                'filter cannot be used with worker threads',
             );
         });
 
@@ -95,7 +95,6 @@ describe('Fixtures', () => {
             const data = await analyzePGN(fixturePath('results-mix'), {
                 maxGames: 2,
                 filter: (game: ParsedGame) => game.result === '0-1',
-                workers: false,
             });
             expect(data.gameCount).toBe(2);
         });

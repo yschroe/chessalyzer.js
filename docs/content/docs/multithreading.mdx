@@ -32,12 +32,9 @@ Pass `workers: false` when you need everything on the main thread:
 await analyzePGN('<pathToPgnFile>', { workers: false });
 ```
 
-**Required when using:**
+A JavaScript [`filter`](/docs/filters) callback also forces single-threaded analysis — omit `workers` or pass `workers: false`. Combining a filter with an explicit worker pool is an error.
 
-- A JavaScript [`filter`](/docs/filters) callback
-- Some [custom tracker](/docs/trackers/custom) setups during development
-
-The library validates this and will tell you if you forget.
+Some [custom tracker](/docs/trackers/custom) setups during development may also need `workers: false`.
 
 ## Custom trackers in multithreaded mode
 

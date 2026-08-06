@@ -29,10 +29,10 @@ describe('normalizeAnalyzeOptions', () => {
         ).toThrow('Cannot set both runs and top-level trackers');
     });
 
-    it('rejects filter without workers: false', () => {
-        expect(() =>
-            normalizeAnalyzeOptions(invalidAnalyzeOptions({ filter: () => true })),
-        ).toThrow('filter requires workers: false');
+    it('uses single-threaded mode when filter is set and workers omitted', () => {
+        const { configs, multithreadCfg } = normalizeAnalyzeOptions({ filter: () => true });
+        expect(multithreadCfg).toBeNull();
+        expect(configs[0]?.limits.filter).toBeDefined();
     });
 
     it('allows filter with workers: false', () => {
@@ -44,18 +44,33 @@ describe('normalizeAnalyzeOptions', () => {
         expect(configs[0]?.limits.filter).toBeDefined();
     });
 
-    it('rejects filter in multi-run without workers: false', () => {
+    it('rejects filter with an explicit worker pool', () => {
+        expect(() =>
+            normalizeAnalyzeOptions(invalidAnalyzeOptions({ filter: () => true, workers: 4 })),
+        ).toThrow('filter cannot be used with worker threads');
+    });
+
+    it('uses single-threaded mode for multi-run filters when workers omitted', () => {
+        const { multithreadCfg, configs } = normalizeAnalyzeOptions({
+            runs: [{ filter: () => true }, { trackers: [tileTracker()] }],
+        });
+        expect(multithreadCfg).toBeNull();
+        expect(configs).toHaveLength(2);
+    });
+
+    it('rejects multi-run filter with an explicit worker pool', () => {
         expect(() =>
             normalizeAnalyzeOptions(
                 invalidAnalyzeOptions({
+                    workers: { count: 2 },
                     runs: [{ filter: () => true }, { trackers: [tileTracker()] }],
                 }),
             ),
-        ).toThrow('filter requires workers: false');
+        ).toThrow('filter cannot be used with worker threads');
     });
 
     it('parses headers when a filter is present', () => {
-        const { parseHeaders } = normalizeAnalyzeOptions({ workers: false, filter: () => true });
+        const { parseHeaders } = normalizeAnalyzeOptions({ filter: () => true });
         expect(parseHeaders).toBe(true);
     });
 

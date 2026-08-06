@@ -35,20 +35,6 @@ function resolveParseHeaders(
     return needsHeaders;
 }
 
-/** Assert that a filter requires workers: false. */
-function assertFilterRequiresSingleThreaded(
-    runs: AnalyzeRun[],
-    multithreadCfg: WorkerOptions | null,
-): void {
-    if (multithreadCfg === null) return;
-    const hasFilter = runs.some((run) => run.filter !== undefined);
-    if (hasFilter) {
-        throw new Error(
-            'A JavaScript filter requires workers: false — filter predicates run on the main thread and cannot be used with the default worker pool',
-        );
-    }
-}
-
 /** Assert that no conflicting run fields are set. */
 function assertNoConflictingRunFields(opts: AnalyzeOptions): void {
     if (opts.trackers !== undefined) {
@@ -78,8 +64,21 @@ function resolveRuns(opts: AnalyzeOptions): AnalyzeRun[] {
     return [{ trackers: single.trackers, filter: single.filter, maxGames: single.maxGames }];
 }
 
-/** Resolve `workers` option to multithread config or `null` for single-threaded. */
-function resolveMultithreadCfg(workers: AnalyzeOptions['workers']): WorkerOptions | null {
+/**
+ * Resolve `workers` to multithread config or `null` for single-threaded.
+ * A filter implies single-threaded when `workers` is omitted; an explicit
+ * worker pool with a filter is a conflict.
+ */
+function resolveMultithreadCfg(
+    workers: AnalyzeOptions['workers'],
+    hasFilter: boolean,
+): WorkerOptions | null {
+    if (hasFilter) {
+        if (workers === undefined || workers === false) return null;
+        throw new Error(
+            'A JavaScript filter cannot be used with worker threads — omit workers or pass workers: false (filter predicates run on the main thread)',
+        );
+    }
     if (workers === false) return null;
     if (typeof workers === 'number') return { count: workers };
     return workers ?? {};
@@ -90,13 +89,10 @@ function resolveMultithreadCfg(workers: AnalyzeOptions['workers']): WorkerOption
  * validates, then builds per-run runtime state and path-selection fields.
  */
 export function normalizeAnalyzeOptions(options: AnalyzeOptions = {}): NormalizedAnalyzeOptions {
-    const multithreadCfg = resolveMultithreadCfg(options.workers);
-
     // Resolve runs into per-run configs, converting single-run sugar.
     const runs = resolveRuns(options);
-    assertFilterRequiresSingleThreaded(runs, multithreadCfg);
-
     const hasFilter = runs.some((run) => run.filter !== undefined);
+    const multithreadCfg = resolveMultithreadCfg(options.workers, hasFilter);
     const multithreaded = multithreadCfg !== null;
     let needsHeaders = false;
     const configs: GameProcessorConfig[] = [];

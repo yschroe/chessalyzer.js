@@ -17,6 +17,10 @@ async function validSingleRun() {
 async function validFilteredRun() {
     const tiles = tileTracker();
     await analyzePGN('x', {
+        trackers: [tiles],
+        filter: (game) => game.result === '1-0',
+    });
+    await analyzePGN('x', {
         workers: false,
         trackers: [tiles],
         filter: (game) => game.result === '1-0',
@@ -27,7 +31,6 @@ async function validMultiRun() {
     const blackWins = tileTracker();
     const whiteWins = tileTracker();
     await analyzePGN('x', {
-        workers: false,
         runs: [
             { trackers: [blackWins], filter: (game) => game.result === '0-1' },
             { trackers: [whiteWins], filter: (game) => game.result === '1-0' },
@@ -56,8 +59,8 @@ async function invalidConfigs() {
     const tiles = tileTracker();
     const games = gameTracker();
 
-    // @ts-expect-error filter requires workers: false
-    await analyzePGN('x', { trackers: [games], filter: () => true });
+    // @ts-expect-error filter cannot combine with an explicit worker pool
+    await analyzePGN('x', { trackers: [games], filter: () => true, workers: 4 });
 
     // @ts-expect-error cannot set both runs and top-level trackers
     await analyzePGN('x', { runs: [{ trackers: [tiles] }], trackers: [games] });
@@ -65,8 +68,11 @@ async function invalidConfigs() {
     // @ts-expect-error runs must be non-empty
     await analyzePGN('x', { runs: [] });
 
-    // @ts-expect-error filter in multi-run requires workers: false
-    await analyzePGN('x', { runs: [{ filter: () => true, trackers: [tiles] }] });
+    // @ts-expect-error filter in multi-run cannot combine with an explicit worker pool
+    await analyzePGN('x', {
+        workers: { count: 2 },
+        runs: [{ filter: () => true, trackers: [tiles] }],
+    });
 
     const noMerge = defineGameTracker({
         id: 'no-merge',

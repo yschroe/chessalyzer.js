@@ -129,4 +129,4 @@ import { defineGameTracker, defineMoveTracker } from 'chessalyzer/trackers';
 
 See [`manual-tests/custom-game-tracker.ts`](https://github.com/yschroe/chessalyzer/blob/main/manual-tests/custom-game-tracker.ts) for a minimal working example.
 
-When using custom trackers with filters, pass `workers: false`. See [Multithreading](/docs/multithreading).
+When using custom trackers with filters, analysis is single-threaded (omit `workers` or pass `workers: false`). See [Multithreading](/docs/multithreading).
