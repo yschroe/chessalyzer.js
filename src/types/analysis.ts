@@ -85,11 +85,11 @@ type MultiRunBase<R extends readonly AnalyzeRunBase[]> = SharedAnalyzeFields<All
 };
 
 /** Multi-run options when any run may include a filter (`workers` omitted or `false`). */
-export type MultiRunOptions<R extends readonly [AnalyzeRunWithFilter, ...AnalyzeRunWithFilter[]]> =
+type MultiRunOptionsST<R extends readonly [AnalyzeRunWithFilter, ...AnalyzeRunWithFilter[]]> =
     MultiRunBase<R> & { workers?: false };
 
 /** Multi-run options with no filters (default worker pool allowed). */
-export type MultiRunOptionsMT<R extends readonly [AnalyzeRunNoFilter, ...AnalyzeRunNoFilter[]]> =
+type MultiRunOptionsMT<R extends readonly [AnalyzeRunNoFilter, ...AnalyzeRunNoFilter[]]> =
     MultiRunBase<R> & { workers?: WorkerOptions | number | false };
 
 /**
@@ -98,7 +98,7 @@ export type MultiRunOptionsMT<R extends readonly [AnalyzeRunNoFilter, ...Analyze
  */
 export type AnalyzeOptions =
     | SingleRunOptions
-    | MultiRunOptions<readonly [AnalyzeRunWithFilter, ...AnalyzeRunWithFilter[]]>
+    | MultiRunOptionsST<readonly [AnalyzeRunWithFilter, ...AnalyzeRunWithFilter[]]>
     | MultiRunOptionsMT<readonly [AnalyzeRunNoFilter, ...AnalyzeRunNoFilter[]]>;
 
 /** Per-run counters returned from `analyzePGN`. Tracker state lives on the instances you passed in. */
