@@ -41,11 +41,14 @@ Tests that run the full `analyzePGN` pipeline stay in `test/integration/` becaus
 
 | File                     | Focus                                                                |
 | ------------------------ | -------------------------------------------------------------------- |
-| `fixtures.test.ts`       | Small PGN fixtures, filters, tileTracker golden                      |
+| `fixtures.test.ts`       | Smoke matrix: every fixture × ST/MT expected game/move counts        |
+| `filters.test.ts`        | `filter` / `maxGames` / filter×workers rejection                     |
+| `multi-run.test.ts`      | Multi-run orchestration + volume via repeated fixtures               |
+| `trackers.test.ts`       | Tracker smokes + tileTracker golden (`en-passant`)                   |
 | `parse-pgn.test.ts`      | `chessalyzer/pgn` `parsePGN` / `streamParsePGN`, fixture move counts |
 | `workers.test.ts`        | MT `analyzePGN` abort / corrupt trailing game                        |
 | `custom-tracker.test.ts` | Custom tracker + `workerModule` in MT mode                           |
-| `error-policy.test.ts`   | `onError: 'abort'` / `'skip-game'`                                   |
+| `error-policy.test.ts`   | `onError: 'abort'` / `'skip-game'` (incl. `skippedGames`)            |
 | `exports.test.ts`        | `chessalyzer/board` subpath and `replay` option on `analyzePGN`      |
 | `corpus.test.ts`         | Optional large-file golden regression                                |
 
@@ -66,11 +69,11 @@ Corpus tests use `describe.skip` when `test/corpus/asorted-games.pgn` is missing
 | ------------------------------------ | --------------- | ------------- | -------------------------------------------- |
 | Public `parsePGN` / `streamParsePGN` | yes             | —             | `parse-pgn.test.ts`                          |
 | Basic parse counts                   | yes             | yes           | `fixtures.test.ts`, `corpus.test.ts`         |
-| Filter / maxGames                    | yes             | yes           | `fixtures.test.ts`, `corpus.test.ts`         |
-| Multi-run                            | —               | yes           | `fixtures.test.ts`                           |
+| Filter / maxGames                    | yes             | yes           | `filters.test.ts`, `corpus.test.ts`          |
+| Multi-run                            | yes             | yes           | `multi-run.test.ts`                          |
 | gameTracker golden                   | yes             | yes           | `corpus.test.ts` (corpus only)               |
 | pieceTracker golden                  | yes             | yes           | `corpus.test.ts` (corpus only)               |
-| tileTracker golden                   | yes             | yes           | `fixtures.test.ts` (`en-passant.pgn`)        |
+| tileTracker golden                   | yes             | yes           | `trackers.test.ts` (`en-passant.pgn`)        |
 | Custom tracker MT                    | —               | yes           | `custom-tracker.test.ts` (incl. filter path) |
 | Replay unit                          | yes             | —             | `src/replay/__tests__/game-replayer.test.ts` |
 | Error skip-game                      | yes             | yes           | `error-policy.test.ts`                       |

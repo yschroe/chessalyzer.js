@@ -21,7 +21,8 @@ const descriptions: Record<string, string> = {
     'en-passant': 'Game containing an en passant capture',
     promotion: 'Game with a pawn promotion',
     'multiple-promotions': 'Game with multiple pawn promotions',
-    corrupt: 'One complete game plus one truncated game at EOF',
+    corrupt:
+        'One complete game plus one truncated game at EOF (incomplete game dropped at parse; not counted in skippedGames)',
     'white-wins': 'Short game ending 1-0',
     'black-wins': 'Short game ending 0-1',
     draw: 'Short game ending 1/2-1/2',

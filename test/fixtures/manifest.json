@@ -55,7 +55,7 @@
         },
         "corrupt": {
             "file": "corrupt.pgn",
-            "description": "One complete game plus one truncated game at EOF",
+            "description": "One complete game plus one truncated game at EOF (incomplete game dropped at parse; not counted in skippedGames)",
             "expected": {
                 "games": 1,
                 "moves": 15
