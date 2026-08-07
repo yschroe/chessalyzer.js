@@ -3,13 +3,10 @@
     "fixtures": {
         "bad-san-mid-file": {
             "file": "bad-san-mid-file.pgn",
-            "description": "Three games; middle game has illegal SAN (error-policy tests use a move tracker to force replay)",
+            "description": "Three games; middle game has illegal SAN (error-policy tests)",
             "expected": {
                 "games": 3,
                 "moves": 33
-            },
-            "analyzeOptions": {
-                "onError": "skip-game"
             }
         },
         "basic-normal": {
@@ -26,6 +23,14 @@
             "expected": {
                 "games": 1,
                 "moves": 4
+            }
+        },
+        "chessdotcom-headers": {
+            "file": "chessdotcom-headers.pgn",
+            "description": "Exported from Chess.com (2020)",
+            "expected": {
+                "games": 25,
+                "moves": 2228
             }
         },
         "comments-multiline": {
@@ -46,7 +51,7 @@
         },
         "corrupt": {
             "file": "corrupt.pgn",
-            "description": "One complete game plus one truncated game at EOF",
+            "description": "One complete game plus one truncated game at EOF (incomplete trailing game dropped at parse)",
             "expected": {
                 "games": 1,
                 "moves": 15

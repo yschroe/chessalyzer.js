@@ -26,8 +26,7 @@ interface TileTrackerGolden {
 export interface FixtureEntry {
     file: string;
     description: string;
-    expected: { games: number; moves: number; skippedGames?: number };
-    analyzeOptions?: { onError?: 'abort' | 'skip-game' };
+    expected: { games: number; moves: number };
     golden?: {
         tileTracker?: TileTrackerGolden;
     };
@@ -49,8 +48,7 @@ export function fixtureExpected(id: FixtureId) {
 export function getFixtureEntry(id: FixtureId): FixtureEntry {
     const entry = manifest.fixtures[id];
     if (!entry) throw new Error(`Unknown fixture id: ${id}`);
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- JSON manifest shape matches FixtureEntry; keys are validated via FixtureId
-    return entry as FixtureEntry;
+    return entry;
 }
 
 /**

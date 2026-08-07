@@ -19,6 +19,7 @@ import type {
     HeatmapPieceRef,
     TrackerInstance,
 } from 'chessalyzer/trackers';
+import { gameTracker } from 'chessalyzer/trackers';
 
 type ReplayOption = NonNullable<AnalyzeOptions['replay']>;
 const replayBoard: ReplayOption = 'board';
@@ -40,7 +41,7 @@ const runResult: AnalyzeRunResult = { gameCount: 0, moveCount: 0 };
 const workerOpts: WorkerOptions = { count: 4 };
 const run: AnalyzeRun = { trackers: [] };
 const filter: GameFilter = () => true;
-const instance: TrackerInstance = { def: {} as never, state: {} };
+const instance: TrackerInstance = gameTracker();
 
 // @ts-expect-error HeatmapData is not exported from the root entry
 type RootHeatmapData = import('chessalyzer').HeatmapData;

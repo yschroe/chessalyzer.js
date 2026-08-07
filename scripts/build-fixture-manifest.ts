@@ -1,17 +1,16 @@
 /**
  * Analyzes committed test/fixtures/*.pgn and merges results into test/fixtures/manifest.json.
- * Preserves golden values and manual entries; per-fixture analyze overrides handle error fixtures.
+ * Preserves golden values and existing descriptions when regenerating expected counts.
  *
  * Run after adding or changing fixture PGNs: bun run test:build-fixtures
  *
- * Uses single-threaded mode for deterministic analysis.
+ * Uses single-threaded mode for deterministic analysis (no trackers — parse/count smoke only).
  */
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { analyzePGN } from '#core/analyze';
-import type { AnalyzeOptions } from '#types/analysis';
 
 const FIXTURES_DIR = fileURLToPath(new URL('../test/fixtures/', import.meta.url));
 const MANIFEST_PATH = join(FIXTURES_DIR, 'manifest.json');
@@ -21,7 +20,8 @@ const descriptions: Record<string, string> = {
     'en-passant': 'Game containing an en passant capture',
     promotion: 'Game with a pawn promotion',
     'multiple-promotions': 'Game with multiple pawn promotions',
-    corrupt: 'One complete game plus one truncated game at EOF',
+    corrupt:
+        'One complete game plus one truncated game at EOF (incomplete trailing game dropped at parse)',
     'white-wins': 'Short game ending 1-0',
     'black-wins': 'Short game ending 0-1',
     draw: 'Short game ending 1/2-1/2',
@@ -33,22 +33,15 @@ const descriptions: Record<string, string> = {
     'crlf-endings': 'Two complete games with CRLF line endings',
 };
 
-/** Per-fixture analyze options, or `manual` to keep the existing manifest entry unchanged. */
-const FIXTURE_ANALYZE: Record<string, AnalyzeOptions | 'manual'> = {
-    'bad-san-mid-file': { onError: 'skip-game', workers: false },
-};
-
 interface ManifestExpected {
     games: number;
     moves: number;
-    skippedGames?: number;
 }
 
 interface ManifestFixture {
     file: string;
     description: string;
     expected: ManifestExpected;
-    analyzeOptions?: AnalyzeOptions;
     golden?: Record<string, unknown>;
 }
 
@@ -67,16 +60,6 @@ async function loadExistingManifest(): Promise<Manifest> {
     }
 }
 
-/** Options stored in manifest (workers are always false in the build script). */
-function manifestAnalyzeOptions(
-    policy: AnalyzeOptions | 'manual' | undefined,
-): AnalyzeOptions | undefined {
-    if (!policy || policy === 'manual') return undefined;
-    const { workers: _workers, ...rest } = policy;
-    if (Object.keys(rest).length === 0) return undefined;
-    return { workers: false, ...rest };
-}
-
 const existing = await loadExistingManifest();
 const fixtures: Record<string, ManifestFixture> = {};
 let hadError = false;
@@ -87,44 +70,21 @@ for (const file of files) {
     const id = file.replace(/\.pgn$/, '');
     const path = join(FIXTURES_DIR, file);
     const prior = existing.fixtures[id];
-    const policy = FIXTURE_ANALYZE[id];
-
-    if (policy === 'manual') {
-        if (!prior) {
-            console.error(`${id}: marked manual but missing from manifest.json`);
-            hadError = true;
-            continue;
-        }
-        fixtures[id] = { ...prior, file };
-        console.log(`${id}: kept manual entry (${prior.expected.games} games)`);
-        continue;
-    }
-
-    const analyzeOpts: AnalyzeOptions = { workers: false, ...policy };
 
     try {
         // oxlint-disable-next-line eslint/no-await-in-loop -- sequential fixture analysis for readable logs and lower memory use
-        const result = await analyzePGN(path, analyzeOpts);
-        const expected: ManifestExpected = {
-            games: result.gameCount,
-            moves: result.moveCount,
-        };
-        if ((result.skippedGames ?? 0) > 0) {
-            expected.skippedGames = result.skippedGames;
-        }
-
+        const result = await analyzePGN(path, { workers: false });
         fixtures[id] = {
             file,
             description: descriptions[id] ?? prior?.description ?? id,
-            expected,
-            ...(manifestAnalyzeOptions(policy)
-                ? { analyzeOptions: manifestAnalyzeOptions(policy) }
-                : {}),
+            expected: {
+                games: result.gameCount,
+                moves: result.moveCount,
+            },
             ...(prior?.golden ? { golden: prior.golden } : {}),
         };
 
-        const skipped = expected.skippedGames ? `, ${expected.skippedGames} skipped` : '';
-        console.log(`${id}: ${result.gameCount} games, ${result.moveCount} moves${skipped}`);
+        console.log(`${id}: ${result.gameCount} games, ${result.moveCount} moves`);
     } catch (err) {
         if (prior) {
             fixtures[id] = { ...prior, file };
