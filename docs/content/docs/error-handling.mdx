@@ -1,49 +1,88 @@
 ---
-title: Error handling
-description: Stop on first bad game or skip and keep going.
+title: Handling errors
+description: Stop on the first broken game, or skip it and keep going.
 ---
 
-What happens when a game has a broken or illegal move? Two strategies:
+Real-world PGN files are messy. Somewhere in those two million games there's usually one with a move that doesn't make sense. You choose what happens when Chessalyzer meets it: stop immediately, or skip the game and keep going.
 
-## Stop immediately (default)
+To try both, imagine our [example file](/docs/quickstart#the-example-file) with one broken game appended — `2. Nf9` is not a square a knight can reach:
 
-Good while developing or on small, trusted files. The run throws on the first replay failure:
+```text
+[Event "Broken game"]
+[White "blunderbuss"]
+[Black "cleopatra"]
+[Result "*"]
+
+1. e4 e5 2. Nf9 0-1
+```
+
+## Stop on the first broken game (default)
+
+By default, `analyzePGN` throws as soon as a game can't be replayed. That's what you want while developing — you notice bad data immediately:
 
 ```javascript
 import { analyzePGN, isReplayError } from 'chessalyzer';
 
 try {
-    await analyzePGN('<pathToPgnFile>');
+    await analyzePGN('games.pgn', { trackers: [tiles] });
 } catch (err) {
     if (isReplayError(err)) {
         console.error(`Game ${err.gameIndex}, move ${err.moveIndex}: ${err.san}`);
+        // Game 3, move 2: Nf9
     }
     throw err;
 }
 ```
 
+`isReplayError` narrows the thrown value so you can read `gameIndex` (which game, zero-based), `moveIndex` (which half-move), `san`, and a machine-readable `reason`.
+
+<Callout type="info" title="Threading changes what you catch">
+    The typed error above is what you get single-threaded. With the default worker pool, a broken
+    game still aborts the run and rejects the promise — but the error crossing the thread boundary
+    arrives as a plain `Error` with the same message, without the structured fields. If you rely on
+    `isReplayError` data, prefer collecting errors with `onError: 'skip-game'` (below), where they
+    arrive fully typed on the result object in both modes.
+</Callout>
+
 ## Skip bad games and keep going
 
-Better for large batch runs over mostly good data (e.g. Lichess database dumps):
+For batch runs over mostly-good data (think Lichess database dumps), aborting on one bad apple wastes the whole run. `onError: 'skip-game'` collects the failures and finishes the rest:
 
 ```javascript
-const result = await analyzePGN('<pathToPgnFile>', { onError: 'skip-game' });
-
-console.log(result.gameCount, result.skippedGames, result.errors, result.errorsTruncated);
+const result = await analyzePGN('games.pgn', {
+    trackers: [tiles],
+    onError: 'skip-game',
+});
 ```
 
-`result.errors` holds up to 100 typed replay errors (`gameIndex`, `moveIndex`, `san`, `reason`) summed across all runs. If more than 100 games fail, `result.errorsTruncated` is `true`.
+The three good games are fully processed, and the result tells you exactly what was skipped:
 
-With multiple `runs`, each `result.runs[i]` may also include `skippedGames` and `errors` for that cohort only (omitted when zero).
-
-```javascript
-for (const [i, run] of result.runs.entries()) {
-    if (run.errors?.length) {
-        console.log(`Run ${i}: ${run.skippedGames} skipped, ${run.errors.length} errors`);
-    }
+```json
+{
+    "gameCount": 3,
+    "moveCount": 19,
+    "skippedGames": 1,
+    "errors": [
+        {
+            "code": "replay",
+            "gameIndex": 3,
+            "moveIndex": 2,
+            "san": "Nf9",
+            "reason": "IllegalMove",
+            "message": "w: No piece for move N to (7,6) found!"
+        }
+    ],
+    "runs": [{ "gameCount": 3, "moveCount": 19, "skippedGames": 1, "errors": [/* same entry */] }]
 }
 ```
 
-The library never logs to the console for you — you decide what to do with the errors.
+(`durationMs` and `movesPerSecond` omitted — they're there too. Each entry in `runs` mirrors its own `skippedGames`/`errors` when you use [multiple runs](/docs/comparing-analyses), omitted when zero.)
 
-Replay assumes trustworthy PGN; moves are not checked for legality.
+Two limits to know: `errors` holds at most **100 entries** — past that, `result.errorsTruncated` is `true` and counting continues silently — and Chessalyzer never prints anything by itself, so what happens with these errors is entirely your call.
+
+<Callout type="warn" title="Errors only surface when games are replayed">
+    Replay trusts your PGN — it applies moves, but it does not check them for legality, and in a
+    count-only run (no move trackers) games aren't replayed at all, so a broken move may pass
+    unnoticed. That's the deliberate speed/strictness trade-off. If you're cleaning unknown data,
+    attach any move tracker (or set `replay: 'board'`) to make sure every move is actually decoded.
+</Callout>

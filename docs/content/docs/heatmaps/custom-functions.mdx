@@ -3,12 +3,13 @@ title: Custom heatmap functions
 description: Write your own per-square calculation for generateHeatmap.
 ---
 
-Pass any function as the `analysis` argument to `generateHeatmap(state, analysis)`. The function is called for every square on the board.
+A heatmap function answers one small question — "what value should this square have?" — and `generateHeatmap` asks it 64 times, once per square. If you can write that one function, you can make any heatmap.
+
+Here's one from scratch: "how much of the game did white pieces occupy each square?" (as a percentage of all half-moves):
 
 ```javascript
 import { generateHeatmap, tileAt } from 'chessalyzer/trackers';
 
-// after analyzePGN — read state from your tracker instance
 const heatmapData = generateHeatmap(tiles.state, ({ data, square }) => {
     const cell = tileAt(data.tiles, square);
     if (!cell) return 0;
@@ -16,32 +17,32 @@ const heatmapData = generateHeatmap(tiles.state, ({ data, square }) => {
 });
 ```
 
-Capture extra values from the outer scope when you need them (e.g. a piece of interest or a precomputed average) — no special options field is required. Built-in scoped presets use the same pattern as factories:
+Need an extra value in your function — a piece you care about, a precomputed average? Just close over it:
 
 ```javascript
 const queen = { color: 'w', name: 'Qd' };
 
-const heatmapData = generateHeatmap(tiles.state, ({ data, square }) => {
+const queenSquares = generateHeatmap(tiles.state, ({ data, square }) => {
     const cell = tileAt(data.tiles, square);
     if (!cell) return 0;
     return cell[queen.color].byPiece[queen.name].movedTo;
 });
 ```
 
-## Analysis function arguments
+## The arguments
 
-Your function receives a single object with three properties:
+Your function gets a single object with three properties:
 
-| Property        | Type                      | Description                                                          |
-| --------------- | ------------------------- | -------------------------------------------------------------------- |
-| `data`          | your tracker state        | State passed to `generateHeatmap` (e.g. `TileTrackerState`)          |
-| `square`        | `Square`                  | Square being calculated, e.g. `'a2'`                                 |
-| `startingPiece` | `HeatmapPieceRef \| null` | Piece that starts the game on `square`, or `null` if it starts empty |
+| Property        | Type                      | What it is                                                               |
+| --------------- | ------------------------- | ------------------------------------------------------------------------ |
+| `data`          | your tracker state        | Whatever you passed to `generateHeatmap` (e.g. `TileTrackerState`)       |
+| `square`        | `Square`                  | The square being calculated, e.g. `'a2'`                                 |
+| `startingPiece` | `HeatmapPieceRef \| null` | The piece that _starts the game_ on this square, or `null` if it's empty |
 
-Use `square` when each cell means a **board location**, and `startingPiece` when each cell means a **piece identity** (how `PIECE_CAPTURED` and `TILE_OCC_BY_PIECE` work):
+Most functions only need `data` and `square` — each cell is a board location. Reach for `startingPiece` when each cell should represent a _piece identity_ instead (that's how `PIECE_CAPTURED` and `TILE_OCC_BY_PIECE` work):
 
 ```typescript
-import type { HeatmapFn, HeatmapPieceRef } from 'chessalyzer/trackers';
+import type { HeatmapFn } from 'chessalyzer/trackers';
 
 // HeatmapPieceRef: { color: 'b' | 'w'; name: StartingPieceName }
 
@@ -51,6 +52,10 @@ const byPieceIdentity: HeatmapFn = ({ data, startingPiece }) => {
 };
 ```
 
-You can also type the whole function with `HeatmapFn<YourState>` to get full inference on `data`.
+Type the function as `HeatmapFn<YourState>` and `data` is fully inferred.
 
-See [Presets](/docs/heatmaps/presets) for built-in functions you can study or reuse.
+<Callout type="idea" title="Learn from the presets">
+    The [built-in presets](/docs/heatmaps/presets) are ordinary heatmap functions written with this
+    exact API — if one is close to what you want, its behavior is a great starting point to copy and
+    adjust.
+</Callout>

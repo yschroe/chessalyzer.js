@@ -1,55 +1,48 @@
 ---
-title: How it works
-description: The four stages from PGN file to tracker results.
+title: How Chessalyzer works
+description: The pipeline from PGN file to tracker results, and the design choices that make it fast.
 ---
 
-Every PGN file goes through four stages:
+This page is the optional tour under the hood. You don't need any of it to use the library — but if you're pushing millions of games through it, or you're just curious, here's what's actually happening.
 
-1. **I/O** — read the file from disk (as lines, or as byte-sized chunks in multithreaded mode).
-2. **PGN parse** — extract headers, mainline move strings (SAN), and game results. No board involved yet.
-3. **Replay** — decode each SAN string and play it on an internal board. Needed when your trackers care about _where_ pieces are, not just _what_ was played.
-4. **Analyze** — run your trackers and accumulate statistics.
+## The four stages
 
-When people say "PGN parser," they usually mean step 2 only. Turning a file into actual legal moves takes **PGN parse + replay**.
+Every PGN file flows through the same four stages:
 
-## Full pipeline vs parse-only
-
-```javascript
-import { analyzePGN } from 'chessalyzer';
-import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
-import { gameTracker } from 'chessalyzer/trackers';
-
-// Just the games — no board replay
-const games = await parsePGN('<pathToPgnFile>', { headers: true, maxGames: 100 });
-// games[0].moves[i].san — mainline SAN strings
-
-// Same, but one game at a time (easier on memory for huge files)
-for await (const game of streamParsePGN('<pathToPgnFile>', { headers: true })) {
-    // process game
-}
-
-// Full pipeline — stats accumulate on the tracker instance
-const stats = gameTracker();
-const result = await analyzePGN('<pathToPgnFile>', {
-    trackers: [stats],
-    headers: true,
-    replay: 'board', // 'skip' | 'board' | 'actions'
-});
-console.log(stats.state.gameCount, result.gameCount);
+```text
+1. I/O  →  2. PGN parse  →  3. Replay  →  4. Analyze
 ```
 
-## Replay modes
+1. **I/O** — the file is streamed from disk, never loaded whole. In multithreaded mode it's cut into byte-sized chunks aligned to game boundaries; single-threaded it's read line by line.
 
-| Mode        | When to use                                                  |
-| ----------- | ------------------------------------------------------------ |
-| `'skip'`    | Count-only runs with no move trackers — fastest              |
-| `'board'`   | Trackers need board position but not per-move action details |
-| `'actions'` | Move trackers — required for `defineMoveTracker` definitions |
+1. **I/O** — the file is streamed from disk, never loaded whole. In multithreaded mode it's cut into byte-sized chunks aligned to game boundaries; single-threaded it's read line by line.
+1. **PGN parse** — each game is split into tag-pair headers, mainline move strings (SAN), and the result. This stage is purely textual: no board, no legality, just structure.
+1. **Replay** — each SAN string is decoded and played on an internal board. This is the expensive part, and it's what move trackers need: they care _where_ pieces stand, not just _what_ was played.
+1. **Analyze** — your trackers run over the results and accumulate state.
 
-Move trackers need `'actions'`. Count-only runs (no move trackers) skip board replay by default.
+A subtlety worth knowing: when people say "PGN parser" they usually mean stage 2. Turning a file into _moves on a board_ takes stages 2 + 3, which is why the [parser module](/docs/parsing-pgn) and `analyzePGN` are separate tools.
 
-## Headers
+## Replay modes: pay only for what you need
 
-Set `headers: true` when your tracker reads tag pairs like `WhiteElo`. By default, headers are parsed automatically when you use a game tracker (`'auto'`) or a [`filter`](/docs/filters) callback.
+Stage 3 comes in three flavors, and choosing the cheapest sufficient one is the single biggest speed lever:
 
-See also: [PGN parser](/docs/pgn-parser), [Trackers](/docs/trackers).
+| Mode        | What happens                                    | Who needs it                                       |
+| ----------- | ----------------------------------------------- | -------------------------------------------------- |
+| `'skip'`    | No board at all — moves are just counted        | Count-only runs (no move trackers)                 |
+| `'board'`   | Moves are played, positions tracked             | Trackers that need the board, not per-move details |
+| `'actions'` | Each half-move is decoded into `Action` objects | Move trackers (`defineMoveTracker`)                |
+
+You normally never touch this: `analyzePGN` infers the mode from your trackers (a move tracker implies `'actions'`; no move trackers means replay is skipped by default). The `replay` option exists for overrides — e.g. `replay: 'board'` to force decoding so [broken moves surface as errors](/docs/error-handling).
+
+Headers work the same way: `headers: 'auto'` (the default) parses tag pairs when a game tracker or filter needs them and skips them otherwise.
+
+## Why it's fast
+
+A few deliberate choices, in case you wonder why the internals look the way they do:
+
+- **Workers parse, not just analyze.** In the default multithreaded mode, the main thread only cuts the file into chunks; parsing, replaying, and tracking all happen on worker threads, and chunks travel as transferable byte buffers to avoid copying.
+- **Strings on the hot path.** Internally, moves stay plain strings (`'e4'`) as long as possible; the `{ san }` objects you see in `ParsedGame` are only materialized at public boundaries. Millions of tiny object allocations would otherwise pressure the garbage collector during board replay.
+- **No dependencies.** The library is zero-dependency, so install and audit surfaces stay minimal.
+- **State merges once.** Trackers accumulate locally per worker and merge into your instances a single time at the end — see [Multithreading](/docs/multithreading) for the mechanics and the one pitfall this creates.
+
+The repository's `bench/` folder has the benchmarks behind these decisions if you ever want numbers.

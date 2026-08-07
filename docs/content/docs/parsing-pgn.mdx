@@ -1,0 +1,109 @@
+---
+title: Parsing PGN files
+description: Turn PGN files into plain JavaScript objects — no analysis attached.
+---
+
+Sometimes you don't want statistics at all — you just want the games. The `chessalyzer/pgn` module reads a PGN file and hands you structured data: the tag-pair headers, the moves, the result. No board replay, no trackers, no setup.
+
+Both examples below run on the [three-game `games.pgn`](/docs/quickstart#the-example-file) from the quickstart.
+
+## parsePGN — all games at once
+
+```javascript
+import { parsePGN } from 'chessalyzer/pgn';
+
+const games = await parsePGN('games.pgn', { headers: true });
+
+console.log(games.length); // 3
+console.log(games[0].headers?.White); // 'alice'
+console.log(games[0].moves[0].san); // 'e4'
+```
+
+You get back an array of `ParsedGame` — one object per game, in file order. This is the real thing for our example file (games two and three trimmed for brevity, they look the same):
+
+```json
+[
+    {
+        "moves": [
+            { "san": "e4" },
+            { "san": "e5" },
+            { "san": "Bc4" },
+            { "san": "Nc6" },
+            { "san": "Qh5" },
+            { "san": "Nf6" },
+            { "san": "Qxf7" }
+        ],
+        "result": "1-0",
+        "headers": {
+            "Event": "Casual Blitz game",
+            "Site": "https://lichess.org/a1b2c3d4",
+            "Date": "2024.05.12",
+            "White": "alice",
+            "Black": "blunderbuss",
+            "Result": "1-0",
+            "WhiteElo": "2114",
+            "BlackElo": "1892",
+            "ECO": "C23"
+        }
+    }
+    // …two more games
+]
+```
+
+A few things worth knowing about this shape:
+
+- **`moves` holds mainline SAN strings**, one `{ san }` object per half-move. Check and mate suffixes are normalized away — the file's `Qxf7#` comes out as `"Qxf7"`.
+- **`result`** is `'1-0'`, `'0-1'`, `'1/2-1/2'`, or `'*'` (unfinished).
+- **`headers`** is only present with `headers: true`. Without it you still get `result` (from the movetext), just not the tag pairs:
+
+```json
+[{ "moves": [{ "san": "e4" }, { "san": "e5" } /* … */], "result": "1-0" }]
+```
+
+## streamParsePGN — one game at a time
+
+Same data, delivered as an async iterator. The whole file never sits in memory at once:
+
+```javascript
+import { streamParsePGN } from 'chessalyzer/pgn';
+
+for await (const game of streamParsePGN('games.pgn', { headers: true })) {
+    console.log(
+        game.headers?.White,
+        'vs',
+        game.headers?.Black,
+        '—',
+        game.moves.length,
+        'half-moves',
+    );
+}
+```
+
+```text
+alice vs blunderbuss — 7 half-moves
+blunderbuss vs cleopatra — 4 half-moves
+alice vs cleopatra — 8 half-moves
+```
+
+<Callout type="idea" title="Which one should I pick?">
+    Rule of thumb: if the file fits comfortably in memory and you want random access (`games[42]`),
+    take `parsePGN`. If the file is huge — database dumps can be gigabytes — or you process each
+    game and then forget it, take `streamParsePGN`.
+</Callout>
+
+## Options
+
+| Option     | What it does                                                   | Default  |
+| ---------- | -------------------------------------------------------------- | -------- |
+| `headers`  | Parse tag pairs (`White`, `BlackElo`, `ECO`, …) into `headers` | `false`  |
+| `maxGames` | Stop after this many games                                     | no limit |
+
+## Parser or analyzer?
+
+|                           | `parsePGN` / `streamParsePGN`         | `analyzePGN`                              |
+| ------------------------- | ------------------------------------- | ----------------------------------------- |
+| What you get              | The games themselves                  | Statistics via [trackers](/docs/trackers) |
+| Moves replayed on a board | No                                    | Yes, when your trackers need it           |
+| Typical use               | Inspect, convert, or export game data | Answer questions about many games         |
+
+If you find yourself writing `for` loops that count things over parsed games, that's the smell — [trackers](/docs/trackers) do exactly that, in parallel, and [How Chessalyzer works](/docs/how-it-works) explains what else the full pipeline buys you.

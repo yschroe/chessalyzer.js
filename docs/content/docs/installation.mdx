@@ -3,36 +3,35 @@ title: Installation
 description: Install Chessalyzer and import the modules you need.
 ---
 
-## Requirements
-
-- **Node.js** ≥ 22, or **Bun**
-
-## Install
+Chessalyzer runs on **Node.js ≥ 22** or **Bun** — pick whichever you already have. There are no other requirements, and the library itself has zero dependencies.
 
 ```sh
 npm install chessalyzer
 ```
 
-## Imports
+## What you can import
 
-The main entry point is `chessalyzer`. Subpath imports keep bundles focused:
+The main entry point is `chessalyzer`, with a few extra subpaths for the parts you only need sometimes:
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
-import { printHeatmap } from 'chessalyzer/trackers';
-import { tileTracker } from 'chessalyzer/trackers';
+import { tileTracker, printHeatmap } from 'chessalyzer/trackers';
 import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
 ```
 
-| Subpath                | Use for                                       |
-| ---------------------- | --------------------------------------------- |
-| `chessalyzer`          | `analyzePGN`, error helpers, analysis types   |
-| `chessalyzer/trackers` | Built-in trackers, factories, heatmap helpers |
-| `chessalyzer/pgn`      | Parse-only PGN access                         |
-| `chessalyzer/board`    | `Square`, coord helpers, piece-name types     |
-| `chessalyzer/replay`   | Replay action types (`Action`, …)             |
+| Subpath                | What you'll find there                               |
+| ---------------------- | ---------------------------------------------------- |
+| `chessalyzer`          | `analyzePGN`, error helpers, analysis types          |
+| `chessalyzer/trackers` | Built-in trackers, tracker authoring, heatmaps       |
+| `chessalyzer/pgn`      | Parse-only PGN access (`parsePGN`, `streamParsePGN`) |
+| `chessalyzer/board`    | Square and coordinate helpers, piece-name types      |
+| `chessalyzer/replay`   | Replay action types (`Action`, …)                    |
 
-## Quick check
+Don't worry about memorizing these — the guides always show the right import at the top of each example.
+
+## See it work
+
+If you have a PGN file lying around, this is a complete program:
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
@@ -40,10 +39,10 @@ import { tileTracker } from 'chessalyzer/trackers';
 
 const tiles = tileTracker();
 
-const result = await analyzePGN('<pathToPgnFile>', { trackers: [tiles] });
+const result = await analyzePGN('games.pgn', { trackers: [tiles] });
 
-console.log(result.gameCount, result.moveCount, result.movesPerSecond);
+console.log(result.gameCount, result.moveCount);
 console.log(tiles.state.movesTotal);
 ```
 
-Next: [Basic usage](/docs/basic-usage).
+No PGN file yet? The [next page](/docs/quickstart) comes with a tiny one you can copy — let's run your first real analysis.

@@ -1,9 +1,11 @@
 ---
-title: Filters
-description: Limit analysis to games that match a JavaScript predicate.
+title: Filtering games
+description: Analyze only the games that match a JavaScript predicate.
 ---
 
-You can filter games with a plain JavaScript function — for example, only analyze games where `WhiteElo > 2000`:
+Often you don't want _every_ game — only the ones worth your question. Pass a `filter`: a plain function that receives each parsed game and returns `true` for the games to keep. Everything else is skipped before it costs you anything.
+
+Only one game in our [example file](/docs/quickstart#the-example-file) has a white player rated above 2000 (alice, 2114), so this analysis processes exactly one game:
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
@@ -11,20 +13,35 @@ import { tileTracker } from 'chessalyzer/trackers';
 
 const tiles = tileTracker();
 
-await analyzePGN('<pathToPgnFile>', {
+const result = await analyzePGN('games.pgn', {
     trackers: [tiles],
     filter: (game) => Number(game.headers?.WhiteElo) > 2000,
 });
 
-console.log(tiles.state.movesTotal);
+console.log(result.gameCount); // 1
+console.log(result.moveCount); // 7
 ```
 
-## Requirements
+The filter receives the same [`ParsedGame`](/docs/parsing-pgn) shape you know from the parser — `headers`, `result`, `moves`. Header values are always strings, hence the `Number(...)`. Headers are parsed automatically when a filter is present, so `game.headers` is always populated; leave `headers: false` alone unless your filter truly never looks at them.
 
-- Filters are regular JS callbacks and run on the main thread. When a `filter` is present, analysis is single-threaded automatically (`workers` may be omitted or set to `false`). Passing an explicit worker pool with a filter is an error.
+<Callout type="info" title="Why filters run single-threaded">
+    A filter is a JavaScript closure, and closures can't be shipped to worker threads — so when a
+    `filter` is present, `analyzePGN` automatically analyzes on the main thread. Just don't combine
+    a filter with explicit `workers` options; that's rejected as an error. On large files this costs
+    real throughput, and [Multithreading](/docs/multithreading) explains the trade-off and your
+    options.
+</Callout>
 
-Tag-pair headers are parsed automatically when a filter is present (so `game.headers` is populated). Set `headers: false` only when your filter does not read headers.
+## Handy patterns
 
-Filters receive a `ParsedGame` with headers and moves. Combine with `maxGames` to cap how many matching games are processed.
+Combine with `maxGames` to cap how many _matching_ games are processed — a quick way to sample:
 
-For comparing two filtered cohorts side by side, see [Comparing analyses](/docs/comparing-analyses).
+```javascript
+await analyzePGN('huge-database.pgn', {
+    trackers: [tiles],
+    filter: (game) => game.headers?.Result === '1/2-1/2',
+    maxGames: 1000, // the first 1000 draws
+});
+```
+
+And if you want to compare two filtered groups side by side — say, high-rated vs. low-rated players — you don't need two passes over the file: [Comparing groups of games](/docs/comparing-analyses) does both in one go.

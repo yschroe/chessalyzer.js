@@ -3,16 +3,16 @@
     "pages": [
         "index",
         "installation",
-        "basic-usage",
-        "---Core---",
-        "how-it-works",
-        "filters",
+        "quickstart",
+        "---Guides---",
         "trackers",
         "heatmaps",
-        "pgn-parser",
-        "---Going further---",
-        "multithreading",
+        "parsing-pgn",
+        "filters",
         "comparing-analyses",
-        "error-handling"
+        "error-handling",
+        "---Going further---",
+        "how-it-works",
+        "multithreading"
     ]
 }

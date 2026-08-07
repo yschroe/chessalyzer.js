@@ -1,24 +1,35 @@
 ---
-title: Introduction
+title: Welcome
 description: Batch-analyze chess PGN files and turn game data into statistics and heatmaps.
 icon: BookOpen
 ---
 
-Chessalyzer is a JavaScript library for working through large PGN databases and collecting exactly the statistics you care about — move by move, or game by game.
+Chessalyzer is a JavaScript library that reads chess games from PGN files and collects exactly the statistics you care about — for a handful of games or for millions of them.
 
-Give it a file, create a few **tracker instances**, and it handles the heavy lifting: reading the PGN, replaying moves on an internal board, and aggregating results into plain state you read from those same handles. You stay in control of what gets measured, which keeps things fast even on big exports.
+You tell it **what to measure** by attaching small building blocks called **trackers** (count results, watch what happens on each square, or invent your own statistic). Chessalyzer takes care of the boring parts: reading the file, understanding the moves, and adding everything up. When it's done, you simply read the results off your trackers.
 
-## What it's good at
+```javascript
+import { analyzePGN } from 'chessalyzer';
+import { gameTracker } from 'chessalyzer/trackers';
 
-- **Batch analysis** — process thousands or millions of games without loading everything into memory at once.
-- **Modular stats** — track only what you need (results, captures, tile occupation, or your own metrics).
-- **Heatmaps** — turn tracker data into square-by-square values for terminal preview or your own visualizations.
-- **Throughput** — designed for multi-core machines; multithreaded by default.
+const games = gameTracker();
 
-If you just want parsed games without board replay, the [`pgn-parser`](/docs/pgn-parser) module has you covered too.
+await analyzePGN('games.pgn', { trackers: [games] });
+
+games.state.results; // { white: 1, black: 1, draw: 1 }
+```
+
+## What you can do with it
+
+- **Answer questions about your games.** How often does each opening appear? Who wins more on this square? Where do pieces get captured? If you can phrase it, a tracker can count it.
+- **Draw heatmaps.** Turn any tracker into square-by-square values and preview them right in your terminal, or feed the data into your own charts.
+- **Go big.** Chessalyzer is built for huge database exports: it streams files instead of loading them whole and uses all your CPU cores by default.
+- **Just parse.** Only need the games themselves? The [PGN parser](/docs/parsing-pgn) gives you structured game data without any analysis.
+
+## Where to next
 
 <Cards>
     <Card title="Installation" href="/docs/installation" />
-    <Card title="Basic usage" href="/docs/basic-usage" />
+    <Card title="Your first analysis" href="/docs/quickstart" />
     <Card title="Trackers" href="/docs/trackers" />
 </Cards>

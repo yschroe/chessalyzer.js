@@ -1,31 +1,70 @@
 ---
 title: Heatmaps
-description: Turn tracker data into per-square values for preview or visualization.
+description: Turn tracker state into per-square values for preview or visualization.
 ---
 
-After running `analyzePGN`, tracker **state** holds the raw statistics. **Heatmaps** map that state to a value for each square on the board.
+Tracker state is precise but hard to eyeball — 64 squares times a handful of counters. A **heatmap** boils it down to one number per square, so patterns jump out. Chessalyzer gives you the numbers and a quick terminal preview; what you build on top (web boards, charts, posters) is up to you.
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
-import { printHeatmap } from 'chessalyzer/trackers';
-import { generateHeatmap, TileHeatmapPresets, tileTracker } from 'chessalyzer/trackers';
+import {
+    generateHeatmap,
+    printHeatmap,
+    tileTracker,
+    TileHeatmapPresets,
+} from 'chessalyzer/trackers';
 
 const tiles = tileTracker();
 
-await analyzePGN('<pathToPgnFile>', { trackers: [tiles] });
+await analyzePGN('games.pgn', { trackers: [tiles] });
 
 const heatmapData = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
 printHeatmap(heatmapData);
 ```
 
-## What you get
+`printHeatmap` draws a colored 8×8 board in your terminal — orange for high values, blue for negative ones. Handy while exploring, before you reach for a real chart.
 
-`generateHeatmap` returns data you can pass to `printHeatmap` for a quick terminal preview, or feed into your own visualization library. Chessalyzer provides the **data**, not chart components.
+## What you get back
 
-## Options
+`generateHeatmap` returns plain data — nothing chess-specific about it anymore:
 
-- **[Presets](/docs/heatmaps/presets)** — built-in analysis functions like `TileHeatmapPresets.TILE_OCC_ALL`
-- **[Custom functions](/docs/heatmaps/custom-functions)** — write your own per-square calculation
-- **[Comparing analyses](/docs/comparing-analyses)** — `generateComparisonHeatmap(state, otherState, analysis)` for side-by-side cohorts
+```json5
+{
+    map: [
+        [100, 84.21 /* … */],
+        // …8 rows of 8 values
+    ],
+    min: 0,
+    max: 100,
+}
+```
 
-Use `generateHeatmap(state, analysis)` and `generateComparisonHeatmap(state, otherState, analysis)` from `chessalyzer/trackers`. Pass a preset from `TileHeatmapPresets` / `PieceHeatmapPresets` (call factories for scoped ones), or any custom function with the same signature.
+- `map` is an 8×8 grid of values. **Row 0 is rank 8, column 0 is the a-file** — the board as white sees it from behind.
+- `min` / `max` are the extremes across the grid, useful for scaling colors in your own visualization.
+
+For the three-game example file, the occupation map looks like this (files a–h left to right, rank 8 on top — `e4` sits at row 4, column 4 with 68.42):
+
+```text
+         a      b      c      d      e      f      g      h
+8  100.00  84.21  89.47 100.00 100.00 100.00  94.74 100.00
+7  100.00 100.00  68.42  78.95  63.16  94.74 100.00 100.00
+6    0.00   0.00  15.79  21.05   0.00   5.26   0.00   0.00
+5    0.00  10.53  31.58   0.00  36.84   0.00   0.00  10.53
+4    0.00   0.00  21.05   0.00  68.42   0.00   5.26   0.00
+3    0.00   0.00   0.00   0.00   0.00  42.11   0.00   0.00
+2  100.00 100.00 100.00 100.00  31.58  84.21  94.74 100.00
+1  100.00 100.00 100.00  89.47 100.00  63.16  73.68 100.00
+```
+
+<Callout type="idea" title="Saving instead of printing">
+    `printHeatmap` writes to stdout. Its sibling `heatmapToString(heatmapData)` returns the same
+    colored board as a string — handy for logs, files, or Slack messages.
+</Callout>
+
+## Choosing what one cell means
+
+The second argument to `generateHeatmap` is a function that computes a single value from the state for each square. You can pick a ready-made one or write your own:
+
+- [Presets](/docs/heatmaps/presets) — common questions out of the box (`TILE_OCC_ALL`, capture counts, per-piece views, …)
+- [Custom functions](/docs/heatmaps/custom-functions) — your own per-square calculation
+- [Comparing groups](/docs/comparing-analyses) — `generateComparisonHeatmap` for "how does group A differ from group B?"

@@ -1,0 +1,35 @@
+[Event "Casual Blitz game"]
+[Site "https://lichess.org/a1b2c3d4"]
+[Date "2024.05.12"]
+[White "alice"]
+[Black "blunderbuss"]
+[Result "1-0"]
+[WhiteElo "2114"]
+[BlackElo "1892"]
+[ECO "C23"]
+
+1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7# 1-0
+
+[Event "Rated Bullet game"]
+[Site "https://lichess.org/e5f6g7h8"]
+[Date "2024.05.13"]
+[White "blunderbuss"]
+[Black "cleopatra"]
+[Result "0-1"]
+[WhiteElo "1650"]
+[BlackElo "1701"]
+[ECO "A02"]
+
+1. f3 e5 2. g4 Qh4# 0-1
+
+[Event "Rated Rapid game"]
+[Site "https://lichess.org/i9j0k1l2"]
+[Date "2024.05.14"]
+[White "alice"]
+[Black "cleopatra"]
+[Result "1/2-1/2"]
+[WhiteElo "1987"]
+[BlackElo "2005"]
+[ECO "B20"]
+
+1. e4 c5 2. Nf3 d6 3. Bb5+ Bd7 4. Bxd7+ Qxd7 1/2-1/2

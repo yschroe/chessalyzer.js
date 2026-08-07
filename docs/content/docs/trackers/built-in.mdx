@@ -1,62 +1,108 @@
 ---
 title: Built-in trackers
-description: gameTracker, pieceTracker, and tileTracker.
+description: gameTracker, pieceTracker, and tileTracker — what they count and what their state looks like.
 ---
 
-Chessalyzer ships three built-in tracker factories (`gameTracker`, `pieceTracker`, `tileTracker`). Call them to create instances, pass those to `analyzePGN`, then read **`instance.state`**.
+Chessalyzer ships with three ready-made trackers. All examples below run on the [three-game `games.pgn`](/docs/quickstart#the-example-file) from the quickstart, and every output block is the real thing — paste the code, and you'll see the same numbers.
+
+## gameTracker — results and openings
+
+The simplest of the three: it reads each game's headers and result, and counts. It needs headers, which Chessalyzer parses automatically as soon as a game tracker is attached.
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
-import { tileTracker } from 'chessalyzer/trackers';
+import { gameTracker } from 'chessalyzer/trackers';
+
+const games = gameTracker();
+
+await analyzePGN('games.pgn', { trackers: [games] });
+console.log(games.state);
+```
+
+```json
+{
+    "results": { "white": 1, "black": 1, "draw": 1 },
+    "gameCount": 3,
+    "eco": { "A02": 1, "B20": 1, "C23": 1 }
+}
+```
+
+| Field       | What it counts                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| `results`   | Wins by white, wins by black, draws                                                         |
+| `gameCount` | Games processed                                                                             |
+| `eco`       | Games per [ECO opening code](https://en.wikipedia.org/wiki/Encyclopaedia_of_Chess_Openings) |
+
+## pieceTracker — who captures whom
+
+A capture matrix: for every starting piece, how often it captured each opposing piece. Pieces are named by their starting square — `Qd` is the queen, `Pe` the king's pawn, `Nb` the knight that began on the b-file — and each color gets its own table under `w` and `b`.
+
+```javascript
+import { analyzePGN } from 'chessalyzer';
+import { pieceTracker } from 'chessalyzer/trackers';
+
+const pieces = pieceTracker();
+
+await analyzePGN('games.pgn', { trackers: [pieces] });
+console.log(pieces.state.w.Qd.Pf); // 1 — white's queen captured black's f-pawn
+```
+
+Our file only has three captures, so the (large, mostly zero) state boils down to:
+
+```json5
+{
+    w: {
+        Qd: { Pf: 1 }, // game 1: Qxf7 — the scholar's mate
+        Bf: { Bc: 1 }, // game 3: Bxd7 — bishop takes bishop
+    },
+    b: {
+        Qd: { Bf: 1 }, // game 3: Qxd7 — black's queen strikes back
+    },
+}
+```
+
+## tileTracker — the life of every square
+
+The workhorse. For each of the 64 squares it records, per color and per piece:
+
+- `movedTo` — how often a piece moved _to_ this square
+- `occupiedFor` — how many half-moves a piece _sat on_ this square
+- `captures` — captures that happened _on_ this square
+- `losses` — pieces that were captured _on_ this square
+
+```javascript
+import { analyzePGN } from 'chessalyzer';
+import { tileAt, tileTracker } from 'chessalyzer/trackers';
 
 const tiles = tileTracker();
 
-await analyzePGN('<pathToPgnFile>', { trackers: [tiles] });
-console.log(tiles.state.movesTotal);
+await analyzePGN('games.pgn', { trackers: [tiles] });
+
+console.log(tiles.state.movesTotal); // 19
+console.log(tileAt(tiles.state.tiles, 'f7'));
 ```
 
-## gameTracker
+`tileAt` saves you from indexing the 8×8 `tiles` grid by hand. And `f7` turns out to be the most dramatic square in our file — the scholar's mate happened right there:
 
-Per-game statistics from headers and results.
-
-| Field       | Description                             |
-| ----------- | --------------------------------------- |
-| `results`   | Counts of white wins, draws, black wins |
-| `eco`       | ECO code counts (e.g. `'A00'`)          |
-| `gameCount` | Number of games processed               |
-
-## pieceTracker
-
-Tracks captures between pieces.
-
-| Field | Description                                                                          |
-| ----- | ------------------------------------------------------------------------------------ |
-| `b`   | Black pieces — how often each black piece captured each white piece (e.g. `b.Pa.Qd`) |
-| `w`   | Same for white pieces                                                                |
-
-## tileTracker
-
-Tracks what happens on each square of the board.
-
-| Field        | Description                                                     |
-| ------------ | --------------------------------------------------------------- |
-| `tiles[][]`  | Per-square stats for each piece (`b`/`w` → `total` / `byPiece`) |
-| `movesTotal` | Total moves processed                                           |
-
-Each tile has two color buckets (`b`, `w`). Each bucket has a `total` stats object plus per-piece stats under `byPiece` (`Pa`, `Ra`, etc.):
-
-- `movedTo` — how often the piece moved to this square
-- `occupiedFor` — half-moves the piece was on this square
-- `captures` — captures made on this square
-- `losses` — times the piece was lost on this square
-
-Use `tileAt(state.tiles, square)` to read a square by name. Then take `total` for the combined stats of one side (e.g. `cell.b.total.occupiedFor`), or `byPiece` for a single piece (e.g. `cell.b.byPiece.Pa.occupiedFor`):
-
-```javascript
-import { tileAt } from 'chessalyzer/trackers';
-
-const cell = tileAt(tiles.state.tiles, 'g8');
-console.log(cell?.b.total.occupiedFor, cell?.b.byPiece.Pa.occupiedFor);
+```json5
+{
+    b: {
+        total: { movedTo: 0, occupiedFor: 18, captures: 0, losses: 1 },
+        byPiece: {
+            Pf: { movedTo: 0, occupiedFor: 18, captures: 0, losses: 1 },
+            // …15 more black pieces, all zero
+        },
+    },
+    w: {
+        total: { movedTo: 1, occupiedFor: 0, captures: 1, losses: 0 },
+        byPiece: {
+            Qd: { movedTo: 1, occupiedFor: 0, captures: 1, losses: 0 },
+            // …15 more white pieces, all zero
+        },
+    },
+}
 ```
 
-`tileTracker` and `pieceTracker` support [heatmap generation](/docs/heatmaps) — pass state and a preset function to `generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL)`.
+Reading it: black's f-pawn (`Pf`) never moved and defended f7 for 18 half-moves across the games, until white's queen (`Qd`) took it — once, and checkmate.
+
+`total` combines all pieces of one color; `byPiece` breaks it down. You'll usually read state through [heatmap presets](/docs/heatmaps/presets) rather than by hand — both `tileTracker` and `pieceTracker` states plug straight into `generateHeatmap`.
