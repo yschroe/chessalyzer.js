@@ -22,11 +22,7 @@ describe('Fixtures', () => {
                     let data: AnalyzeResult;
 
                     beforeAll(async () => {
-                        const entry = getFixtureEntry(id);
-                        const { workers: _fixtureWorkers, ...fixtureOpts } =
-                            entry.analyzeOptions ?? {};
                         data = await analyzePGN(fixturePath(id), {
-                            ...fixtureOpts,
                             ...(workers === false ? { workers: false } : {}),
                         });
                     });
@@ -35,11 +31,6 @@ describe('Fixtures', () => {
                         const expected = getFixtureEntry(id).expected;
                         expect(data.gameCount).toBe(expected.games);
                         expect(data.moveCount).toBe(expected.moves);
-                        if (expected.skippedGames !== undefined) {
-                            expect(data.skippedGames).toBe(expected.skippedGames);
-                        } else {
-                            expect(data.skippedGames).toBeUndefined();
-                        }
                     });
                 });
             }

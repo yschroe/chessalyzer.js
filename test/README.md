@@ -92,7 +92,7 @@ bun run build && bun test    # full suite (CI: setup builds, then bun test)
 bun run test:build-fixtures  # merge-update manifest after fixture changes (preserves golden)
 ```
 
-`test:build-fixtures` re-analyzes each `test/fixtures/*.pgn` and updates `expected` counts. It preserves `golden` blocks and uses per-fixture `analyzeOptions` overrides (see `FIXTURE_ANALYZE` in `scripts/build-fixture-manifest.ts`) for error-policy fixtures like `bad-san-mid-file`.
+`test:build-fixtures` re-analyzes each `test/fixtures/*.pgn` (no trackers) and updates `expected` game/move counts. It preserves `golden` blocks and descriptions. Replay skip / `onError` behavior is covered in `error-policy.test.ts`, not the fixture manifest.
 
 CI (`.github/workflows/ci.yml`) runs `bun run build` then `bun test`. Corpus tests are included in `bun test` but skip when the local corpus file is absent.
 

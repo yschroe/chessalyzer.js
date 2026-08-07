@@ -26,8 +26,7 @@ interface TileTrackerGolden {
 export interface FixtureEntry {
     file: string;
     description: string;
-    expected: { games: number; moves: number; skippedGames?: number };
-    analyzeOptions?: { onError?: 'abort' | 'skip-game'; workers?: false };
+    expected: { games: number; moves: number };
     golden?: {
         tileTracker?: TileTrackerGolden;
     };
