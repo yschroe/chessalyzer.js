@@ -1,41 +1,64 @@
 ---
 title: Multithreading
-description: Parallel analysis with worker threads — default and when to turn it off.
+description: How the default worker pool parallelizes analysis, and when to run single-threaded.
 ---
 
-By default, Chessalyzer uses Node.js [Worker Threads](https://nodejs.org/api/worker_threads.html) to read and analyze your PGN in parallel. No configuration needed:
+Chessalyzer is multithreaded out of the box: one `analyzePGN` call spreads the file across [worker threads](https://nodejs.org/api/worker_threads.html) and all your CPU cores. You don't configure anything to get it — this page explains what actually happens, how to tune it, and the few cases where threads step aside.
+
+## What happens under the hood
+
+```text
+main thread:  read file → cut into chunks → dispatch ─┐
+                                                       ├─► worker 1: parse → replay → track
+PGN file ─────┤                                        ├─► worker 2: parse → replay → track
+              └────────────────────────────────────────┘─► worker N: parse → replay → track
+                                                            │
+main thread:  merge tracker states ◄── snapshots ◄──────────┘
+```
+
+1. The main thread streams the file and cuts it into **chunks** sized in bytes, always aligned to whole games.
+2. Each worker receives raw chunk bytes and does _everything_ itself: parse, replay, and accumulate tracker state locally. Nothing per-game crosses the thread boundary — that's what keeps the pool fast.
+3. When the pool drains, each worker posts back one plain `{ index, state }` snapshot per tracker. The main thread folds them into your tracker instances via each tracker's **`merge`**, then runs **`onFinish`** once. Per-game `onGameEnd` hooks run on the workers, not the main thread.
+
+`maxGames` is enforced by the workers themselves, so filtered-down counting stays accurate without extra coordination.
+
+<Callout type="warn" title="State is partial until the end">
+    Because merging happens at pool drain, your tracker instances hold *incomplete* state while an
+    analysis is running. Reading `tracker.state` mid-flight won't throw — it will just quietly show
+    you a fraction of the truth. Await `analyzePGN` first; only then is state final.
+</Callout>
+
+## Tuning the pool
+
+Defaults are sensible for most files (one worker per available core). When you do tune, `workers` takes an object (or a plain number for the thread count):
 
 ```javascript
-import { analyzePGN } from 'chessalyzer';
-import { tileTracker } from 'chessalyzer/trackers';
-
-const tiles = tileTracker();
-
-await analyzePGN('<pathToPgnFile>', {
+await analyzePGN('games.pgn', {
     trackers: [tiles],
-    maxGames: 10000,
     workers: { count: 8, chunk: { targetBytes: 4 * 1024 * 1024 } },
 });
-
-console.log(tiles.state.movesTotal);
 ```
 
-The `workers` option lets you tune the thread count and PGN chunk size; defaults are fine for most files.
+| Option              | What it controls                                        | Default              |
+| ------------------- | ------------------------------------------------------- | -------------------- |
+| `workers`           | Thread count (shorthand: `workers: 8`)                  | all available cores  |
+| `chunk.targetBytes` | Chunk size target, extended to the next game boundary   | tuned for throughput |
+| `chunk.maxLines`    | Safety cap on lines per chunk                           |                      |
+| `chunk.minLines`    | Minimum lines before a byte-target chunk may be emitted |                      |
 
-Workers accumulate tracker state locally and send plain `{ index, state }` snapshots back at pool drain. The main thread merges them with **`merge`** on your instances, then runs **`onFinish`** once. Per-game **`onGameEnd`** hooks run on workers, not on the main thread. See [Custom trackers](/docs/trackers/custom#hook-lifecycle).
+Bigger chunks mean less dispatch overhead; smaller chunks balance better when games vary wildly in length. Measure with your own file before micro-tuning.
 
-## Single-threaded mode
+## When threads step aside
 
-Pass `workers: false` when you need everything on the main thread:
+Pass `workers: false` to force everything onto the main thread:
 
 ```javascript
-await analyzePGN('<pathToPgnFile>', { workers: false });
+await analyzePGN('games.pgn', { trackers: [tiles], workers: false });
 ```
 
-A JavaScript [`filter`](/docs/filters) callback also forces single-threaded analysis — omit `workers` or pass `workers: false`. Combining a filter with an explicit worker pool is an error.
+Two situations call for it — or force it:
 
-Some [custom tracker](/docs/trackers/custom) setups during development may also need `workers: false`.
+- **Filters.** A [`filter`](/docs/filters) is a JavaScript closure, and closures can't cross the worker boundary, so filtered analyses are single-threaded automatically. Passing explicit `workers` options together with a filter is rejected as an error.
+- **Custom tracker development.** [Custom trackers](/docs/trackers/custom) need their module setup (`id`, `workerModule: import.meta.url`, `merge`) before they can join the pool; while sketching one out, `workers: false` keeps things simple and debuggable. The `workerModule` URL also requires an unbundled Node ≥ 22 or Bun runtime.
 
-## Custom trackers in multithreaded mode
-
-Custom trackers need a factory default export, `id`, `workerModule = import.meta.url`, and `merge(state, other)`. See [Custom trackers](/docs/trackers/custom).
+One honest caveat for the other direction: in multithreaded mode, a fatal replay error aborts the run as a plain `Error` (only the message survives the thread boundary). If you need typed `isReplayError` data, use [`onError: 'skip-game'`](/docs/error-handling), which delivers fully typed errors on the result in both modes.

@@ -1,0 +1,153 @@
+---
+title: Your first analysis
+description: Run your first analysis on a small PGN file and see exactly what you get back.
+---
+
+This page walks you through a complete analysis, start to finish, on a tiny example file — so you can follow along and compare your output with ours.
+
+## The example file
+
+Save these three games as `games.pgn`. They are deliberately short (a quick win, a quicker loss, and a draw), and we'll reuse this file throughout the guides:
+
+```text title="games.pgn"
+[Event "Casual Blitz game"]
+[Site "https://lichess.org/a1b2c3d4"]
+[Date "2024.05.12"]
+[White "alice"]
+[Black "blunderbuss"]
+[Result "1-0"]
+[WhiteElo "2114"]
+[BlackElo "1892"]
+[ECO "C23"]
+
+1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7# 1-0
+
+[Event "Rated Bullet game"]
+[Site "https://lichess.org/e5f6g7h8"]
+[Date "2024.05.13"]
+[White "blunderbuss"]
+[Black "cleopatra"]
+[Result "0-1"]
+[WhiteElo "1650"]
+[BlackElo "1701"]
+[ECO "A02"]
+
+1. f3 e5 2. g4 Qh4# 0-1
+
+[Event "Rated Rapid game"]
+[Site "https://lichess.org/i9j0k1l2"]
+[Date "2024.05.14"]
+[White "alice"]
+[Black "cleopatra"]
+[Result "1/2-1/2"]
+[WhiteElo "1987"]
+[BlackElo "2005"]
+[ECO "B20"]
+
+1. e4 c5 2. Nf3 d6 3. Bb5+ Bd7 4. Bxd7+ Qxd7 1/2-1/2
+```
+
+## Running the analysis
+
+We'll ask the built-in `tileTracker` to watch every square of the board — who moved where, who got captured where, and how long each piece stayed put:
+
+```javascript
+import { analyzePGN } from 'chessalyzer';
+import { tileTracker } from 'chessalyzer/trackers';
+
+const tiles = tileTracker();
+
+const result = await analyzePGN('games.pgn', { trackers: [tiles] });
+
+console.log(result);
+```
+
+Two things to notice: you **create a tracker instance** (`tileTracker()`) and hand it over, and after the call you **read your results from that same instance**. More on why in [Trackers](/docs/trackers).
+
+## What you get back
+
+`analyzePGN` returns a small summary of the run itself — how many games and half-moves were processed, and how long it took:
+
+```json
+{
+    "durationMs": 33.99,
+    "gameCount": 3,
+    "moveCount": 19,
+    "movesPerSecond": 559,
+    "runs": [
+        {
+            "gameCount": 3,
+            "moveCount": 19
+        }
+    ]
+}
+```
+
+<Callout type="info" title="Your numbers will differ">
+    `durationMs` and `movesPerSecond` depend on your machine, and 3 games finish in the blink of an
+    eye — throughput gets interesting on files with thousands or millions of games. The `runs` array
+    has one entry per analysis pass; there's exactly one here, and [Comparing
+    groups](/docs/comparing-analyses) shows when you'd want more.
+</Callout>
+
+The actual statistics live on your tracker. `tiles.state` counts 19 half-moves, and each square has its own little report — here's `e4`, the square white's king pawn moved to in two of our three games:
+
+```javascript
+console.log(tiles.state.movesTotal); // 19
+console.log(tiles.state.tiles); // 8×8 grid of square reports
+```
+
+```json5
+// the e4 square, trimmed to the interesting bits
+{
+    b: {
+        total: { movedTo: 0, occupiedFor: 0, captures: 0, losses: 0 },
+        // …same breakdown for each black piece under byPiece
+    },
+    w: {
+        total: { movedTo: 2, occupiedFor: 13, captures: 0, losses: 0 },
+        byPiece: {
+            Pe: { movedTo: 2, occupiedFor: 13, captures: 0, losses: 0 },
+            // …15 more white pieces, all zero here
+        },
+    },
+}
+```
+
+White's e-pawn (`Pe`) moved to e4 twice and then sat there for 13 half-moves in total — that's the whole story of `e4` in our file. [Built-in trackers](/docs/trackers/built-in) explains every field.
+
+## Turning it into a picture
+
+Numbers per square are nice; a heatmap makes patterns pop. `generateHeatmap` maps the state to one value per square, and `printHeatmap` renders a colored board in your terminal:
+
+```javascript
+import { generateHeatmap, printHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
+
+const heatmapData = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
+printHeatmap(heatmapData); // colored 8×8 board in your terminal
+```
+
+`TILE_OCC_ALL` answers "how busy was each square?" — the percentage of half-moves a square had a piece on it. Underneath the colors, `heatmapData` is plain data (`{ map, min, max }`); here's the actual `map` for our file, with files a–h left to right and rank 8 on top:
+
+```text
+         a      b      c      d      e      f      g      h
+8  100.00  84.21  89.47 100.00 100.00 100.00  94.74 100.00
+7  100.00 100.00  68.42  78.95  63.16  94.74 100.00 100.00
+6    0.00   0.00  15.79  21.05   0.00   5.26   0.00   0.00
+5    0.00  10.53  31.58   0.00  36.84   0.00   0.00  10.53
+4    0.00   0.00  21.05   0.00  68.42   0.00   5.26   0.00
+3    0.00   0.00   0.00   0.00   0.00  42.11   0.00   0.00
+2  100.00 100.00 100.00 100.00  31.58  84.21  94.74 100.00
+1  100.00 100.00 100.00  89.47 100.00  63.16  73.68 100.00
+```
+
+Spot `e4` at 68.42% (13 of 19 half-moves) and `f3` at 42.11% — white's ill-fated first move in game two. Since `heatmapData` is just numbers, you can also feed it into any charting library you like. More in [Heatmaps](/docs/heatmaps).
+
+## Where to next
+
+<Cards>
+    <Card title="Trackers" href="/docs/trackers" />
+    <Card title="Built-in trackers" href="/docs/trackers/built-in" />
+    <Card title="Heatmaps" href="/docs/heatmaps" />
+    <Card title="Parsing PGN files" href="/docs/parsing-pgn" />
+</Cards>

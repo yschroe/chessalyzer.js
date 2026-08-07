@@ -120,13 +120,6 @@ export default function Home() {
                         </a>
                     </div>
                 </div>
-
-                <div className="mx-auto mt-auto p-6 font-sans">
-                    <p className="text-xs leading-relaxed text-fd-foreground">
-                        Most of this documentation was AI-generated and will be overhauled before
-                        the final release. Treat it as a draft while the API settles.
-                    </p>
-                </div>
             </div>
         </div>
     );

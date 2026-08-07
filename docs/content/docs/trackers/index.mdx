@@ -1,42 +1,57 @@
 ---
 title: Trackers
-description: Collect statistics during analysis — per move or per game.
+description: What trackers are, and how they collect statistics during analysis.
 ---
 
-**Trackers** define what Chessalyzer measures. Call a tracker **factory** to create an **instance**, pass that instance to `analyzePGN`, then read accumulated **state** from the same handle.
+A **tracker** is a little scorekeeper. While Chessalyzer works through your PGN file, each tracker watches the games go by and tallies up the one thing it cares about — results, captures, square activity, anything. You decide what gets measured by choosing which trackers to attach, and tracking only what you need is what keeps analyses fast.
 
-| Concept      | What it is                                                                                 |
-| ------------ | ------------------------------------------------------------------------------------------ |
-| **Factory**  | Callable from `defineMoveTracker` / `defineGameTracker` (or a built-in like `tileTracker`) |
-| **Instance** | Handle returned by the factory — what you pass to `analyzePGN`                             |
-| **State**    | Plain accumulated data — what you read from `instance.state` after analysis                |
+## Factory, instance, state
 
-There are two kinds:
+You'll meet three words over and over:
 
-| Kind             | Factory             | Receives                  | Example                       |
-| ---------------- | ------------------- | ------------------------- | ----------------------------- |
-| **Move tracker** | `defineMoveTracker` | Per-move board/actions    | `tileTracker`, `pieceTracker` |
-| **Game tracker** | `defineGameTracker` | Headers + result per game | `gameTracker`                 |
-
-Move trackers need `replay: 'actions'`. Game trackers only need headers (set `headers: true` or use `'auto'`).
-
-## Usage
+- A **factory** is a function like `tileTracker()` that creates a tracker. Built-in factories ship with Chessalyzer; you can also [write your own](/docs/trackers/custom).
+- An **instance** is what the factory hands back — the handle you pass to `analyzePGN`.
+- The **state** is where the instance accumulates its numbers. After the analysis finishes, you read `instance.state`.
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
 import { tileTracker, gameTracker } from 'chessalyzer/trackers';
 
-const tiles = tileTracker();
+const tiles = tileTracker(); // factory call → instance
 const games = gameTracker();
 
-await analyzePGN('<pathToPgnFile>', {
-    trackers: [tiles, games],
-});
+await analyzePGN('games.pgn', { trackers: [tiles, games] });
 
-console.log(tiles.state.movesTotal, games.state.gameCount);
+tiles.state.movesTotal; // 19 — tile stats
+games.state.gameCount; // 3  — game stats
 ```
 
-Each call to a factory returns a fresh instance with its own `.state`. Use distinct instances when you need separate cohorts in a multi-run analysis.
+Every factory call creates a fresh instance with its own state, so calling `tileTracker()` twice gives you two independent counters — handy for [comparing groups of games](/docs/comparing-analyses).
 
-- [Built-in trackers](/docs/trackers/built-in) — `gameTracker`, `pieceTracker`, `tileTracker`
-- [Custom trackers](/docs/trackers/custom) — factories for your own stats
+<Callout type="warn" title="Wait for the finish line">
+    Don't read `instance.state` while an analysis is still in flight. Chessalyzer works in parallel
+    by default, and the partial results from all worker threads are only merged into your instance
+    right before `analyzePGN` resolves — so mid-run reads see incomplete numbers. Await the call,
+    then read state. Curious why? [Multithreading](/docs/multithreading) has the details.
+</Callout>
+
+## Two kinds of trackers
+
+| Kind             | Created with        | Sees                                   | Built-in examples             |
+| ---------------- | ------------------- | -------------------------------------- | ----------------------------- |
+| **Move tracker** | `defineMoveTracker` | Every half-move, with board context    | `tileTracker`, `pieceTracker` |
+| **Game tracker** | `defineGameTracker` | One summary per game (headers, result) | `gameTracker`                 |
+
+Pick by the question you're asking. "Where do knights get captured?" needs to watch every move → move tracker. "Which openings are most common?" only needs each game's headers → game tracker.
+
+<Callout type="info" title="Replay is taken care of">
+    Move trackers need Chessalyzer to replay each game on an internal board; game trackers usually
+    don't. You never have to configure this — `analyzePGN` looks at your trackers and chooses the
+    cheapest sufficient mode automatically. The `replay` option exists for rare overrides; [How
+    Chessalyzer works](/docs/how-it-works) explains the machinery.
+</Callout>
+
+## Next steps
+
+- [Built-in trackers](/docs/trackers/built-in) — the three ready-made scorekeepers and what their state contains
+- [Custom trackers](/docs/trackers/custom) — teach Chessalyzer a statistic of your own

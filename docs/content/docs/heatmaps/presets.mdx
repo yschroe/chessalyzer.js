@@ -1,49 +1,62 @@
 ---
 title: Heatmap presets
-description: Built-in analysis functions for common tile and piece heatmaps.
+description: Built-in heatmap functions for common tile and piece questions.
 ---
 
-Instead of writing your own heatmap function, pass a preset from `TileHeatmapPresets` or `PieceHeatmapPresets`:
+Presets are ready-made heatmap functions — pass one to `generateHeatmap` and you're done. They come in two flavors: **plain presets** are used as-is, and **scoped presets** are little factories you call with a piece or square first.
 
 ```javascript
 import { generateHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
 
-// after analyzePGN — read state from your tracker instance
-const heatmapData = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
-const pieceHeatmap = generateHeatmap(
+// plain preset — use directly
+const busy = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
+
+// scoped presets — call first, then pass
+const queenPath = generateHeatmap(
     tiles.state,
     TileHeatmapPresets.PIECE_MOVED_TO_TILE({ color: 'w', name: 'Qd' }),
 );
-const tileHeatmap = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_BY_PIECE('e4'));
+const e4ByPiece = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_BY_PIECE('e4'));
 ```
 
-Scoped presets are **factories**: call them with a piece or square to get an analysis function. Preset property access on the map autocompletes in TypeScript.
+On the [quickstart file](/docs/quickstart#the-example-file), `queenPath.map` is all zeros except `h5` and `f7` (both `1`) — white's queen traveled d1 → h5 → f7 and the game ended there. TypeScript autocompletes both the preset names and their arguments, so exploring from your editor is encouraged.
 
-## Piece identity
+## Referring to pieces
 
-Piece-scoped presets take a `HeatmapPieceRef`: `{ color, name }`.
+Scoped presets take a `HeatmapPieceRef`: `{ color, name }`.
 
-- `color`: `'w'` | `'b'`
-- `name`: starting-piece id — pawns `Pa`…`Ph`, back rank `Ra`, `Nb`, `Bc`, `Qd`, `Ke`, `Bf`, `Ng`, `Rh`
+- `color`: `'w'` or `'b'`
+- `name`: the piece's **starting square** — pawns `Pa`…`Ph`, back rank `Ra`, `Nb`, `Bc`, `Qd`, `Ke`, `Bf`, `Ng`, `Rh`
 
-Names encode **file**, not just piece type (`Nb` = knight that started on the b-file). Color is required because both sides share the same names.
+Names encode the _file_, not just the piece type: `Nb` is specifically the knight that started on b1/b8. Both colors share the same names, which is why `color` is required.
 
 ## tileTracker presets
 
-| Short Name                   | Description                                                    |
-| ---------------------------- | -------------------------------------------------------------- |
-| `TILE_OCC_ALL`               | How often each square had any piece on it (% of all moves)     |
-| `TILE_OCC_WHITE`             | Same, white pieces only                                        |
-| `TILE_OCC_BLACK`             | Same, black pieces only                                        |
-| `TILE_CAPTURE_COUNT`         | Count of captures on each square                               |
-| `TILE_OCC_BY_PIECE(square)`  | Occupation of `square` by each starting piece (% of all moves) |
-| `PIECE_MOVED_TO_TILE(piece)` | Where `piece` moved to (move-target counts per tile)           |
+Need `tileTracker` state.
+
+| Preset                       | Question it answers                                             |
+| ---------------------------- | --------------------------------------------------------------- |
+| `TILE_OCC_ALL`               | How often did any piece stand on each square? (% of half-moves) |
+| `TILE_OCC_WHITE`             | Same, white pieces only                                         |
+| `TILE_OCC_BLACK`             | Same, black pieces only                                         |
+| `TILE_CAPTURE_COUNT`         | How many captures happened on each square?                      |
+| `TILE_OCC_BY_PIECE(square)`  | Which pieces occupied `square`, and how much? (% per piece)     |
+| `PIECE_MOVED_TO_TILE(piece)` | Where did `piece` move to? (counts per target square)           |
+
+<Callout type="info" title="Some maps are about pieces, not places">
+    In `TILE_OCC_BY_PIECE('e4')`, each cell represents a *piece* (by its starting square), not a
+    board location: on the example file the only non-zero cell is `e2` at 68.42 — the pawn that
+    started on e2 accounted for all of e4's occupation. `PIECE_CAPTURED` and `PIECE_CAPTURED_BY`
+    below use the same trick.
+</Callout>
 
 ## pieceTracker presets
 
-| Short Name                 | Description                                                    |
-| -------------------------- | -------------------------------------------------------------- |
-| `PIECE_CAPTURED_BY(piece)` | How often `piece` was captured by each opposing starting piece |
-| `PIECE_CAPTURED(piece)`    | How often `piece` captured each opposing starting piece        |
+Need `pieceTracker` state.
 
-For full control, see [Custom heatmap functions](/docs/heatmaps/custom-functions).
+| Preset                     | Question it answers                                   |
+| -------------------------- | ----------------------------------------------------- |
+| `PIECE_CAPTURED_BY(piece)` | Which opposing pieces captured `piece`, how often?    |
+| `PIECE_CAPTURED(piece)`    | Which opposing pieces did `piece` capture, how often? |
+
+When none of these quite ask your question, writing your own function is genuinely easy — see [Custom heatmap functions](/docs/heatmaps/custom-functions).

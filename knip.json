@@ -3,19 +3,20 @@
     "workspaces": {
         ".": {
             "entry": [
+                "bench/*.ts",
+                "bench/{atomic,exploratory}/*.ts",
                 "src/index.ts",
                 "src/chess-worker.ts",
                 "src/pgn/index.ts",
                 "src/board/index.ts",
                 "src/replay/index.ts",
                 "src/trackers/index.ts",
-                "bench/*.ts",
-                "bench/{atomic,exploratory}/*.ts"
+                "test/**/*.type-test.ts"
             ],
-            "ignore": ["manual-tests/**", "test/types/**", "test/integration/**/*.type-test.ts"]
+            "ignore": ["manual-tests/**"]
         },
         "docs": {
-            "entry": ["src/pages/**/*.{ts,tsx}", "waku.config.ts"]
+            "entry": ["src/pages/**/*.{ts,tsx}", "waku.config.ts", "examples/generate-outputs.ts"]
         }
     }
 }

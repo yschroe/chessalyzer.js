@@ -1,42 +1,15 @@
 ---
 title: Custom trackers
-description: Define your own statistics with defineGameTracker and defineMoveTracker.
+description: Teach Chessalyzer your own statistics with defineGameTracker and defineMoveTracker.
 ---
 
-Trackers separate **definition** (behavior) from **state** (plain data). `defineGameTracker` / `defineMoveTracker` return a **factory** — a callable that creates instances. Default-export that factory from its own module for multithreaded use.
+The built-in trackers cover common questions, but the fun starts when you have a question nobody asked before. Writing a custom tracker means describing three things: **what your state looks like initially** (`init`), **how one game or move changes it** (`track`), and **how two partial states combine** (`merge`). Chessalyzer handles everything else.
 
-```javascript
-// my-tracker.ts
-import { defineGameTracker } from 'chessalyzer/trackers';
+## A first tracker in five minutes
 
-export default defineGameTracker({
-    id: 'elo-tracker',
-    workerModule: import.meta.url, // multithreaded custom trackers only
-    init: (options) => ({
-        games: 0,
-        wins: [0, 0, 0],
-        minElo: options?.minElo ?? 0,
-    }),
-    track: (state, game) => {
-        state.games += 1;
-        // fold one game into state
-    },
-    merge: (state, other) => {
-        // fold worker state into main state
-    },
-    onFinish: (state) => {
-        // optional end-of-analysis hook (main thread only)
-    },
-});
-```
+Let's count half-moves and captures — not built in, and only a few lines away. Create a file for your tracker:
 
-## `defineMoveTracker` walkthrough
-
-Move trackers receive decoded **`Action[]`** per half-move. They require `replay: 'actions'` (inferred automatically when you pass a move tracker to `analyzePGN`).
-
-This example counts half-moves and captures:
-
-```javascript
+```typescript
 // half-move-counter.ts
 import { defineMoveTracker } from 'chessalyzer/trackers';
 
@@ -59,61 +32,62 @@ export default defineMoveTracker({
 });
 ```
 
+Then use it like any built-in:
+
 ```javascript
 import { analyzePGN } from 'chessalyzer';
 import halfMoveCounter from './half-move-counter.ts';
 
 const counter = halfMoveCounter();
 
-await analyzePGN(path, { trackers: [counter] });
-// replay: 'actions' is inferred from the move tracker
+await analyzePGN('games.pgn', { trackers: [counter] });
 
-console.log(counter.state.halfMoves, counter.state.captures);
+console.log(counter.state); // { halfMoves: 19, captures: 3 }
 ```
 
-**Action tips:**
+Nineteen half-moves and three captures on our [example file](/docs/quickstart#the-example-file) — that's the whole API. `defineGameTracker` works the same way, except its `track(state, game)` receives one parsed game (headers, result, move list) at a time instead of per-move actions.
 
-- Replay reuses the same `Action` objects each half-move — copy fields you need to retain across moves.
-- **Castling** produces two move actions (king leg, then rook leg). The rook leg carries the same `castle` flag.
-- `action.piece` / `takingPiece` / `takenPiece` use `PieceName` (`Pa`, `Nb`, … or promoted names like `Q17`). Use `isStartingPieceName()` when indexing starting-piece matrices.
+## Why the separate file and the extra fields?
 
-## Usage
+<Callout type="info" title="What workerModule is for">
+    By default, Chessalyzer analyzes on several threads at once. Threads can't receive functions
+    from your main program — so each worker *imports your tracker module itself* and creates its own
+    copy via the default-exported factory. That's why the definition needs an `id` and
+    `workerModule: import.meta.url`, and why state travels back as plain data to be combined with
+    your `merge` function. [Multithreading](/docs/multithreading) walks through the whole flow.
+</Callout>
 
-Call the factory to get an instance. Pass options to the factory call (not stored on the definition):
+Two consequences worth remembering:
 
-```javascript
-import { analyzePGN } from 'chessalyzer';
-import myTracker from './my-tracker.ts';
+- **State must be plain data** (numbers, strings, arrays, plain objects) — no class instances, Maps, or functions, because it crosses thread boundaries via structured clone.
+- **Options go to the factory call**, and they must be plain data too: `halfMoveCounter()` takes none, but a `myTracker({ minElo: 2000 })` would forward `{ minElo: 2000 }` to `init(options)` on every worker.
 
-const t = myTracker({ minElo: 2000 });
+<Callout type="warn" title="Action objects are recycled">
+    In a move tracker's `track`, the `Action` objects are reused from half-move to half-move for
+    performance. Read what you need and store *values* in your state — never keep a reference to an
+    action itself, or you'll be looking at the next move's data.
+</Callout>
 
-await analyzePGN(path, { trackers: [t] });
-console.log(t.state.games, t.state.wins);
-```
+More action details that tend to surprise people:
 
-## Multithreading
+- **Castling is two actions** (king leg, then rook leg); both carry the same `castle` flag.
+- **Piece names** (`action.piece`, `takingPiece`, `takenPiece`) identify pieces by origin square — `Pa`, `Nb`, … — with promoted pawns getting synthetic names like `Q17`. Use `isStartingPieceName()` before indexing starting-piece matrices.
 
-Custom trackers need:
+## Which hook runs where?
 
-1. **Own module** with a **default-exported factory** (return value of `defineGameTracker` / `defineMoveTracker`)
-2. **`id`** and **`workerModule = import.meta.url`**
-3. **`merge(state, other)`** — both arguments are plain state after structured clone
+With the default multithreaded pool, per-game work happens on the workers, and only the final combination happens back on the main thread:
 
-Workers import the factory and call it with the options you passed on the main thread. Options must be plain structured-cloneable data.
+| Hook        | Single-threaded (`workers: false`)      | Multithreaded (default)                             |
+| ----------- | --------------------------------------- | --------------------------------------------------- |
+| `init`      | At factory call                         | Once per worker, plus on your main-thread instances |
+| `track`     | Each game / half-move                   | Each game / half-move, on workers                   |
+| `onGameEnd` | After each game (including replay skip) | After each game, on workers                         |
+| `merge`     | —                                       | On your instances, when worker snapshots arrive     |
+| `onFinish`  | Once at the end                         | Once at the end, after all merges                   |
 
-### Hook lifecycle
+Use `onGameEnd(state)` for per-game flush logic and `onFinish(state)` for final touches like computing averages — knowing that `onFinish` only ever sees fully merged state.
 
-| Hook        | Single-threaded (`workers: false`)      | Worker thread (default pool)    | Main thread (default pool)                 |
-| ----------- | --------------------------------------- | ------------------------------- | ------------------------------------------ |
-| `init`      | At factory call                         | Worker calls factory + `init`   | Factory + `init` on your instances         |
-| `track`     | Each game / half-move                   | Each game / half-move on worker | —                                          |
-| `onGameEnd` | After each game (including replay skip) | Same on worker                  | —                                          |
-| `merge`     | —                                       | —                               | When worker snapshots arrive at pool drain |
-| `onFinish`  | Once at end of analysis                 | —                               | Once after all merges (`finishTrackers`)   |
-
-Under multithreading the main thread only drives **`merge`** and **`onFinish`** on your instances. Per-game hooks run on workers. State must be plain data (structured-cloneable) so snapshots can cross the worker boundary.
-
-## Imports
+## Types you'll want
 
 ```javascript
 import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
@@ -122,11 +96,8 @@ import type { PieceName, Square } from 'chessalyzer/board';
 import { defineGameTracker, defineMoveTracker } from 'chessalyzer/trackers';
 ```
 
-## Notes
+## Good to know
 
-- **`workerModule = import.meta.url`** requires an unbundled Node ≥ 22 or Bun runtime.
-- Override **`onGameEnd(state)`** for per-game flush hooks and **`onFinish(state)`** for end-of-analysis hooks on the main thread.
-
-See [`manual-tests/custom-game-tracker.ts`](https://github.com/yschroe/chessalyzer/blob/main/manual-tests/custom-game-tracker.ts) for a minimal working example.
-
-When using custom trackers with filters, analysis is single-threaded (omit `workers` or pass `workers: false`). See [Multithreading](/docs/multithreading).
+- `workerModule: import.meta.url` needs an unbundled Node ≥ 22 or Bun runtime (workers import the file by its URL).
+- A [`filter`](/docs/filters) on the same `analyzePGN` call forces single-threaded mode, so custom trackers in a filtered analysis don't need the multithreading setup.
+- [manual-tests/custom-game-tracker.ts](https://github.com/yschroe/chessalyzer/blob/main/manual-tests/custom-game-tracker.ts) is a minimal working example you can run.

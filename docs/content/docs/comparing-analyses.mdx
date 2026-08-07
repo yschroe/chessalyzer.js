@@ -1,11 +1,9 @@
 ---
-title: Comparing analyses
-description: Run multiple filtered cohorts and compare their heatmaps.
+title: Comparing groups of games
+description: Analyze two filtered groups in one pass and diff their heatmaps.
 ---
 
-Use the `runs` option to analyze different game subsets in one pass — each run gets its own tracker instances and optional filter.
-
-This example compares tile occupation for high-rated vs low-rated white players (1000 games each):
+Some questions are really comparisons in disguise: do high-rated players use the center differently than beginners? The `runs` option lets you analyze several groups — each with its own trackers and filter — in a single call:
 
 ```javascript
 import { analyzePGN } from 'chessalyzer';
@@ -14,31 +12,54 @@ import { generateComparisonHeatmap, tileAt, tileTracker } from 'chessalyzer/trac
 const high = tileTracker();
 const low = tileTracker();
 
-await analyzePGN('<pathToPgnFile>', {
+await analyzePGN('games.pgn', {
     headers: true,
     runs: [
-        {
-            trackers: [high],
-            filter: (game) => Number(game.headers?.WhiteElo) > 2000,
-            maxGames: 1000,
-        },
-        {
-            trackers: [low],
-            filter: (game) => Number(game.headers?.WhiteElo) < 1200,
-            maxGames: 1000,
-        },
+        { trackers: [high], filter: (game) => Number(game.headers?.WhiteElo) > 2000 },
+        { trackers: [low], filter: (game) => Number(game.headers?.WhiteElo) < 1700 },
     ],
 });
+```
 
-const compareFunc = ({ data, square }) => {
+Each run accumulates into its own tracker instances: on our [example file](/docs/quickstart#the-example-file), `high.state` sees only alice's 2114-ELO game (7 half-moves), while `low.state` sees only the 1650 game (4 half-moves).
+
+<Callout type="warn" title="One instance per group">
+    Pass **distinct tracker instances** to each run (`tileTracker()` twice, not one instance
+    reused). The same instance cannot appear twice in a single `analyzePGN` call — its state would
+    mix both groups together.
+</Callout>
+
+## Diffing two heatmaps
+
+`generateComparisonHeatmap(stateA, stateB, fn)` runs the same per-square function over both states and returns the **percentage difference** per square: positive means group A scored higher, negative means group B did, and `0` whenever either side has nothing to compare. The result is a regular [`HeatmapData`](/docs/heatmaps) (`{ map, min, max }`), so `printHeatmap` works on it — blue cells favor group B, orange cells favor group A:
+
+```javascript
+const diff = generateComparisonHeatmap(high.state, low.state, ({ data, square }) => {
     const cell = tileAt(data.tiles, square);
     if (!cell) return 0;
     return (cell.w.total.occupiedFor * 100) / data.movesTotal;
-};
-
-const heatmapData = generateComparisonHeatmap(high.state, low.state, compareFunc);
+});
 ```
 
-`generateComparisonHeatmap` builds two heatmaps from the same analysis function and returns per-cell percentage differences.
+Asking "where did white pieces spend their time?" for both groups on the example file:
 
-Pass **distinct instances** for each cohort (`tileTracker()` twice) — the same instance cannot appear more than once in one `analyzePGN` call. Filters run on the main thread (single-threaded automatically). See [Filters](/docs/filters) and [Heatmaps](/docs/heatmaps).
+```text
+// diff.map — percentage points, files a–h, rank 8 on top
+        a      b      c      d      e       f       g      h
+8     0.00   0.00   0.00   0.00   0.00    0.00    0.00   0.00
+7     0.00   0.00   0.00   0.00   0.00    0.00    0.00   0.00
+6     0.00   0.00   0.00   0.00   0.00    0.00    0.00   0.00
+5     0.00   0.00   0.00   0.00   0.00    0.00    0.00   0.00
+4     0.00   0.00   0.00   0.00   0.00    0.00    0.00   0.00
+3     0.00   0.00   0.00   0.00   0.00    0.00    0.00   0.00
+2     0.00   0.00   0.00   0.00 -600.00  300.00   33.33  0.00
+1     0.00   0.00   0.00 -40.00   0.00 -133.33    0.00  0.00
+```
+
+With one game per group this is illustrative rather than insightful — but you can already see the high-ELO game pushing a pawn to e4 early (e2 empties faster, hence −600) while the low-ELO game opened with f3. Feed it two real cohorts of a few thousand games and the same code tells you where styles actually differ.
+
+<Callout type="info" title="Filters mean one thread">
+    Runs with `filter` are analyzed single-threaded, like any filtered analysis — see [Filtering
+    games](/docs/filters). Runs *without* filters can use the worker pool and still parse the file
+    only once per chunk.
+</Callout>

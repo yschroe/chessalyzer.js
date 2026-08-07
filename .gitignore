@@ -4,6 +4,7 @@ node_modules
 # PGN data files — only small committed fixtures are tracked
 *.pgn
 !test/fixtures/*.pgn
+!docs/examples/*.pgn
 test/.tmp/
 bench/.cache/
 
