@@ -22,9 +22,10 @@ describe('Fixtures', () => {
                     let data: AnalyzeResult;
 
                     beforeAll(async () => {
-                        data = await analyzePGN(fixturePath(id), {
-                            ...(workers === false ? { workers: false } : {}),
-                        });
+                        data = await analyzePGN(
+                            fixturePath(id),
+                            workers === false ? { workers: false } : undefined,
+                        );
                     });
 
                     it('parses the expected number of games and moves', () => {

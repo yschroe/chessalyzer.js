@@ -40,10 +40,10 @@ describe('TileTracker golden (en-passant)', () => {
     ] as const) {
         it(`matches golden values (${mode})`, async () => {
             const tiles = tileTracker();
-            const data = await analyzePGN(fixturePath('en-passant'), {
-                trackers: [tiles],
-                ...(workers === false ? { workers: false } : {}),
-            });
+            const data = await analyzePGN(
+                fixturePath('en-passant'),
+                workers === false ? { trackers: [tiles], workers: false } : { trackers: [tiles] },
+            );
 
             expect(data.gameCount).toBe(1);
             expect(tiles.state.movesTotal).toBe(golden.movesTotal);
