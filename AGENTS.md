@@ -37,7 +37,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 | `manual-tests/`      | Release smoke tests against the built package                                                                               |
 | `docs/`              | Fumadocs site (`content/docs/` MDX, `examples/` sample PGN + output generator). Style: [`docs/STYLE.md`](docs/STYLE.md)     |
 
-**Runtime:** Node ≥ 22 or Bun. Tests and benches are typically run with Bun.
+**Runtime:** Any JavaScript runtime, Node.js ≥ 22 or Bun recommended. Tests and benches are typically run with Bun.
 
 ### Type organization
 
