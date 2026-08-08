@@ -5,15 +5,15 @@ description: Install Chessalyzer and import the modules you need.
 
 Chessalyzer runs on any **JavaScript runtime**, with **Node.js ≥ 22** or **Bun** being recommended. There are no other requirements, and the library itself has zero dependencies.
 
-```sh
-npm install chessalyzer
+```package-install
+chessalyzer
 ```
 
 ## What you can import
 
 The main entry point is `chessalyzer`, with a few extra subpaths for the parts you only need sometimes:
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import { tileTracker, printHeatmap } from 'chessalyzer/trackers';
 import { parsePGN, streamParsePGN } from 'chessalyzer/pgn';
@@ -33,7 +33,7 @@ Don't worry about memorizing these — the guides always show the right import a
 
 If you have a PGN file lying around, this is a complete parse + analyze run:
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import { tileTracker } from 'chessalyzer/trackers';
 

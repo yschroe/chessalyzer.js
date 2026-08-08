@@ -8,7 +8,7 @@ Chessalyzer is a JavaScript library that reads chess games from PGN files and co
 
 You tell it **what to measure** by attaching small building blocks called **[Trackers](/docs/trackers)** (count results, watch what happens on each square, or invent your own statistic). Chessalyzer takes care of the boring parts: reading the file, understanding the moves, and adding everything up. When it's done, you simply read the results off your trackers.
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import { gameTracker } from 'chessalyzer/trackers';
 

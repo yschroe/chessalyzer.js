@@ -9,7 +9,7 @@ Chessalyzer ships with three ready-made trackers. All examples below run on the 
 
 The simplest of the three: it reads each game's headers and result, and counts. It needs headers, which Chessalyzer parses automatically as soon as a game tracker is attached.
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import { gameTracker } from 'chessalyzer/trackers';
 
@@ -37,7 +37,7 @@ console.log(games.state);
 
 A capture matrix: for every starting piece, how often it captured each opposing piece. Pieces are named by their starting square — `Qd` is the queen, `Pe` the king's pawn, `Nb` the knight that began on the b-file — and each color gets its own table under `w` and `b`.
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import { pieceTracker } from 'chessalyzer/trackers';
 
@@ -70,7 +70,7 @@ The workhorse. For each of the 64 squares it records, per color and per piece:
 - `captures` — captures that happened _on_ this square
 - `losses` — pieces that were captured _on_ this square
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import { tileAt, tileTracker } from 'chessalyzer/trackers';
 

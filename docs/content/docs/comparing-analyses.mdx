@@ -5,7 +5,7 @@ description: Analyze two filtered groups in one pass and diff their heatmaps.
 
 Some questions are really comparisons in disguise: do high-rated players use the center differently than beginners? The `runs` option lets you analyze several groups — each with its own trackers and filter — in a single call:
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import { generateComparisonHeatmap, tileAt, tileTracker } from 'chessalyzer/trackers';
 
@@ -33,7 +33,7 @@ Each run accumulates into its own tracker instances: on our [example file](/docs
 
 `generateComparisonHeatmap(stateA, stateB, fn)` runs the same per-square function over both states and returns the **percentage difference** per square: positive means group A scored higher, negative means group B did, and `0` whenever either side has nothing to compare. The result is a regular [`HeatmapData`](/docs/heatmaps) (`{ map, min, max }`), so `printHeatmap` works on it — blue cells favor group B, orange cells favor group A:
 
-```javascript
+```typescript
 const diff = generateComparisonHeatmap(high.state, low.state, ({ data, square }) => {
     const cell = tileAt(data.tiles, square);
     if (!cell) return 0;

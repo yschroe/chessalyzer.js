@@ -51,7 +51,7 @@ Save these three games as `games.pgn`. They are deliberately short (a quick win,
 
 We'll ask the built-in `tileTracker` to watch every square of the board — who moved where, who got captured where, and how long each piece stayed put:
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import { tileTracker } from 'chessalyzer/trackers';
 
@@ -92,7 +92,7 @@ Two things to notice: you **create a tracker instance** (`tileTracker()`) and ha
 
 The actual statistics live on your tracker. `tiles.state` counts 19 half-moves, and each square has its own little report — here's `e4`, the square white's king pawn moved to in two of our three games:
 
-```javascript
+```typescript
 console.log(tiles.state.movesTotal); // 19
 console.log(tiles.state.tiles); // 8×8 grid of square reports
 ```
@@ -120,7 +120,7 @@ White's e-pawn (`Pe`) moved to e4 twice and then sat there for 13 half-moves in 
 
 Numbers per square are nice; a heatmap makes patterns pop. `generateHeatmap` maps the state to one value per square, and `printHeatmap` renders a colored board in your terminal:
 
-```javascript
+```typescript
 import { generateHeatmap, printHeatmap, TileHeatmapPresets } from 'chessalyzer/trackers';
 
 const heatmapData = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);

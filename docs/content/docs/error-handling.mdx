@@ -20,7 +20,7 @@ To try both, imagine our [example file](/docs/quickstart#the-example-file) with 
 
 By default, `analyzePGN` throws as soon as a game can't be replayed. That's what you want while developing — you notice bad data immediately:
 
-```javascript
+```typescript
 import { analyzePGN, isReplayError } from 'chessalyzer';
 
 try {
@@ -40,7 +40,7 @@ try {
 
 For batch runs over mostly-good data (think Lichess database dumps), aborting on one bad apple wastes the whole run. `onError: 'skip-game'` collects the failures and finishes the rest:
 
-```javascript
+```typescript
 const result = await analyzePGN('games.pgn', {
     trackers: [tiles],
     onError: 'skip-game',

@@ -5,7 +5,7 @@ description: Turn tracker state into per-square values for preview or visualizat
 
 Tracker state is precise but hard to eyeball — 64 squares times a handful of counters. A **heatmap** boils it down to one number per square, so patterns jump out. Chessalyzer gives you the numbers and a quick terminal preview; what you build on top (web boards, charts, posters) is up to you.
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import {
     generateHeatmap,

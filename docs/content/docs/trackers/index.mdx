@@ -13,7 +13,7 @@ You'll meet three words over and over:
 - An **instance** is what the factory hands back — the handle you pass to `analyzePGN`.
 - The **state** is where the instance accumulates its numbers. After the analysis finishes, you read `instance.state`.
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import { tileTracker, gameTracker } from 'chessalyzer/trackers';
 

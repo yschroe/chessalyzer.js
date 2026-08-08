@@ -30,7 +30,7 @@ Requires any JavaScript runtime, Node.js ≥ 22 or Bun recommended.
 
 ## Getting started
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import {
     tileTracker,

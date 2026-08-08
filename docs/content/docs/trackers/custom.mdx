@@ -34,7 +34,7 @@ export default defineMoveTracker({
 
 Then use it like any built-in:
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import halfMoveCounter from './half-move-counter.ts';
 
@@ -89,7 +89,7 @@ Use `onGameEnd(state)` for per-game flush logic and `onFinish(state)` for final 
 
 ## Types you'll want
 
-```javascript
+```typescript
 import type { ParsedGame, ParsedMove } from 'chessalyzer/pgn';
 import type { Action } from 'chessalyzer/replay';
 import type { PieceName, Square } from 'chessalyzer/board';
