@@ -26,11 +26,11 @@ Guides for installation, basic usage, the analysis pipeline, built-in and custom
 npm install chessalyzer
 ```
 
-Requires Node ≥ 22 or Bun.
+Requires any JavaScript runtime, Node.js ≥ 22 or Bun recommended.
 
 ## Getting started
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import {
     tileTracker,

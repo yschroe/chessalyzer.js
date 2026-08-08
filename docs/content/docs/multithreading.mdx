@@ -32,7 +32,7 @@ main thread:  merge tracker states ◄── snapshots ◄───────�
 
 Defaults are sensible for most files (one worker per available core). When you do tune, `workers` takes an object (or a plain number for the thread count):
 
-```javascript
+```typescript
 await analyzePGN('games.pgn', {
     trackers: [tiles],
     workers: { count: 8, chunk: { targetBytes: 4 * 1024 * 1024 } },
@@ -52,7 +52,7 @@ Bigger chunks mean less dispatch overhead; smaller chunks balance better when ga
 
 Pass `workers: false` to force everything onto the main thread:
 
-```javascript
+```typescript
 await analyzePGN('games.pgn', { trackers: [tiles], workers: false });
 ```
 

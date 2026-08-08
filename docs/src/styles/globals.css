@@ -10,3 +10,8 @@ body {
     margin-right: 0px !important;
     --removed-body-scroll-bar-size: 0px !important;
 }
+
+/* Show empty lines in code blocks (plain text type) */
+code > .line > span:empty {
+    display: inline-block;
+}

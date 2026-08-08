@@ -41,10 +41,12 @@ function buildResultBase(
     }
 
     const result: Omit<AnalyzeResult, 'runs'> = {
-        durationMs,
         gameCount,
         moveCount,
-        movesPerSecond: durationMs > 0 ? Math.round(moveCount / (durationMs / 1000)) : 0,
+        perf: {
+            durationMs,
+            movesPerSecond: durationMs > 0 ? Math.round(moveCount / (durationMs / 1000)) : 0,
+        },
     };
 
     if (skippedGames > 0) {

@@ -113,10 +113,16 @@ export interface AnalyzeRunResult {
     errors?: AnalyzeError[];
 }
 
-/** Result from `analyzePGN`. Always contains one {@link AnalyzeRunResult} per run. */
-export interface AnalyzeResult {
+/** Performance and throughput telemetry returned by {@link analyzePGN}. */
+interface AnalyzePerformance {
     /** Wall time for the whole call in milliseconds. */
     durationMs: number;
+    /** Call-level move throughput from total moves and {@link durationMs}. */
+    movesPerSecond: number;
+}
+
+/** Result from `analyzePGN`. Always contains one {@link AnalyzeRunResult} per run. */
+export interface AnalyzeResult {
     /**
      * Sum of {@link AnalyzeRunResult.gameCount} across runs.
      * With a single run, equals that run's processed game count. With multiple `runs`, sums each pass over the file.
@@ -124,8 +130,8 @@ export interface AnalyzeResult {
     gameCount: number;
     /** Sum of {@link AnalyzeRunResult.moveCount} across runs. */
     moveCount: number;
-    /** Call-level throughput from total moves and {@link durationMs}. */
-    movesPerSecond: number;
+    /** Performance and throughput metrics for the call. */
+    perf: AnalyzePerformance;
     /** Games skipped due to replay failure when `onError: 'skip-game'`. */
     skippedGames?: number;
     /** Collected replay errors when `onError: 'skip-game'` (capped at 100). */

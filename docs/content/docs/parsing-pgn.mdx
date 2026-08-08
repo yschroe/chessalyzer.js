@@ -9,7 +9,7 @@ Both examples below run on the [three-game `games.pgn`](/docs/quickstart#the-exa
 
 ## parsePGN — all games at once
 
-```javascript
+```typescript
 import { parsePGN } from 'chessalyzer/pgn';
 
 const games = await parsePGN('games.pgn', { headers: true });
@@ -64,7 +64,7 @@ A few things worth knowing about this shape:
 
 Same data, delivered as an async iterator. The whole file never sits in memory at once:
 
-```javascript
+```typescript
 import { streamParsePGN } from 'chessalyzer/pgn';
 
 for await (const game of streamParsePGN('games.pgn', { headers: true })) {

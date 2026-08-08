@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`AnalyzeResult` shape (breaking):** `durationMs` and `movesPerSecond` are now nested under a dedicated `perf: AnalyzePerformance` sub-object (`result.perf.durationMs`, `result.perf.movesPerSecond`).
+
 ## [4.0.0-beta.1] - 2026-08-08
 
 ### Changed

@@ -7,7 +7,7 @@ Often you don't want _every_ game — only the ones worth your question. Pass a 
 
 Only one game in our [example file](/docs/quickstart#the-example-file) has a white player rated above 2000 (alice, 2114), so this analysis processes exactly one game:
 
-```javascript
+```typescript
 import { analyzePGN } from 'chessalyzer';
 import { tileTracker } from 'chessalyzer/trackers';
 
@@ -36,7 +36,7 @@ The filter receives the same [`ParsedGame`](/docs/parsing-pgn) shape you know fr
 
 Combine with `maxGames` to cap how many _matching_ games are processed — a quick way to sample:
 
-```javascript
+```typescript
 await analyzePGN('huge-database.pgn', {
     trackers: [tiles],
     filter: (game) => game.headers?.Result === '1/2-1/2',

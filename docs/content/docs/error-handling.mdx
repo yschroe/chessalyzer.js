@@ -20,7 +20,7 @@ To try both, imagine our [example file](/docs/quickstart#the-example-file) with 
 
 By default, `analyzePGN` throws as soon as a game can't be replayed. That's what you want while developing — you notice bad data immediately:
 
-```javascript
+```typescript
 import { analyzePGN, isReplayError } from 'chessalyzer';
 
 try {
@@ -40,7 +40,7 @@ try {
 
 For batch runs over mostly-good data (think Lichess database dumps), aborting on one bad apple wastes the whole run. `onError: 'skip-game'` collects the failures and finishes the rest:
 
-```javascript
+```typescript
 const result = await analyzePGN('games.pgn', {
     trackers: [tiles],
     onError: 'skip-game',
@@ -68,7 +68,7 @@ The three good games are fully processed, and the result tells you exactly what 
 }
 ```
 
-(`durationMs` and `movesPerSecond` omitted — they're there too. Each entry in `runs` mirrors its own `skippedGames`/`errors` when you use [multiple runs](/docs/comparing-analyses), omitted when zero.)
+(`perf.durationMs` and `perf.movesPerSecond` omitted — they're there too inside `result.perf`. Each entry in `runs` mirrors its own `skippedGames`/`errors` when you use [multiple runs](/docs/comparing-analyses), omitted when zero.)
 
 Two limits to know: `errors` holds at most **100 entries** — past that, `result.errorsTruncated` is `true` and counting continues silently — and Chessalyzer never prints anything by itself, so what happens with these errors is entirely your call.
 

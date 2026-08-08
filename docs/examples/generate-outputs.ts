@@ -33,18 +33,16 @@ function print(label: string, value: unknown): void {
     console.log(value);
 }
 
-function json(value: unknown): string {
-    return JSON.stringify(value, null, 2);
+function json(value: unknown, keys?: string[]): string {
+    return JSON.stringify(value, keys, 2);
 }
 
 // --- analyzePGN: result object (quickstart, installation) ---
-
 const tiles = tileTracker();
 const analyzeResult = await analyzePGN(PGN, { trackers: [tiles] });
 print('ANALYZE_RESULT', json(analyzeResult));
 
 // --- tileTracker state excerpts (quickstart, built-in trackers) ---
-
 const TILE_SQUARES = ['e4', 'e5', 'f7', 'd7', 'h4'] as const;
 const tileExcerpt: Record<string, unknown> = { movesTotal: tiles.state.movesTotal };
 for (const square of TILE_SQUARES) {
@@ -53,19 +51,16 @@ for (const square of TILE_SQUARES) {
 print('TILE_STATE_EXCERPT', json(tileExcerpt));
 
 // --- gameTracker state (built-in trackers) ---
-
 const games = gameTracker();
 await analyzePGN(PGN, { trackers: [games] });
 print('GAME_STATE', json(games.state));
 
 // --- pieceTracker state (built-in trackers) ---
-
 const pieces = pieceTracker();
 await analyzePGN(PGN, { trackers: [pieces] });
 print('PIECE_STATE', json(pieces.state));
 
 // --- parsePGN / streamParsePGN (parsing PGN files) ---
-
 const parsed = await parsePGN(PGN, { headers: true });
 print('PARSED_GAMES', json(parsed));
 
@@ -78,7 +73,6 @@ for await (const game of streamParsePGN(PGN, { headers: true })) {
 }
 
 // --- heatmaps (heatmaps, quickstart) ---
-
 const heat = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
 print('HEATMAP_MIN_MAX', json({ min: heat.min, max: heat.max }));
 
@@ -93,7 +87,6 @@ print(
 );
 
 // --- filter (filters) ---
-
 const filtered = tileTracker();
 const filterResult = await analyzePGN(PGN, {
     trackers: [filtered],
@@ -102,7 +95,6 @@ const filterResult = await analyzePGN(PGN, {
 print('FILTER_RESULT', json(filterResult));
 
 // --- comparing analyses (runs + comparison heatmap) ---
-
 const high = tileTracker();
 const low = tileTracker();
 await analyzePGN(PGN, {
@@ -131,7 +123,6 @@ print(
 );
 
 // --- custom move tracker numbers (custom trackers walkthrough) ---
-
 const counter = defineMoveTracker({
     id: 'half-move-counter',
     init: () => ({ halfMoves: 0, captures: 0 }),
@@ -152,7 +143,6 @@ await analyzePGN(PGN, { trackers: [counter], workers: false });
 print('HALF_MOVE_COUNTER_STATE', json(counter.state));
 
 // --- error handling (skip-game on a file with a broken 4th game) ---
-
 const badGame = `
 [Event "Broken game"]
 [White "blunderbuss"]
@@ -174,7 +164,7 @@ try {
         // default worker pool — typed ReplayError must survive the thread boundary
         await analyzePGN(TMP_BAD_PGN, { trackers: [tileTracker()] });
     } catch (err) {
-        print('ABORT_THROWN', json(err, Object.getOwnPropertyNames(err as object)));
+        print('ABORT_THROWN', json(err, Object.getOwnPropertyNames(err)));
         print('ABORT_IS_REPLAY_ERROR', String(isReplayError(err)));
     }
 } finally {

@@ -7,7 +7,7 @@ A heatmap function answers one small question — "what value should this square
 
 Here's one from scratch: "how much of the game did white pieces occupy each square?" (as a percentage of all half-moves):
 
-```javascript
+```typescript
 import { generateHeatmap, tileAt } from 'chessalyzer/trackers';
 
 const heatmapData = generateHeatmap(tiles.state, ({ data, square }) => {
@@ -19,7 +19,7 @@ const heatmapData = generateHeatmap(tiles.state, ({ data, square }) => {
 
 Need an extra value in your function — a piece you care about, a precomputed average? Just close over it:
 
-```javascript
+```typescript
 const queen = { color: 'w', name: 'Qd' };
 
 const queenSquares = generateHeatmap(tiles.state, ({ data, square }) => {
