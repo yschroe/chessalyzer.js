@@ -1,6 +1,7 @@
 import {
     BOARD_INDICES,
     isBoardIndex,
+    squareAt,
     squareCol,
     squareRow,
     type Square,
@@ -13,16 +14,15 @@ import {
     runtimeTileAt,
     setStartingPiece,
 } from '#trackers/tile/tile-grid';
-import type { RuntimeTileGrid, StatsField, TileGrid } from '#trackers/tile/tile-tracker-types';
-import type { MoveCoords } from '#trackers/tile/tile-tracker-types';
-import type { Action } from '#types/actions';
+import type { RuntimeTileGrid, SquareStats } from '#trackers/tile/tile-tracker-types';
+import type { Action, MoveCoords } from '#types/actions';
 import type { PlayerColor } from '#types/tokens';
 import type { MoveTrackerDef, TrackerFactory } from '#types/tracker';
 
 /** Accumulated state from {@link tileTracker} after `analyzePGN` completes. */
 export interface TileTrackerState {
-    /** Per-square counters (8×8 grid). Use {@link tileAt} for square-based access. */
-    tiles: TileGrid;
+    /** Per-square counters keyed by algebraic square (`'a1'`…`'h8'`). */
+    squares: Record<Square, SquareStats>;
     /** Total half-moves processed across all games. */
     movesTotal: number;
 }
@@ -135,21 +135,11 @@ function processCapture(
     }
 }
 
-function stripRuntimeScratch(state: TileTrackerRuntimeState): void {
-    for (const row of BOARD_INDICES) {
-        for (const col of BOARD_INDICES) {
-            const cell = state.tiles[row][col] as Partial<StatsField>;
-            delete cell.currentPiece;
-        }
-    }
-    delete (state as Partial<TileTrackerRuntimeState>).movesGame;
-}
-
 /**
  * Built-in move tracker: per-square statistics (moves to, occupation time, captures, losses).
  *
- * Maintains an 8×8 grid parallel to the board. After analysis, read `tiles.state` — runtime
- * scratch fields are stripped in `onFinish`.
+ * Maintains an 8×8 grid parallel to the board. After analysis, read `tiles.state.squares` —
+ * runtime scratch fields are converted in `onFinish`.
  */
 const tileTrackerFactory = defineMoveTracker<TileTrackerRuntimeState>({
     id: 'TileTracker',
@@ -220,7 +210,17 @@ const tileTrackerFactory = defineMoveTracker<TileTrackerRuntimeState>({
     },
 
     onFinish(state) {
-        stripRuntimeScratch(state);
+        // Convert runtime tile grid to public state squares object.
+        const squares = {} as Record<Square, SquareStats>;
+        for (const row of BOARD_INDICES) {
+            for (const col of BOARD_INDICES) {
+                const cell = state.tiles[row][col];
+                squares[squareAt(row, col)] = { b: cell.b, w: cell.w };
+            }
+        }
+        (state as unknown as TileTrackerState).squares = squares;
+        delete (state as Partial<TileTrackerRuntimeState>).tiles;
+        delete (state as Partial<TileTrackerRuntimeState>).movesGame;
     },
 });
 
@@ -238,7 +238,7 @@ const tileTrackerFactory = defineMoveTracker<TileTrackerRuntimeState>({
  * ```
  */
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- public state omits runtime scratch fields
-export const tileTracker = tileTrackerFactory as TrackerFactory<
+export const tileTracker = tileTrackerFactory as unknown as TrackerFactory<
     TileTrackerState,
     unknown,
     MoveTrackerDef<TileTrackerState>

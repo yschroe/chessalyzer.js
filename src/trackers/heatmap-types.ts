@@ -17,7 +17,7 @@ export interface HeatmapData {
  * @example
  * ```ts
  * const occupation: HeatmapFn<TileTrackerState> = ({ data, square }) => {
- *     const cell = tileAt(data.tiles, square);
+ *     const cell = data.squares[square];
  *     return cell ? cell.w.total.occupiedFor : 0;
  * };
  * ```

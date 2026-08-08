@@ -6,6 +6,7 @@
  */
 import type { PieceTrackerState } from '#trackers/piece-tracker';
 import type { TileTrackerState } from '#trackers/tile/tile-tracker';
+import type { RuntimeTileGrid } from '#trackers/tile/tile-tracker-types';
 
 /** Shared shape for custom / merge game-tracker stubs (wins + games). */
 export interface GameWinsTrackerState {
@@ -13,7 +14,21 @@ export interface GameWinsTrackerState {
     games: number;
 }
 
+/** Public tile tracker state after `onFinish` (square-keyed record). */
 export function isTileTrackerState(value: unknown): value is TileTrackerState {
+    return (
+        typeof value === 'object' && value !== null && 'movesTotal' in value && 'squares' in value
+    );
+}
+
+/** Runtime tile tracker state before `onFinish` (internal 8×8 grid). */
+export interface TileTrackerRuntimeState {
+    tiles: RuntimeTileGrid;
+    movesTotal: number;
+    movesGame?: number;
+}
+
+export function isTileTrackerRuntimeState(value: unknown): value is TileTrackerRuntimeState {
     return typeof value === 'object' && value !== null && 'movesTotal' in value && 'tiles' in value;
 }
 

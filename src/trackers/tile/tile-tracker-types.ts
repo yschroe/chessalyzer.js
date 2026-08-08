@@ -5,17 +5,10 @@
  * Tracker state is plain data so it can be merged across worker threads.
  */
 
-import type { Square } from '#board/board-coords';
 import { pieceList, type StartingPieceName } from '#trackers/piece-types';
 
-/** Board square pair used in tile move tracking. */
-export interface MoveCoords {
-    from: Square;
-    to: Square;
-}
-
 /** Counters for one color on one square (aggregate or per starting piece). */
-export interface TileStats {
+export interface SquareCounters {
     /** Times a piece moved onto this square. */
     movedTo: number;
     /** Half-moves pieces spent occupying this square (summed across arrivals). */
@@ -26,7 +19,7 @@ export interface TileStats {
     losses: number;
 }
 
-function createTileStats(): TileStats {
+function createSquareCounters(): SquareCounters {
     return { movedTo: 0, occupiedFor: 0, captures: 0, losses: 0 };
 }
 
@@ -34,26 +27,26 @@ function createTileStats(): TileStats {
  * Per-color stats on a square: aggregate counters plus one slot per starting piece.
  * Access via `cell.w.total.occupiedFor` (aggregate) or `cell.w.byPiece.Nb.occupiedFor` (per piece).
  */
-export interface TileColorStats {
+export interface PlayerSquareStats {
     /** Totals across all starting pieces of this color on the square. */
-    total: TileStats;
+    total: SquareCounters;
     /** Per starting-piece-name counters (`Pa`, `Nb`, `Qd`, …). */
-    byPiece: Record<StartingPieceName, TileStats>;
+    byPiece: Record<StartingPieceName, SquareCounters>;
 }
 
-export function createTileColorStats(): TileColorStats {
+export function createPlayerSquareStats(): PlayerSquareStats {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- filled for every StartingPieceName in the loop below
-    const byPiece = {} as Record<StartingPieceName, TileStats>;
+    const byPiece = {} as Record<StartingPieceName, SquareCounters>;
     for (const name of pieceList) {
-        byPiece[name] = createTileStats();
+        byPiece[name] = createSquareCounters();
     }
-    return { total: createTileStats(), byPiece };
+    return { total: createSquareCounters(), byPiece };
 }
 
-/** Public per-square counters (what callers see on {@link TileTrackerState.tiles}). */
-export interface TileCell {
-    b: TileColorStats;
-    w: TileColorStats;
+/** Public per-square counters (what callers see on {@link TileTrackerState.squares}). */
+export interface SquareStats {
+    b: PlayerSquareStats;
+    w: PlayerSquareStats;
 }
 
 /**
@@ -71,19 +64,11 @@ export function createTilePiece(piece: string, color: 'b' | 'w'): TilePiece {
 }
 
 /** Runtime cell: public counters plus live occupant for occupation tracking. */
-export interface StatsField extends TileCell {
+export interface StatsField extends SquareStats {
     currentPiece: TilePiece | null;
 }
 
-type TileRow = [TileCell, TileCell, TileCell, TileCell, TileCell, TileCell, TileCell, TileCell];
-
-/**
- * 8×8 tile grid indexed by internal board coordinates.
- * Row 0 is rank 8; column 0 is the a-file. Prefer {@link tileAt} for square-based access.
- */
-export type TileGrid = [TileRow, TileRow, TileRow, TileRow, TileRow, TileRow, TileRow, TileRow];
-
-export type RuntimeTileRow = [
+type RuntimeTileRow = [
     StatsField,
     StatsField,
     StatsField,
@@ -93,6 +78,8 @@ export type RuntimeTileRow = [
     StatsField,
     StatsField,
 ];
+
+export type { RuntimeTileRow };
 
 export type RuntimeTileGrid = [
     RuntimeTileRow,

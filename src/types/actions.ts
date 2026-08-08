@@ -2,6 +2,12 @@ import type { Square } from '#board/board-coords';
 import type { PieceName } from '#board/piece-names';
 import type { PlayerColor, PromotionToken } from '#types/tokens';
 
+/** From/to square pair shared by quiet moves and tracker helpers. */
+export interface MoveCoords {
+    from: Square;
+    to: Square;
+}
+
 /** Shared fields on replay {@link Action} variants. */
 interface BaseAction {
     type: 'move' | 'capture' | 'promote';
@@ -10,7 +16,7 @@ interface BaseAction {
 }
 
 /** A quiet move or castle king leg. */
-export interface MoveAction extends BaseAction {
+export interface MoveAction extends BaseAction, MoveCoords {
     type: 'move';
     /** Standard Algebraic Notation of the half-move. */
     san: string;
@@ -18,8 +24,6 @@ export interface MoveAction extends BaseAction {
     player: PlayerColor;
     /** Piece on the origin square after a successful SAN decode (starting or promoted name). */
     piece: PieceName;
-    from: Square;
-    to: Square;
     /** Present on the king leg when the SAN is a castle. */
     castle?: 'kingside' | 'queenside';
 }

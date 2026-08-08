@@ -14,6 +14,10 @@ export interface HeatmapPieceRef {
 }
 
 type PieceStats = { [piece in StartingPieceName]: number };
+/**
+ * Capture counts per taking piece and taken piece.
+ * Access order: `state[takingColor][takingPiece][takenPiece]`.
+ */
 export type PieceStatsMap = { [piece in StartingPieceName]: PieceStats };
 
 export const pieceList: StartingPieceName[] = [...PAWN_TEMPLATE, ...PIECE_TEMPLATE];
