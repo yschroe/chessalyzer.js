@@ -35,6 +35,7 @@ Chessalyzer.js parses large PGN databases and runs user-defined **trackers** ove
 | `test/`              | Integration tests, fixtures, corpus (unit tests live in `src/**/__tests__/`)                                                |
 | `pgn/`               | Local large PGN files for manual/bench runs (gitignored)                                                                    |
 | `manual-tests/`      | Release smoke tests against the built package                                                                               |
+| `docs/`              | Fumadocs site (`content/docs/` MDX, `examples/` sample PGN + output generator). Style: [`docs/STYLE.md`](docs/STYLE.md)     |
 
 **Runtime:** Node ≥ 22 or Bun. Tests and benches are typically run with Bun.
 
@@ -181,6 +182,10 @@ Pass `single-threaded` to `bench-perf` to benchmark only the single-threaded pat
 - `manual-tests/test-release-singlethreaded.ts` — single-threaded (`workers: false`)
 
 Place large Lichess exports in `pgn/` (gitignored). The perf bench automatically picks the largest file available.
+
+### Documentation
+
+User-facing docs live in [`docs/content/docs/`](docs/content/docs/) (Fumadocs / Waku). When editing or adding pages, follow **[`docs/STYLE.md`](docs/STYLE.md)** — friendly, example-first Guides; internals in Going Further; real return shapes from [`docs/examples/`](docs/examples/); Callouts for tips and caveats; no changelog leftovers.
 
 ### Tests
 
