@@ -7,9 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`MoveCoords`** on `chessalyzer/replay` and `chessalyzer/trackers` — `{ from, to }` square pair shared by `MoveAction` and custom move trackers.
+
 ### Changed
 
 - **`AnalyzeResult` shape (breaking):** `durationMs` and `movesPerSecond` are now nested under a dedicated `perf: AnalyzePerformance` sub-object (`result.perf.durationMs`, `result.perf.movesPerSecond`).
+- **`TileTrackerState` shape (breaking):** `tiles` (8×8 grid) → `squares: Record<Square, SquareStats>`. Access per-square stats with `state.squares['e4']` instead of `tileAt(state.tiles, 'e4')`.
+- **Tile tracker type renames (breaking):** `TileStats` → `SquareCounters`, `TileColorStats` → `PlayerSquareStats`, `TileCell` → `SquareStats`. `TileGrid` removed from the public API.
+- **`pieceTracker`** is now a `TrackerFactory` (callable `pieceTracker()`), matching `tileTracker` / `gameTracker`.
+
+### Removed
+
+- **`tileAt`** from `chessalyzer/trackers` — use `state.squares[square]` on finished tile tracker state.
+- **`TileGrid`**, **`TileCell`**, **`TileStats`**, **`TileColorStats`** from `chessalyzer/trackers` exports.
+
+### Migration
+
+```ts
+// tile tracker state — square-keyed record after analysis
+import { tileTracker } from 'chessalyzer/trackers';
+
+const tiles = tileTracker();
+await analyzePGN('games.pgn', { trackers: [tiles] });
+const cell = tiles.state.squares['f7'];
+
+// heatmap callbacks
+generateHeatmap(tiles.state, ({ data, square }) => {
+    const cell = data.squares[square];
+    return cell?.w.total.occupiedFor ?? 0;
+});
+
+// move coordinates (also on MoveAction)
+import type { MoveCoords } from 'chessalyzer/replay';
+```
 
 ## [4.0.0-beta.1] - 2026-08-08
 

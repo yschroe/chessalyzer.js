@@ -1,7 +1,6 @@
 import {
     BOARD_INDICES,
     isBoardIndex,
-    squareAt,
     squareCol,
     squareRow,
     type Square,
@@ -10,6 +9,7 @@ import { defineMoveTracker } from '#trackers/define-tracker';
 import { isStartingPieceName, type PieceName } from '#trackers/piece-types';
 import {
     createTileGrid,
+    buildSquaresRecord,
     mergeCellStats,
     runtimeTileAt,
     setStartingPiece,
@@ -135,6 +135,23 @@ function processCapture(
     }
 }
 
+function toPublicTileState(runtime: TileTrackerRuntimeState): TileTrackerState {
+    return {
+        squares: buildSquaresRecord(runtime.tiles),
+        movesTotal: runtime.movesTotal,
+    };
+}
+
+/** Replace runtime scratch fields with the public {@link TileTrackerState} shape in place. */
+function finalizeTileTrackerState(
+    runtime: TileTrackerRuntimeState,
+    finished: TileTrackerState,
+): void {
+    Reflect.deleteProperty(runtime, 'tiles');
+    Reflect.deleteProperty(runtime, 'movesGame');
+    Object.assign(runtime, finished);
+}
+
 /**
  * Built-in move tracker: per-square statistics (moves to, occupation time, captures, losses).
  *
@@ -210,17 +227,7 @@ const tileTrackerFactory = defineMoveTracker<TileTrackerRuntimeState>({
     },
 
     onFinish(state) {
-        // Convert runtime tile grid to public state squares object.
-        const squares = {} as Record<Square, SquareStats>;
-        for (const row of BOARD_INDICES) {
-            for (const col of BOARD_INDICES) {
-                const cell = state.tiles[row][col];
-                squares[squareAt(row, col)] = { b: cell.b, w: cell.w };
-            }
-        }
-        (state as unknown as TileTrackerState).squares = squares;
-        delete (state as Partial<TileTrackerRuntimeState>).tiles;
-        delete (state as Partial<TileTrackerRuntimeState>).movesGame;
+        finalizeTileTrackerState(state, toPublicTileState(state));
     },
 });
 
@@ -236,8 +243,11 @@ const tileTrackerFactory = defineMoveTracker<TileTrackerRuntimeState>({
  * await analyzePGN('games.pgn', { trackers: [tiles] });
  * const heat = generateHeatmap(tiles.state, TileHeatmapPresets.TILE_OCC_ALL);
  * ```
+ *
+ * The factory is typed against runtime accumulation state; callers only see
+ * {@link TileTrackerState} after `onFinish` strips the internal grid.
  */
-// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- public state omits runtime scratch fields
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- runtime vs public state shapes differ; onFinish converts in place
 export const tileTracker = tileTrackerFactory as unknown as TrackerFactory<
     TileTrackerState,
     unknown,
