@@ -70,10 +70,12 @@ Two things to notice: you **create a tracker instance** (`tileTracker()`) and ha
 
 ```json
 {
-    "durationMs": 33.99,
     "gameCount": 3,
     "moveCount": 19,
-    "movesPerSecond": 559,
+    "perf": {
+        "durationMs": 33.99,
+        "movesPerSecond": 559
+    },
     "runs": [
         {
             "gameCount": 3,
@@ -84,10 +86,10 @@ Two things to notice: you **create a tracker instance** (`tileTracker()`) and ha
 ```
 
 <Callout type="info" title="Your numbers will differ">
-    `durationMs` and `movesPerSecond` depend on your machine, and 3 games finish in the blink of an
-    eye — throughput gets interesting on files with thousands or millions of games. The `runs` array
-    has one entry per analysis pass; there's exactly one here, and [Comparing
-    groups](/docs/comparing-analyses) shows when you'd want more.
+    The `perf` entries (`durationMs` and `movesPerSecond`) depend on your machine, and 3 games
+    finish in the blink of an eye — throughput gets interesting on files with thousands or millions
+    of games. The `runs` array has one entry per analysis pass; there's exactly one here, and
+    [Comparing groups](/docs/comparing-analyses) shows when you'd want more.
 </Callout>
 
 The actual statistics live on your tracker. `tiles.state` counts 19 half-moves, and each square has its own little report — here's `e4`, the square white's king pawn moved to in two of our three games:

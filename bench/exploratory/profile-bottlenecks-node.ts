@@ -81,7 +81,7 @@ async function api(options: AnalyzeOptions) {
         ms,
         cntGames: result.gameCount,
         cntMoves: result.moveCount,
-        mps: result.movesPerSecond,
+        mps: result.perf.movesPerSecond,
     };
 }
 

@@ -20,7 +20,7 @@ describe('analyzePGN result shape', () => {
 
         expect(result.runs).toHaveLength(1);
         expect(result.runs[0]?.gameCount).toBe(result.gameCount);
-        expect(result.movesPerSecond).toBeGreaterThan(0);
+        expect(result.perf.movesPerSecond).toBeGreaterThan(0);
         expect(tiles.state.movesTotal).toBe(result.moveCount);
     });
 

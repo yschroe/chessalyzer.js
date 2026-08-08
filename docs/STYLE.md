@@ -34,7 +34,7 @@ Never leave the reader guessing what comes back from a call.
 2. Use `'games.pgn'` in code samples — not `'<pathToPgnFile>'` or abstract placeholders.
 3. For every public function you introduce, show **real return shapes**: `AnalyzeResult`, `ParsedGame[]`, tracker `.state`, `HeatmapData`, error entries, etc.
 4. Prefer **annotated excerpts** when full JSON is huge (e.g. trim `byPiece` zeros, keep the squares that tell the story). Say when something is trimmed.
-5. When an output is machine-sensitive (`durationMs`, `movesPerSecond`), note that the reader's numbers will differ.
+5. When an output is machine-sensitive (`perf.durationMs`, `perf.movesPerSecond`), note that the reader's numbers will differ.
 
 ### Regenerating outputs
 
