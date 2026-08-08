@@ -1,6 +1,6 @@
 import type { GameAndMoveCount } from '#core/analysis-runtime';
 import type { GameProcessorConfig } from '#core/analysis-runtime';
-import { collectError } from '#core/analyze-errors';
+import { collectError, errorFromWorkerBatchFailure } from '#core/analyze-errors';
 import type { WorkerBatchConfigResult, WorkerMessage } from '#core/worker-types';
 
 /**
@@ -34,7 +34,7 @@ export function mergeWorkerTrackerFlush(
     configs: GameProcessorConfig[],
     result: WorkerMessage,
 ): void {
-    if (result.error) throw new Error(result.error);
+    if (result.error) throw errorFromWorkerBatchFailure(result.error);
 
     for (const configResult of result.results) {
         if (!('trackerSnapshots' in configResult)) continue;

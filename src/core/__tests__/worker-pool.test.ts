@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from 'bun:test';
 import { fileURLToPath } from 'node:url';
 
+import { isReplayError } from '#core/analyze-errors';
 import WorkerPool from '#core/worker-pool';
 import type { WorkerMessage } from '#core/worker-types';
 
@@ -108,6 +109,31 @@ describe('WorkerPool', () => {
         expect(err).toBeInstanceOf(Error);
         expect(err?.message).toContain('Unknown tracker');
         expect(result).toBeNull();
+        expect(pool.failed).toBe(true);
+    });
+
+    it('rejects runTask with typed ReplayError when worker posts a structured error', async () => {
+        const structuredErrorWorkerPath = fileURLToPath(
+            new URL('fixtures/stub-structured-error-worker.ts', import.meta.url),
+        );
+        pool = new WorkerPool(1, structuredErrorWorkerPath, emptyInit);
+
+        const { err } = await runTaskWithTimeout(
+            pool,
+            {
+                type: 'batch',
+                pgnChunkBytes: minimalChunkBytes(),
+                configs: [{ idxConfig: 0, parseHeaders: false }],
+            },
+            10_000,
+        );
+
+        expect(isReplayError(err)).toBe(true);
+        if (isReplayError(err)) {
+            expect(err.gameIndex).toBe(3);
+            expect(err.san).toBe('Nf9');
+            expect(err.reason).toBe('IllegalMove');
+        }
         expect(pool.failed).toBe(true);
     });
 });

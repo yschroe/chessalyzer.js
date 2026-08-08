@@ -14,11 +14,9 @@ Every PGN file flows through the same four stages:
 ```
 
 1. **I/O** — the file is streamed from disk, never loaded whole. In multithreaded mode it's cut into byte-sized chunks aligned to game boundaries; single-threaded it's read line by line.
-
-1. **I/O** — the file is streamed from disk, never loaded whole. In multithreaded mode it's cut into byte-sized chunks aligned to game boundaries; single-threaded it's read line by line.
-1. **PGN parse** — each game is split into tag-pair headers, mainline move strings (SAN), and the result. This stage is purely textual: no board, no legality, just structure.
-1. **Replay** — each SAN string is decoded and played on an internal board. This is the expensive part, and it's what move trackers need: they care _where_ pieces stand, not just _what_ was played.
-1. **Analyze** — your trackers run over the results and accumulate state.
+2. **PGN parse** — each game is split into tag-pair headers, mainline move strings (SAN), and the result. This stage is purely textual: no board, no legality, just structure.
+3. **Replay** — each SAN string is decoded and played on an internal board. This is the expensive part, and it's what move trackers need: they care _where_ pieces stand, not just _what_ was played.
+4. **Analyze** — your trackers run over the results and accumulate state.
 
 A subtlety worth knowing: when people say "PGN parser" they usually mean stage 2. Turning a file into _moves on a board_ takes stages 2 + 3, which is why the [parser module](/docs/parsing-pgn) and `analyzePGN` are separate tools.
 

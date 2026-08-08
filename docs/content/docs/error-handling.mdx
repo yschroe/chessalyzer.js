@@ -36,14 +36,6 @@ try {
 
 `isReplayError` narrows the thrown value so you can read `gameIndex` (which game, zero-based), `moveIndex` (which half-move), `san`, and a machine-readable `reason`.
 
-<Callout type="info" title="Threading changes what you catch">
-    The typed error above is what you get single-threaded. With the default worker pool, a broken
-    game still aborts the run and rejects the promise — but the error crossing the thread boundary
-    arrives as a plain `Error` with the same message, without the structured fields. If you rely on
-    `isReplayError` data, prefer collecting errors with `onError: 'skip-game'` (below), where they
-    arrive fully typed on the result object in both modes.
-</Callout>
-
 ## Skip bad games and keep going
 
 For batch runs over mostly-good data (think Lichess database dumps), aborting on one bad apple wastes the whole run. `onError: 'skip-game'` collects the failures and finishes the rest:

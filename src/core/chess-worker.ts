@@ -1,6 +1,7 @@
 import assert from 'node:assert';
 import { parentPort, workerData } from 'node:worker_threads';
 
+import { toWorkerBatchError } from '#core/analyze-errors';
 import {
     getCachedCfg,
     initWorkerTrackers,
@@ -134,10 +135,10 @@ port.on('message', (msg: WorkerTaskData) => {
         .catch((e: unknown) => {
             // Return errors to the main thread instead of throwing — unhandled worker
             // rejections would otherwise leave the pool waiting indefinitely.
-            const message = e instanceof Error ? e.message : String(e);
+            // Replay aborts keep structured fields so `isReplayError` works on the main thread.
             const errorResult: WorkerMessage = {
                 results: [],
-                error: message,
+                error: toWorkerBatchError(e),
             };
             // oxlint-disable-next-line unicorn/require-post-message-target-origin -- Node worker_threads MessagePort has no targetOrigin
             port.postMessage(errorResult);

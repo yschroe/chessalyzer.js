@@ -171,7 +171,8 @@ try {
     print('ERROR_RESULT', json(errorResult));
 
     try {
-        await analyzePGN(TMP_BAD_PGN, { trackers: [tileTracker()], workers: false });
+        // default worker pool — typed ReplayError must survive the thread boundary
+        await analyzePGN(TMP_BAD_PGN, { trackers: [tileTracker()] });
     } catch (err) {
         print('ABORT_THROWN', json(err, Object.getOwnPropertyNames(err as object)));
         print('ABORT_IS_REPLAY_ERROR', String(isReplayError(err)));

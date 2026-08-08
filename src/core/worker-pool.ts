@@ -1,5 +1,6 @@
 import { Worker } from 'node:worker_threads';
 
+import { errorFromWorkerBatchFailure } from '#core/analyze-errors';
 import type {
     WorkerBatchTask,
     WorkerInitData,
@@ -160,7 +161,7 @@ export default class WorkerPool {
 
             // Workers report batch failures via result.error instead of throwing.
             if (result.error) {
-                const err = new Error(result.error);
+                const err = errorFromWorkerBatchFailure(result.error);
                 task?.reject(err);
                 this.fail(err);
             } else {
