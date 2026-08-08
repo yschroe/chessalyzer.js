@@ -7,7 +7,7 @@ Some questions are really comparisons in disguise: do high-rated players use the
 
 ```typescript
 import { analyzePGN } from 'chessalyzer';
-import { generateComparisonHeatmap, tileAt, tileTracker } from 'chessalyzer/trackers';
+import { generateComparisonHeatmap, tileTracker } from 'chessalyzer/trackers';
 
 const high = tileTracker();
 const low = tileTracker();
@@ -35,7 +35,7 @@ Each run accumulates into its own tracker instances: on our [example file](/docs
 
 ```typescript
 const diff = generateComparisonHeatmap(high.state, low.state, ({ data, square }) => {
-    const cell = tileAt(data.tiles, square);
+    const cell = data.squares[square];
     if (!cell) return 0;
     return (cell.w.total.occupiedFor * 100) / data.movesTotal;
 });

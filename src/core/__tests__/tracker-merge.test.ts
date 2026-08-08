@@ -4,7 +4,7 @@ import type { GameProcessorConfig } from '#core/analysis-runtime';
 import { TrackerHost } from '#core/tracker-host';
 import { createWorkerResultHandler, mergeWorkerTrackerFlush } from '#core/tracker-merge';
 import { tileTracker } from '#trackers/tile/tile-tracker';
-import { isGameWinsTrackerState, isTileTrackerState } from '~/test/helpers/tracker-state';
+import { isGameWinsTrackerState, isTileTrackerRuntimeState } from '~/test/helpers/tracker-state';
 
 import mergeGameTracker from './fixtures/merge-game-tracker';
 
@@ -33,7 +33,7 @@ describe('tracker merge', () => {
 
             const mainState = mainHost.moveEntries[0]?.state;
             const batchState = batchHost.moveEntries[0]?.state;
-            if (!isTileTrackerState(mainState) || !isTileTrackerState(batchState)) {
+            if (!isTileTrackerRuntimeState(mainState) || !isTileTrackerRuntimeState(batchState)) {
                 throw new Error('expected tile tracker state');
             }
 
@@ -146,7 +146,7 @@ describe('tracker merge', () => {
             const workerHost = new TrackerHost([tileTracker()]);
 
             const workerState = workerHost.moveEntries[0]?.state;
-            if (!isTileTrackerState(workerState)) {
+            if (!isTileTrackerRuntimeState(workerState)) {
                 throw new Error('expected tile tracker state');
             }
             workerState.movesTotal = 12;
@@ -168,7 +168,7 @@ describe('tracker merge', () => {
             });
 
             const mainState = mainHost.moveEntries[0]?.state;
-            if (!isTileTrackerState(mainState)) {
+            if (!isTileTrackerRuntimeState(mainState)) {
                 throw new Error('expected tile tracker state');
             }
             expect(cfg.processedGames).toBe(50);

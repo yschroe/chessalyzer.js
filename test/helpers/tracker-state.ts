@@ -5,7 +5,7 @@
  * may still use these helpers; they assert shapes, not the package export graph.
  */
 import type { PieceTrackerState } from '#trackers/piece-tracker';
-import type { TileTrackerState } from '#trackers/tile/tile-tracker';
+import type { RuntimeTileGrid } from '#trackers/tile/tile-tracker-types';
 
 /** Shared shape for custom / merge game-tracker stubs (wins + games). */
 export interface GameWinsTrackerState {
@@ -13,7 +13,14 @@ export interface GameWinsTrackerState {
     games: number;
 }
 
-export function isTileTrackerState(value: unknown): value is TileTrackerState {
+/** Runtime tile tracker state before `onFinish` (internal 8×8 grid). */
+export interface TileTrackerRuntimeState {
+    tiles: RuntimeTileGrid;
+    movesTotal: number;
+    movesGame?: number;
+}
+
+export function isTileTrackerRuntimeState(value: unknown): value is TileTrackerRuntimeState {
     return typeof value === 'object' && value !== null && 'movesTotal' in value && 'tiles' in value;
 }
 

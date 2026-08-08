@@ -57,27 +57,27 @@ Do **not** mandate a `types.ts` file in every submodule — use one when a modul
 
 #### Where types belong (current layout)
 
-| Location            | Put here                                        | Examples                                                                                                                                 |
-| ------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **`src/types/`**    | Cross-stage pipeline contracts                  | `AnalyzeOptions`, `ParsedGame` / `AssembledGame`, `Action`, `TrackerDef` / `TrackerInstance`, `AnalyzeError`, `PlayerColor` / SAN tokens |
-| **`src/board/`**    | Board geometry and piece identity               | `Square`, `BoardCoord`, `StartingPieceName`, `PieceName`, `ChessPiece`                                                                   |
-| **`src/replay/`**   | Replay policy and decode internals              | `ReplayMode` (internal), `PawnResolution`, `ReplayFailure`                                                                               |
-| **`src/pgn/`**      | Parse-only options resolved at the pgn boundary | `StandaloneParseOptions`, `resolveStandaloneParseOptions`                                                                                |
-| **`src/trackers/`** | Tracker state, heatmap API, built-in shapes     | `TileTrackerState`, `HeatmapData`, `HeatmapPieceRef`, `MoveCoords`                                                                       |
-| **`src/core/`**     | Analyze orchestration and worker plumbing       | `GameProcessorConfig`, `AnalyzeRunState`, `WorkerMessage`, `TrackerSnapshot`, `NormalizedAnalyzeOptions`                                 |
-| **`src/io/`**       | Stream/chunk interfaces                         | `LineStream`, `PgnChunk` types (fully self-contained; no `#types` imports)                                                               |
+| Location            | Put here                                        | Examples                                                                                                                                               |
+| ------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`src/types/`**    | Cross-stage pipeline contracts                  | `AnalyzeOptions`, `ParsedGame` / `AssembledGame`, `Action`, `MoveCoords`, `TrackerDef` / `TrackerInstance`, `AnalyzeError`, `PlayerColor` / SAN tokens |
+| **`src/board/`**    | Board geometry and piece identity               | `Square`, `BoardCoord`, `StartingPieceName`, `PieceName`, `ChessPiece`                                                                                 |
+| **`src/replay/`**   | Replay policy and decode internals              | `ReplayMode` (internal), `PawnResolution`, `ReplayFailure`                                                                                             |
+| **`src/pgn/`**      | Parse-only options resolved at the pgn boundary | `StandaloneParseOptions`, `resolveStandaloneParseOptions`                                                                                              |
+| **`src/trackers/`** | Tracker state, heatmap API, built-in shapes     | `TileTrackerState`, `HeatmapData`, `HeatmapPieceRef`                                                                                                   |
+| **`src/core/`**     | Analyze orchestration and worker plumbing       | `GameProcessorConfig`, `AnalyzeRunState`, `WorkerMessage`, `TrackerSnapshot`, `NormalizedAnalyzeOptions`                                               |
+| **`src/io/`**       | Stream/chunk interfaces                         | `LineStream`, `PgnChunk` types (fully self-contained; no `#types` imports)                                                                             |
 
 #### `src/types/` file map
 
-| File            | Role                                                                                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `analysis.ts`   | Public `analyzePGN` options and result shapes                                                                                  |
-| `parse-pgn.ts`  | Game shapes at the parse ↔ replay ↔ analyze boundary (`AssembledGame` is internal hot-path; `ParsedGame` is public via `/pgn`) |
-| `actions.ts`    | Move-level replay output consumed by board and move trackers (public via `/replay`)                                            |
-| `tracker.ts`    | Tracker authoring contract only (`TrackerDef*`, `TrackerFactory`, `TrackerInstance`) — not heatmap or worker snapshot types    |
-| `errors.ts`     | Shared analyze/replay error model (public via root)                                                                            |
-| `tokens.ts`     | Small cross-cutting literals (`PlayerColor`, `PieceToken`, …)                                                                  |
-| `open-union.ts` | `OpenUnion<T>` helper for extensible string unions                                                                             |
+| File            | Role                                                                                                                             |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `analysis.ts`   | Public `analyzePGN` options and result shapes                                                                                    |
+| `parse-pgn.ts`  | Game shapes at the parse ↔ replay ↔ analyze boundary (`AssembledGame` is internal hot-path; `ParsedGame` is public via `/pgn`)   |
+| `actions.ts`    | Move-level replay output consumed by board and move trackers (public via `/replay`; `MoveCoords` dual-exported from `/trackers`) |
+| `tracker.ts`    | Tracker authoring contract only (`TrackerDef*`, `TrackerFactory`, `TrackerInstance`) — not heatmap or worker snapshot types      |
+| `errors.ts`     | Shared analyze/replay error model (public via root)                                                                              |
+| `tokens.ts`     | Small cross-cutting literals (`PlayerColor`, `PieceToken`, …)                                                                    |
+| `open-union.ts` | `OpenUnion<T>` helper for extensible string unions                                                                               |
 
 #### Public exports vs internal types
 
@@ -97,7 +97,7 @@ Public barrels re-export **user-facing** names from the **owning** module. Inter
 
 - Putting worker IPC or processor runtime in `src/types/` — belongs in `core/worker-types.ts`, `core/analysis-runtime.ts`.
 - Re-exporting board concepts from `chessalyzer/replay` — use `/board` (or `/trackers` for tracker-centric aliases).
-- A catch-all `game.ts` or mixed-concern hub file — split by real owner (`ChessPiece` → board, `MoveCoords` → tile tracker, heatmap squares → trackers).
+- A catch-all `game.ts` or mixed-concern hub file — split by real owner (`ChessPiece` → board, heatmap squares → trackers).
 - Exporting every type from the root entry — keep `src/index.ts` to analyze + errors; domain types live on subpaths.
 - Collapsing `AssembledGame` (`moves: string[]`) into `ParsedGame` (`ParsedMove[]`) on hot paths — see **Performance** below.
 

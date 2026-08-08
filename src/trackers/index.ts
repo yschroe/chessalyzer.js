@@ -3,7 +3,6 @@ export { defineGameTracker, defineMoveTracker } from '#trackers/define-tracker';
 export { gameTracker } from '#trackers/game-tracker';
 export { pieceTracker } from '#trackers/piece-tracker';
 export { tileTracker } from '#trackers/tile/tile-tracker';
-export { tileAt } from '#trackers/tile/tile-grid';
 
 export { generateComparisonHeatmap, generateHeatmap } from '#trackers/heatmap-utils';
 export { heatmapToString, printHeatmap } from '#trackers/print-heatmap';
@@ -22,12 +21,11 @@ export type { GameTrackerState } from '#trackers/game-tracker';
 export type { PieceTrackerState } from '#trackers/piece-tracker';
 export type { TileTrackerState } from '#trackers/tile/tile-tracker';
 export type { HeatmapData, HeatmapFn } from '#trackers/heatmap-types';
-export type { Action, CaptureAction, MoveAction, PromoteAction } from '#types/actions';
+export type { Action, CaptureAction, MoveAction, MoveCoords, PromoteAction } from '#types/actions';
 export type { TrackerInstance } from '#types/tracker';
 export type {
-    TileCell,
-    TileColorStats,
-    TileGrid,
-    TileStats,
+    PlayerSquareStats,
+    SquareCounters,
+    SquareStats,
 } from '#trackers/tile/tile-tracker-types';
 export type { PieceStatsMap } from '#trackers/piece-types';

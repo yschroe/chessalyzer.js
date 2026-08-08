@@ -34,7 +34,7 @@ function createInitialState(): PieceTrackerState {
 }
 
 /** Built-in move tracker: which starting piece captured which, per color. */
-export const pieceTracker = defineMoveTracker<PieceTrackerState>({
+const pieceTrackerFactory = defineMoveTracker<PieceTrackerState>({
     id: 'PieceTracker',
 
     init: createInitialState,
@@ -58,3 +58,6 @@ export const pieceTracker = defineMoveTracker<PieceTrackerState>({
         }
     },
 });
+
+/** Built-in piece tracker factory — pass `pieceTracker()` to {@link analyzePGN}. */
+export const pieceTracker = pieceTrackerFactory;

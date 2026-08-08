@@ -1,6 +1,7 @@
 import {
     BOARD_INDICES,
     isBoardIndex,
+    squareAt,
     squareCol,
     squareRow,
     type BoardIndex,
@@ -9,17 +10,16 @@ import {
 import { getStartingPiece } from '#board/piece-names';
 import { pieceList } from '#trackers/piece-types';
 import {
-    createTileColorStats,
+    createPlayerSquareStats,
     createTilePiece,
     type RuntimeTileGrid,
     type RuntimeTileRow,
+    type SquareCounters,
+    type SquareStats,
     type StatsField,
-    type TileCell,
-    type TileGrid,
-    type TileStats,
 } from '#trackers/tile/tile-tracker-types';
 
-function addTileStats(dst: TileStats, src: TileStats): void {
+function addSquareCounters(dst: SquareCounters, src: SquareCounters): void {
     dst.movedTo += src.movedTo;
     dst.occupiedFor += src.occupiedFor;
     dst.captures += src.captures;
@@ -30,7 +30,7 @@ function addTileStats(dst: TileStats, src: TileStats): void {
  * Grid lifecycle helpers for the tile tracker: allocation, reset, merge.
  *
  * The runtime grid is an 8×8 array of cells holding aggregate stats for black/white
- * plus per-piece-name {@link TileStats} objects, alongside the live occupant.
+ * plus per-piece-name {@link SquareCounters} objects, alongside the live occupant.
  * These helpers keep init / track / onGameEnd DRY.
  */
 
@@ -72,8 +72,8 @@ export function createTileGrid(): RuntimeTileGrid {
 /** Build one empty cell with aggregate + per-piece stat slots (all zero). */
 function createEmptyCell(): StatsField {
     return {
-        b: createTileColorStats(),
-        w: createTileColorStats(),
+        b: createPlayerSquareStats(),
+        w: createPlayerSquareStats(),
         currentPiece: null,
     };
 }
@@ -92,33 +92,18 @@ export function setStartingPiece(tiles: RuntimeTileGrid, row: BoardIndex, col: B
  * Used when combining worker batch results on the main thread.
  */
 export function mergeCellStats(dst: StatsField, src: StatsField): void {
-    addTileStats(dst.b.total, src.b.total);
-    addTileStats(dst.w.total, src.w.total);
+    addSquareCounters(dst.b.total, src.b.total);
+    addSquareCounters(dst.w.total, src.w.total);
 
     for (const name of pieceList) {
-        addTileStats(dst.b.byPiece[name], src.b.byPiece[name]);
-        addTileStats(dst.w.byPiece[name], src.w.byPiece[name]);
+        addSquareCounters(dst.b.byPiece[name], src.b.byPiece[name]);
+        addSquareCounters(dst.w.byPiece[name], src.w.byPiece[name]);
     }
 }
 
 /**
- * Look up the tile cell for an algebraic {@link Square}.
- *
- * Prefer this over `tiles[row][col]` — it avoids `noUncheckedIndexedAccess` issues and
- * matches how heatmap presets access the grid.
- */
-export function tileAt(tiles: TileGrid, square: Square): TileCell | undefined {
-    const row = squareRow(square);
-    const col = squareCol(square);
-    if (!isBoardIndex(row) || !isBoardIndex(col)) {
-        return undefined;
-    }
-    return tiles[row][col];
-}
-
-/**
- * Internal counterpart of {@link tileAt} that keeps the live occupant on the returned cell.
- * Kept separate so `RuntimeTileGrid` / `StatsField` stay out of the public type surface.
+ * Look up the runtime tile cell for an algebraic {@link Square}.
+ * Keeps the live occupant on the returned cell.
  */
 export function runtimeTileAt(tiles: RuntimeTileGrid, square: Square): StatsField | undefined {
     const row = squareRow(square);
@@ -127,4 +112,32 @@ export function runtimeTileAt(tiles: RuntimeTileGrid, square: Square): StatsFiel
         return undefined;
     }
     return tiles[row][col];
+}
+
+/** Build the public per-square record from the runtime 8×8 grid (all 64 squares). */
+export function buildSquaresRecord(tiles: RuntimeTileGrid): Record<Square, SquareStats> {
+    const squares: Partial<Record<Square, SquareStats>> = {};
+    for (const row of BOARD_INDICES) {
+        for (const col of BOARD_INDICES) {
+            const cell = tiles[row][col];
+            squares[squareAt(row, col)] = { b: cell.b, w: cell.w };
+        }
+    }
+    if (!isCompleteSquaresRecord(squares)) {
+        throw new Error('tile tracker: incomplete squares record');
+    }
+    return squares;
+}
+
+function isCompleteSquaresRecord(
+    squares: Partial<Record<Square, SquareStats>>,
+): squares is Record<Square, SquareStats> {
+    for (const row of BOARD_INDICES) {
+        for (const col of BOARD_INDICES) {
+            if (squares[squareAt(row, col)] === undefined) {
+                return false;
+            }
+        }
+    }
+    return true;
 }

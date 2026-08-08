@@ -72,17 +72,17 @@ The workhorse. For each of the 64 squares it records, per color and per piece:
 
 ```typescript
 import { analyzePGN } from 'chessalyzer';
-import { tileAt, tileTracker } from 'chessalyzer/trackers';
+import { tileTracker } from 'chessalyzer/trackers';
 
 const tiles = tileTracker();
 
 await analyzePGN('games.pgn', { trackers: [tiles] });
 
 console.log(tiles.state.movesTotal); // 19
-console.log(tileAt(tiles.state.tiles, 'f7'));
+console.log(tiles.state.squares['f7']);
 ```
 
-`tileAt` saves you from indexing the 8×8 `tiles` grid by hand. And `f7` turns out to be the most dramatic square in our file — the scholar's mate happened right there:
+State is keyed by algebraic square — `tiles.state.squares['f7']` is the f7 report. And `f7` turns out to be the most dramatic square in our file — the scholar's mate happened right there:
 
 ```json5
 {

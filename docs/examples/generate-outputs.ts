@@ -20,7 +20,6 @@ import {
     generateComparisonHeatmap,
     generateHeatmap,
     pieceTracker,
-    tileAt,
     tileTracker,
     TileHeatmapPresets,
 } from '../../src/trackers/index';
@@ -46,7 +45,7 @@ print('ANALYZE_RESULT', json(analyzeResult));
 const TILE_SQUARES = ['e4', 'e5', 'f7', 'd7', 'h4'] as const;
 const tileExcerpt: Record<string, unknown> = { movesTotal: tiles.state.movesTotal };
 for (const square of TILE_SQUARES) {
-    tileExcerpt[square] = tileAt(tiles.state.tiles, square);
+    tileExcerpt[square] = tiles.state.squares[square];
 }
 print('TILE_STATE_EXCERPT', json(tileExcerpt));
 
@@ -106,7 +105,7 @@ await analyzePGN(PGN, {
 });
 
 const comparison = generateComparisonHeatmap(high.state, low.state, ({ data, square }) => {
-    const cell = tileAt(data.tiles, square);
+    const cell = data.squares[square];
     if (!cell) return 0;
     return (cell.w.total.occupiedFor * 100) / data.movesTotal;
 });
