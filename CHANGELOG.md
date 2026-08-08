@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0-beta.1] - 2026-08-08
+
 ### Changed
 
 - **Filters no longer require `workers: false`:** a JavaScript `filter` implies single-threaded analysis when `workers` is omitted (or set to `false`). Combining a filter with an explicit worker pool (`workers: n` / `workers: { … }`) is still a type and runtime error. `analyzePGN` overloads were simplified to a single-run generic plus a catch-all `AnalyzeOptions` signature.
+- Replay errors in multithreaded mode are now passed fully to the main thread instead of just returning the error message string.
 
 ## [4.0.0-beta.0] - 2026-08-04
 
