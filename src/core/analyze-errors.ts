@@ -51,6 +51,32 @@ export function isReplayError(err: unknown): err is ReplayError {
     return err.code === 'replay' && typeof err.gameIndex === 'number';
 }
 
+/**
+ * Plain cloneable payload for worker → main abort reporting.
+ * Omits `cause` so structured clone never has to ferry Error instances.
+ */
+export function toWorkerBatchError(err: unknown): string | AnalyzeError {
+    if (isReplayError(err)) {
+        const payload: ReplayError = {
+            code: err.code,
+            gameIndex: err.gameIndex,
+            moveIndex: err.moveIndex,
+            san: err.san,
+            reason: err.reason,
+            message: err.message,
+        };
+        return payload;
+    }
+    return err instanceof Error ? err.message : String(err);
+}
+
+/** Rebuild a thrown error from a worker batch `error` field (string or structured). */
+export function errorFromWorkerBatchFailure(error: string | AnalyzeError): Error {
+    if (typeof error === 'string') return new Error(error);
+    if (isReplayError(error)) return toAbortError(error);
+    return new Error(error.message);
+}
+
 /** Thrown in abort mode; replay fields are copied onto the error for {@link isReplayError}. */
 export function toAbortError(replayError: ReplayError): Error {
     const err = new Error(replayError.message);

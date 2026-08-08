@@ -27,6 +27,24 @@ describe('Error policy', () => {
         expect(isReplayError(analyzeError)).toBe(true);
     });
 
+    it('aborts with typed ReplayError in multithreaded mode', async () => {
+        let caught: unknown;
+        try {
+            await analyzePGN(badSanPath, { trackers: [pieceTracker()] });
+        } catch (err) {
+            caught = err;
+        }
+
+        expect(caught).toBeDefined();
+        expect(isReplayError(caught)).toBe(true);
+        if (isReplayError(caught)) {
+            expect(caught.gameIndex).toBe(1);
+            expect(caught.moveIndex).toBe(0);
+            expect(caught.san).toBe('Nf9');
+            expect(caught.reason).toBe('IllegalMove');
+        }
+    });
+
     it('skip-game continues with error summary (single-threaded)', async () => {
         const data = await analyzePGN(badSanPath, {
             workers: false,

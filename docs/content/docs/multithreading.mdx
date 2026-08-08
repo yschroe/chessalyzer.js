@@ -60,5 +60,3 @@ Two situations call for it — or force it:
 
 - **Filters.** A [`filter`](/docs/filters) is a JavaScript closure, and closures can't cross the worker boundary, so filtered analyses are single-threaded automatically. Passing explicit `workers` options together with a filter is rejected as an error.
 - **Custom tracker development.** [Custom trackers](/docs/trackers/custom) need their module setup (`id`, `workerModule: import.meta.url`, `merge`) before they can join the pool; while sketching one out, `workers: false` keeps things simple and debuggable. The `workerModule` URL also requires an unbundled Node ≥ 22 or Bun runtime.
-
-One honest caveat for the other direction: in multithreaded mode, a fatal replay error aborts the run as a plain `Error` (only the message survives the thread boundary). If you need typed `isReplayError` data, use [`onError: 'skip-game'`](/docs/error-handling), which delivers fully typed errors on the result in both modes.

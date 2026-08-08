@@ -60,6 +60,9 @@ export type WorkerConfigResult = WorkerBatchConfigResult | WorkerFlushConfigResu
 /** Worker → main result: one or more config results, or a batch-level error. */
 export interface WorkerMessage {
     results: WorkerConfigResult[];
-    /** Set when batch processing failed catastrophically; main thread should abort. */
-    error?: string;
+    /**
+     * Set when batch processing failed catastrophically; main thread should abort.
+     * Replay aborts are a structured {@link AnalyzeError}; other failures stay plain strings.
+     */
+    error?: string | AnalyzeError;
 }
