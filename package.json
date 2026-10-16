@@ -82,20 +82,20 @@
         "docs:typecheck": "bun run --filter chessalyzer-docs --elide-lines=0 typecheck"
     },
     "devDependencies": {
-        "@types/bun": "^1.4.2",
-        "@types/node": "^26.4.0",
+        "@types/bun": "^1.4.3",
+        "@types/node": "^26.6.5",
         "bumpp": "^12.3.0",
         "bun-plugin-dts": "^0.4.0",
-        "knip": "^6.35.1",
-        "oxfmt": "^0.68.0",
-        "oxlint": "^1.83.0",
-        "oxlint-tsgolint": "^7.0.2001",
-        "tinybench": "^6.2.0",
-        "tsx": "^4.23.13",
+        "knip": "^6.41.0",
+        "oxfmt": "^0.73.0",
+        "oxlint": "^1.88.0",
+        "oxlint-tsgolint": "^7.0.2004",
+        "tinybench": "^6.2.2",
+        "tsx": "^4.23.15",
         "typescript": "6.0.3"
     },
     "overrides": {
-        "@types/node": "^26.4.0"
+        "@types/node": "^26.6.5"
     },
     "engines": {
         "node": ">=22"
