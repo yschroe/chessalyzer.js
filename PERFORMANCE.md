@@ -1,6 +1,6 @@
 # Performance improvement worklist
 
-Findings from the 2026-10-17 review using the `optimize-javascript` skill. Candidate 1 is implemented and retained after measurement; candidates 2–7 remain open. Unchecked boxes represent work still to do. Work through each candidate independently.
+Findings from the 2026-10-17 review using the `optimize-javascript` skill. Candidates 1 and 2 are implemented and retained after measurement; candidates 3–7 remain open. Unchecked boxes represent work still to do. Work through each candidate independently.
 
 Profile percentages identify where time was sampled, not expected speedups. The quadratic cases below were confirmed with operation counts. Other proposed improvements remain hypotheses to benchmark.
 
@@ -45,12 +45,14 @@ The original local harnesses were `/private/tmp/chessalyzer-perf-review.mts` and
 
 **Code:** [movetext.ts](src/pgn/movetext.ts), consumed by [game-assembler.ts](src/pgn/game-assembler.ts) and [pgn-chunks.ts](src/io/pgn-chunks.ts).
 
-- [ ] Benchmark a suffix-oriented fast path against the existing regex on short and long lines, matches, misses, and trailing whitespace.
-- [ ] Preserve `1-0`, `0-1`, `1/2-1/2`, and `*`, including the current whitespace and suffix-matching semantics. Keep unrelated parser behavior changes separate.
-- [ ] Check empty lines, non-result endings, comments removed before detection, and chunk-boundary agreement with assembly.
-- [ ] Compare full analysis throughput in all modes and record the outcome.
+- [x] Benchmark a suffix-oriented fast path against the existing regex on short and long lines, matches, misses, and trailing whitespace.
+- [x] Preserve `1-0`, `0-1`, `1/2-1/2`, and `*`, including the current whitespace and suffix-matching semantics. Keep unrelated parser behavior changes separate.
+- [x] Check empty lines, non-result endings, comments removed before detection, and chunk-boundary agreement with assembly.
+- [x] Compare full analysis throughput in all modes and record the outcome.
 
 **Acceptance:** Equivalent results and game boundaries, with a measurable gain on representative PGN input. Optimize result detection independently of SAN extraction; this finding does not justify replacing the tuned move regex.
+
+**Outcome:** Retained. `trimEnd()` followed by four `endsWith()` checks preserves the existing result and whitespace semantics while avoiding the regex's search through the line. Node single-threaded count-only elapsed time decreased by 7.3% in the initial comparison and 9.5% in reverse order; board mode improved by 4.2–4.8%. Action-mode gains were smaller. Worker timings varied with comparison order, with no consistent regression. SAN extraction is unchanged. See the [experiment record](#candidate-2-experiment-2026-10-17) for the full matrix, Bun cross-check, and limits.
 
 ## 3. Avoid assembler copies
 
@@ -168,6 +170,7 @@ Use one row per experiment, including rejected or inconclusive variants. Link du
 | Candidate / variant         | Baseline → candidate commits                   | Workload / runtime                       | Before → after (mean, min, CV)                                                | Correctness / scaling / memory evidence                                           | Decision |
 | --------------------------- | ---------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------- |
 | 1: guard reset in skip mode | `af01dcb` → working-tree guard described below | 1777.3 MiB, Node 26.10.0, ST + 8 workers | ST skip: 8.076 / 8.036 s / 0.69% → 7.257 / 7.243 s / 0.27%; full matrix below | 222 tests pass; exact large-file counts; mixed-mode and failure-recovery coverage | Retained |
+| 2: result suffix checks | `917d121` → working-tree suffix checks described below | 1777.3 MiB, Node 26.10.0 + Bun 1.4.3, ST + 8 workers | Node ST skip: 7.162 / 7.161 s / 0.04% → 6.637 / 6.583 s / 0.79%; full matrix below | 227 tests pass; exact large-file counts; Unicode suffix and chunk/assembly coverage | Retained |
 
 ### Candidate 1 experiment: 2026-10-17
 
@@ -215,3 +218,73 @@ Because the first pass showed slower board/actions timings, the follow-up isolat
 **Correctness.** `bun run build && bun test`: 222 passed, 0 failed. `bun run typecheck`: passed. `bun run lint`: completed with the existing `unicorn/consistent-function-scoping` warning for `makeRow` in the unchanged tile-grid module. Added coverage for alternating skip/board/actions with game-end hooks; recovery after partially replayed games fail under both error policies; and mixed count-only/action runs in ST and a reused worker across small chunks. The measured production guard was unchanged after validation.
 
 Local logs, the adapted harness, and frozen builds are under `/private/tmp/chessalyzer-reset-isysv3gn/`. They are temporary artifacts; the timings, revision identity, and reproduction method are recorded here so the outcome survives their removal.
+
+### Candidate 2 experiment: 2026-10-17
+
+**Revisions and workload.** Baseline: `917d1215234494983223ae3a74df0fa887b8f4c3`. Candidate: that revision plus `trimEnd()` and suffix checks in `extractGameResult()`; no other production code changed. Candidate `src/pgn/movetext.ts` SHA-256: `0a217e079d359fc616bbefc14ffd3ab046625991aa5e644851ae5b9b6699a809`. Tests, benchmark, and documentation changes are outside the timed workload.
+
+Apple M1, Node `v26.10.0` / V8 `14.6.202.34-node.34`, Bun `1.4.3`; default pool of 8 workers. Input: `lichess_db_standard_rated_2014-09.pgn` concatenated twice, **1777.3 MiB, 2,000,112 games, 135,020,744 moves**. No trackers; all replay modes, ST and MT. Every timed analysis returned the expected counts, asserted after timing. Analysis used the default abort-on-error policy and completed without errors.
+
+**Method.** Built baseline before changing production code and preserved its `lib/` tree; built and preserved the candidate separately. A temporary copy of [bench-perf.ts](bench/bench-perf.ts) selected the built entry with `RESULT_BUILD_ENTRY`, printed raw samples, and asserted counts outside timing. It retained the existing fixture resolution and timing helpers; helper imports were absolute so the temporary harness also ran under Bun. Each invocation was a fresh process (`node --import tsx` or `bun`); benchmarks and tests ran sequentially.
+
+The initial Node pass used `BENCH_RUNS=3`, with one full-fixture warmup per scenario, in this order: baseline ST, baseline MT, candidate ST, candidate MT. Modes within each process were `skip`, `board`, `actions`. The workload and options match these existing benchmarks:
+
+```sh
+BENCH_RUNS=3 bun run bench:perf skip board actions --single-threaded
+BENCH_RUNS=3 bun run bench:perf skip board actions
+```
+
+**Node initial comparison:**
+
+| Path / mode | Baseline mean / min / CV | Candidate mean / min / CV |
+| --- | --- | --- |
+| ST skip | 7.162 s / 7.161 s / 0.04% | 6.637 s / 6.583 s / 0.79% |
+| ST board | 20.407 s / 20.190 s / 0.93% | 19.560 s / 19.505 s / 0.34% |
+| ST actions | 34.884 s / 34.847 s / 0.09% | 34.215 s / 34.085 s / 0.63% |
+| MT skip | 3.944 s / 3.745 s / 4.46% | 4.075 s / 3.764 s / 6.63% |
+| MT board | 7.632 s / 7.127 s / 5.73% | 8.159 s / 7.867 s / 3.52% |
+| MT actions | 13.817 s / 13.396 s / 3.61% | 14.498 s / 14.362 s / 0.98% |
+
+A fresh-process unchanged-build ST skip control after that pass measured **7.493 s mean, 7.366 s minimum, 2.90% CV**, about 4.6% slower than the first baseline. This indicates drift beyond the initial within-process variation; the first-pass worker differences should not be attributed solely to the change.
+
+The follow-up isolated each mode in fresh processes and reversed order: **candidate then baseline, adjacent for each scenario**, ST modes first, then MT. Each process used one full-fixture warmup and one timed sample (`BENCH_RUNS=1`); CV is not meaningful for individual samples.
+
+| Path / mode | Candidate sample (first) | Baseline sample (second) |
+| --- | ---: | ---: |
+| ST skip | 6.631705 s | 7.332042 s |
+| ST board | 19.512351 s | 20.498416 s |
+| ST actions | 34.410105 s | 34.521367 s |
+| MT skip | 3.680363 s | 4.052595 s |
+| MT board | 7.051363 s | 8.066838 s |
+| MT actions | 14.163444 s | 14.283516 s |
+
+**Bun cross-check.** Baseline ST, baseline MT, candidate ST, candidate MT, with `BENCH_RUNS=2` and one warmup per mode. No separate Bun A/A control was recorded. Follow-up worker board/actions checks reversed order with one warmup and one timed sample per fresh process.
+
+| Path / mode | Baseline mean / min / CV | Candidate mean / min / CV |
+| --- | --- | --- |
+| ST skip | 10.275 s / 10.268 s / 0.10% | 8.650 s / 8.506 s / 2.35% |
+| ST board | 20.205 s / 20.199 s / 0.04% | 19.527 s / 19.420 s / 0.78% |
+| ST actions | 29.548 s / 29.450 s / 0.47% | 28.823 s / 28.799 s / 0.12% |
+| MT skip | 7.260 s / 7.035 s / 4.39% | 6.919 s / 6.789 s / 2.66% |
+| MT board | 9.345 s / 9.323 s / 0.33% | 9.415 s / 9.378 s / 0.56% |
+| MT actions | 11.878 s / 11.781 s / 1.15% | 12.190 s / 12.187 s / 0.03% |
+
+| Path / mode | Candidate sample (first) | Baseline sample (second) |
+| --- | ---: | ---: |
+| MT board | 8.273354 s | 9.422737 s |
+| MT actions | 11.329992 s | 12.194225 s |
+
+**Focused reproduction.** [bench-result-suffix.ts](bench/exploratory/bench-result-suffix.ts) compares the original regex with the production helper on short and long strings, all four results, misses, and trailing ASCII/Unicode whitespace. Short strings use one movetext prefix; long strings repeat that prefix 100 times. It validates outputs and consumes result lengths as a checksum. Each timed sample performs 400,000 extractions; three samples plus a warmup per variant, with regex/suffix then suffix/regex order.
+
+```sh
+node --import tsx bench/exploratory/bench-result-suffix.ts
+bun bench/exploratory/bench-result-suffix.ts
+```
+
+Long-line cases improved substantially in both runtimes. Short-line cases were generally faster, but **Bun short misses with trailing whitespace regressed**: approximately 14.0 ms for the regex versus 19.4 ms for suffix checks in round two. Node's corresponding case was close (12.5 versus 11.8 ms). The first short-match suffix rounds had elevated CV despite warmup; raw samples retain these outliers. These microbenchmarks explain the avoided scan, but do not predict full-pipeline speedups.
+
+**Correctness.** All **227 tests passed**, including direct suffix/miss/comment checks, differential comparison with the original regex across all 65,536 UTF-16 code units after each result, and chunk/assembler agreement at byte thresholds, line thresholds, and EOF. Differential coverage includes Unicode whitespace and line terminators, non-whitespace, and surrogate code units. The implementation preserves suffix matching without a preceding token boundary and keeps comment removal at the existing caller boundary. Build, typecheck, and lint passed. The measured production helper was unchanged after validation.
+
+**Decision.** Retained. Node ST skip improved by **7.3% initially and 9.5% in reverse order**; ST board improved by **4.2% and 4.8%**. ST actions improved by **1.9% and 0.3%**, so its gain is smaller and less certain. Initial Node worker samples were slower, while all adjacent reverse-order worker comparisons were faster; no precise worker speedup or consistent regression is established. Bun ST improved in all modes (skip **15.8%**, board **3.4%**, actions **2.5%**) in its single comparison order. Bun worker board/actions differences also reversed in the adjacent follow-up. Follow-ups changed mode isolation as well as order, so they do not distinguish timing drift from persistent runtime state. These conclusions apply to this fixture and machine; heavily wrapped, whitespace-heavy inputs may have a different balance of short misses.
+
+All raw timed samples, means, minima, standard deviations, and CVs are preserved in [result-suffix-2026-10-17.jsonl](bench/exploratory/results/result-suffix-2026-10-17.jsonl), with baseline revision, candidate source hash, runtime, and fixture metadata. Baseline/candidate builds and the temporary full-analysis harness remain machine-local under `/private/tmp/chessalyzer-result-suffix/`.
