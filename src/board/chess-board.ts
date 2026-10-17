@@ -1,6 +1,4 @@
-import { squareToCoords } from '#board/board-coords';
-import type { BoardCoord } from '#board/board-coords';
-import type { MutableBoardCoord } from '#board/board-coords';
+import { squareToCoords, type BoardCoord, type MutableBoardCoord } from '#board/board-coords';
 import type { ChessPiece } from '#board/chess-piece';
 import {
     PAWN_TEMPLATE,
@@ -245,10 +243,10 @@ class ChessBoard {
 
             for (let col = 0; col < 8; col += 1) {
                 const piece = this.getPieceAt(row, col);
-                if (piece !== null) {
-                    process.stdout.write(`|${piece.color}${piece.name}|`);
-                } else {
+                if (piece === null) {
                     process.stdout.write('|...|');
+                } else {
+                    process.stdout.write(`|${piece.color}${piece.name}|`);
                 }
             }
             process.stdout.write('\n');

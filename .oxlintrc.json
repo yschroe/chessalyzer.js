@@ -13,6 +13,26 @@
         // Array.from({ length: 10 }) is slower than new Array(10)
         "unicorn/no-new-array": "off",
 
+        // ESLint rules
+        "eslint/arrow-body-style": "warn",
+        "eslint/default-case-last": "warn",
+        "eslint/default-param-last": "warn",
+        "eslint/eqeqeq": ["error", "smart"],
+        "eslint/logical-assignment-operators": "warn",
+        "eslint/no-duplicate-imports": "error",
+        "eslint/no-else-return": "warn",
+        "eslint/no-fallthrough": "error",
+        "eslint/no-lonely-if": "warn",
+        "eslint/no-negated-condition": "warn",
+        "eslint/object-shorthand": "warn",
+        "eslint/prefer-arrow-callback": "warn",
+        "eslint/prefer-const": "error",
+        "eslint/prefer-template": "warn",
+        "eslint/yoda": "warn",
+
+        // TypeScript rules
+        "typescript/no-unnecessary-condition": "error",
+        "typescript/no-explicit-any": "error",
         // Superseded by "noImplicitReturns" in tsconfig.json
         "typescript/consistent-return": "off"
     },

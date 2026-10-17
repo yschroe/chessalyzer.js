@@ -1,5 +1,4 @@
-import type { BoardCoord } from '#board/board-coords';
-import type { MutableBoardCoord } from '#board/board-coords';
+import type { BoardCoord, MutableBoardCoord } from '#board/board-coords';
 import type { PieceToken, PlayerColor } from '#types/tokens';
 
 /**
@@ -157,7 +156,7 @@ export default class PiecePositions {
     promote(pieceName: string, on: BoardCoord): void {
         const list = this.listForChar(pieceName.charCodeAt(0));
         const [row, col] = on;
-        if (!list || row === undefined || col === undefined) return;
+        if (!list) return;
         list.push([row, col]);
     }
 }

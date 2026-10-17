@@ -1,4 +1,4 @@
-import { openLineStream, type LineStream } from '#io/line-reader';
+import { openLineStream } from '#io/line-reader';
 
 /**
  * Producer-facing controls for {@link lineStreamIterable}.
@@ -38,7 +38,22 @@ export function lineStreamIterable<T>(
     let waiter: ((result: IteratorResult<T>) => void) | null = null;
     let finished = false;
     let streamError: Error | null = null;
-    let lines: LineStream;
+
+    const lines = openLineStream(file, {
+        onLine: (line) => handlers.onLine(line, sink),
+        onClose: () => handlers.onClose?.(sink),
+        onError: (err) => {
+            if (streamError) return;
+            streamError = err;
+            finished = true;
+            if (waiter) {
+                const rejectWaiter = waiter;
+                waiter = null;
+                rejectWaiter({ value: undefined, done: true });
+            }
+            lines.close();
+        },
+    });
 
     const deliver = (result: IteratorResult<T>): void => {
         if (waiter) {
@@ -64,22 +79,6 @@ export function lineStreamIterable<T>(
             lines.close();
         },
     };
-
-    lines = openLineStream(file, {
-        onLine: (line) => handlers.onLine(line, sink),
-        onClose: () => handlers.onClose?.(sink),
-        onError: (err) => {
-            if (streamError) return;
-            streamError = err;
-            finished = true;
-            if (waiter) {
-                const rejectWaiter = waiter;
-                waiter = null;
-                rejectWaiter({ value: undefined, done: true });
-            }
-            lines.close();
-        },
-    });
 
     const next = (): Promise<IteratorResult<T>> => {
         if (streamError) return Promise.reject(streamError);

@@ -13,13 +13,13 @@ import type {
 } from 'chessalyzer';
 import type { Square } from 'chessalyzer/board';
 import type { Action } from 'chessalyzer/replay';
-import type {
-    HeatmapData,
-    HeatmapFn,
-    HeatmapPieceRef,
-    TrackerInstance,
+import {
+    type HeatmapData,
+    type HeatmapFn,
+    type HeatmapPieceRef,
+    type TrackerInstance,
+    gameTracker,
 } from 'chessalyzer/trackers';
-import { gameTracker } from 'chessalyzer/trackers';
 
 type ReplayOption = NonNullable<AnalyzeOptions['replay']>;
 const replayBoard: ReplayOption = 'board';

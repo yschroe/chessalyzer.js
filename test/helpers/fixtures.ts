@@ -35,7 +35,6 @@ export interface FixtureEntry {
 /** Absolute path to a committed fixture PGN. */
 export function fixturePath(id: FixtureId): string {
     const entry = manifest.fixtures[id];
-    if (!entry) throw new Error(`Unknown fixture id: ${id}`);
     return join(FIXTURES_DIR, entry.file);
 }
 
@@ -47,7 +46,6 @@ export function fixtureExpected(id: FixtureId) {
 /** Full manifest entry for a fixture (includes optional golden values). */
 export function getFixtureEntry(id: FixtureId): FixtureEntry {
     const entry = manifest.fixtures[id];
-    if (!entry) throw new Error(`Unknown fixture id: ${id}`);
     return entry;
 }
 

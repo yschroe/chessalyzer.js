@@ -1,5 +1,4 @@
-import type { GameAndMoveCount } from '#core/analysis-runtime';
-import type { GameProcessorConfig } from '#core/analysis-runtime';
+import type { GameAndMoveCount, GameProcessorConfig } from '#core/analysis-runtime';
 import { collectError, errorFromWorkerBatchFailure } from '#core/analyze-errors';
 import type { WorkerBatchConfigResult, WorkerMessage } from '#core/worker-types';
 
