@@ -58,9 +58,6 @@ export default class PieceFinder {
         player: PlayerColor,
     ): MutableBoardCoord {
         const [tarRow, tarCol] = toPosition;
-        if (tarRow === undefined || tarCol === undefined) {
-            throw moveNotFoundFailure(token, player, -1, -1);
-        }
 
         const validPieces = this.board.getPositionsForToken(player, token);
         const len = validPieces.length;
@@ -84,7 +81,6 @@ export default class PieceFinder {
             const val = validPieces[i];
             if (!val) continue;
             const [row, col] = val;
-            if (row === undefined || col === undefined) continue;
 
             if (mustBeInRow !== null && row !== mustBeInRow) continue;
             if (mustBeInCol !== null && col !== mustBeInCol) continue;
@@ -121,7 +117,6 @@ export default class PieceFinder {
             const piece = filtered[p];
             if (!piece) continue;
             const [pieceRow, pieceCol] = piece;
-            if (pieceRow === undefined || pieceCol === undefined) continue;
 
             if (!isKnight) {
                 const dRow = tarRow - pieceRow;
@@ -160,16 +155,6 @@ export default class PieceFinder {
         const [kingRow, kingCol] = king;
         const [fromRow, fromCol] = from;
         const [toRow, toCol] = to;
-        if (
-            kingRow === undefined ||
-            kingCol === undefined ||
-            fromRow === undefined ||
-            fromCol === undefined ||
-            toRow === undefined ||
-            toCol === undefined
-        ) {
-            return false;
-        }
 
         const diff0 = fromRow - kingRow;
         const diff1 = fromCol - kingCol;
