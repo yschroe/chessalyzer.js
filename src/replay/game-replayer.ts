@@ -77,7 +77,8 @@ class GameReplayer {
 
         analysisCfg.processedMoves += moves.length;
         analysisCfg.processedGames += 1;
-        this.ctx.reset();
+        // Skip mode leaves the board and side-to-move unchanged.
+        if (replayMode !== 'skip') this.ctx.reset();
         return parsed;
     }
 

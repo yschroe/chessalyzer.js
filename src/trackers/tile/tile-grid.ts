@@ -26,6 +26,28 @@ function addSquareCounters(dst: SquareCounters, src: SquareCounters): void {
     dst.losses += src.losses;
 }
 
+/** Build one empty cell with aggregate + per-piece stat slots (all zero). */
+function createEmptyCell(): StatsField {
+    return {
+        b: createPlayerSquareStats(),
+        w: createPlayerSquareStats(),
+        currentPiece: null,
+    };
+}
+
+function makeRow(): RuntimeTileRow {
+    return [
+        createEmptyCell(),
+        createEmptyCell(),
+        createEmptyCell(),
+        createEmptyCell(),
+        createEmptyCell(),
+        createEmptyCell(),
+        createEmptyCell(),
+        createEmptyCell(),
+    ];
+}
+
 /**
  * Grid lifecycle helpers for the tile tracker: allocation, reset, merge.
  *
@@ -36,19 +58,6 @@ function addSquareCounters(dst: SquareCounters, src: SquareCounters): void {
 
 /** Allocate a fresh 8×8 grid with zeroed stats and starting-position virtual pieces. */
 export function createTileGrid(): RuntimeTileGrid {
-    function makeRow(): RuntimeTileRow {
-        return [
-            createEmptyCell(),
-            createEmptyCell(),
-            createEmptyCell(),
-            createEmptyCell(),
-            createEmptyCell(),
-            createEmptyCell(),
-            createEmptyCell(),
-            createEmptyCell(),
-        ];
-    }
-
     const tiles: RuntimeTileGrid = [
         makeRow(),
         makeRow(),
@@ -67,15 +76,6 @@ export function createTileGrid(): RuntimeTileGrid {
     }
 
     return tiles;
-}
-
-/** Build one empty cell with aggregate + per-piece stat slots (all zero). */
-function createEmptyCell(): StatsField {
-    return {
-        b: createPlayerSquareStats(),
-        w: createPlayerSquareStats(),
-        currentPiece: null,
-    };
 }
 
 /**

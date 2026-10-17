@@ -2,11 +2,38 @@ import { describe, it, afterAll, expect } from 'bun:test';
 
 import { analyzePGN } from 'chessalyzer';
 import type { ParsedGame } from 'chessalyzer/pgn';
-import { gameTracker } from 'chessalyzer/trackers';
+import { gameTracker, pieceTracker } from 'chessalyzer/trackers';
 
 import { cleanupTmpPgns, fixtureExpected, fixturePath, repeatPgn } from '~/test/helpers/fixtures';
 
 describe('Multi-run', () => {
+    it.each([false, { count: 1, chunk: { targetBytes: 256 } }] as const)(
+        'isolates count-only and action runs with workers: %j',
+        async (workers) => {
+            const path = fixturePath('results-mix');
+            const expected = fixtureExpected('results-mix');
+            const reference = pieceTracker();
+            await analyzePGN(path, { workers: false, trackers: [reference] });
+
+            const games = gameTracker();
+            const pieces = pieceTracker();
+            const data = await analyzePGN(path, {
+                workers,
+                runs: [{ trackers: [games] }, { trackers: [pieces] }, { trackers: [] }],
+            });
+
+            expect(data.runs).toEqual(
+                Array.from({ length: 3 }, () => ({
+                    gameCount: expected.games,
+                    moveCount: expected.moves,
+                })),
+            );
+            expect(games.state.gameCount).toBe(expected.games);
+            expect(pieces.state).toEqual(reference.state);
+            expect(data.errors).toBeUndefined();
+        },
+    );
+
     it('processes all runs without sharing detached chunk buffers', async () => {
         const expected = fixtureExpected('results-mix');
         const a = gameTracker();

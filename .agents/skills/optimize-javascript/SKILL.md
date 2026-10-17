@@ -1,14 +1,14 @@
 ---
 name: optimize-javascript
 description: >-
-  V8/Node.js performance patterns for hot paths, parsers, and core libraries in
-  JavaScript/TypeScript. Use whenever JavaScript or TypeScript is slow or should
-  get faster: hot loops, tokenizers and parsers, heavy allocation or GC pressure,
-  megamorphic call sites, deoptimization, memory growth, slow startup or module
-  load. Triggers on "too slow", "speed up", "make it faster", "optimize this",
-  "reduce allocations", "bottleneck", "profile it", and on any performance review
-  of .js, .ts, .mjs, or .cjs code, including when the user never says
-  "performance".
+    V8/Node.js performance patterns for hot paths, parsers, and core libraries in
+    JavaScript/TypeScript. Use whenever JavaScript or TypeScript is slow or should
+    get faster: hot loops, tokenizers and parsers, heavy allocation or GC pressure,
+    megamorphic call sites, deoptimization, memory growth, slow startup or module
+    load. Triggers on "too slow", "speed up", "make it faster", "optimize this",
+    "reduce allocations", "bottleneck", "profile it", and on any performance review
+    of .js, .ts, .mjs, or .cjs code, including when the user never says
+    "performance".
 ---
 
 ## Core principles
@@ -72,7 +72,7 @@ Keep V8 on the fast path:
 
 ## Functions & control flow
 
-- A function created per hot-loop iteration only costs when it *escapes* — stored, registered, or passed where its identity is observed. V8 often inlines or elides the rest (immediately-invoked callbacks, args to builtins like `.map`/`.then`, object-property callbacks), so don't flag a non-escaping callback as a cost without evidence it's retained. For merge/compose fan-out, prefer an array of handlers + a plain iteration loop over nested `merged = (x) => { prev(x); next(x) }` wrappers applied N times: the nested chain gets progressively slower as it deepens, while the array loop stays flat. A one-off 2-way compose is fine (it inlines to two direct calls); don't build deeper wrapper chains expecting a speedup
+- A function created per hot-loop iteration only costs when it _escapes_ — stored, registered, or passed where its identity is observed. V8 often inlines or elides the rest (immediately-invoked callbacks, args to builtins like `.map`/`.then`, object-property callbacks), so don't flag a non-escaping callback as a cost without evidence it's retained. For merge/compose fan-out, prefer an array of handlers + a plain iteration loop over nested `merged = (x) => { prev(x); next(x) }` wrappers applied N times: the nested chain gets progressively slower as it deepens, while the array loop stays flat. A one-off 2-way compose is fine (it inlines to two direct calls); don't build deeper wrapper chains expecting a speedup
 - Push, don't poll, on growing shared collections — when a producer mutates a Set/Array the consumer needs to react to, fire a callback on each add; polling "did the size grow? then re-iterate" is O(N×M) because each consumer pass re-walks the full collection from the start
 - Deduplicate repeated registrations in multi-tenant loops — when the same handler/callback is registered once per iteration (e.g. per workspace, per route, per config entry), identical work multiplies; track what's already registered and skip duplicates
 - Keep hot functions small — V8's inlining budgets change by version and code shape; extract cold/error paths when it keeps the hot path simple enough to inline
