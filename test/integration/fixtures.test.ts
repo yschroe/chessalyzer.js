@@ -1,7 +1,6 @@
 import { describe, it, beforeAll, expect } from 'bun:test';
 
-import { analyzePGN } from 'chessalyzer';
-import type { AnalyzeResult } from 'chessalyzer';
+import { analyzePGN, type AnalyzeResult } from 'chessalyzer';
 
 import { allFixtureIds, fixturePath, getFixtureEntry } from '~/test/helpers/fixtures';
 

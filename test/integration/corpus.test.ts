@@ -1,9 +1,8 @@
-import { describe, it, beforeAll, expect } from 'bun:test';
-
 // Optional golden regression tests against the large corpus (test/corpus/).
 // Skipped automatically when corpus files are not present locally.
-import { analyzePGN } from 'chessalyzer';
-import type { AnalyzeResult } from 'chessalyzer';
+import { describe, it, beforeAll, expect } from 'bun:test';
+
+import { analyzePGN, type AnalyzeResult } from 'chessalyzer';
 import type { ParsedGame } from 'chessalyzer/pgn';
 import {
     gameTracker,
@@ -11,8 +10,10 @@ import {
     isStartingPieceName,
     PieceHeatmapPresets,
     pieceTracker,
+    type GameTrackerState,
+    type HeatmapFn,
+    type PieceTrackerState,
 } from 'chessalyzer/trackers';
-import type { GameTrackerState, HeatmapFn, PieceTrackerState } from 'chessalyzer/trackers';
 
 import { corpusPath, getCorpusEntry } from '~/test/helpers/fixtures';
 import { isPieceTrackerState } from '~/test/helpers/tracker-state';

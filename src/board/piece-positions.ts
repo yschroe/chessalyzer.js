@@ -1,5 +1,4 @@
-import type { BoardCoord } from '#board/board-coords';
-import type { MutableBoardCoord } from '#board/board-coords';
+import type { BoardCoord, MutableBoardCoord } from '#board/board-coords';
 import type { PieceToken, PlayerColor } from '#types/tokens';
 
 /**

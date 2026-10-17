@@ -1,6 +1,4 @@
-import { squareToCoords } from '#board/board-coords';
-import type { BoardCoord } from '#board/board-coords';
-import type { MutableBoardCoord } from '#board/board-coords';
+import { squareToCoords, type BoardCoord, type MutableBoardCoord } from '#board/board-coords';
 import type { ChessPiece } from '#board/chess-piece';
 import {
     PAWN_TEMPLATE,
