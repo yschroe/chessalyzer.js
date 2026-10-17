@@ -39,7 +39,7 @@ const replayModes = process.argv.slice(2).filter((arg) => allowedReplayModes.inc
 
 if (replayModes.length === 0) {
     console.error('Error: No replay modes provided');
-    console.error('Usage: bun run bench:perf [skip|board]...');
+    console.error('Usage: bun run bench:perf [skip|board|actions]...');
     process.exit(1);
 }
 const SCENARIOS = replayModes as readonly ReplayMode[];
