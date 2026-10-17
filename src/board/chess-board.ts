@@ -245,10 +245,10 @@ class ChessBoard {
 
             for (let col = 0; col < 8; col += 1) {
                 const piece = this.getPieceAt(row, col);
-                if (piece !== null) {
-                    process.stdout.write(`|${piece.color}${piece.name}|`);
-                } else {
+                if (piece === null) {
                     process.stdout.write('|...|');
+                } else {
+                    process.stdout.write(`|${piece.color}${piece.name}|`);
                 }
             }
             process.stdout.write('\n');

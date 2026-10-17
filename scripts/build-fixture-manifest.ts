@@ -102,5 +102,5 @@ for (const file of files) {
 if (hadError) process.exit(1);
 
 const manifest: Manifest = { dir: 'test/fixtures', fixtures };
-await Bun.write(MANIFEST_PATH, JSON.stringify(manifest, null, 4) + '\n');
+await Bun.write(MANIFEST_PATH, `${JSON.stringify(manifest, null, 4)  }\n`);
 console.log('\nWrote test/fixtures/manifest.json');
