@@ -76,10 +76,10 @@
         "bump": "bumpp",
         "release:notes": "node scripts/release-notes.mjs",
         "release:pack": "node scripts/npm-publish.mjs --dry-run",
-        "docs:dev": "bun run --filter chessalyzer-docs --elide-lines=0 dev",
-        "docs:build": "bun run --filter chessalyzer-docs --elide-lines=0 build",
-        "docs:preview": "bun run --filter chessalyzer-docs --elide-lines=0 preview",
-        "docs:typecheck": "bun run --filter chessalyzer-docs --elide-lines=0 typecheck"
+        "docs:dev": "bun run --filter chessalyzer-docs dev",
+        "docs:build": "bun run --filter chessalyzer-docs build",
+        "docs:preview": "bun run --filter chessalyzer-docs preview",
+        "docs:typecheck": "bun run --filter chessalyzer-docs typecheck"
     },
     "devDependencies": {
         "@types/bun": "^1.4.3",

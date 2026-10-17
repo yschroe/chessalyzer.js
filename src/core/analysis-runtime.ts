@@ -3,7 +3,7 @@ import type { ReplayMode } from '#replay/replay-mode';
 import type { AnalyzeError } from '#types/errors';
 import type { ParsedGame } from '#types/parse-pgn';
 
-/** @internal Raw game/move counters from the processor. */
+/** Raw game/move counters from the processor. */
 export interface GameAndMoveCount {
     games: number;
     moves: number;

@@ -26,6 +26,9 @@ jobs:
       - name: Check for unused dependencies
         run: bun run knip
 
+      - name: Check for unused dependencies (production mode)
+        run: bun run knip -p
+
   typecheck:
     name: '🔍 Typecheck'
     runs-on: ubuntu-latest
