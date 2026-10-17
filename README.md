@@ -16,7 +16,7 @@ A JavaScript library for batch-analyzing chess PGN files — parse games, replay
 - Fully modular, track only the statistics you need
 - Generate heatmaps out of the generated data
 - Standalone PGN parser with async streaming mode
-- It's fast: parses ~34M moves/s in parse-only mode; ~12M moves/s with full board replay and `Actions` decoding (measured on an Apple M1 MacBook Air 8GB; 1.8GiB test file)
+- It's fast: parses ~35M moves/s in parse-only mode; ~12M moves/s with full board replay and `Actions` decoding (measured on an Apple M1 MacBook Air 8GB; 1.8GiB test file)
 - Handles big files easily
 
 ## Documentation

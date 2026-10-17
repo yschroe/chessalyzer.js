@@ -156,7 +156,7 @@ export default class PiecePositions {
     promote(pieceName: string, on: BoardCoord): void {
         const list = this.listForChar(pieceName.charCodeAt(0));
         const [row, col] = on;
-        if (!list || row === undefined || col === undefined) return;
+        if (!list) return;
         list.push([row, col]);
     }
 }

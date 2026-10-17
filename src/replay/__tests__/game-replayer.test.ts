@@ -216,7 +216,7 @@ describe('GameReplayer', () => {
             expect(board.getPieceAt(4, 4)?.name).toBe('Pe');
             expect(board.getPieceAt(3, 4)?.name).toBe('Pe');
             const knight = board.getPieceAt(5, 5);
-            expect(knight?.name?.charAt(0)).toBe('N');
+            expect(knight?.name.charAt(0)).toBe('N');
             expect(knight?.color).toBe('w');
         });
 
@@ -224,7 +224,7 @@ describe('GameReplayer', () => {
             const board = boardAfterSans(['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Bc5', 'b4', 'Bxb4']);
 
             const bishop = board.getPieceAt(4, 1);
-            expect(bishop?.name?.charAt(0)).toBe('B');
+            expect(bishop?.name.charAt(0)).toBe('B');
             expect(bishop?.color).toBe('b');
         });
 
@@ -244,7 +244,7 @@ describe('GameReplayer', () => {
             const board = boardAfterSans(promoGame?.moves ?? []);
 
             const queen = board.getPieceAt(0, 6);
-            expect(queen?.name?.charAt(0)).toBe('Q');
+            expect(queen?.name.charAt(0)).toBe('Q');
             expect(queen?.color).toBe('w');
         });
     });
