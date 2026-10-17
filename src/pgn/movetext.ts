@@ -22,14 +22,6 @@ const COMMENT_REGEX = /\{.*?\}|\(.*?\)/g;
 const MOVE_REGEX = /[RNBQKOa-h][^\s?!#+]+/g;
 
 /**
- * Matches a game-result terminator at end of line: `1-0`, `0-1`, `1/2-1/2`, or `*`
- * (game ended without a recorded result). Used on cleaned movetext lines, e.g.
- * `... Qh7+ 1-0`. `*` must terminate games too — otherwise `*`-terminated games
- * never complete and are silently dropped.
- */
-const RESULT_REGEX = /(1-0|0-1|1\/2-1\/2|\*)\s*$/;
-
-/**
  * Parse a PGN header tag line into `[key, value]`, or null if not a valid tag.
  * @param line Raw line from the PGN file (expected to start with `[`).
  */
@@ -62,5 +54,12 @@ export function extractMoves(line: string): string[] | null {
  * chunking, so both agree on what completes a game.
  */
 export function extractGameResult(line: string): string | null {
-    return RESULT_REGEX.exec(line)?.[1] ?? null;
+    // trimEnd preserves the regex's \s* semantics, including Unicode whitespace.
+    // No leading token boundary is required: historically even "prefix1-0" matches.
+    const trimmed = line.trimEnd();
+    if (trimmed.endsWith('1-0')) return '1-0';
+    if (trimmed.endsWith('0-1')) return '0-1';
+    if (trimmed.endsWith('1/2-1/2')) return '1/2-1/2';
+    if (trimmed.endsWith('*')) return '*';
+    return null;
 }

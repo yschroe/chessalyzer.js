@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'bun:test';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { readLines } from '#io/line-reader';
 import { decodePgnChunkBytes, readPgnChunks, type PgnChunkConfig } from '#io/pgn-chunks';
@@ -45,6 +48,39 @@ async function collectChunks(path: string, config: PgnChunkConfig) {
 }
 
 describe('readPgnChunks', () => {
+    it('agrees with assembly on result suffixes, whitespace, comments, and unfinished lines', async () => {
+        const lines = [
+            '[Event "Suffixes"]',
+            '1. e4 {1-0} e5 (0-1)',
+            '2. Nf3 Nc6 1-0\t {finished}',
+            '1. d4 d5 0-1\u00a0',
+            '1. c4 e5 1/2-1/2\u2028\ufeff',
+            '1. Nf3 d5* (finished)',
+            '1. e4 e5 1-0!',
+        ];
+        const expected = parseGamesFromLines(lines, { parseHeaders: true });
+        expect(expected.map((game) => game.result)).toEqual(['1-0', '0-1', '1/2-1/2', '*']);
+        expect(expected[0]?.moves).toEqual(['e4', 'e5', 'Nf3', 'Nc6']);
+        const dir = await mkdtemp(join(tmpdir(), 'chessalyzer-results-'));
+        try {
+            const path = join(dir, 'results.pgn');
+            await writeFile(path, lines.join('\n'));
+            const chunkSets = await Promise.all(
+                [{ targetBytes: 1 }, { maxLines: 4 }, {}].map((config) =>
+                    collectChunks(path, config),
+                ),
+            );
+            for (const chunks of chunkSets) {
+                const games = chunks.flatMap((chunk) =>
+                    parseGamesFromLines(chunkText(chunk).split('\n'), { parseHeaders: true }),
+                );
+                expect(games).toEqual(expected);
+            }
+        } finally {
+            await rm(dir, { recursive: true });
+        }
+    });
+
     it('aligns byte-target chunks to complete games', async () => {
         const volumePath = await repeatPgn('results-mix', 100);
         const chunks = await collectChunks(volumePath, { targetBytes: 32_768 });
