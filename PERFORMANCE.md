@@ -1,6 +1,6 @@
 # Performance improvement worklist
 
-Findings from the 2026-10-17 review using the `optimize-javascript` skill. Start with candidates 1–3, then work through the remaining items independently. Each checkbox represents work still to do; no optimization has been implemented or validated by an A/B comparison yet.
+Findings from the 2026-10-17 review using the `optimize-javascript` skill. Candidate 1 is implemented and retained after measurement; candidates 2–7 remain open. Unchecked boxes represent work still to do. Work through each candidate independently.
 
 Profile percentages identify where time was sampled, not expected speedups. The quadratic cases below were confirmed with operation counts. Other proposed improvements remain hypotheses to benchmark.
 
@@ -30,12 +30,14 @@ The original local harnesses were `/private/tmp/chessalyzer-perf-review.mts` and
 
 **Code:** [game-replayer.ts](src/replay/game-replayer.ts), [san-context.ts](src/replay/san-context.ts), [chess-board.ts](src/board/chess-board.ts), [piece-positions.ts](src/board/piece-positions.ts).
 
-- [ ] Verify the board-state invariant across successful replay, skipped replay, and replay failures.
-- [ ] Experiment with guarding the successful-game reset when replay is disabled.
-- [ ] Verify mixed runs, consecutive games, tracker end hooks, and `abort` / `skip-game` behavior.
-- [ ] Measure all replay modes in both execution paths and record the outcome below.
+- [x] Verify the board-state invariant across successful replay, skipped replay, and replay failures.
+- [x] Experiment with guarding the successful-game reset when replay is disabled.
+- [x] Verify mixed runs, consecutive games, tracker end hooks, and `abort` / `skip-game` behavior.
+- [x] Measure all replay modes in both execution paths and record the outcome below.
 
 **Acceptance:** Counts, tracker state, and error behavior remain equivalent; count-only throughput improves beyond measured noise without regressing replay modes.
+
+**Outcome:** Retained. Guarding the successful-game reset with `replayMode !== 'skip'` reduced single-threaded count-only elapsed time by 10–11% in both comparison orders. Successful replay and the existing failure handler still reset the context; skipped replay leaves it unchanged. Worker count-only runs also improved, with more timing variability. Other modes showed no consistent regression across the initial and reverse-order comparisons. See the [experiment record](#candidate-1-experiment-2026-10-17) for measurements and limits.
 
 ## 2. Recognize game results from the line suffix
 
@@ -163,6 +165,53 @@ Follow the repository's [performance and testing rules](AGENTS.md). Work on one 
 
 Use one row per experiment, including rejected or inconclusive variants. Link durable benchmark output and reproductions when available.
 
-| Candidate / variant               | Baseline → candidate commits | Workload / runtime | Before → after (mean, min, CV) | Correctness / scaling / memory evidence               | Decision |
-| --------------------------------- | ---------------------------- | ------------------ | ------------------------------ | ----------------------------------------------------- | -------- |
-| No implementation experiments yet | —                            | —                  | —                              | Initial profiling and operation counts recorded above | Pending  |
+| Candidate / variant         | Baseline → candidate commits                   | Workload / runtime                       | Before → after (mean, min, CV)                                                | Correctness / scaling / memory evidence                                           | Decision |
+| --------------------------- | ---------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------- |
+| 1: guard reset in skip mode | `af01dcb` → working-tree guard described below | 1777.3 MiB, Node 26.10.0, ST + 8 workers | ST skip: 8.076 / 8.036 s / 0.69% → 7.257 / 7.243 s / 0.27%; full matrix below | 222 tests pass; exact large-file counts; mixed-mode and failure-recovery coverage | Retained |
+
+### Candidate 1 experiment: 2026-10-17
+
+**Revisions and workload.** Baseline: `af01dcb3d1c300bb322a84c71dc6258f770ec921`. Candidate: that revision plus the guarded successful-game reset in `GameReplayer.processGame()`; no other production code changed. Candidate `src/replay/game-replayer.ts` SHA-256: `5ba35d07b857239f7be2707a7cf17a95e504ba429ef007e08d9ec9b231ebd3a7`. The test and documentation changes are outside the timed workload.
+
+Runtime: Node `v26.10.0`, V8 `14.6.202.34-node.34`, Apple M1; workers used the default pool of 8. Input was the same 1777.3 MiB cached fixture as above. All timed runs returned **2,000,112 games and 135,020,744 moves**, asserted outside timing. Performance measurements cover Node; correctness tests ran on Bun `1.4.3`.
+
+**Method.** Built both versions with `bun run build` and preserved their separate `lib/` trees. Used a temporary copy of [bench-perf.ts](bench/bench-perf.ts) with its `analyzePGN` import redirected to the selected built entry via `RESET_BUILD_ENTRY`; fixture resolution, workload, and timing helpers were unchanged. The copy also emitted raw samples and checked counts after timing. Invocations used `node --import tsx`, with fresh sequential processes and no overlapping benchmarks or tests.
+
+The first pass ran baseline then candidate, with `skip`, `board`, and `actions` sequentially within each process, separately for ST and MT. Each scenario had one full-fixture warmup and two timed samples (`BENCH_RUNS=2`). A fresh-process baseline-only ST skip control measured 8.164 s mean, 8.122 s minimum, and 0.74% CV (samples: 8.121518, 8.206941 s). Its mean differed by about 1.1% from the first baseline, providing an A/A noise reference.
+
+| Path / mode | Baseline mean / min / CV    | Candidate mean / min / CV   |
+| ----------- | --------------------------- | --------------------------- |
+| ST skip     | 8.076 s / 8.036 s / 0.69%   | 7.257 s / 7.243 s / 0.27%   |
+| ST board    | 20.598 s / 20.545 s / 0.36% | 20.929 s / 20.791 s / 0.93% |
+| ST actions  | 35.254 s / 35.214 s / 0.16% | 36.278 s / 36.057 s / 0.86% |
+| MT skip     | 4.466 s / 4.404 s / 1.96%   | 4.082 s / 3.909 s / 6.01%   |
+| MT board    | 7.618 s / 7.343 s / 5.11%   | 8.363 s / 8.305 s / 0.97%   |
+| MT actions  | 14.268 s / 14.051 s / 2.16% | 14.619 s / 14.506 s / 1.09% |
+
+Raw timed samples from that pass, in seconds:
+
+| Path / mode | Baseline samples     | Candidate samples    |
+| ----------- | -------------------- | -------------------- |
+| ST skip     | 8.036297, 8.115360   | 7.271133, 7.243452   |
+| ST board    | 20.650015, 20.545024 | 20.791447, 21.066296 |
+| ST actions  | 35.214235, 35.294486 | 36.057211, 36.499308 |
+| MT skip     | 4.403806, 4.527576   | 3.908668, 4.255647   |
+| MT board    | 7.342556, 7.893381   | 8.419782, 8.305321   |
+| MT actions  | 14.485633, 14.050672 | 14.506288, 14.731254 |
+
+Because the first pass showed slower board/actions timings, the follow-up isolated each mode in fresh processes and reversed build order: **candidate then baseline, adjacent for each scenario**. Each process had one full-fixture warmup and one timed sample (`BENCH_RUNS=1`); CV is not meaningful for these individual samples.
+
+| Path / mode | Candidate sample (first) | Baseline sample (second) |
+| ----------- | -----------------------: | -----------------------: |
+| ST skip     |               7.225841 s |               8.107646 s |
+| ST board    |              20.368639 s |              20.733137 s |
+| ST actions  |              34.749078 s |              34.811222 s |
+| MT skip     |               3.916741 s |               4.969866 s |
+| MT board    |               8.239148 s |               8.592186 s |
+| MT actions  |              14.288156 s |              14.755583 s |
+
+**Interpretation.** ST skip elapsed time decreased by 10.1% in the first comparison and 10.9% in the reverse-order comparison, exceeding the observed A/A drift. MT skip improved in both comparisons, but the samples are too variable to promise a precise worker speedup. Board/actions differences changed direction between passes; these measurements support no consistent regression, rather than a claim of improvement in those modes. The follow-up also changed mode isolation, so it does not identify whether drift or persistent runtime state caused the first-pass differences. No cold-start or Bun throughput claim is established.
+
+**Correctness.** `bun run build && bun test`: 222 passed, 0 failed. `bun run typecheck`: passed. `bun run lint`: completed with the existing `unicorn/consistent-function-scoping` warning for `makeRow` in the unchanged tile-grid module. Added coverage for alternating skip/board/actions with game-end hooks; recovery after partially replayed games fail under both error policies; and mixed count-only/action runs in ST and a reused worker across small chunks. The measured production guard was unchanged after validation.
+
+Local logs, the adapted harness, and frozen builds are under `/private/tmp/chessalyzer-reset-isysv3gn/`. They are temporary artifacts; the timings, revision identity, and reproduction method are recorded here so the outcome survives their removal.
