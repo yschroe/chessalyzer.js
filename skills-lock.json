@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "optimize-javascript": {
+      "source": "webpro/skills",
+      "sourceType": "github",
+      "skillPath": "skills/optimize-javascript/SKILL.md",
+      "computedHash": "a2a08986220bdfa5547f3eeae42222b91ae270109200925d7d7db245358b14e4"
+    }
+  }
+}
