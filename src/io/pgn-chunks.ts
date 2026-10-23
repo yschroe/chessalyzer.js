@@ -2,10 +2,8 @@ import { open, type FileHandle } from 'node:fs/promises';
 
 import { extractGameResult, stripComments } from '#pgn/movetext';
 
-/**
- * Default chunk size for worker-side PGN dispatch.
- */
-const DEFAULT_PGN_CHUNK_BYTES = 3.5 * 1024 * 1024;
+/** Default chunk size for worker-side PGN dispatch. */
+const DEFAULT_PGN_CHUNK_BYTES = 3.0 * 1024 * 1024;
 
 /** Smallest file read; keeps tiny byte targets from degrading into many small reads. */
 const MIN_READ_BYTES = 64 * 1024;
