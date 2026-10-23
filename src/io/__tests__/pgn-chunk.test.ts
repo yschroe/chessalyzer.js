@@ -217,17 +217,14 @@ describe('readPgnChunks equivalence with the line reader', () => {
             await writeFile(path, `\uFEFF${games.join('')}`);
             const expected = await lineReaderGames(path);
             expect(expected.map((game) => game.result)).toEqual(['1-0', '0-1', '1/2-1/2', '*']);
+            expect(expected[0]?.headers).toEqual({ Event: 'BOM', Result: '1-0' });
             const results = await Promise.all(
                 [...EQUIVALENCE_CONFIGS, { targetBytes: 70_000 }].map((config) =>
                     chunkedGames(path, config),
                 ),
             );
             for (const actual of results) {
-                // readline keeps the BOM, so its first header line parses as movetext;
-                // worker decoding drops the BOM (as it did before byte-level chunking).
-                expect(actual.slice(1)).toEqual(expected.slice(1));
-                expect(actual[0]?.moves).toEqual(['e4', 'e5', 'Nf3']);
-                expect(actual[0]?.headers).toEqual({ Event: 'BOM', Result: '1-0' });
+                expect(actual).toEqual(expected);
             }
         } finally {
             await rm(dir, { recursive: true });

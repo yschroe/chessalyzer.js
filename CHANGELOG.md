@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Do not reset board state after games in `'skip'` mode for increased performance.
 - Faster game-result detection: results are matched on the end of each movetext line instead of with a regex search (about 7–10% faster single-threaded analysis in `'skip'` mode and about 4–5% in `'board'` mode).
 - Completed games take over their parsed headers object instead of copying it (about 3% faster single-threaded analysis when headers are parsed).
+- Fix: single-threaded analysis and `parsePGN` / `streamParsePGN` now ignore a UTF-8 BOM at the start of the file. Previously the first header line was parsed as movetext.
 
 ## [4.0.0] - 2026-08-09
 

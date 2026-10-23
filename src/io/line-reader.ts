@@ -66,9 +66,16 @@ export function openLineStream(file: string, handlers: LineStreamHandlers): Line
         },
     };
 
-    rl.on('line', (line) => {
+    const onLine = (line: string) => {
         if (closed) return;
         handlers.onLine(line);
+    };
+
+    // The utf8 stream decoder keeps a BOM, so strip it from the first line, then
+    // swap in the plain handler so later lines pay no extra check.
+    rl.once('line', (line) => {
+        rl.on('line', onLine);
+        onLine(line.charCodeAt(0) === 0xfeff ? line.slice(1) : line);
     });
 
     rl.once('close', () => {

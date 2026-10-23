@@ -25,6 +25,14 @@
                 "moves": 4
             }
         },
+        "bom": {
+            "file": "bom.pgn",
+            "description": "UTF-8 BOM before the first header tag",
+            "expected": {
+                "games": 2,
+                "moves": 6
+            }
+        },
         "chessdotcom-headers": {
             "file": "chessdotcom-headers.pgn",
             "description": "Exported from Chess.com (2020)",
