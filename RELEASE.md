@@ -9,6 +9,8 @@ Local version bumps use [bumpp](https://github.com/antfu-collective/bumpp) via `
 
 ## Happy path
 
+Pre: Make sure you are on the main branch before running the steps. If you accidentally performed the steps on a different (fresh) branch, see the [section below](#moving-a-release-from-a-fresh-branch-to-main).
+
 1. **Update `CHANGELOG.md`**
     - Move items from `[Unreleased]` into a new `## [x.y.z] - YYYY-MM-DD` section (Keep a Changelog style).
     - The heading version **must** match the version you are about to bump. CI fails with `No changelog section found for [version]` otherwise.
@@ -67,6 +69,10 @@ That re-runs the release workflow on the new tip.
 If a GitHub release object already exists for the old tag target, delete or update it so it does not disagree with the moved tag (`gh release delete vX.Y.Z` and let CI recreate, or edit the release).
 
 Avoid moving tags that consumers may already have pulled; for a botched **published** release, prefer a new patch/prerelease over rewriting history.
+
+## Moving a release from a fresh branch to main
+
+If the above steps were accidentally performed on a fresh branch, the release commit can simply be fast-forwarded onto the main branch by running `git push origin <the-release-commit>:main`.
 
 ## Related commands
 
