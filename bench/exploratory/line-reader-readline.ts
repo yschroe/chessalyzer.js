@@ -52,12 +52,12 @@ console.timeEnd('readline for-await');
 console.time('readPgnChunks (await at chunk)');
 {
     let chunks = 0;
-    let lines = 0;
+    let bytes = 0;
     for await (const chunk of readPgnChunks(pgn.path)) {
         chunks += 1;
-        lines += chunk.lineCount;
+        bytes += chunk.bytes.byteLength;
     }
     void chunks;
-    void lines;
+    void bytes;
 }
 console.timeEnd('readPgnChunks (await at chunk)');

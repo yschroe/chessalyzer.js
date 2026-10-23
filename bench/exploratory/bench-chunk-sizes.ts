@@ -12,7 +12,7 @@ import { formatSeconds, timeAsync } from '~/bench/lib/timing';
 
 const pgn = findLargestPgn();
 const MB = 1024 * 1024;
-const chunkSizes = [2 * MB, 4 * MB, 8 * MB, 16 * MB];
+const chunkSizes = [2 * MB, 3 * MB, 4 * MB, 5 * MB, 8 * MB, 16 * MB];
 const workerCounts = [Math.max(1, availableParallelism() - 1), availableParallelism()];
 
 async function bench(label: string, multithreadCfg: { targetBytes: number; count: number }) {

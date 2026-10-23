@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { readLines } from '#io/line-reader';
-import { decodePgnChunkBytes, readPgnChunks, type PgnChunkConfig } from '#io/pgn-chunks';
+import { decodePgnChunkLines, readPgnChunks, type PgnChunkConfig } from '#io/pgn-chunks';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import { extractGameResult, stripComments } from '#pgn/movetext';
 import { fixturePath, repeatPgn, cleanupTmpPgns } from '~/test/helpers/fixtures';
@@ -35,8 +35,8 @@ function chunkEndsWithCompleteGame(lines: string[]): boolean {
     return true;
 }
 
-function chunkText(chunk: { bytes: Uint8Array }): string {
-    return decodePgnChunkBytes(chunk.bytes);
+function chunkLines(chunk: { bytes: Uint8Array }): string[] {
+    return decodePgnChunkLines(chunk.bytes);
 }
 
 async function collectChunks(path: string, config: PgnChunkConfig) {
@@ -72,7 +72,7 @@ describe('readPgnChunks', () => {
             );
             for (const chunks of chunkSets) {
                 const games = chunks.flatMap((chunk) =>
-                    parseGamesFromLines(chunkText(chunk).split('\n'), { parseHeaders: true }),
+                    parseGamesFromLines(chunkLines(chunk), { parseHeaders: true }),
                 );
                 expect(games).toEqual(expected);
             }
@@ -87,7 +87,7 @@ describe('readPgnChunks', () => {
 
         expect(chunks.length).toBeGreaterThan(1);
         for (const chunk of chunks) {
-            expect(chunkEndsWithCompleteGame(chunkText(chunk).split('\n'))).toBe(true);
+            expect(chunkEndsWithCompleteGame(chunkLines(chunk))).toBe(true);
         }
         await cleanupTmpPgns();
     });
@@ -109,9 +109,7 @@ describe('readPgnChunks', () => {
 
         const chunkGames = [];
         for await (const chunk of readPgnChunks(path, { targetBytes: 1 })) {
-            chunkGames.push(
-                ...parseGamesFromLines(chunkText(chunk).split('\n'), { parseHeaders: false }),
-            );
+            chunkGames.push(...parseGamesFromLines(chunkLines(chunk), { parseHeaders: false }));
         }
 
         expect(chunkGames).toHaveLength(lineGames.length);
@@ -129,8 +127,8 @@ describe('readPgnChunks', () => {
         expect(chunk).toBeDefined();
         if (!chunk) return;
 
-        expect(chunk.lineCount).toBeGreaterThan(0);
-        expect(chunkEndsWithCompleteGame(chunkText(chunk).split('\n'))).toBe(true);
+        expect(chunk.bytes.byteLength).toBeGreaterThan(0);
+        expect(chunkEndsWithCompleteGame(chunkLines(chunk))).toBe(true);
         await cleanupTmpPgns();
     });
 
@@ -140,7 +138,7 @@ describe('readPgnChunks', () => {
         const chunk = chunks[0];
         expect(chunk).toBeDefined();
         if (!chunk) return;
-        expect(chunkEndsWithCompleteGame(chunkText(chunk).split('\n'))).toBe(true);
+        expect(chunkEndsWithCompleteGame(chunkLines(chunk))).toBe(true);
     });
 
     it('emits a complete game before an incomplete trailing game with default chunk size', async () => {
@@ -149,9 +147,112 @@ describe('readPgnChunks', () => {
         const [chunk] = chunks;
         expect(chunk).toBeDefined();
         if (!chunk) return;
-        const games = parseGamesFromLines(chunkText(chunk).split('\n'), { parseHeaders: true });
+        const games = parseGamesFromLines(chunkLines(chunk), { parseHeaders: true });
         expect(games).toHaveLength(1);
         expect(games[0]?.result).toBe('1-0');
+    });
+});
+
+/** Games as the single-threaded path assembles them (readline lines → assembler). */
+async function lineReaderGames(path: string) {
+    const lines: string[] = [];
+    await readLines(path, (line) => {
+        lines.push(line);
+    });
+    return parseGamesFromLines(lines, { parseHeaders: true });
+}
+
+async function chunkedGames(path: string, config: PgnChunkConfig) {
+    const chunks = await collectChunks(path, config);
+    for (const chunk of chunks) {
+        // Transfer to workers is zero-copy only when the view owns its whole buffer.
+        expect(chunk.bytes.byteOffset).toBe(0);
+        expect(chunk.bytes.byteLength).toBe(chunk.bytes.buffer.byteLength);
+    }
+    return chunks.flatMap((chunk) =>
+        parseGamesFromLines(chunkLines(chunk), { parseHeaders: true }),
+    );
+}
+
+const EQUIVALENCE_CONFIGS: PgnChunkConfig[] = [
+    {},
+    { targetBytes: 1 },
+    { targetBytes: 100 },
+    { maxLines: 3 },
+    { targetBytes: 1, minLines: 7 },
+];
+
+describe('readPgnChunks equivalence with the line reader', () => {
+    it.each([
+        'basic-normal',
+        'comments-multiline',
+        'comments-singleline',
+        'corrupt',
+        'crlf-endings',
+        'lichess-headers',
+        'chessdotcom-headers',
+        'results-mix',
+    ] as const)('assembles the same games from %s', async (id) => {
+        const expected = await lineReaderGames(fixturePath(id));
+        const results = await Promise.all(
+            EQUIVALENCE_CONFIGS.map((config) => chunkedGames(fixturePath(id), config)),
+        );
+        for (const actual of results) {
+            expect(actual).toEqual(expected);
+        }
+    });
+
+    it('handles BOM, lone CR, CRLF, Unicode whitespace, multi-byte text across reads, and no final newline', async () => {
+        // Each game carries > 64 KiB of multi-byte comment text so cuts and reads land mid-sequence.
+        const comment = `{${'Zug ♞ über “ñ” 🐴 '.repeat(4_000)}}`;
+        const games = [
+            `[Event "BOM"]\n[Result "1-0"]\n\n1. e4 ${comment} e5 2. Nf3 1-0\n\n`,
+            `[Event "CRLF"]\r\n\r\n1. d4 d5\r\n2. c4 0-1 \r\n\r\n`,
+            `[Event "Lone CR"]\r\r1. c4 ${comment}\r1... e5 1/2-1/2\r\r`,
+            `[Event "Header result"]\n[Result "1-0"]\n\n1. Nf3 d5 ${comment}\n2. g3 *`,
+        ];
+        const dir = await mkdtemp(join(tmpdir(), 'chessalyzer-bytes-'));
+        try {
+            const path = join(dir, 'edge.pgn');
+            await writeFile(path, `\uFEFF${games.join('')}`);
+            const expected = await lineReaderGames(path);
+            expect(expected.map((game) => game.result)).toEqual(['1-0', '0-1', '1/2-1/2', '*']);
+            expect(expected[0]?.headers).toEqual({ Event: 'BOM', Result: '1-0' });
+            const results = await Promise.all(
+                [...EQUIVALENCE_CONFIGS, { targetBytes: 70_000 }].map((config) =>
+                    chunkedGames(path, config),
+                ),
+            );
+            for (const actual of results) {
+                expect(actual).toEqual(expected);
+            }
+        } finally {
+            await rm(dir, { recursive: true });
+        }
+    });
+
+    it('extends a line-capped chunk until a long game completes', async () => {
+        const movetext = Array.from({ length: 200 }, (_, i) => `${i + 1}. Nf3 Nf6`).join('\n');
+        const dir = await mkdtemp(join(tmpdir(), 'chessalyzer-long-'));
+        try {
+            const path = join(dir, 'long.pgn');
+            await writeFile(
+                path,
+                `[Event "Long"]\n\n${movetext}\n1-0\n\n[Event "Next"]\n\n1. e4 0-1\n`,
+            );
+            const chunks = await collectChunks(path, { maxLines: 10 });
+            const games = chunks.flatMap((chunk) =>
+                parseGamesFromLines(chunkLines(chunk), { parseHeaders: true }),
+            );
+            expect(games.map((game) => game.moves.length)).toEqual([400, 1]);
+        } finally {
+            await rm(dir, { recursive: true });
+        }
+    });
+
+    it('rejects when the file does not exist', async () => {
+        const missing = join(tmpdir(), 'chessalyzer-missing-file.pgn');
+        expect(collectChunks(missing, {})).rejects.toThrow();
     });
 });
 

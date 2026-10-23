@@ -51,8 +51,9 @@ export class GameAssembler {
             } else if (this.headers?.Result !== undefined) {
                 completed.result = toGameResult(this.headers.Result);
             }
+            // Hand off ownership: `this.headers` is reset below and never mutated afterwards.
             if (this.headers) {
-                completed.headers = { ...this.headers };
+                completed.headers = this.headers;
             }
             this.game = { moves: [] };
             this.headers = undefined;

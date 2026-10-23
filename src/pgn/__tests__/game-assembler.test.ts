@@ -85,4 +85,34 @@ describe('GameAssembler', () => {
         expect(games[0]?.result).toBe('*');
         expect(games[1]?.result).toBe('1-0');
     });
+
+    it('keeps wrapped movetext in order across lines', () => {
+        const games = parseGamesFromLines(
+            ['[Event "x"]', '', '1. e4 e5', '2. Nf3 {c} Nc6', '3. Bb5 (3. Bc4) a6', '4. Ba4 1-0'],
+            { parseHeaders: false },
+        );
+
+        expect(games[0]?.moves).toEqual(['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6', 'Ba4']);
+    });
+
+    it('hands out independent headers and moves for consecutive games', () => {
+        const assembler = new GameAssembler({ parseHeaders: true });
+
+        assembler.processLine('[White "A"]');
+        assembler.processLine('[Result "1-0"]');
+        const first = assembler.processLine('1. e4 e5 1-0')!;
+        assembler.processLine('[White "B"]');
+        assembler.processLine('1. d4');
+        const second = assembler.processLine('1... d5 0-1')!;
+        const third = assembler.processLine('1. c4 *')!;
+
+        first.moves.push('mutated');
+
+        expect(first.headers).toEqual({ White: 'A', Result: '1-0' });
+        expect(first.headers).not.toBe(second.headers);
+        expect(second.headers).toEqual({ White: 'B' });
+        expect(second.moves).toEqual(['d4', 'd5']);
+        expect(third.headers).toBeUndefined();
+        expect(third.moves).toEqual(['c4']);
+    });
 });

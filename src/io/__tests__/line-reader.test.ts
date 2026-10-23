@@ -25,6 +25,14 @@ async function collectLines(path: string): Promise<string[]> {
 }
 
 describe('readLines', () => {
+    it('drops a UTF-8 BOM from the first line only', async () => {
+        const path = await writeTmpPgn('bom.pgn', '\uFEFF[Event "BOM"]\n\uFEFF1. e4 e5 1-0\n');
+
+        const lines = await collectLines(path);
+
+        expect(lines).toEqual(['[Event "BOM"]', '\uFEFF1. e4 e5 1-0']);
+    });
+
     it('reassembles a line split across read chunks', async () => {
         const longLine = 'x'.repeat(70 * 1024);
         const path = await writeTmpPgn('long-line.pgn', longLine);

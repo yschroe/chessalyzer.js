@@ -16,7 +16,8 @@ export interface LineStreamHandlers {
 
 /**
  * Controllable UTF-8 line stream over a file.
- * Sole owner of `fs` / `readline` I/O in the PGN pipeline.
+ * Sole owner of line-oriented `fs` / `readline` I/O in the PGN pipeline. Worker
+ * chunking reads raw bytes instead (see `pgn-chunks.ts`).
  */
 export interface LineStream {
     /** Pause the underlying read stream (backpressure). No-op if already closed. */
@@ -65,9 +66,16 @@ export function openLineStream(file: string, handlers: LineStreamHandlers): Line
         },
     };
 
-    rl.on('line', (line) => {
+    const onLine = (line: string) => {
         if (closed) return;
         handlers.onLine(line);
+    };
+
+    // The utf8 stream decoder keeps a BOM, so strip it from the first line, then
+    // swap in the plain handler so later lines pay no extra check.
+    rl.once('line', (line) => {
+        rl.on('line', onLine);
+        onLine(line.charCodeAt(0) === 0xfeff ? line.slice(1) : line);
     });
 
     rl.once('close', () => {

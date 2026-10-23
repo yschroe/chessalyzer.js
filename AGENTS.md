@@ -133,6 +133,7 @@ Examples of deliberate choices:
 - **`Array.concat` vs `push`** in specific hot loops where benchmarks showed a win. Run `npm run bench:atomic -- array` before changing append patterns.
 - **Readline `'line'` events instead of `for await`** in `openLineStream` / `readLines` — sync push handlers beat async-iterator pull on large PGNs; `await` only at chunk boundaries in `readPgnChunks`. See `bench/exploratory/line-reader-readline.ts`. Do not reintroduce per-line async iteration for “cleaner” ergonomics.
 - **Worker-side parsing** with transferable UTF-8 chunk bytes to minimize main-thread work and copying.
+- **Byte-level chunking** in `readPgnChunks`: the main thread reads raw bytes and decodes only the few lines it checks for a game boundary; workers decode and split. Do not reintroduce per-line decoding or line counting on the default path (`maxLines` / `minLines` count lines only when set). See `bench/exploratory/bench-pgn-chunking.ts`.
 - **Zero production dependencies.**
 - **`AssembledGame` (`moves: string[]`) vs public `ParsedGame` (`moves: ParsedMove[]`)** — the analyze/replay pipeline keeps mainline SANs as strings (`GameAssembler`, `GameReplayer`, workers). `{ san }` objects are materialized only at public boundaries (`parsePGN`, `streamParsePGN`, game trackers, filters) via `toParsedGame()` in [`src/pgn/to-parsed-game.ts`](src/pgn/to-parsed-game.ts). **Do not collapse this into `ParsedMove[]` everywhere** for API neatness: v4 alpha benching showed only ~1–2% regression on `replay: 'skip'` but a large regression on `replay: 'board'`, because board replay loads every move in a tight loop — `moves[i].san` (object + property) vs `moves[i]` (string). Millions of short-lived `{ san }` allocations also add GC pressure during CPU-bound replay.
 
@@ -160,6 +161,7 @@ Run `bench:perf` when performance-sensitive code changes, in all `skip`, `board`
 - `profile-bottlenecks-node.ts` — staged pipeline profile
 - `line-reader-readline.ts` — readline events vs `for await` vs `readLines` / `readPgnChunks`
 - `bench-worker-overhead.ts` — worker pool startup cost
+- `bench-pgn-chunking.ts` — main-thread chunking cost (raw read vs `readPgnChunks`, with/without line counting)
 
 **Perf bench env vars:**
 

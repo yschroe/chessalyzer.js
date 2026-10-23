@@ -16,7 +16,7 @@ import type {
     WorkerTaskConfigEntry,
     WorkerTaskData,
 } from '#core/worker-types';
-import { decodePgnChunkBytes } from '#io/pgn-chunks';
+import { decodePgnChunkLines } from '#io/pgn-chunks';
 import { parseGamesFromLines } from '#pgn/game-assembler';
 import GameReplayer from '#replay/game-replayer';
 import type { ReplayMode } from '#replay/replay-mode';
@@ -88,7 +88,7 @@ function processReplayConfig(
 
 /** Assemble games from a PGN chunk once, then replay/analyze per config. */
 function processBatch(msg: WorkerBatchTask): WorkerMessage {
-    const lines = decodePgnChunkBytes(msg.pgnChunkBytes).split('\n');
+    const lines = decodePgnChunkLines(msg.pgnChunkBytes);
     const parseHeaders = msg.configs.some((c) => c.parseHeaders);
     const maxGames = computeParseMaxGames(msg.configs);
     const parsedGames = parseGamesFromLines(lines, { parseHeaders, maxGames });

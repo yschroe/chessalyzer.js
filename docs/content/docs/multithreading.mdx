@@ -39,14 +39,20 @@ await analyzePGN('games.pgn', {
 });
 ```
 
-| Option              | What it controls                                        | Default              |
-| ------------------- | ------------------------------------------------------- | -------------------- |
-| `workers`           | Thread count (shorthand: `workers: 8`)                  | all available cores  |
-| `chunk.targetBytes` | Chunk size target, extended to the next game boundary   | tuned for throughput |
-| `chunk.maxLines`    | Safety cap on lines per chunk                           |                      |
-| `chunk.minLines`    | Minimum lines before a byte-target chunk may be emitted |                      |
+| Option              | What it controls                                               | Default              |
+| ------------------- | -------------------------------------------------------------- | -------------------- |
+| `workers`           | Thread count (shorthand: `workers: 8`)                         | all available cores  |
+| `chunk.targetBytes` | Chunk size target in bytes, extended to the next game boundary | tuned for throughput |
+| `chunk.maxLines`    | Optional cap on lines per chunk                                | no cap               |
+| `chunk.minLines`    | Minimum lines before a byte-target chunk may be emitted        | none                 |
 
 Bigger chunks mean less dispatch overhead; smaller chunks balance better when games vary wildly in length. Measure with your own file before micro-tuning.
+
+<Callout title="Line options cost main-thread time">
+    By default the main thread splits the file on bytes and never counts lines. Setting
+    `chunk.maxLines` or `chunk.minLines` makes it count every line, which slows down chunking.
+    Prefer `chunk.targetBytes` unless you need a line-based limit.
+</Callout>
 
 ## When threads step aside
 

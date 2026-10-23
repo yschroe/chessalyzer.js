@@ -12,16 +12,16 @@
         "lint": "oxlint"
     },
     "dependencies": {
-        "fumadocs-core": "16.17.5",
-        "fumadocs-mdx": "15.4.7",
-        "fumadocs-ui": "npm:@fumadocs/base-ui@16.17.5",
-        "lucide-react": "^1.58.0",
+        "fumadocs-core": "16.17.8",
+        "fumadocs-mdx": "15.4.10",
+        "fumadocs-ui": "npm:@fumadocs/base-ui@16.17.8",
+        "lucide-react": "^1.61.0",
         "react": "^19.3.1",
         "react-dom": "^19.3.1",
         "react-server-dom-webpack": "^19.3.1",
-        "takumi-js": "^2.16.3",
+        "takumi-js": "^2.17.1",
         "use-sync-external-store": "^1.7.0",
-        "waku": "1.0.0-rc.3"
+        "waku": "1.0.0-rc.4"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.3.3",
@@ -31,6 +31,6 @@
         "@types/react-dom": "^19.3.0",
         "tailwindcss": "^4.3.3",
         "typescript": "^6.0.3",
-        "vite": "^8.3.4"
+        "vite": "^8.3.5"
     }
 }
