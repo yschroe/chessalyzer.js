@@ -1,6 +1,6 @@
 # Performance improvement worklist
 
-Findings from the 2026-10-17 review using the `optimize-javascript` skill. Candidates 1 and 2 are implemented and retained after measurement; candidates 3–7 remain open. Unchecked boxes represent work still to do. Work through each candidate independently.
+Findings from the 2026-10-17 review using the `optimize-javascript` skill. Candidates 1 and 2 are implemented and retained after measurement. Candidate 3 is partially evaluated: header transfer is retained, first-array adoption is rejected, and linear accumulation remains open. Candidates 4–7 remain open. Unchecked boxes represent work still to do. Work through each candidate independently.
 
 Profile percentages identify where time was sampled, not expected speedups. The quadratic cases below were confirmed with operation counts. Other proposed improvements remain hypotheses to benchmark.
 
@@ -60,13 +60,16 @@ The original local harnesses were `/private/tmp/chessalyzer-perf-review.mts` and
 
 **Code:** `GameAssembler.processLine()` in [game-assembler.ts](src/pgn/game-assembler.ts).
 
-- [ ] Benchmark adopting the first matched-moves array directly, keeping subsequent append behavior unchanged initially.
-- [ ] Independently benchmark transferring the completed headers object instead of cloning it; confirm the assembler never mutates that object afterward.
-- [ ] Verify retained games and headers remain independent across subsequent assembly, public parsing, filters, and game trackers.
-- [ ] Investigate linear accumulation for heavily wrapped games as a separate experiment, using the operation counts below.
-- [ ] Run `bun run bench:atomic -- array` before changing append patterns, then check large-file throughput in all modes.
+- [x] Benchmark adopting the first matched-moves array directly, keeping subsequent append behavior unchanged initially.
+- [x] Independently benchmark transferring the completed headers object instead of cloning it; confirm the assembler never mutates that object afterward.
+- [x] Verify retained games and headers remain independent across subsequent assembly, public parsing, filters, and game trackers.
+- [x] Investigate linear accumulation for heavily wrapped games as a separate experiment, using the operation counts below.
+- [x] Run `bun run bench:atomic -- array` before changing append patterns, then check large-file throughput in all modes.
+- [ ] Benchmark linear accumulation end to end without first-array adoption (see outcome).
 
 **Acceptance:** Preserve the existing common-case performance and ownership semantics. Any more complex multiline strategy must demonstrate better scaling without sacrificing the tuned single-line path. Keep internal moves as `string[]`; materialize `{ san }` only at existing public boundaries.
+
+**Outcome:** Partially retained. **Header transfer is retained**: with `headers: true`, Node ST `skip` improved by 3.4% and 3.7% in both comparison orders and ST `board` by 2.7%; worker timings reversed with order. The assembler resets its reference immediately after hand-off, and `ParsedGame.headers` is typed `Readonly`, so consumers already cannot mutate it. **First-array adoption is rejected**: it showed no reliable gain in any mode, and `board` was slower in all four comparisons (ST +4.2% / +2.1%, MT +9.2% / +3.3%). `%DebugPrint` showed identical maps, elements kinds, and backing-store sizes for `match` and `concat` arrays, so the cause is unexplained. **Linear accumulation** (push into the owned array after the first line) removes the quadratic copying and is 31% faster on 8-line wrapped games in isolation, but was only measured on top of adoption; it remains open. See the [experiment record](#candidate-3-experiment-2026-10-23).
 
 ## 4. Stop rescanning unfinished chunks
 
@@ -170,6 +173,8 @@ Use one row per experiment, including rejected or inconclusive variants. Link du
 | Candidate / variant         | Baseline → candidate commits                   | Workload / runtime                       | Before → after (mean, min, CV)                                                | Correctness / scaling / memory evidence                                           | Decision |
 | --------------------------- | ---------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------- |
 | 1: guard reset in skip mode | `af01dcb` → working-tree guard described below | 1777.3 MiB, Node 26.10.0, ST + 8 workers | ST skip: 8.076 / 8.036 s / 0.69% → 7.257 / 7.243 s / 0.27%; full matrix below | 222 tests pass; exact large-file counts; mixed-mode and failure-recovery coverage | Retained |
+| 3a: adopt first moves array | `f6cc403` → working-tree variant described below | 1777.3 MiB, Node 26.12.1, ST + 8 workers | ST board: 19.286 / 19.169 s / 0.54% → 20.103 / 19.990 s / 0.52%; full matrix below | Exact large-file counts; no gain, `board` slower in all four comparisons | Rejected |
+| 3b: transfer headers object | `f6cc403` → working-tree hand-off described below | 1777.3 MiB, Node 26.12.1, `headers: true`, ST + 8 workers | ST skip: 9.978 / 9.952 s / 0.23% → 9.642 / 9.607 s / 0.38%; full matrix below | 229 tests pass; exact large-file counts; header/move independence coverage | Retained |
 | 2: result suffix checks | `917d121` → working-tree suffix checks described below | 1777.3 MiB, Node 26.10.0 + Bun 1.4.3, ST + 8 workers | Node ST skip: 7.162 / 7.161 s / 0.04% → 6.637 / 6.583 s / 0.79%; full matrix below | 227 tests pass; exact large-file counts; Unicode suffix and chunk/assembly coverage | Retained |
 
 ### Candidate 1 experiment: 2026-10-17
@@ -288,3 +293,50 @@ Long-line cases improved substantially in both runtimes. Short-line cases were g
 **Decision.** Retained. Node ST skip improved by **7.3% initially and 9.5% in reverse order**; ST board improved by **4.2% and 4.8%**. ST actions improved by **1.9% and 0.3%**, so its gain is smaller and less certain. Initial Node worker samples were slower, while all adjacent reverse-order worker comparisons were faster; no precise worker speedup or consistent regression is established. Bun ST improved in all modes (skip **15.8%**, board **3.4%**, actions **2.5%**) in its single comparison order. Bun worker board/actions differences also reversed in the adjacent follow-up. Follow-ups changed mode isolation as well as order, so they do not distinguish timing drift from persistent runtime state. These conclusions apply to this fixture and machine; heavily wrapped, whitespace-heavy inputs may have a different balance of short misses.
 
 All raw timed samples, means, minima, standard deviations, and CVs are preserved in [result-suffix-2026-10-17.jsonl](bench/exploratory/results/result-suffix-2026-10-17.jsonl), with baseline revision, candidate source hash, runtime, and fixture metadata. Baseline/candidate builds and the temporary full-analysis harness remain machine-local under `/private/tmp/chessalyzer-result-suffix/`.
+
+### Candidate 3 experiment: 2026-10-23
+
+**Revisions and workload.** Baseline: `f6cc403d49238edca250383bbdbf6669fbe3ed0f`. Variant A (rejected) replaced the append with `moves.length === 0 ? matchedMoves : moves.concat(matchedMoves)`. Variant B (retained) assigns `this.headers` to the completed game instead of `{ ...this.headers }`; final `src/pgn/game-assembler.ts` SHA-256: `5b8e9b227156741146de5389ee263935c5073d3e69b3fa1585a0dc04d5854d7b`. Each variant was applied to the baseline alone and built separately.
+
+Apple M1, Node `v26.12.1`; default pool of 8 workers. Input: the same 1777.3 MiB cached fixture (**2,000,112 games, 135,020,744 moves**), counts asserted after every timed run. No trackers. Variant B used `headers: true` because the default benchmark does not parse headers and cannot observe it. No Bun measurements were taken.
+
+**Method.** The baseline and both variants were built with `bun run build` and their `lib/` trees preserved. A temporary harness imported `analyzePGN` from the selected built entry, printed raw samples, and asserted counts. Pass 1 ran baseline then candidate with one warmup and `BENCH_RUNS=3`, with modes sequential within a process. The reverse pass ran candidate then baseline, one mode per fresh process, with one warmup and one sample. A fresh-process baseline ST skip A/A control measured **6.570 s mean** against 6.546 s in pass 1 (0.4% drift). `bun run bench:atomic -- array` ran first: for a single 20-item append into a fresh array, `concat` (27.9M ops/s) beat `push(...)` (21.3M ops/s).
+
+**Variant A: adopt the first matched-moves array.**
+
+| Path / mode | Baseline mean / min / CV | Candidate mean / min / CV | Reverse: candidate → baseline |
+| --- | --- | --- | --- |
+| ST skip | 6.546 s / 6.528 s / 0.19% | 6.610 s / 6.581 s / 0.33% | 6.509 s → 6.558 s |
+| ST board | 19.286 s / 19.169 s / 0.54% | 20.103 s / 19.990 s / 0.52% | 20.031 s → 19.616 s |
+| ST actions | 33.947 s / 33.923 s / 0.10% | 35.040 s / 34.940 s / 0.23% | 34.044 s → 33.943 s |
+| MT skip | 4.132 s / 3.913 s / 3.77% | 4.181 s / 4.067 s / 1.95% | 3.588 s → 3.851 s |
+| MT board | 7.184 s / 7.038 s / 1.47% | 7.843 s / 7.750 s / 1.18% | 7.374 s → 7.137 s |
+| MT actions | 12.574 s / 12.523 s / 0.29% | 12.937 s / 12.868 s / 0.53% | 13.360 s → 13.405 s |
+
+`skip` and `actions` changed direction with order. `board` was slower in every comparison. Lichess movetext is single-line, so this variant removed one 60–120 element copy per game; that saving did not appear in `skip`, where parsing dominates.
+
+**Variant B: transfer the headers object (`headers: true`).**
+
+| Path / mode | Baseline mean / min / CV | Candidate mean / min / CV |
+| --- | --- | --- |
+| ST skip | 9.978 s / 9.952 s / 0.23% | 9.642 s / 9.607 s / 0.38% |
+| ST board | 23.335 s / 23.281 s / 0.17% | 22.709 s / 22.692 s / 0.07% |
+| MT skip | 4.937 s / 4.668 s / 4.21% | 5.125 s / 4.962 s / 2.32% |
+| ST skip (reverse: candidate first) | 10.085 s / 10.056 s / 0.30% | 9.708 s / 9.639 s / 0.84% |
+| MT skip (reverse: candidate first) | 5.426 s / 5.394 s / 0.61% | 4.988 s / 4.754 s / 3.43% |
+
+ST improved in both orders, by more than the A/A drift. Worker timings reversed with order and establish neither a gain nor a regression.
+
+**Linear accumulation.** [bench-assembler-copies.ts](bench/exploratory/bench-assembler-copies.ts) compares `concat`, `adopt`, and `adopt_push` (adopt the first array, then push later lines' tokens in a loop; spread is avoided for very long lines). It reproduces the operation counts above: copied elements per game for 1,000 / 2,000 / 4,000 stress lines were 1,001,000 / 4,002,000 / 16,004,000 for `concat` and 1,998 / 3,998 / 7,998 for `adopt_push`. Timings (200,000 games, Node):
+
+| Workload | concat | adopt | adopt_push |
+| --- | ---: | ---: | ---: |
+| single line, 40 moves | 0.126 s | 0.122 s | 0.122 s |
+| 8 wrapped lines, 40 moves | 0.269 s | 0.266 s | 0.184 s |
+| 4,000 stress lines (20 games) | 0.167 s | 0.167 s | 0.005 s |
+
+Because adoption regressed `board` end to end, a follow-up should benchmark linear accumulation that keeps the baseline's first-line `concat` and pushes only on later lines. The Lichess fixture is single-line and would not exercise that path, so a wrapped-movetext fixture is also needed.
+
+**Correctness.** `bun run build && bun test`: 229 passed, 0 failed. Typecheck and lint passed. Added coverage for wrapped movetext order across comment-stripped lines and for independent headers and move arrays across consecutive games.
+
+All raw samples are preserved in [assembler-copies-2026-10-23.jsonl](bench/exploratory/results/assembler-copies-2026-10-23.jsonl).
