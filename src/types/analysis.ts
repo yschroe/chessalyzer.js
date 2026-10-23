@@ -25,11 +25,11 @@ type HeadersForInstances<I> = HasKind<I, 'game'> extends true ? true | 'auto' : 
 
 /** Advanced: PGN chunk sizing for worker dispatch (`workers.chunk`). */
 interface WorkerChunkOptions {
-    /** Target chunk size in bytes before extending to the next game boundary. */
+    /** Target chunk size in UTF-8 bytes before extending to the next game boundary. */
     targetBytes?: number;
-    /** Safety cap on lines per chunk. */
+    /** Optional cap on lines per chunk. Setting it enables line counting, which slows chunking. */
     maxLines?: number;
-    /** Minimum lines before a byte-target chunk may be emitted. */
+    /** Minimum lines before a byte-target chunk may be emitted. Setting it enables line counting, which slows chunking. */
     minLines?: number;
 }
 

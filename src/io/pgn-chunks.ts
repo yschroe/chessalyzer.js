@@ -1,127 +1,218 @@
-import { lineStreamIterable } from '#io/line-iterable';
+import { open, type FileHandle } from 'node:fs/promises';
+
 import { extractGameResult, stripComments } from '#pgn/movetext';
 
-/** Default chunk size (~4 MB) for worker-side PGN dispatch. */
-const DEFAULT_PGN_CHUNK_BYTES = 4 * 1024 * 1024;
+/**
+ * Default chunk size for worker-side PGN dispatch. Matches the effective chunk size of
+ * the previous line-based chunker on Lichess exports, where its 50k-line cap applied first.
+ */
+const DEFAULT_PGN_CHUNK_BYTES = 2.5 * 1024 * 1024;
+
+/** Smallest file read; keeps tiny byte targets from degrading into many small reads. */
+const MIN_READ_BYTES = 64 * 1024;
+
+/** Read size while extending a chunk past its target to the next game boundary. */
+const EXTEND_READ_BYTES = 1024 * 1024;
+
+const LF = 10;
 
 /** Configuration for reading PGN chunks. */
 export interface PgnChunkConfig {
-    /** Target chunk size in bytes before extending to the next game boundary. */
+    /** Target chunk size in UTF-8 bytes before extending to the next game boundary. */
     targetBytes?: number;
-    /** Safety cap on lines per chunk. */
+    /** Optional cap on lines per chunk. Setting it enables line counting (slower). */
     maxLines?: number;
-    /** Minimum lines before a byte-target chunk may be emitted. */
+    /** Minimum lines before a byte-target chunk may be emitted. Setting it enables line counting (slower). */
     minLines?: number;
 }
 
-/** A chunk of PGN lines. */
+/** A chunk of PGN text aligned to complete games. */
 export interface PgnChunk {
-    /** UTF-8 bytes for zero-copy transfer to workers via `postMessage` transfer list. */
+    /** UTF-8 bytes owning their whole `ArrayBuffer`, for zero-copy transfer to workers. */
     bytes: Uint8Array;
-    /** Number of lines in the chunk. */
-    lineCount: number;
 }
 
-const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
+/** Keeps a leading BOM so {@link lineCompletesGame} strips it only where a worker would. */
+const lineDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 
-/** Decode UTF-8 PGN chunk bytes received from the main thread. */
-export function decodePgnChunkBytes(bytes: Uint8Array): string {
-    return textDecoder.decode(bytes);
+/** Splits on the same terminators as readline (`\r\n`, lone `\r`, `\n`). */
+const LINE_TERMINATOR_REGEX = /\r\n|\r|\n/;
+
+/**
+ * Decode UTF-8 PGN chunk bytes received from the main thread into lines.
+ * Chunks are raw file bytes, so line terminators are split here the way readline would.
+ */
+export function decodePgnChunkLines(bytes: Uint8Array): string[] {
+    const text = textDecoder.decode(bytes);
+    return text.includes('\r') ? text.split(LINE_TERMINATOR_REGEX) : text.split('\n');
 }
 
-/** Byte size of a chunk of lines. */
-function chunkByteSize(lines: string[]): number {
-    let size = 0;
-    for (const line of lines) {
-        size += line.length + 1;
-    }
-    return size;
+/**
+ * True when the physical line `[start, end)` (excluding its `\n`) completes a game,
+ * using the same test as {@link GameAssembler}. A lone `\r` splits lines in readline,
+ * so only the text after the last `\r` is the line directly before the cut. Offset 0
+ * is the start of the next chunk, where the worker's decoder drops a BOM.
+ */
+function lineCompletesGame(buf: Buffer, start: number, end: number): boolean {
+    if (end === start) return false;
+    let line = lineDecoder.decode(buf.subarray(start, end));
+    if (start === 0 && line.startsWith('\uFEFF')) line = line.slice(1);
+    if (line.endsWith('\r')) line = line.slice(0, -1);
+    const cr = line.lastIndexOf('\r');
+    if (cr !== -1) line = line.slice(cr + 1);
+    if (line === '' || line.startsWith('[')) return false;
+    return extractGameResult(stripComments(line)) !== null;
 }
 
-/** Index of the last movetext line that completes a game, or -1 if none. */
-function findLastCompleteGameLineIndex(lines: string[]): number {
-    for (let i = lines.length - 1; i >= 0; i -= 1) {
-        const line = lines[i];
-        if (line === undefined || line === '') continue;
-        if (line.startsWith('[')) continue;
-        if (extractGameResult(stripComments(line)) !== null) return i;
+/**
+ * Offset just past the `\n` of the last game-completing line whose `\n` lies in
+ * `[floor, end)`, or -1 when there is none.
+ */
+function findLastCut(buf: Buffer, floor: number, end: number): number {
+    let lineEnd = end > 0 ? buf.lastIndexOf(LF, end - 1) : -1;
+    while (lineEnd >= floor && lineEnd !== -1) {
+        const prev = lineEnd === 0 ? -1 : buf.lastIndexOf(LF, lineEnd - 1);
+        if (lineCompletesGame(buf, prev + 1, lineEnd)) return lineEnd + 1;
+        lineEnd = prev;
     }
     return -1;
 }
 
 /**
- * Stream a PGN file as raw text chunks aligned to complete games.
+ * Stream a PGN file as raw UTF-8 chunks aligned to complete games.
  *
- * I/O lives in {@link lineStreamIterable}; this module only accumulates lines, cuts on
- * game boundaries, and encodes transferable bytes. `await` happens between chunks
- * (not per line) via the returned async iterator.
+ * The main thread never decodes the file: it reads bytes, then decodes only the few
+ * lines it inspects backward from the chunk target to find the last line that
+ * completes a game. Workers decode and split the chunk (see {@link decodePgnChunkLines}).
+ * A chunk extends past its target until a game completes. Reads happen per pulled
+ * chunk, so the consumer provides backpressure.
  */
 export function readPgnChunks(file: string, config: PgnChunkConfig = {}): AsyncIterable<PgnChunk> {
-    const targetBytes = config.targetBytes ?? DEFAULT_PGN_CHUNK_BYTES;
-    const maxLines = config.maxLines ?? 50_000;
+    const targetBytes = Math.max(1, config.targetBytes ?? DEFAULT_PGN_CHUNK_BYTES);
+    const maxLines = config.maxLines ?? Infinity;
     const minLines = config.minLines ?? 0;
+    // Counting newlines costs more than the rest of chunking; only pay it when asked.
+    const countLines = config.maxLines !== undefined || config.minLines !== undefined;
 
-    const accumulator: string[] = [];
-    let byteSize = 0;
-    /** True once the current fill has reached the byte/line target and is waiting on a game boundary. */
-    let extendingToBoundary = false;
+    let handle: FileHandle | undefined;
+    let buf = Buffer.allocUnsafeSlow(Math.max(targetBytes, MIN_READ_BYTES));
+    let filled = 0;
+    let eof = false;
+    let done = false;
+    /** True once the chunk reached its target without a cut; only new lines are scanned. */
+    let extending = false;
+    /** Lines whose `\n` lies below this offset were already scanned without finding a cut. */
+    let scanFloor = 0;
+    /** Line counting state (only when {@link countLines}). */
+    let countedTo = 0;
+    let lineCount = 0;
+    /** Offset just past the `maxLines`-th `\n`, once reached. */
+    let lineCapEnd = -1;
 
-    const pushLine = (line: string) => {
-        accumulator.push(line);
-        byteSize += line.length + 1;
+    const close = async (): Promise<void> => {
+        done = true;
+        const h = handle;
+        handle = undefined;
+        await h?.close();
     };
 
-    const hitAccumulationTarget = (): boolean => {
-        const hitByteTarget = byteSize >= targetBytes && accumulator.length >= minLines;
-        const hitLineCap = accumulator.length >= maxLines;
-        return hitByteTarget || hitLineCap;
-    };
-
-    const takeCompleteChunk = (): PgnChunk | null => {
-        const lastResultIdx = findLastCompleteGameLineIndex(accumulator);
-        if (lastResultIdx === -1) return null;
-
-        const completeLines = accumulator.slice(0, lastResultIdx + 1);
-        const remainder = accumulator.slice(lastResultIdx + 1);
-
-        const text = completeLines.join('\n');
-
-        accumulator.length = 0;
-        byteSize = 0;
-        if (remainder.length > 0) {
-            accumulator.push(...remainder);
-            byteSize = chunkByteSize(accumulator);
+    const countNewLines = (): void => {
+        let i = buf.indexOf(LF, countedTo);
+        while (i !== -1 && i < filled) {
+            lineCount += 1;
+            if (lineCount === maxLines && lineCapEnd === -1) lineCapEnd = i + 1;
+            i = buf.indexOf(LF, i + 1);
         }
-
-        return {
-            bytes: textEncoder.encode(text),
-            lineCount: completeLines.length,
-        };
+        countedTo = filled;
     };
 
-    return lineStreamIterable<PgnChunk>(file, {
-        onLine: (line, sink) => {
-            pushLine(line);
+    /** End of the region the next cut search may use, or -1 while below target. */
+    const searchEnd = (): number => {
+        if (extending) return filled;
+        if (!countLines) return filled >= targetBytes ? filled : -1;
+        countNewLines();
+        if (lineCapEnd !== -1) return lineCapEnd;
+        return filled >= targetBytes && lineCount >= minLines ? filled : -1;
+    };
 
-            if (!extendingToBoundary) {
-                if (!hitAccumulationTarget()) return;
-                extendingToBoundary = true;
-            }
+    /** Emit `[0, cut)` as an owned buffer; keep the remainder for the next chunk. */
+    const emit = (cut: number): IteratorResult<PgnChunk> => {
+        const bytes = new Uint8Array(cut);
+        bytes.set(buf.subarray(0, cut));
+        buf.copyWithin(0, cut, filled);
+        filled -= cut;
+        extending = false;
+        scanFloor = 0;
+        countedTo = 0;
+        lineCount = 0;
+        lineCapEnd = -1;
+        return { value: { bytes }, done: false };
+    };
 
-            const chunk = takeCompleteChunk();
-            if (chunk) {
-                extendingToBoundary = false;
-                sink.emit(chunk);
+    const readMore = async (): Promise<void> => {
+        handle ??= await open(file, 'r');
+        const want =
+            !extending && filled < targetBytes
+                ? Math.max(targetBytes - filled, MIN_READ_BYTES)
+                : EXTEND_READ_BYTES;
+        if (filled + want > buf.length) {
+            const grown = Buffer.allocUnsafeSlow(Math.max(filled + want, buf.length * 2));
+            buf.copy(grown, 0, 0, filled);
+            buf = grown;
+        }
+        const { bytesRead } = await handle.read(buf, filled, want, null);
+        if (bytesRead === 0) eof = true;
+        filled += bytesRead;
+    };
+
+    /** At EOF: emit through the last completed game; an incomplete trailing game is dropped. */
+    const finish = async (): Promise<IteratorResult<PgnChunk>> => {
+        await close();
+        if (filled === 0) return { value: undefined, done: true };
+        // The final line may lack a trailing newline; readline still emits it as a line.
+        const lastLf = buf.lastIndexOf(LF, filled - 1);
+        let cut = lineCompletesGame(buf, lastLf + 1, filled) ? filled : -1;
+        if (cut === -1) cut = findLastCut(buf, 0, filled);
+        if (cut <= 0) {
+            filled = 0;
+            return { value: undefined, done: true };
+        }
+        const result = emit(cut);
+        filled = 0;
+        return result;
+    };
+
+    const next = async (): Promise<IteratorResult<PgnChunk>> => {
+        if (done) return { value: undefined, done: true };
+        try {
+            for (;;) {
+                const end = searchEnd();
+                if (end !== -1) {
+                    const cut = findLastCut(buf, scanFloor, end);
+                    if (cut !== -1) return emit(cut);
+                    // Linear extension: only lines appended from here on are scanned next.
+                    extending = true;
+                    scanFloor = end;
+                }
+                // oxlint-disable-next-line eslint/no-await-in-loop -- sequential file reads; one chunk per pull
+                if (eof) return await finish();
+                // oxlint-disable-next-line eslint/no-await-in-loop -- each read depends on the previous fill
+                await readMore();
             }
-        },
-        onClose: (sink) => {
-            // Final flush — the line stream is already closed, so emit's pause is a no-op.
-            if (accumulator.length > 0) {
-                const chunk = takeCompleteChunk();
-                if (chunk) sink.emit(chunk);
-            }
-            sink.finish();
-        },
-    });
+        } catch (err) {
+            await close();
+            throw err;
+        }
+    };
+
+    return {
+        [Symbol.asyncIterator]: () => ({
+            next,
+            async return(): Promise<IteratorResult<PgnChunk>> {
+                await close();
+                return { value: undefined, done: true };
+            },
+        }),
+    };
 }

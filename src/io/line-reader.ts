@@ -16,7 +16,8 @@ export interface LineStreamHandlers {
 
 /**
  * Controllable UTF-8 line stream over a file.
- * Sole owner of `fs` / `readline` I/O in the PGN pipeline.
+ * Sole owner of line-oriented `fs` / `readline` I/O in the PGN pipeline. Worker
+ * chunking reads raw bytes instead (see `pgn-chunks.ts`).
  */
 export interface LineStream {
     /** Pause the underlying read stream (backpressure). No-op if already closed. */
